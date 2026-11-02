@@ -228,7 +228,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Watch my six.</b> A zombie mode with only two windows: one straight ahead of you at 12 o'clock and one right behind you at 6 o'clock. Nothing comes from the left or right, so About face is your best friend.</p>
     <p><b>Horror hallway.</b> A zombie mode where you walk down a long hallway on your own, with no walk button. Your footsteps tell you your pace: quick, close together steps when the hallway ahead is clear, slowing down the more zombies are ahead, until you stop completely. You also stop while a zombie is right in front of you or grabbing you. Zombies break out of wooden barriers and glass windows in the walls ahead: you hear wood thudding and splintering, or glass banging and cracking, then the crash as they get through. If you walk past one, it chases you from behind, fast. A soft double tick plays every 100 feet. Your score is every foot you walk plus 10 points for every kill. Status reads your distance, kills and score.</p>
     <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: a fence 20 feet around you zaps every 4 seconds with a loud electric crack, incinerating any regular zombie at or inside it and hitting giant zombies for 100. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health.</p>
-    <p><b>Mythical weapons.</b> Thunderclap chains lightning: listen for crackles jumping between enemies. Thunderclap upgrades: a static field makes shocked enemies buzz and move at half speed, the ball lightning slug fires a fizzing orb straight ahead that bursts into lightning, and the lightning rod hums when it is charged, making your next shot a supercharged blast with a long deep rumble. The Black Hole Cannon's orb hums where it lands, drags enemies toward it, then collapses with a boom. The Banshee's scream hits and stuns everything in front of you, and stunned enemies make a ringing sound. It is strongest within 40 feet and weakens out to 160 feet. The Hydra's three rockets each explode where their target is, so you hear up to three blasts in different places. The Alien Symbiote fires wet, fleshy bursts. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, at 40 percent more damage for every 50 health eaten. Now and then you hear it feed, a squelch, a growl and a heartbeat, and you hear its damage each time it passes another whole multiple. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100. Status tells you how strong it has grown. Carrying it without using it never costs you health. With vampiric rounds, every kill it makes gives you back 2 health with a soft heartbeat pulse. With Hair trigger V2, the Banshee becomes a tactical rifle: each trigger pull is a tight burst of 3 quick shrieks that hit harder, with a short pause between bursts. The Jack Frost chills hard: each icicle slows an enemy more, down to a tenth of its speed after four hits. Its Blizzard blast goes off when you reload: a whirling wind storm circles you, then a crunch of ice as every enemy within 40 feet freezes completely still for 15 seconds. Ice cracking means they are moving again, and a crystal chime means the next blizzard is ready, 10 seconds after the last. The Jet rifle's heat vent goes off with a roaring rush of hot air, bigger the more rounds you fired. With both Ramjet upgrades, a Jet round punches through every enemy in its line, with no limit, and never skips one, even from cover.</p>
+    <p><b>Mythical weapons.</b> Thunderclap chains lightning: listen for crackles jumping between enemies. Thunderclap upgrades: a static field makes shocked enemies buzz and move at half speed, the ball lightning slug fires a fizzing orb straight ahead that passes through up to 7 enemies, scorches anyone within 2 feet of them and bursts into chain lightning, and when the lightning rod is charged you hear a rising hum and then electricity crackling around you until you fire your supercharged blast with its long deep rumble. The Black Hole Cannon's orb hums where it lands, drags enemies toward it, then collapses with a boom. The Banshee's scream hits and stuns everything in front of you, and stunned enemies make a ringing sound. It is strongest within 40 feet and weakens out to 160 feet. The Hydra's three rockets each explode where their target is, so you hear up to three blasts in different places. The Alien Symbiote fires wet, fleshy bursts. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, at 40 percent more damage for every 50 health eaten. Now and then you hear it feed, a squelch, a growl and a heartbeat, and you hear its damage each time it passes another whole multiple. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100. Status tells you how strong it has grown. Carrying it without using it never costs you health. With vampiric rounds, every kill it makes gives you back 2 health with a soft heartbeat pulse. With Hair trigger V2, the Banshee becomes a tactical rifle: each trigger pull is a tight burst of 3 quick shrieks that hit harder, with a short pause between bursts. The Jack Frost chills hard: each icicle slows an enemy more, down to a tenth of its speed after four hits. Its Blizzard blast goes off when you reload: a whirling wind storm circles you, then a crunch of ice as every enemy within 40 feet freezes completely still for 15 seconds. Ice cracking means they are moving again, and a crystal chime means the next blizzard is ready, 10 seconds after the last. The Jet rifle's heat vent goes off with a roaring rush of hot air, bigger the more rounds you fired. With both Ramjet upgrades, a Jet round punches through every enemy in its line, with no limit, and never skips one, even from cover.</p>
     <p><b>Silver and the Armory.</b> Every kill pays silver: 10 for light enemies, 16 for heavy ones, 50 for mini bosses, 83 for bosses and 250 for mega bosses. In endless survival, boss rush and zombie siege, every kill pays 8 percent more silver for each wave you have survived, so wave 11 pays almost double. Every regular wave has one mini boss: it announces itself with a rising two-note siren before its cry, and it is far tougher than a normal enemy. Spend it in the Armory shop on weapons, attachments, body armor, grenades and perks. Perks go up to level 50. Kills also raise each gun's mastery, up to level 10, making its attachments stronger.</p>
     <p><b>Keyboard.</b> Left and right arrows turn. Down arrow is about face. Hold Space to fire. R reloads. Q switches weapon. C takes cover. G throws a grenade. X switches grenade type. E reads enemy locations. T is status. Escape pauses.</p>
   </div>
@@ -783,9 +783,16 @@ function jetShot(d,at=0){
   tone(d,{f:60,f2:22,dur:.8,vol:1,at,attack:.002});noise(d,{dur:.6,vol:.95,type:'lowpass',f:1800,f2:150,at,attack:.002});
   noise(d,{dur:1.6,vol:.45,type:'bandpass',f:2400,f2:300,q:.8,at:at+.03,attack:.05});
   tone(d,{type:'sawtooth',f:1400,f2:200,dur:1.4,vol:.12,at:at+.03,attack:.03})}
-/* Thunderclap: shotgun blast with a crackle of lightning and a rolling thunder crack */
-function thunderShot(d,at=0){shot(PR.ksg,at,d);for(let i=0;i<10;i++)noise(d,{dur:.015,vol:.5,type:'highpass',f:3500,at:at+.02+i*.025+Math.random()*.02,attack:.001});
-  noise(d,{dur:1.6,vol:.7,type:'lowpass',f:500,f2:60,at:at+.12,attack:.08});tone(d,{f:55,f2:30,dur:1.3,vol:.6,at:at+.12,attack:.1})}
+/* Thunderclap: a real thunder clap, no gunshot. A split-second white crack, a ripping tear of sky,
+   a heavy boom, then thunder rolling away in uneven waves. */
+function thunderShot(d,at=0){
+  noise(d,{dur:.045,vol:1,type:'highpass',f:1800,at,attack:.001});
+  noise(d,{dur:.14,vol:.9,type:'bandpass',f:2400,f2:700,q:.6,at,attack:.001});
+  for(let i=0;i<14;i++){const t=at+.03+i*.022+Math.random()*.015;noise(d,{dur:.025,vol:.75-i*.04,type:'bandpass',f:3200-i*150,q:1.2,at:t,attack:.001})}
+  noise(d,{dur:.7,vol:1,type:'lowpass',f:1100,f2:140,at:at+.04,attack:.01});
+  tone(d,{f:62,f2:30,dur:1.1,vol:.8,at:at+.04,attack:.02});
+  for(let i=0;i<4;i++){const t=at+.35+i*(.32+Math.random()*.2);noise(d,{dur:.9+Math.random()*.4,vol:.55-i*.1,type:'lowpass',f:320-i*40,f2:55,at:t,attack:.12})}
+  tone(d,{f:44,f2:26,dur:2.2,vol:.45,at:at+.3,attack:.3})}
 /* Ball lightning slug: a fizzing orb launches with a rising electric whine and crackles away */
 function ballShot(d,at=0){tone(d,{type:'sawtooth',f:180,f2:900,dur:.35,vol:.3,at,attack:.01});tone(d,{type:'square',f:60,f2:120,dur:.3,vol:.18,at});
   for(let i=0;i<12;i++)noise(d,{dur:.012,vol:.4,type:'highpass',f:4000,at:at+i*.03+Math.random()*.02,attack:.001});
@@ -898,6 +905,11 @@ Object.assign(fx,{
   shock(rel,dist,at=0){const d=out(rel,dist,.7,enBus);tone(d,{type:'sawtooth',f:118,f2:122,dur:.25,vol:.16,at,attack:.01});tone(d,{type:'square',f:236,dur:.25,vol:.05,at});
     for(let i=0;i<3;i++)noise(d,{dur:.01,vol:.3,type:'highpass',f:4500,at:at+Math.random()*.22,attack:.001})},
   /* lightning rod fully charged: a rising electric hum ending in a bright spark */
+  /* lightning rod holding its charge: short random electric crackles and snaps */
+  rodCrackle(){const d=gunDest(Math.random()*.6-.3);const n=2+Math.floor(Math.random()*4);
+    for(let i=0;i<n;i++){const t=i*.03+Math.random()*.05;noise(d,{dur:.008+Math.random()*.012,vol:.35+Math.random()*.25,type:'highpass',f:3000+Math.random()*2500,at:t,attack:.001})}
+    if(Math.random()<.4)tone(d,{type:'sawtooth',f:2400+Math.random()*900,f2:700,dur:.06,vol:.07,at:Math.random()*.08})
+    if(Math.random()<.3)buzz(d,110+Math.random()*40,.12,.06,Math.random()*.05)},
   rodReady(){const d=gunDest(0);tone(d,{type:'sawtooth',f:90,f2:700,dur:.9,vol:.2,attack:.2});tone(d,{f:180,f2:1400,dur:.9,vol:.08,attack:.2});
     noise(d,{dur:.04,vol:.5,type:'highpass',f:4000,at:.9,attack:.001});tone(d,{f:2000,f2:2600,dur:.15,vol:.12,at:.9})},
   zap(rel,dist,at=0){const d=out(rel,dist,.9,gunBus);for(let i=0;i<5;i++)noise(d,{dur:.02,vol:.6,type:'highpass',f:3000,at:at+i*.02,attack:.001});tone(d,{type:'sawtooth',f:1800,f2:300,dur:.12,vol:.25,at})},
@@ -1149,7 +1161,7 @@ const WPN=[
   {id:'coach',rng:0,name:'Double-barrel coach gun',short:'COACH GUN',mag:2,dmg:6.5,cone:30,cd:.5,reload:2.0,shots:2,spread:true,rm:.7,price:200,
    traits:'Old double-barrel shotgun. Both barrels fire at once for a huge close-range blast, then you break it open and load 2 more shells. Very short range.'},
   {id:'thunder',rng:0,name:'Thunderclap',short:'THUNDER',mag:6,dmg:30,cone:24,cd:.9,reload:3.0,shots:1,spread:true,chain:true,price:35000,
-   traits:'Mythical shotgun charged with a storm. Every blast lands with a thunder crack, and lightning leaps from the first enemy hit to up to 4 more enemies within 15 feet of it for 60 percent damage. Has its own storm upgrades in the Armory, including the ball lightning slug and the lightning rod.'},
+   traits:'Mythical shotgun charged with a storm. Every blast is a real thunder clap, and lightning leaps from the first enemy hit to up to 4 more enemies within 15 feet of it for 60 percent damage. Has its own storm upgrades in the Armory, including the ball lightning slug and the lightning rod.'},
   {id:'blackhole',rng:0,name:'Black Hole Cannon',short:'BLACK HOLE',mag:2,dmg:70,cone:12,cd:1.6,reload:3.4,shots:1,hole:true,price:45000,
    traits:'Mythical cannon that fires a slow humming orb. It lands on the nearest enemy you are facing, or about 40 feet ahead. For 4 seconds it drags every enemy within 25 feet into it, crushing everything caught in its pull for 9 damage a second, then collapses, hitting everything within 12 feet for 70 and everything else it pulled for half that. Perfect to follow with a shotgun or a grenade. Takes only a few of its own upgrades, including the Dark matter core.'},
   {id:'banshee',rng:0,name:'Banshee',short:'BANSHEE',mag:15,dmg:20,cone:40,cd:.25,reload:3.0,shots:1,sonic:true,acc:1,full:12.2,reach:48.8,price:30000,
@@ -1205,9 +1217,9 @@ const ATT=[
   {id:'tcap',name:'Storm capacitor',price:8000,for:'thunder',desc:()=>'Lightning jumps to up to 6 more enemies instead of 4, and reaches 25 feet from the first enemy hit instead of 15.'},
   {id:'tover',name:'Overcharge rounds',price:10000,for:'thunder',desc:()=>'Every lightning jump hits for 90 percent of the blast instead of 60.'},
   {id:'tstatic',name:'Static field',price:7000,for:'thunder',desc:()=>'Every enemy the lightning touches is shocked and moves at half speed for 4 seconds. Shocked enemies give off a buzzing crackle so you can hear who is affected.'},
-  {id:'tball',name:'Ball lightning slug',price:12000,for:'thunder',ammo:true,desc:()=>'Fires one crackling orb straight ahead instead of a spread. It never misses, never loses power with distance, and hits 50 percent harder than a close-range blast, then bursts into chain lightning where it lands.'},
+  {id:'tball',name:'Ball lightning slug',price:15000,for:'thunder',ammo:true,req:'tchoke',desc:()=>'Fires one crackling orb straight ahead instead of a spread. It never misses, never loses power with distance, and hits 50 percent harder than a close-range blast. It passes through up to 7 enemies in a line, hurts any enemy within 2 feet of each one it passes through, then bursts into chain lightning. Buy the Thunder choke first.'},
   {id:'tchoke',name:'Thunder choke',price:6000,for:'thunder',desc:()=>'Tightens the spread. Full power reaches 60 percent farther, but the blast covers a narrower area, so it hits fewer enemies at once. Has no effect with the ball lightning slug.'},
-  {id:'trod',name:'Lightning rod',price:15000,for:'thunder',desc:()=>'Every kill builds charge. After 5 kills you hear a rising hum and a voice tells you it is ready: your next shot is a supercharged thunderclap with double damage and a huge rumble.'},
+  {id:'trod',name:'Lightning rod',price:15000,for:'thunder',desc:()=>'Every kill builds charge. After 5 kills you hear a rising hum and a voice tells you it is ready. While it stays charged, electricity crackles around you whenever the Thunderclap is in your hands. Your next shot is a supercharged thunderclap with double damage and a huge rumble.'},
   {id:'tdrum',name:'Conductive drum',price:5000,for:'thunder',desc:w=>`Doubles the magazine, 6 shells becomes 12. Stacks with the extended magazine.`},
   {id:'symmag1',name:'Extended magazine V1',price:3000,for:'symbiote',desc:()=>'Holds 110 rounds instead of 55.'},
   {id:'symmag2',name:'Extended magazine V2',price:6000,for:'symbiote',req:'symmag1',desc:()=>'Holds 165 rounds. Buy V1 first.'},
@@ -1285,7 +1297,7 @@ function build(w){
     b.chainN=has('tcap')?6:4;b.chainR=(has('tcap')?25:15)/3.281;b.chainM=has('tover')?.9:.6;b.shock=has('tstatic');b.rod=has('trod');
     if(has('tdrum'))b.mag=b.mag*2;
     if(has('tchoke')){const rm=1.6;b.range=b.barrel?[11*rm,20*rm,.45]:[7*rm,14*rm,.25];b.cone=14}
-    if(has('tball')){b.spread=false;b.ballslug=true;b.cone=12;b.acc=1;b.dmg*=1.5}}
+    if(has('tball')){b.spread=false;b.ballslug=true;b.cone=12;b.acc=1;b.dmg*=1.5;b.pen=7;b.exit=Infinity;b.sure=true}}
   if(b.akimbo){b.name='Akimbo '+w.name+'s';b.short=w.short+' x2'}
   return b;
 }
@@ -1614,9 +1626,15 @@ function fire(){
     G.enemies.forEach(e=>{if(hits.includes(e)||e.hp<=0)return;const[x,y]=pos(e);if(Math.hypot(x-cx,y-cy)>10/3.281)return;
       e.hp-=w.dmg*shots*.6*(e.dist<r[0]?1:e.dist<r[1]?.55:r[2]);blastN++;const rel=norm(e.angle-G.heading),t=.05+e.dist*.006;if(w.dragon)ignite(e,w.id,t);
       fx.impact(rel,e.dist,e.type,t);if(e.hp<=0)fx.kill(rel,e.dist,t+.08,e.type)})}
+  // ball lightning: the orb also scorches anyone within 2 feet of each enemy it passes through
+  const scorched=[];
+  if(w.ballslug&&anyHit){hits.filter(h=>h.hp!==undefined).forEach(h=>{const[hx,hy]=xy(h.angle,h.dist);
+    G.enemies.forEach(e=>{if(e.hp<=0||hits.includes(e)||scorched.includes(e))return;const[x,y]=xy(e.angle,e.dist);if(Math.hypot(x-hx,y-hy)>2/3.281)return;
+      scorched.push(e);e.hp-=w.dmg*(G.pk&&G.pk.dtap?1.35:1);const rel=norm(e.angle-G.heading),t=.06+e.dist*.006;fx.zap(rel,e.dist,t);
+      if(e.hp<=0)fx.kill(rel,e.dist,t+.08,e.type);else if(w.shock){e.shockT=4;fx.shock(rel,e.dist,t+.1)}})});blastN+=scorched.length}
   // Thunderclap: lightning leaps from the first enemy hit to up to 4 others within 15 feet
   if(w.chain&&anyHit){const[cx,cy]=xy(hits[0].angle,hits[0].dist);let n=0;
-    G.enemies.filter(e=>e.hp>0&&!hits.includes(e)).map(e=>{const[x,y]=xy(e.angle,e.dist);return[e,Math.hypot(x-cx,y-cy)]}).filter(a=>a[1]<=(w.chainR||15/3.281)).sort((a,b)=>a[1]-b[1]).slice(0,w.chainN||4)
+    G.enemies.filter(e=>e.hp>0&&!hits.includes(e)&&!scorched.includes(e)).map(e=>{const[x,y]=xy(e.angle,e.dist);return[e,Math.hypot(x-cx,y-cy)]}).filter(a=>a[1]<=(w.chainR||15/3.281)).sort((a,b)=>a[1]-b[1]).slice(0,w.chainN||4)
       .forEach(([e])=>{n++;e.hp-=w.dmg*(w.chainM||.6);const rel=norm(e.angle-G.heading),t=.12+n*.07;fx.zap(rel,e.dist,t);if(e.hp<=0)fx.kill(rel,e.dist,t+.1,e.type);else if(w.shock){e.shockT=4;fx.shock(rel,e.dist,t+.12)}});
     if(w.shock&&hits[0].hp>0){hits[0].shockT=4;fx.shock(norm(hits[0].angle-G.heading),hits[0].dist,.1)}
     if(n)blastN+=n}
@@ -1937,6 +1955,7 @@ function stepEnemy(e,dt){
 }
 function step(dt){
   if(G.cd>0)G.cd-=dt;if(G.ncd>0)G.ncd-=dt;
+  if((G.rod||0)>=5&&G.lo[G.w]&&G.lo[G.w].rod&&ctx){G.rodCrT=(G.rodCrT||0)-dt;if(G.rodCrT<=0){fx.rodCrackle();G.rodCrT=.18+Math.random()*.35}}
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
@@ -2045,6 +2064,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-thunderclap',date:'November 2, 2026',title:'Thunderclap storm upgrade',items:[
+    'The Thunderclap now sounds like a real thunder clap when it fires, instead of a shotgun.',
+    'When the lightning rod is charged, you hear electricity crackling around you until you fire the supercharged shot.',
+    'The ball lightning slug now passes through up to 7 enemies in a line and hurts any enemy within 2 feet of each one it passes through. It still bursts into chain lightning.',
+    'The ball lightning slug now requires the Thunder choke, and costs 15,000 silver.']},
   {id:'2026-11-02-symbiote',date:'November 2, 2026',title:'Alien Symbiote rework',items:[
     'The Symbiote no longer feeds at the start of every wave. It only feeds when you use it.',
     'Every kill it makes eats 2 maximum health and makes it stronger, at the same rate as before.',
