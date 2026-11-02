@@ -477,10 +477,13 @@ document.querySelectorAll('.seg[data-key]').forEach(g=>{const k=g.dataset.key,bt
 const ZSPAWN={normal:{n:'Normal',x:1},fast:{n:'Fast',x:1.5},faster:{n:'Faster',x:2},hyper:{n:'Hyperspeed',x:8}};
 const ZDIFF={normal:{n:'Normal',hp:.05,dmg:0,pay:1},hard:{n:'Hard',hp:.08,dmg:0,pay:1.25},hardcore:{n:'Hardcore',hp:.12,dmg:0,pay:1.6},hellish:{n:'Hellish',hp:.18,dmg:.06,pay:2}};
 const zSp=()=>ZSPAWN[S.zspawn]||ZSPAWN.normal,zDf=()=>ZDIFF[S.zdiff]||ZDIFF.normal;
+const zKey=(map,zd)=>zd&&zd!=='normal'&&ZDIFF[zd]?map+'|'+zd:map;
+const zKeyOk=k=>{const [m,d]=k.split('|');return !!MAPS[m]&&(d==null||(!!ZDIFF[d]&&d!=='normal'))};
 function zadvSync(){$('zadv-sum').textContent=`Spawn rate ${zSp().n}, difficulty ${zDf().n}`;$('zdiff-sum').textContent=zDf().n}
 function disclose(btnId,boxId){const b=$(btnId),box=$(boxId);b.onclick=()=>{const open=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',open?'true':'false');box.hidden=!open}}
 disclose('zadv-btn','zadv');disclose('zdiff-btn','zdiff');
 document.querySelectorAll('[data-key=zspawn] button,[data-key=zdiff] button').forEach(b=>b.addEventListener('click',zadvSync));
+document.querySelectorAll('[data-key=zdiff] button').forEach(b=>b.addEventListener('click',()=>updateMaps()));
 segSyncs.push(zadvSync);zadvSync();
 
 $('set-rate').oninput=e=>{S.rate=+e.target.value;saveS()};
@@ -1294,8 +1297,8 @@ function loadP(s){
   P.marm={};if(s.marm&&typeof s.marm==='object')for(const k in s.marm)if(MUBY[k]&&s.marm[k])P.marm[k]={kills:Math.max(0,num(s.marm[k].kills)|0)};
   P.best={};if(s.best&&typeof s.best==='object')for(const k in s.best)if(MAPS[k])P.best[k]=Math.max(0,num(s.best[k])|0);
   P.bestBoss={};if(s.bestBoss&&typeof s.bestBoss==='object')for(const k in s.bestBoss)if(MAPS[k])P.bestBoss[k]=Math.max(0,num(s.bestBoss[k])|0);
-  P.bestZ={};if(s.bestZ&&typeof s.bestZ==='object')for(const k in s.bestZ)if(MAPS[k])P.bestZ[k]=Math.max(0,num(s.bestZ[k])|0);
-  ['bestZ6','bestZH'].forEach(b=>{P[b]={};if(s[b]&&typeof s[b]==='object')for(const k in s[b])if(MAPS[k])P[b][k]=Math.max(0,num(s[b][k])|0)});
+  P.bestZ={};if(s.bestZ&&typeof s.bestZ==='object')for(const k in s.bestZ)if(zKeyOk(k))P.bestZ[k]=Math.max(0,num(s.bestZ[k])|0);
+  ['bestZ6','bestZH'].forEach(b=>{P[b]={};if(s[b]&&typeof s[b]==='object')for(const k in s[b])if(zKeyOk(k))P[b][k]=Math.max(0,num(s[b][k])|0)});
   if(s.stats&&typeof s.stats==='object')for(const k in P.stats)P.stats[k]=Math.max(0,num(s.stats[k])|0);
   if(typeof s.player==='string'&&/^[A-Za-z0-9_]{3,16}$/.test(s.player))P.player=s.player;
   P.carry=['pistol','ak','barrett'];if(Array.isArray(s.carry)){const c=s.carry.filter(i=>P.owned.includes(i)).slice(0,MAXCARRY);P.carry=c}
@@ -1452,7 +1455,7 @@ function newGame(map,mode){
      wave:1,toSpawn:0,spawnT:2,enemies:[],kills:0,lockT:0,lockE:null,beatT:0,ambT:3,breakT:0,paused:false,over:false,
      bossWave:false,bossSpawned:false,minionT:6,cover:false,gt:'frag',nades:[],rockets:[],ncd:0,hpT:0,told:{},
      symMult:1,gren:mode==='practice'?{frag:99,cryo:99,jack:99,fatman:99}:{...P.gren},pShots:0,pHits:0,duck:false};
-  if(mode==='zombies'){G.zm=['standard','six','hall'].includes(S.zmode)?S.zmode:'standard';G.pk={};G.fenceT=4;
+  if(mode==='zombies'){G.zm=['standard','six','hall'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.pk={};G.fenceT=4;
     if(G.zm==='hall'){G.win=null;G.pos=0;G.spd=HALLV;G.stepT=0;G.stepSide=0;G.mileAt=100/3.281;G.stopped=false;G.moveSayT=0}
     else G.win=(G.zm==='six'?[0,180]:[0,90,180,270]).map(a=>({a,broken:false,regenT:0,bang:0,busy:0,bt:0}))}
   if(mode==='practice'){G.miniDue=false;G.toSpawn=Infinity;G.spawnT=1.5}else startWave();
@@ -2034,7 +2037,7 @@ const bestOf=(m,zm=S.zmode)=>m==='endless'?P.best:m==='bossrush'?P.bestBoss:m===
 function updateMaps(){
   const m=S.mode||'campaign';$('maps-note').textContent=MODENOTE[m]+(m==='zombies'?(ZNOTE[S.zmode]||ZNOTE.standard)+PERKNOTE:'');$('zmode-field').hidden=m!=='zombies';
   document.querySelectorAll('[data-map]').forEach(b=>{const k=b.dataset.map,M=MAPS[k],sm=b.querySelector('small');
-    const B=bestOf(m);sm.textContent=b.dataset.desc+` Boss: ${m==='zombies'?'Giant zombie, every tenth wave':EN[M.boss].name}.`+(B?` Best: ${B[k]?(m==='zombies'&&S.zmode==='hall'?'score ':'wave ')+B[k]:'none yet'}.`:'')});
+    const B=bestOf(m),bk=m==='zombies'?zKey(k,S.zdiff):k;sm.textContent=b.dataset.desc+` Boss: ${m==='zombies'?'Giant zombie, every tenth wave':EN[M.boss].name}.`+(B?` Best${m==='zombies'?' on '+zDf().n:''}: ${B[bk]?(m==='zombies'&&S.zmode==='hall'?'score ':'wave ')+B[bk]:'none yet'}.`:'')});
 }
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{initAudio();show(b.dataset.go)});
 let lastMap='rainforest';
@@ -2050,10 +2053,10 @@ document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>begin(b.dataset
 function endGame(won){
   G.over=true;G.hold=false;stopAmb();won?fx.win():fx.lose();if(won&&G.mode==='campaign')P.stats.wins++;saveP();flushCloud();
   let msg;
-  if(G.mode==='zombies'&&G.zm==='hall'){const B=P.bestZH,n=hallScore(),best=B[G.map]||0,nb=n>best;if(nb){B[G.map]=n;saveP()}
-    msg=`Horror hallway score ${n}: ${hallFt()} feet walked and ${G.kills} kills, reaching wave ${G.wave}. ${nb?'New best! ':`Best: ${best}. `}`}
-  else if(bestOf(G.mode,G.zm)){const B=bestOf(G.mode,G.zm),n=G.wave-1,best=B[G.map]||0,nb=n>best;if(nb){B[G.map]=n;saveP()}
-    msg=`${G.zm==='six'?'Watch my six. ':''}You survived ${n} wave${n===1?'':'s'} on ${MAPS[G.map].name}. ${nb?'New best! ':`Best: ${best}. `}${G.kills} kills.`}
+  if(G.mode==='zombies'&&G.zm==='hall'){const B=P.bestZH,K=zKey(G.map,G.zd),n=hallScore(),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
+    msg=`${ZDIFF[G.zd].n} horror hallway score ${n}: ${hallFt()} feet walked and ${G.kills} kills, reaching wave ${G.wave}. ${nb?'New best! ':`Best: ${best}. `}`}
+  else if(bestOf(G.mode,G.zm)){const K=G.mode==='zombies'?zKey(G.map,G.zd):G.map,B=bestOf(G.mode,G.zm),n=G.wave-1,best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
+    msg=`${G.mode==='zombies'?ZDIFF[G.zd].n+' difficulty. ':''}${G.zm==='six'?'Watch my six. ':''}You survived ${n} wave${n===1?'':'s'} on ${MAPS[G.map].name}. ${nb?'New best! ':`Best: ${best}. `}${G.kills} kills.`}
   else msg=won?`Victory on ${MAPS[G.map].name}. ${G.kills} kills.`:`You fell on wave ${G.wave}. ${G.kills} kills.`;
   msg+=` Earned ${G.earned} silver. You have ${P.coins}.`;
   $('over-h').textContent=won?'Victory':'Killed in action';$('over-sum').textContent=msg;$('over').hidden=false;
@@ -2098,9 +2101,8 @@ function record(){
   const ms=WPN.filter(w=>P.owned.includes(w.id)).map(w=>`${w.name} level ${mlevel(w.id)}`).join(', ');
   const best=Object.keys(MAPS).filter(k=>P.best[k]).map(k=>`${MAPS[k].name} wave ${P.best[k]}`).join(', ');
   const bb=Object.keys(MAPS).filter(k=>P.bestBoss[k]).map(k=>`${MAPS[k].name} wave ${P.bestBoss[k]}`).join(', ');
-  const bz=Object.keys(MAPS).filter(k=>P.bestZ[k]).map(k=>`${MAPS[k].name} wave ${P.bestZ[k]}`).join(', ');
-  const b6=Object.keys(MAPS).filter(k=>P.bestZ6[k]).map(k=>`${MAPS[k].name} wave ${P.bestZ6[k]}`).join(', ');
-  const bh=Object.keys(MAPS).filter(k=>P.bestZH[k]).map(k=>`${MAPS[k].name} ${P.bestZH[k]}`).join(', ');
+  const zb=(R,pre)=>Object.keys(ZDIFF).map(d=>{const l=Object.keys(MAPS).filter(k=>R[zKey(k,d)]).map(k=>`${MAPS[k].name} ${pre}${R[zKey(k,d)]}`).join(', ');return l?`${ZDIFF[d].n}: ${l}`:''}).filter(Boolean).join('. ');
+  const bz=zb(P.bestZ,'wave '),b6=zb(P.bestZ6,'wave '),bh=zb(P.bestZH,'');
   say(`Service record. ${t.games} battles, ${t.wins} campaign victories. ${t.kills} kills, ${t.headshots} by headshot, ${acc} percent. ${t.bossKills} bosses defeated. ${t.earned} silver earned in total, ${P.coins} in hand. Mastery: ${ms}.${best?' Endless best: '+best+'.':''}${bb?' Boss rush best: '+bb+'.':''}${bz?' Zombie siege best: '+bz+'.':''}${b6?' Watch my six best: '+b6+'.':''}${bh?' Horror hallway best score: '+bh+'.':''}`);
 }
 $('b-record').onclick=record;
