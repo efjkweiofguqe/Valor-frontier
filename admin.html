@@ -35,6 +35,7 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <label>Email<input id="em" type="email" autocomplete="username" required></label>
     <label>Password<input id="pw" type="password" autocomplete="current-password" required></label>
     <button class="primary" type="submit">Sign in</button>
+    <button type="button" id="reset">Reset password<small style="display:block;font-weight:400;font-size:15px">Emails you a link to set a new password</small></button>
   </form>
 </section>
 
@@ -84,7 +85,13 @@ A.onAuthStateChanged(auth,u=>{
   if(admin){status(`Signed in as ${u.email}.`);loadPlayers();loadSent()}else status('Sign in with your developer account.');
 });
 $('login-f').onsubmit=async e=>{e.preventDefault();status('Signing in…');
-  try{await A.signInWithEmailAndPassword(auth,$('em').value.trim(),$('pw').value)}catch(err){status('Sign in failed. Check the email and password.')}};
+  try{await A.signInWithEmailAndPassword(auth,$('em').value.trim(),$('pw').value)}catch(err){const c=String(err&&err.code||'unknown').replace('auth/','');
+    const why={'invalid-credential':'The email or password is wrong.','wrong-password':'The password is wrong.','user-not-found':'No account with that email.','invalid-email':'That email address is not valid.',
+      'operation-not-allowed':'Email and password sign-in is not turned on in Firebase.','too-many-requests':'Too many tries. Wait a few minutes or reset your password.','network-request-failed':'No internet connection.'}[c]||'';
+    status(`Sign in failed. ${why} Error code: ${c}.`)}};
+$('reset').onclick=async()=>{const em=$('em').value.trim();if(!em){status('Type your email first, then tap Reset password.');return}
+  try{await A.sendPasswordResetEmail(auth,em);status(`Password reset email sent to ${em}. Check your inbox and spam folder, set a new password, then sign in here.`)}
+  catch(err){status(`Could not send the reset email. Error code: ${String(err&&err.code||'unknown').replace('auth/','')}.`)}};
 $('out').onclick=()=>A.signOut(auth);
 
 async function loadPlayers(){
