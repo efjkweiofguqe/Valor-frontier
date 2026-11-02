@@ -36,6 +36,8 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .btn.primary small{color:var(--accent-ink)}
 .btn:focus-visible,.pad button:focus-visible,.aim button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 .field{display:flex;flex-direction:column;gap:6px}
+.inp{font:inherit;font-size:19px;background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:10px;padding:14px 16px;width:100%;box-sizing:border-box}
+.inp:focus{border-color:var(--accent)}
 .flabel{font-weight:700;margin:0}
 .seg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
 .seg button{text-align:left;background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:12px 14px;font-weight:700;font-size:17px}
@@ -113,8 +115,28 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-go="tutorial">Training and sound check<small>Learn the controls and every enemy sound</small></button>
     <button class="btn" data-go="settings">Settings<small>Voice, volume, difficulty</small></button>
     <button class="btn" id="b-record">Service record<small>Hear your lifetime stats</small></button>
+    <button class="btn" data-go="pid" id="menu-pid">Player ID<small id="menu-pid-s">Create a username so the developer can send you testing items</small></button>
   </div>
   <p class="note" id="save-state" role="status">Checking your saved progress…</p>
+</section>
+
+<!-- PLAYER ID -->
+<section id="pid" class="screen" hidden>
+  <p class="tag">Player ID</p>
+  <h2 id="pid-h" tabindex="-1">Player ID</h2>
+  <button class="btn back" data-go="menu">Back</button>
+  <p class="note">Creating a username gives the developer the option to give you anything you request for testing, like silver, weapons, armor or grenades. Your username is linked to this save file, and gifts are added automatically when you open the game. Do not use your real name or any personal information.</p>
+  <div id="pid-new" class="field">
+    <label class="flabel" for="pid-name">Choose a username</label>
+    <input id="pid-name" class="inp" type="text" maxlength="16" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="pid-hint">
+    <p id="pid-hint" class="note">3 to 16 letters, numbers or underscores. It cannot be changed later.</p>
+    <button class="btn primary" id="pid-make">Create username<small>Link it to this save file</small></button>
+  </div>
+  <div id="pid-have" class="stack" hidden>
+    <p id="pid-cur"></p>
+    <button class="btn primary" id="pid-check">Check for gifts<small>Gifts also arrive on their own when you open the game</small></button>
+  </div>
+  <p id="pid-status" role="status" aria-live="polite"></p>
 </section>
 
 <!-- MAPS -->
@@ -1226,7 +1248,7 @@ function build(w){
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
 const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,jack:0,fatman:0},mast:{},perk:{hp:0,heal:0},armor:{own:[],on:''},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},
-  stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},ts:0};
+  stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',ts:0};
 const num=(v,d=0)=>typeof v==='number'&&isFinite(v)?v:d;
 function loadP(s){
   if(!s||typeof s!=='object')return;
@@ -1245,6 +1267,7 @@ function loadP(s){
   P.bestZ={};if(s.bestZ&&typeof s.bestZ==='object')for(const k in s.bestZ)if(MAPS[k])P.bestZ[k]=Math.max(0,num(s.bestZ[k])|0);
   ['bestZ6','bestZH'].forEach(b=>{P[b]={};if(s[b]&&typeof s[b]==='object')for(const k in s[b])if(MAPS[k])P[b][k]=Math.max(0,num(s[b][k])|0)});
   if(s.stats&&typeof s.stats==='object')for(const k in P.stats)P.stats[k]=Math.max(0,num(s.stats[k])|0);
+  if(typeof s.player==='string'&&/^[A-Za-z0-9_]{3,16}$/.test(s.player))P.player=s.player;
   P.carry=['pistol','ak','barrett'];if(Array.isArray(s.carry)){const c=s.carry.filter(i=>P.owned.includes(i)).slice(0,MAXCARRY);P.carry=c}
 }
 try{loadP(JSON.parse(localStorage.getItem('vf-progress')||'{}'))}catch(e){}
@@ -1287,6 +1310,95 @@ async function initCloud(){
     else setCloud('saved');
   }catch(e){clearTimeout(tm);setCloud(cloud?'error':'local')}
 }
+/* ---------- player ID and developer gifts (Firebase) ----------
+   A player picks a username, which is stored in the save file and registered in the
+   developer's Firebase project. The developer sends gifts from admin.html; the game
+   picks them up automatically when it opens or returns to the main menu. */
+const FB_CONFIG={apiKey:'',authDomain:'',projectId:'',appId:''};
+const FBV='10.12.2';
+let fbP=null,giftBusy=false,giftAt=0;
+function fbInit(){
+  if(fbP)return fbP;
+  if(!FB_CONFIG.apiKey)return Promise.reject(new Error('nocfg'));
+  const base=`https://www.gstatic.com/firebasejs/${FBV}/`;
+  fbP=(async()=>{
+    const [app,auth,fs]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
+    const a=app.initializeApp(FB_CONFIG),au=auth.getAuth(a);
+    await new Promise(r=>{const off=auth.onAuthStateChanged(au,()=>{off();r()})});
+    if(!au.currentUser)await auth.signInAnonymously(au);
+    return {db:fs.getFirestore(a),uid:au.currentUser.uid,fs};
+  })();
+  fbP.catch(()=>{fbP=null});
+  return fbP;
+}
+function pidMsg(t,speak=true){$('pid-status').textContent=t;if(speak)say(t)}
+function updatePidMenu(){const el=$('menu-pid-s');if(el)el.textContent=P.player?`Your username is ${P.player}. Check for gifts from the developer`:'Create a username so the developer can send you testing items'}
+function updatePid(){
+  const has=!!P.player;$('pid-new').hidden=has;$('pid-have').hidden=!has;
+  if(has)$('pid-cur').textContent=`Your username is ${P.player}. It is linked to this save file. Ask the developer for anything you want to test, and tell them this username.`;
+  $('pid-status').textContent=FB_CONFIG.apiKey?'':'Player IDs are not switched on yet. Check back after the next update.';
+}
+async function createName(){
+  const name=$('pid-name').value.trim();
+  if(!FB_CONFIG.apiKey)return pidMsg('Player IDs are not switched on yet. Check back after the next update.');
+  if(!/^[A-Za-z0-9_]{3,16}$/.test(name))return pidMsg('Usernames need 3 to 16 letters, numbers or underscores, with no spaces.');
+  const btn=$('pid-make');btn.disabled=true;pidMsg('Creating your username…');
+  try{
+    const {db,uid,fs}=await fbInit(),key=name.toLowerCase();
+    await fs.runTransaction(db,async t=>{
+      const r=fs.doc(db,'usernames',key),me=fs.doc(db,'players',uid);
+      const [a,b]=[await t.get(r),await t.get(me)];
+      if(b.exists())throw new Error('have:'+b.data().name);
+      if(a.exists())throw new Error('taken');
+      t.set(r,{uid,name});
+      t.set(me,{name,created:fs.serverTimestamp(),seen:fs.serverTimestamp()});
+    });
+    P.player=name;saveP();fx.buy();updatePid();updatePidMenu();
+    pidMsg(`Username ${name} created and linked to this save file. Tell the developer your username and what you want to test.`);
+    setTimeout(()=>$('pid-h').focus(),50);
+  }catch(e){
+    const m=String(e&&e.message||'');
+    if(m==='taken'){fx.click();pidMsg(`${name} is already taken. Try a different username.`)}
+    else if(m.startsWith('have:')){P.player=m.slice(5);saveP();updatePid();updatePidMenu();pidMsg(`This device already has the username ${P.player}. It is now linked to this save file.`)}
+    else pidMsg('Could not reach the server. Check your internet connection and try again.');
+  }
+  btn.disabled=false;
+}
+/* adds one gift to the save and returns a spoken summary of it */
+function applyGift(g){
+  const out=[],it=g&&g.items||{};
+  const silver=Math.max(0,Math.min(10000000,num(it.silver)|0));
+  if(silver){P.coins+=silver;out.push(`${silver} silver`)}
+  (Array.isArray(it.weapons)?it.weapons:[]).forEach(id=>{const w=WBY[id];if(!w||P.owned.includes(id))return;P.owned.push(id);if(P.carry.length<MAXCARRY)P.carry.push(id);out.push(`the ${w.name}`)});
+  (Array.isArray(it.armor)?it.armor:[]).forEach(id=>{const a=ARMOR.find(x=>x.id===id);if(!a||P.armor.own.includes(id))return;P.armor.own.push(id);out.push(a.name)});
+  const gr=it.grenades&&typeof it.grenades==='object'?it.grenades:{};
+  NTYPES.forEach(k=>{const n=Math.max(0,Math.min(1000,num(gr[k])|0));if(n){P.gren[k]+=n;out.push(`${n} ${n>1?NADE[k].plural:NADE[k].name}`)}});
+  return out;
+}
+async function checkGifts(quiet){
+  if(!P.player||!FB_CONFIG.apiKey||giftBusy||G)return;
+  if(quiet&&Date.now()-giftAt<60000)return;
+  giftBusy=true;giftAt=Date.now();if(!quiet)pidMsg('Checking for gifts…');
+  try{
+    const {db,uid,fs}=await fbInit();
+    const me=await fs.getDoc(fs.doc(db,'players',uid));
+    if(!me.exists()){if(!quiet)pidMsg(`The username ${P.player} was created on a different device or browser, so gifts for it go there. Ask the developer to help move it.`);giftBusy=false;return}
+    fs.updateDoc(me.ref,{seen:fs.serverTimestamp()}).catch(()=>{});
+    const snap=await fs.getDocs(fs.query(fs.collection(db,'gifts'),fs.where('uid','==',uid),fs.where('claimed','==',false)));
+    const got=[],notes=[];
+    for(const d of snap.docs){
+      try{await fs.updateDoc(d.ref,{claimed:true,claimedAt:fs.serverTimestamp()})}catch(e){continue}
+      got.push(...applyGift(d.data()));const n=d.data().note;if(typeof n==='string'&&n.trim())notes.push(n.trim().slice(0,300));
+    }
+    if(snap.size){saveP();refreshAfterLoad();fx.buy();
+      pidMsg(`Gift from the developer! You got ${got.length?got.join(', '):'nothing new, you already had it'}.${notes.length?' Message: '+notes.join(' '):''} You now have ${P.coins} silver.`)}
+    else if(!quiet)pidMsg('No gifts waiting right now.');
+  }catch(e){if(!quiet)pidMsg('Could not reach the server. Check your internet connection and try again.')}
+  giftBusy=false;
+}
+$('pid-make').onclick=()=>{initAudio();createName()};
+$('pid-name').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();initAudio();createName()}});
+$('pid-check').onclick=()=>{initAudio();checkGifts(false)};
 const sortCarry=()=>P.carry.sort((a,b)=>WPN.indexOf(WBY[a])-WPN.indexOf(WBY[b]));
 
 /* ---------- state ---------- */
@@ -1868,13 +1980,15 @@ function hud(){
 }
 
 /* ---------- screens ---------- */
-const screens=['menu','maps','shop','mods','tutorial','settings','game'];
+const screens=['menu','maps','shop','mods','tutorial','settings','pid','game'];
 function show(id){
   screens.forEach(s=>$(s).hidden=s!==id);$('pause').hidden=true;$('over').hidden=true;$('perks').hidden=true;
   if(id==='menu')$('menu-coins').textContent=`Weapons, attachments, armor, grenades and perks. You have ${P.coins} silver.`;
   if(id==='maps')updateMaps();
   if(id==='shop')buildShop();
   if(id==='mods')buildMods();
+  if(id==='pid')updatePid();
+  if(id==='menu'){updatePidMenu();checkGifts(true)}
   const h=$(id+'-h');if(h)setTimeout(()=>h.focus(),50);
 }
 const MODENOTE={campaign:'Four waves, each with a mini boss, then the battlefield\'s boss on wave five. Beat the boss to win.',

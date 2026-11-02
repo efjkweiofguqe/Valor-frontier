@@ -1,0 +1,45 @@
+rules_version = '2';
+// Valor Frontier player IDs and developer gifts.
+// Replace ADMIN_UID with the User UID of your developer account (Firebase console > Authentication > Users).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.uid == 'ADMIN_UID'; }
+
+    // usernames/{lowercase name} -> { uid, name }. Claimed once, never changed by players.
+    match /usernames/{key} {
+      allow get: if signedIn();
+      allow list, delete: if isAdmin();
+      allow create: if signedIn()
+        && key.matches('^[a-z0-9_]{3,16}$')
+        && request.resource.data.keys().hasOnly(['uid', 'name'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name is string
+        && request.resource.data.name.lower() == key
+        && getAfter(/databases/$(database)/documents/players/$(request.auth.uid)).data.name == request.resource.data.name;
+    }
+
+    // players/{uid} -> { name, created, seen }. One username per player.
+    match /players/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list, delete: if isAdmin();
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'created', 'seen'])
+        && request.resource.data.name is string
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.name.lower())).data.uid == uid;
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seen']);
+    }
+
+    // gifts/{id} -> { uid, name, items, note, claimed, created }. Only the developer sends them.
+    match /gifts/{id} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (signedIn()
+        && resource.data.uid == request.auth.uid
+        && resource.data.claimed == false
+        && request.resource.data.claimed == true
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimed', 'claimedAt']));
+    }
+  }
+}
