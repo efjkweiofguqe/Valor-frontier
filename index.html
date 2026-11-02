@@ -54,6 +54,11 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .stepper .val{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--panel);border:2px solid var(--accent);border-radius:12px;margin:0;font-variant-numeric:tabular-nums}
 .stepper .val b{font-family:var(--display);font-weight:400;font-size:34px;color:var(--accent);line-height:1.05}
 .stepper .val span{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.check{flex-direction:row;align-items:flex-start;gap:14px;background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:14px 16px;font-size:19px;cursor:pointer}
+.check input{width:28px;height:28px;margin:2px 0 0;flex:none;accent-color:var(--accent)}
+.check small{display:block;font-weight:400;font-size:15px;color:var(--muted);margin-top:2px}
+.check:has(input:checked){border-color:var(--accent)}
+.check:has(input:focus-visible){outline:3px solid var(--fg);outline-offset:2px}
 .adv{display:flex;flex-direction:column;gap:8px;padding-left:10px;border-left:3px solid var(--line)}
 .btn.quiet{width:auto;align-self:flex-start;padding:10px 16px;font-size:16px;font-weight:700;background:transparent}
 .logent{border-top:2px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
@@ -201,6 +206,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
         <button id="zst-plus" aria-label="Raise starting wave">+</button>
       </div>
       <p class="note" id="zst-hint">Hold plus or minus to change it faster. Zombies start as tough as that wave, and silver pays as if you had reached it. Best records count the waves you actually survive.</p>
+      <label class="check" for="zgiants"><input type="checkbox" id="zgiants"><span>Giants only<small>Every zombie is a giant zombie boss, in the same numbers as a normal wave. Separate best records.</small></span></label>
       <button class="btn disclose" id="zdiff-btn" aria-expanded="false" aria-controls="zdiff">Difficulty<small id="zdiff-sum"></small></button>
       <div id="zdiff" hidden>
         <div class="seg" role="radiogroup" aria-label="Zombie difficulty" data-key="zdiff">
@@ -239,10 +245,10 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Holding fire.</b> Tap Fire for one trigger pull. To keep firing, press and hold the Fire button. With VoiceOver, double-tap and hold. On a keyboard, hold Space. A faint tick on each shot means your magazine is running low.</p>
     <p><b>Cover.</b> Take cover halves the damage you take, but your aim gets shakier and the battle sounds muffled. Leave cover to aim steady again. Bosses roar as they wind up a big attack: that is your cue to take cover. The Iron Revenant fires rockets from range, so listen for the whistle.</p>
     <p><b>Grenades</b> go off around you, so there is no aiming. Frag grenades blast every enemy within 5 feet, perfect when enemies are attacking you. Cryo grenades freeze every enemy within 8 feet to about a third of their speed for 8 seconds. The Fat Man destroys everything within 50 feet instantly, bosses included, after a falling whistle. A jack-in-the-box is a proximity bomb: it sits 10 feet in front of you playing a little music-box tune, and when an enemy comes within 7 feet of it, the lid pops with a boing and it explodes, hitting everything within 15 feet of the box. An event horizon is a gravity trap: it sits 10 feet in front of you giving off a slow, deep double pulse. When any enemy comes within 13 feet of you, from any side, it switches on with a warbling energy charge that wobbles faster and faster, then snaps into a deep roar, then for one minute it drags every enemy that comes within 13 feet of you into a tight cluster around itself and holds them there, with a throbbing hum. Held enemies cannot move or attack, and it does no damage, so line them up and open fire. Three quick beeps mean it fades in 10 seconds. None of them hurt you. Grenade type cycles between all five.</p>
-    <p><b>Modes.</b> Campaign is five waves ending in the battlefield's boss. Endless survival never stops, brings a boss every fifth wave and a mega boss with twice a boss's health every seventh wave, and pays a bonus for every wave you clear. Boss rush is only bosses: it starts with one weakened boss and gets brutal far faster than endless, with a mega boss every seventh wave. Practice range has still targets that cannot hurt you, for learning a gun. Zombie siege is endless waves of the undead. Four glass windows surround you about 50 feet out, at north, east, south and west. A zombie has to smash through a window to reach you, which takes a few seconds: you hear banging and cracking glass from that direction, then a crash when it shatters. Broken windows seal themselves again about 6 seconds later. Every tenth wave brings a giant zombie boss. The horde grows every wave, to about 200 zombies by wave 50. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Status reads the state of every window. That is the Standard zombie mode.</p>
+    <p><b>Modes.</b> Campaign is five waves ending in the battlefield's boss. Endless survival never stops, brings a boss every fifth wave and a mega boss with twice a boss's health every seventh wave, and pays a bonus for every wave you clear. Boss rush is only bosses: it starts with one weakened boss and gets brutal far faster than endless, with a mega boss every seventh wave. Practice range has still targets that cannot hurt you, for learning a gun. Zombie siege is endless waves of the undead. Four glass windows surround you about 50 feet out, at north, east, south and west. A zombie has to smash through a window to reach you, which takes a few seconds: you hear banging and cracking glass from that direction, then a crash when it shatters. Broken windows seal themselves again about 6 seconds later. Every tenth wave brings a giant zombie boss. The horde grows every wave, to about 200 zombies by wave 50. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Status reads the state of every window. That is the Standard zombie mode. In Advanced options, the Giants only checkbox makes every zombie a giant zombie boss, in the same numbers as a normal wave, so by wave 50 you face about 200 giants. Giants only keeps its own best records.</p>
     <p><b>Watch my six.</b> A zombie mode with only two windows: one straight ahead of you at 12 o'clock and one right behind you at 6 o'clock. Nothing comes from the left or right, so About face is your best friend.</p>
     <p><b>Horror hallway.</b> A zombie mode where you walk down a long hallway on your own, with no walk button. Your footsteps tell you your pace: quick, close together steps when the hallway ahead is clear, slowing down the more zombies are ahead, until you stop completely. You also stop while a zombie is right in front of you or grabbing you. Zombies break out of wooden barriers and glass windows in the walls ahead: you hear wood thudding and splintering, or glass banging and cracking, then the crash as they get through. If you walk past one, it chases you from behind, fast. A soft double tick plays every 100 feet. Your score is every foot you walk plus 10 points for every kill. Status reads your distance, kills and score.</p>
-    <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: an electrified band from 20 feet in to 14 feet around you. A zombie touching it makes a loud electric crack, then sharp zaps while it struggles through at 60 percent speed, taking damage every second. Weaker zombies usually fry, but tougher zombies in later waves get through hurt, and runners can dash across. Giant zombies take more damage but are not slowed. A soft hum every few seconds tells you the fence is on. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health. Bloodthirst: every kill heals you 3 health, or 10 for a mini boss or boss. Gold rush: double silver for the rest of the run. Frost skin: any zombie that hits you is frozen for 2 seconds, bosses for 1. Last stand: when your health drops below a quarter, a shockwave hits every zombie within 15 feet for 150 damage and throws survivors back, once per wave.</p>
+    <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: an electrified band from 20 feet in to 14 feet around you. A zombie touching it makes a loud electric crack, then sharp zaps while it struggles through at 60 percent speed, taking damage every second. Weaker zombies usually fry, but tougher zombies in later waves get through hurt, and runners can dash across. Giant zombies take more damage but are not slowed. A soft hum every few seconds tells you the fence is on. The electric fence is not offered in Horror hallway, since you keep walking forward. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health. Bloodthirst: every kill heals you 3 health, or 10 for a mini boss or boss. Gold rush: double silver for the rest of the run. Frost skin: any zombie that hits you is frozen for 2 seconds, bosses for 1. Last stand: when your health drops below a quarter, a shockwave hits every zombie within 15 feet for 150 damage and throws survivors back, once per wave.</p>
     <p><b>Mythical weapons.</b> Thunderclap chains lightning: listen for crackles jumping between enemies. Thunderclap upgrades: a static field makes shocked enemies buzz and move at half speed, the ball lightning slug fires a fizzing orb straight ahead that passes through up to 7 enemies, scorches anyone within 2 feet of them and bursts into chain lightning, and when the lightning rod is charged you hear a rising hum and then electricity crackling around you until you fire your supercharged blast with its long deep rumble. The Black Hole Cannon's orb hums where it lands, drags enemies toward it, then collapses with a boom. The Banshee's scream hits and stuns everything in front of you, and stunned enemies make a ringing sound. It is strongest within 40 feet and weakens out to 160 feet. The Hydra's three rockets each explode where their target is, so you hear up to three blasts in different places. The Alien Symbiote fires wet, fleshy bursts. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, at 40 percent more damage for every 50 health eaten. Now and then you hear it feed, a squelch, a growl and a heartbeat, and you hear its damage each time it passes another whole multiple. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100. Status tells you how strong it has grown. Carrying it without using it never costs you health. With vampiric rounds, every kill it makes gives you back 2 health with a soft heartbeat pulse. With Hair trigger V2, the Banshee becomes a tactical rifle: each trigger pull is a tight burst of 3 quick shrieks that hit harder, with a short pause between bursts. The Jack Frost chills hard: each icicle slows an enemy more, down to a tenth of its speed after four hits. Its Blizzard blast goes off when you reload: a whirling wind storm circles you, then a crunch of ice as every enemy within 40 feet freezes completely still for 15 seconds. Ice cracking means they are moving again, and a crystal chime means the next blizzard is ready, 10 seconds after the last. The Jet rifle's heat vent goes off with a roaring rush of hot air, bigger the more rounds you fired. With both Ramjet upgrades, a Jet round punches through every enemy in its line, with no limit, and never skips one, even from cover.</p>
     <p><b>Silver and the Armory.</b> Every kill pays silver: 10 for light enemies, 16 for heavy ones, 50 for mini bosses, 83 for bosses and 250 for mega bosses. In endless survival, boss rush and zombie siege, every kill pays 8 percent more silver for each wave you have survived, so wave 11 pays almost double. Every regular wave has one mini boss: it announces itself with a rising two-note siren before its cry, and it is far tougher than a normal enemy. Spend it in the Armory shop on weapons, attachments, body armor, grenades and perks. Perks go up to level 50: Toughness for more health, Field medic for more healing between waves, Deadeye for more gun damage and Scavenger for more silver per kill. Kills also raise each gun's mastery, up to level 10, making its attachments stronger.</p>
     <p><b>Keyboard.</b> Left and right arrows turn. Down arrow is about face. Hold Space to fire. R reloads. Q switches weapon. C takes cover. G throws a grenade. X switches grenade type. E reads enemy locations. T is status. Escape pauses.</p>
@@ -491,7 +497,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 <script>
 (function(){
 /* ---------- settings ---------- */
-const S={voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1};
+const S={voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1,zgiants:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('vf-settings')||'{}'))}catch(e){}
 function saveS(){try{localStorage.setItem('vf-settings',JSON.stringify(S))}catch(e){}if(typeof cloud!=='undefined'&&cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1500)}}
 const $=id=>document.getElementById(id);
@@ -507,10 +513,10 @@ document.querySelectorAll('.seg[data-key]').forEach(g=>{const k=g.dataset.key,bt
 const ZSPAWN={normal:{n:'Normal',x:1},fast:{n:'Fast',x:1.5},faster:{n:'Faster',x:2},hyper:{n:'Hyperspeed',x:8}};
 const ZDIFF={normal:{n:'Normal',hp:.05,dmg:0,pay:1},hard:{n:'Hard',hp:.08,dmg:0,pay:1.25},hardcore:{n:'Hardcore',hp:.12,dmg:0,pay:1.6},hellish:{n:'Hellish',hp:.18,dmg:.06,pay:2}};
 const zSp=()=>ZSPAWN[S.zspawn]||ZSPAWN.normal,zDf=()=>ZDIFF[S.zdiff]||ZDIFF.normal;
-const zKey=(map,zd)=>zd&&zd!=='normal'&&ZDIFF[zd]?map+'|'+zd:map;
-const zKeyOk=k=>{const [m,d]=k.split('|');return !!MAPS[m]&&(d==null||(!!ZDIFF[d]&&d!=='normal'))};
+const zKey=(map,zd,g)=>(zd&&zd!=='normal'&&ZDIFF[zd]?map+'|'+zd:map)+(g?'#g':'');
+const zKeyOk=k=>{const [m,d]=k.replace(/#g$/,'').split('|');return !!MAPS[m]&&(d==null||(!!ZDIFF[d]&&d!=='normal'))};
 const ZMAXSTART=150,zStart=()=>Math.max(1,Math.min(ZMAXSTART,Math.round(+S.zstart||1)));
-function zadvSync(){const w=zStart();$('zadv-sum').textContent=`Spawn rate ${zSp().n}, start wave ${w}, difficulty ${zDf().n}`;$('zdiff-sum').textContent=zDf().n;
+function zadvSync(){const w=zStart();$('zadv-sum').textContent=`Spawn rate ${zSp().n}, start wave ${w},${S.zgiants?' giants only,':''} difficulty ${zDf().n}`;$('zgiants').checked=!!S.zgiants;$('zdiff-sum').textContent=zDf().n;
   $('zst-num').textContent=w;$('zst-val').setAttribute('aria-label',`Starting wave ${w}`);$('zst-minus').disabled=w<=1;$('zst-plus').disabled=w>=ZMAXSTART}
 /* starting wave stepper: tap to move by 1, hold to keep going and speed up */
 (function(){let rep=null,repT=null,held=false,skipClick=false;
@@ -524,6 +530,7 @@ function zadvSync(){const w=zStart();$('zadv-sum').textContent=`Spawn rate ${zSp
     b.addEventListener('click',()=>{if(skipClick){skipClick=false;return}if(step(d,true))saveS()})})})();
 function disclose(btnId,boxId){const b=$(btnId),box=$(boxId);b.onclick=()=>{const open=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',open?'true':'false');box.hidden=!open}}
 disclose('zadv-btn','zadv');disclose('zdiff-btn','zdiff');
+$('zgiants').onchange=e=>{S.zgiants=e.target.checked?1:0;saveS();zadvSync();updateMaps();say(S.zgiants?'Giants only on. Every zombie will be a giant zombie boss.':'Giants only off. Normal zombies.')};
 document.querySelectorAll('[data-key=zspawn] button,[data-key=zdiff] button').forEach(b=>b.addEventListener('click',zadvSync));
 document.querySelectorAll('[data-key=zdiff] button').forEach(b=>b.addEventListener('click',()=>updateMaps()));
 segSyncs.push(zadvSync);zadvSync();
@@ -1560,7 +1567,7 @@ function newGame(map,mode){
      wave:1,toSpawn:0,spawnT:2,enemies:[],kills:0,lockT:0,lockE:null,beatT:0,ambT:3,breakT:0,paused:false,over:false,
      bossWave:false,bossSpawned:false,minionT:6,cover:false,gt:'frag',nades:[],rockets:[],ncd:0,hpT:0,told:{},
      symMult:1,gren:mode==='practice'?{frag:99,cryo:99,jack:99,horizon:99,fatman:99}:{...P.gren},pShots:0,pHits:0,duck:false};
-  if(mode==='zombies'){G.zm=['standard','six','hall'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.pk={};G.fenceT=4;G.zStart=zStart();G.wave=G.zStart;
+  if(mode==='zombies'){G.zm=['standard','six','hall'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.zg=!!S.zgiants;G.pk={};G.fenceT=4;G.zStart=zStart();G.wave=G.zStart;
     if(G.zm==='hall'){G.win=null;G.pos=0;G.spd=HALLV;G.stepT=0;G.stepSide=0;G.mileAt=100/3.281;G.stopped=false;G.moveSayT=0}
     else G.win=(G.zm==='six'?[0,180]:[0,90,180,270]).map(a=>({a,broken:false,regenT:0,bang:0,busy:0,bt:0}))}
   if(mode==='practice'){G.miniDue=false;G.toSpawn=Infinity;G.spawnT=1.5}else startWave();
@@ -1598,9 +1605,9 @@ function startWave(){
   G.spawnT=2.5;G.minionT=6;G.bossSpawned=false;fx.horn();
   if(G.mode==='bossrush'){G.bossWave=false;G.miniDue=false;G.mega=w%7===0;G.toSpawn=brCount(w);G.maxAlive=G.toSpawn;G.spawnT=3;
     say(sym+`Boss rush, wave ${w}. ${G.mega?'Mega boss wave! ':''}${G.toSpawn>1?G.toSpawn+' bosses':'One boss'} incoming${G.mega?', one of them a mega boss with double health':''}.`);return}
-  if(G.mode==='zombies'){G.bossWave=false;G.miniDue=false;G.zBossDue=w%10===0;G.toSpawn=Math.round(4*w);
+  if(G.mode==='zombies'){G.bossWave=false;G.miniDue=false;G.zBossDue=!G.zg&&w%10===0;G.toSpawn=Math.round(4*w);
     G.maxAlive=Math.min(40,Math.round((Math.min(4+Math.floor(w/3),16)+(S.diff>1.5?1:0))*Math.sqrt(zSp().x)));G.spawnT=3/zSp().x;
-    say(sym+`Wave ${w}. ${G.toSpawn} zombies${G.zm==='hall'?' ahead':''}${G.zBossDue?' and a giant zombie boss':''}.`);return}
+    say(sym+`Wave ${w}. ${G.toSpawn} ${G.zg?(G.toSpawn>1?'giant zombies':'giant zombie'):'zombies'}${G.zm==='hall'?' ahead':''}${G.zBossDue?' and a giant zombie boss':''}.`);return}
   G.mega=end&&w%7===0;G.bossWave=end?(w%5===0||G.mega):w===MAXW;G.miniDue=!G.bossWave;
   if(!G.bossWave){G.toSpawn=3+Math.min(w,10)*2;G.maxAlive=Math.min(2+Math.floor(w/2),end?6:4)+(S.diff>1.5?1:0)}
   else{G.toSpawn=0;G.maxAlive=S.diff>1.5?4:3}
@@ -1628,7 +1635,7 @@ function spawn(type,mega){
     e.kind=Math.random()<.5?'bar':'win';e.hb=boss?1:1.6+Math.random()*1.6;e.hb0=e.hb;e.bt=0}
   else if(zq){const wi=Math.floor(Math.random()*G.win.length);e.win=wi;e.angle=(G.win[wi].a+Math.random()*12-6+360)%360;e.dist=ZWIN+2+Math.random()*7}
   G.enemies.push(e);
-  if(zq&&!boss)return;
+  if(zq&&(!boss||G.zg))return;   // giants only: too many to announce each one
   const where=clock(norm(e.angle-G.heading));
   say(`${pr?'Target: ':mega?'Mega boss! Mega ':t.mini?'Mini boss! ':t.z?'Boss! ':''}${t.name}, ${where}, ${ft(dist)} feet.`);
 }
@@ -2026,13 +2033,14 @@ const PERKZ=[
   {id:'gold',name:'Gold rush',price:800,desc:'Double silver for the rest of the run, from kills and from wave survival bonuses.'},
   {id:'frost',name:'Frost skin',price:450,desc:'Any zombie that hits you is frozen solid for 2 seconds. Bosses freeze for 1 second.'},
   {id:'last',name:'Last stand',price:550,desc:'When your health drops below a quarter, you let out a shockwave. Zombies within 15 feet take 150 damage and survivors are thrown back. Recharges every wave.'}];
+const perksHere=()=>PERKZ.filter(p=>!(p.id==='fence'&&G.zm==='hall'));   // the fence makes no sense while walking the hallway
 function openPerks(){
   G.paused=true;G.hold=false;if(ambBus)ambBus.gain.value=0;fx.perkOpen();buildPerks();$('perks').hidden=false;
-  setTimeout(()=>{$('perks-h').focus();say(`Perk machine. You have ${P.coins} silver. ${PERKZ.filter(p=>!G.pk[p.id]).length?'Perks last for the rest of this run.':'You own every perk.'}`)},120);
+  setTimeout(()=>{$('perks-h').focus();say(`Perk machine. You have ${P.coins} silver. ${perksHere().filter(p=>!G.pk[p.id]).length?'Perks last for the rest of this run.':'You own every perk.'}`)},120);
 }
 function buildPerks(){
   const L=$('perk-list');L.textContent='';$('perks-note').textContent=`You have ${P.coins} silver. Perks last for the rest of this run. The machine opens again after wave ${G.wave+5}.`;
-  PERKZ.forEach(p=>{const b=document.createElement('button'),own=!!G.pk[p.id];b.className='btn'+(own?' got':P.coins>=p.price?' primary':'');b.id='pz-'+p.id;
+  perksHere().forEach(p=>{const b=document.createElement('button'),own=!!G.pk[p.id];b.className='btn'+(own?' got':P.coins>=p.price?' primary':'');b.id='pz-'+p.id;
     b.innerHTML=`${p.name}<small></small>`;b.querySelector('small').textContent=(own?'Owned. ':`${p.price} silver. `)+p.desc;
     if(own)b.setAttribute('aria-disabled','true');b.onclick=()=>buyPerk(p);L.appendChild(b)});
 }
@@ -2112,7 +2120,7 @@ function step(dt){
   }else if(G.mode==='zombies'){
     if(G.zBossDue&&G.spawnT<=0){G.zBossDue=false;spawn('zgiant');G.spawnT=2.5/zSp().x}
     else if(G.toSpawn>0&&G.spawnT<=0&&G.enemies.length<G.maxAlive){const r=Math.random(),w=G.wave,pb=Math.min(.25,Math.max(0,(w-4)*.02)),pr=Math.min(.35,.1+w*.01);
-      spawn(r<pb?'zbrute':r<pb+pr?'zrunner':'zombie');G.toSpawn--;G.spawnT=Math.max(.6,2.4-w*.04)/zSp().x}
+      spawn(G.zg?'zgiant':r<pb?'zbrute':r<pb+pr?'zrunner':'zombie');G.toSpawn--;G.spawnT=Math.max(.6,2.4-w*.04)/zSp().x}
   }else if(!G.bossWave){
     if(G.miniDue&&G.spawnT<=0&&G.toSpawn<=Math.ceil((3+Math.min(G.wave,10)*2)/2)){G.miniDue=false;spawn(miniOf());G.spawnT=3.5}
     else if(G.toSpawn>0&&G.spawnT<=0&&G.enemies.length<G.maxAlive){spawn(Math.random()<Math.min(.6,.2+G.wave*.1)?ty[1]:ty[0]);G.toSpawn--;G.spawnT=3.5}
@@ -2173,6 +2181,7 @@ function draw(){
   const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
   if(cv.width!==Math.round(r.width*dpr)||cv.height!==Math.round(r.height*dpr)){cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr)}
   const W=cv.width,H=cv.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-6*dpr;
+  if(R<=0)return;   // the screen has no size yet: nothing to draw
   const css=getComputedStyle(document.documentElement),ink=css.getPropertyValue('--accent-ink'),dan=css.getPropertyValue('--danger');
   c2.clearRect(0,0,W,H);c2.lineWidth=1.5*dpr;c2.strokeStyle=ink;
   [1,.66,.33].forEach(k=>{c2.beginPath();c2.arc(cx,cy,R*k,0,Math.PI*2);c2.stroke()});
@@ -2198,6 +2207,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-giants',date:'November 2, 2026',title:'Giants only, and no fence in the hallway',items:[
+    'Zombie Advanced options has a new Giants only checkbox. When it is checked, every zombie is a giant zombie boss, in the same numbers as a normal wave, so by wave 50 you are facing about 200 giants.',
+    'Giants are not announced one by one, since there are so many. Giants only keeps its own best records, listed separately in your Service record.',
+    'The electric fence perk is no longer offered in Horror hallway, since you keep walking forward. It is still in Standard and Watch my six.']},
   {id:'2026-11-02-horizon',date:'November 2, 2026',title:'New grenade: Event horizon',items:[
     'The Event horizon is a gravity trap, 5000 silver in the Armory under Grenades. Grenade type now cycles through it after the jack-in-the-box.',
     'It is set down 10 feet in front of you and gives off a slow, deep double pulse so you can hear where it sits.',
@@ -2289,12 +2302,12 @@ const MODENOTE={campaign:'Four waves, each with a mini boss, then the battlefiel
 const ZNOTE={standard:' Standard: four glass windows surround you at north, east, south and west.',
   six:' Watch my six: only two windows, straight ahead of you and right behind you. Nothing comes from the left or right.',
   hall:' Horror hallway: you walk down a hallway on your own, quickly when it is clear ahead and slowing to a stop the more zombies there are ahead. Zombies break out of barriers and windows in the walls ahead. Score is every foot walked plus 10 per kill.'};
-const PERKNOTE=' After every fifth wave the perk machine opens: spend silver on perks like an electric fence that lasts the rest of the run.';
+const PERKNOTE=' After every fifth wave the perk machine opens: spend silver on perks that last the rest of the run.';
 const bestOf=(m,zm=S.zmode)=>m==='endless'?P.best:m==='bossrush'?P.bestBoss:m==='zombies'?(zm==='six'?P.bestZ6:zm==='hall'?P.bestZH:P.bestZ):null;
 function updateMaps(){
   const m=S.mode||'campaign';$('maps-note').textContent=MODENOTE[m]+(m==='zombies'?(ZNOTE[S.zmode]||ZNOTE.standard)+PERKNOTE:'');$('zmode-field').hidden=m!=='zombies';
   document.querySelectorAll('[data-map]').forEach(b=>{const k=b.dataset.map,M=MAPS[k],sm=b.querySelector('small');
-    const B=bestOf(m),bk=m==='zombies'?zKey(k,S.zdiff):k;sm.textContent=b.dataset.desc+` Boss: ${m==='zombies'?'Giant zombie, every tenth wave':EN[M.boss].name}.`+(B?` Best${m==='zombies'?' on '+zDf().n:''}: ${B[bk]?(m==='zombies'&&S.zmode==='hall'?'score ':'wave ')+B[bk]:'none yet'}.`:'')});
+    const B=bestOf(m),bk=m==='zombies'?zKey(k,S.zdiff,S.zgiants):k;sm.textContent=b.dataset.desc+` Boss: ${m==='zombies'?(S.zgiants?'Every zombie is a giant zombie':'Giant zombie, every tenth wave'):EN[M.boss].name}.`+(B?` Best${m==='zombies'?' on '+zDf().n+(S.zgiants?', giants only':''):''}: ${B[bk]?(m==='zombies'&&S.zmode==='hall'?'score ':'wave ')+B[bk]:'none yet'}.`:'')});
 }
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{initAudio();show(b.dataset.go)});
 let lastMap='rainforest';
@@ -2310,9 +2323,9 @@ document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>begin(b.dataset
 function endGame(won){
   G.over=true;G.hold=false;stopAmb();won?fx.win():fx.lose();if(won&&G.mode==='campaign')P.stats.wins++;saveP();flushCloud();
   let msg;
-  if(G.mode==='zombies'&&G.zm==='hall'){const B=P.bestZH,K=zKey(G.map,G.zd),n=hallScore(),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
+  if(G.mode==='zombies'&&G.zm==='hall'){const B=P.bestZH,K=zKey(G.map,G.zd,G.zg),n=hallScore(),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
     msg=`${ZDIFF[G.zd].n} horror hallway score ${n}: ${hallFt()} feet walked and ${G.kills} kills, reaching wave ${G.wave}. ${nb?'New best! ':`Best: ${best}. `}`}
-  else if(bestOf(G.mode,G.zm)){const K=G.mode==='zombies'?zKey(G.map,G.zd):G.map,B=bestOf(G.mode,G.zm),n=G.wave-(G.mode==='zombies'?(G.zStart||1):1),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
+  else if(bestOf(G.mode,G.zm)){const K=G.mode==='zombies'?zKey(G.map,G.zd,G.zg):G.map,B=bestOf(G.mode,G.zm),n=G.wave-(G.mode==='zombies'?(G.zStart||1):1),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
     msg=`${G.mode==='zombies'?ZDIFF[G.zd].n+' difficulty. ':''}${G.zm==='six'?'Watch my six. ':''}You survived ${n} wave${n===1?'':'s'}${G.mode==='zombies'&&G.zStart>1?`, from wave ${G.zStart} to wave ${G.wave}`:''} on ${MAPS[G.map].name}. ${nb?'New best! ':`Best: ${best}. `}${G.kills} kills.`}
   else msg=won?`Victory on ${MAPS[G.map].name}. ${G.kills} kills.`:`You fell on wave ${G.wave}. ${G.kills} kills.`;
   msg+=` Earned ${G.earned} silver. You have ${P.coins}.`;
@@ -2358,7 +2371,7 @@ function record(){
   const ms=WPN.filter(w=>P.owned.includes(w.id)).map(w=>`${w.name} level ${mlevel(w.id)}`).join(', ');
   const best=Object.keys(MAPS).filter(k=>P.best[k]).map(k=>`${MAPS[k].name} wave ${P.best[k]}`).join(', ');
   const bb=Object.keys(MAPS).filter(k=>P.bestBoss[k]).map(k=>`${MAPS[k].name} wave ${P.bestBoss[k]}`).join(', ');
-  const zb=(R,pre)=>Object.keys(ZDIFF).map(d=>{const l=Object.keys(MAPS).filter(k=>R[zKey(k,d)]).map(k=>`${MAPS[k].name} ${pre}${R[zKey(k,d)]}`).join(', ');return l?`${ZDIFF[d].n}: ${l}`:''}).filter(Boolean).join('. ');
+  const zb=(R,pre)=>[0,1].flatMap(g=>Object.keys(ZDIFF).map(d=>{const l=Object.keys(MAPS).filter(k=>R[zKey(k,d,g)]).map(k=>`${MAPS[k].name} ${pre}${R[zKey(k,d,g)]}`).join(', ');return l?`${ZDIFF[d].n}${g?' giants only':''}: ${l}`:''})).filter(Boolean).join('. ');
   const bz=zb(P.bestZ,'wave '),b6=zb(P.bestZ6,'wave '),bh=zb(P.bestZH,'');
   say(`Service record. ${t.games} battles, ${t.wins} campaign victories. ${t.kills} kills, ${t.headshots} by headshot, ${acc} percent. ${t.bossKills} bosses defeated. ${t.earned} silver earned in total, ${P.coins} in hand. Mastery: ${ms}.${best?' Endless best: '+best+'.':''}${bb?' Boss rush best: '+bb+'.':''}${bz?' Zombie siege best: '+bz+'.':''}${b6?' Watch my six best: '+b6+'.':''}${bh?' Horror hallway best score: '+bh+'.':''}`);
 }
