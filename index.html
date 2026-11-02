@@ -541,7 +541,7 @@ $('set-rate').oninput=e=>{S.rate=+e.target.value;saveS()};
 $('set-vol').oninput=e=>{S.vol=+e.target.value;saveS();if(master)master.gain.value=S.vol;applyVol()};
 [['set-gvol','gvol'],['set-evol','evol'],['set-avol','avol'],['set-tvol','tvol'],['set-pvol','pvol']].forEach(([id,k])=>{const el=$(id);el.value=S[k];
   el.oninput=()=>{S[k]=+el.value;saveS();applyVol()};el.onchange=()=>{initAudio();if(k==='gvol')gunSound(build(WBY.ak),1);if(k==='evol')CRY.soldier(out(0,6,1,enBus));if(k==='tvol')say('Voice volume.');if(k==='pvol')[0,.32,.64].forEach(t=>setTimeout(()=>fx.lock(10),t*1000))}});
-function applyVol(){if(!ctx)return;gunBus.gain.value=.42*S.gvol;enBus.gain.value=S.evol;uiBus.gain.value=S.vol*S.pvol*1.2;if(G&&!G.paused&&S.amb)ambBus.gain.value=S.avol}
+function applyVol(){if(!ctx)return;if(menuBus)setTimeout(menuAmbSync,0);gunBus.gain.value=.42*S.gvol;enBus.gain.value=S.evol;uiBus.gain.value=S.vol*S.pvol*1.2;if(G&&!G.paused&&S.amb)ambBus.gain.value=S.avol}
 
 
 
@@ -599,8 +599,8 @@ function wakeAudio(){
   try{const pr=ctx.resume();if(pr&&pr.then)pr.then(()=>{if(ctx&&ctx.state==='running')audioStuck=0},()=>{})}catch(e){}
 }
 function rebuildAudio(){
-  const old=ctx;ctx=null;audioStuck=0;ambNodes=[];try{old.close()}catch(e){}
-  initAudio();applyVol();
+  const old=ctx;ctx=null;audioStuck=0;ambNodes=[];menuBus=null;menuWant=null;menuHum=[];try{old.close()}catch(e){}
+  initAudio();applyVol();setTimeout(menuAmbSync,0);
   if(G&&!G.over){startAmb(G.map);if(G.paused&&ambBus)ambBus.gain.value=0}
 }
 ['pointerdown','touchend','keydown','click'].forEach(t=>document.addEventListener(t,wakeAudio,true));
@@ -1102,6 +1102,47 @@ function startAmb(map){
   else if(map==='meme'){loopNoise('bandpass',1200,.8,.02);hum(220,.008,'triangle',800)}
   else{hum(60,.02);hum(120,.01);loopNoise('lowpass',200,.7,.03)}
 }
+/* ---------- menu ambience ----------
+   Main menu: a submarine sonar. A low hull hum, a sweep that turns slowly from left to right, and every few seconds
+   a ping that rings out and echoes, with a faint return ping coming back from somewhere out in the dark.
+   Choose a battlefield, with Zombie siege picked: zombies groaning and growling all around you at different distances.
+   Plays only on those screens, follows the Background ambience setting and volume, and stops when a battle starts. */
+let menuBus=null,menuWant=null,menuNext=0,menuHum=[],sonarDelay=null,curScr='menu';
+function menuMk(){if(menuBus||!ctx)return;menuBus=ctx.createGain();menuBus.gain.value=0;menuBus.connect(master);
+  // sonar echo: a long delay feeding back on itself through a darkening filter
+  const d=ctx.createDelay(2);d.delayTime.value=.62;const fb=ctx.createGain();fb.gain.value=.42;const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;
+  d.connect(lp);lp.connect(fb);fb.connect(d);const wet=ctx.createGain();wet.gain.value=.55;lp.connect(wet);wet.connect(menuBus);sonarDelay=d}
+function menuAmbSync(){
+  const want=!G&&ctx&&S.amb?(curScr==='menu'?'sonar':curScr==='maps'&&S.mode==='zombies'?'zombies':null):null;
+  if(!ctx)return;menuMk();
+  if(want===menuWant){menuBus.gain.setTargetAtTime(want?S.avol*.9:0,ctx.currentTime,.3);return}
+  menuWant=want;menuNext=0;menuHum.forEach(n=>{try{n.stop(ctx.currentTime+.8)}catch(e){}});menuHum=[];
+  menuBus.gain.cancelScheduledValues(ctx.currentTime);menuBus.gain.setTargetAtTime(want?S.avol*.9:0,ctx.currentTime,want?.6:.25);
+  const t=ctx.currentTime;
+  if(want==='sonar'){[[46,.05],[92,.012]].forEach(([f,v])=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(menuBus);o.start(t);menuHum.push(o)})}
+  if(want==='zombies'){const n=ctx.createBufferSource();n.buffer=noiseBuf;n.loop=true;const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=220;const g=ctx.createGain();g.gain.value=.05;n.connect(f);f.connect(g);g.connect(menuBus);n.start(t);menuHum.push(n)}
+}
+function sonarPing(){const t=ctx.currentTime;
+  // the sweep: a soft breathy band that turns from left to right
+  {const n=ctx.createBufferSource();n.buffer=noiseBuf;const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=6;f.frequency.setValueAtTime(500,t);f.frequency.exponentialRampToValueAtTime(1400,t+1.6);
+    const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.05,t+.6);g.gain.linearRampToValueAtTime(0,t+1.7);
+    const p=ctx.createStereoPanner?ctx.createStereoPanner():null;n.connect(f);f.connect(g);if(p){p.pan.setValueAtTime(-.8,t);p.pan.linearRampToValueAtTime(.8,t+1.7);g.connect(p);p.connect(menuBus)}else g.connect(menuBus);n.start(t);n.stop(t+1.8)}
+  // the ping: a pure high tone that rings out, fed into the echo
+  const ping=(at,f,v,pan)=>{const o=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=f;o2.frequency.value=f*2.01;
+    const g2=ctx.createGain();g2.gain.value=.12;g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(v,at+.012);g.gain.exponentialRampToValueAtTime(.0005,at+1.9);
+    o.connect(g);o2.connect(g2);g2.connect(g);let dst=g;if(ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);dst=p}
+    dst.connect(menuBus);dst.connect(sonarDelay);[o,o2].forEach(x=>{x.start(at);x.stop(at+2)})};
+  ping(t+1.75,1180,.22,0);
+  // the return: fainter, lower and off to one side, as if it bounced off something out there
+  ping(t+3.6+Math.random()*.8,1120,.05,(Math.random()<.5?-1:1)*(.4+Math.random()*.4));
+}
+function zombieMoan(){const rel=Math.random()*360-180,dist=4+Math.random()*26,r=Math.random();
+  const d=out(rel,dist,.55,menuBus);(r<.6?CRY.zombie:r<.88?CRY.zbrute:CRY.zrunner)(d)}
+setInterval(()=>{if(!ctx||!menuWant||document.hidden||G)return;const now=performance.now();if(now<menuNext)return;
+  if(menuWant==='sonar'){sonarPing();menuNext=now+5200}
+  else{zombieMoan();if(Math.random()<.35)setTimeout(()=>{if(menuWant==='zombies'&&!G)zombieMoan()},250+Math.random()*400);menuNext=now+700+Math.random()*1300}},150);
+// the menu sound needs a first tap before a phone lets it play
+['pointerdown','click','keydown','touchend'].forEach(t=>document.addEventListener(t,()=>{if(!ctx)initAudio();setTimeout(menuAmbSync,0)},true));
 function stopAmb(){ambNodes.forEach(n=>{try{n.stop()}catch(e){}});ambNodes=[];if(ambBus)ambBus.gain.value=0}
 function ambDetail(map){
   if(!S.amb)return;
@@ -2229,6 +2270,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-menusound',date:'November 2, 2026',title:'Menu sounds',items:[
+    'The main menu now has a submarine sonar in the background: a low hull hum, a sweep turning from left to right, and a ping that rings out and echoes, with a faint return ping from somewhere out in the dark.',
+    'On Choose a battlefield, picking Zombie siege brings zombies groaning and growling all around you.',
+    'Both follow your Background ambience setting and Ambience volume, and stop when a battle starts. On a phone they begin after your first tap.']},
   {id:'2026-11-02-bugsweep',date:'November 2, 2026',title:'Bug fixes',items:[
     'Fixed the M2 machine gun\'s attachments screen not opening.',
     'Fixed Fight again sometimes starting a new battle already hurt or dead, from an enemy hit that was still on its way when you fell.',
@@ -2331,6 +2376,7 @@ updateLogBtn();
 /* ---------- screens ---------- */
 const screens=['menu','maps','shop','mods','tutorial','settings','pid','log','game'];
 function show(id){
+  curScr=id;setTimeout(menuAmbSync,0);
   screens.forEach(s=>$(s).hidden=s!==id);$('pause').hidden=true;$('over').hidden=true;$('perks').hidden=true;
   if(id==='menu')$('menu-coins').textContent=`Weapons, attachments, armor, grenades and perks. You have ${P.coins} silver.`;
   if(id==='maps')updateMaps();
@@ -2352,7 +2398,7 @@ const ZNOTE={standard:' Standard: four glass windows surround you at north, east
   hall:' Horror hallway: you walk down a hallway on your own, quickly when it is clear ahead and slowing to a stop the more zombies there are ahead. Zombies break out of barriers and windows in the walls ahead. Score is every foot walked plus 10 per kill.'};
 const PERKNOTE=' After every fifth wave the perk machine opens: spend silver on perks that last the rest of the run.';
 const bestOf=(m,zm=S.zmode)=>m==='endless'?P.best:m==='bossrush'?P.bestBoss:m==='zombies'?(zm==='six'?P.bestZ6:zm==='hall'?P.bestZH:P.bestZ):null;
-function updateMaps(){
+function updateMaps(){setTimeout(menuAmbSync,0);
   const m=S.mode||'campaign';$('maps-note').textContent=MODENOTE[m]+(m==='zombies'?(ZNOTE[S.zmode]||ZNOTE.standard)+PERKNOTE:'');$('zmode-field').hidden=m!=='zombies';
   document.querySelectorAll('[data-map]').forEach(b=>{const k=b.dataset.map,M=MAPS[k],sm=b.querySelector('small');
     const B=bestOf(m),bk=m==='zombies'?zKey(k,S.zdiff,S.zgiants):k;sm.textContent=b.dataset.desc+` Boss: ${m==='zombies'?(S.zgiants?'Every zombie is a giant zombie, plus a mega giant every tenth wave':'Giant zombie every fifth wave, plus a mega giant every tenth wave'):EN[M.boss].name}.`+(B?` Best${m==='zombies'?' on '+zDf().n+(S.zgiants?', giants only':''):''}: ${B[bk]?(m==='zombies'&&S.zmode==='hall'?'score ':'wave ')+B[bk]:'none yet'}.`:'')});
