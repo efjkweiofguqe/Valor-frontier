@@ -1715,6 +1715,9 @@ function processDead(src){
     if(src&&WBY[src]){const b=mlevel(src);P.mast[src]=(P.mast[src]||0)+1;const a=mlevel(src);
       if(a>b){lv=` ${WBY[src].name} mastery level ${a}. Attachments stronger.`;const i=G.lo.findIndex(x=>x.id===src);if(i>=0)G.lo[i]=build(WBY[src])}}
     return (src==='fence'?'Fried! ':'')+(e.hk?'Headshot! ':'')+(t.boss?`${e.mega?'Mega ':''}${t.name} is down!`:`${t.name} down.`)});
+  // several kills from one action: one short callout instead of repeating every kill
+  if(dead.length>1){const hs=dead.filter(e=>e.hk).length,bigs=dead.filter(e=>EN[e.type].boss||EN[e.type].mini);
+    msg.length=0;msg.push((src==='fence'?'Fried! ':'')+`${dead.length} kills!`+(hs?` ${hs===dead.length?'All headshots':hs+' headshot'+(hs>1?'s':'')}.`:'')+bigs.map(e=>` ${e.mega?'Mega ':''}${EN[e.type].name} is down!`).join(''))}
   if(P.armor.on==='berserk')MARMUP.forEach(u=>{if(u.kind!=='trait'||u.arm!=='berserk'||!P.marm[u.id])return;const b=tlv(u.id);P.marm[u.id].kills+=dead.length;const a=tlv(u.id);if(a>b)lv+=` ${u.name} is now level ${a}.`});
   G.earned+=pay;P.coins+=pay;P.stats.earned+=pay;saveP();
   setTimeout(()=>{if(ctx)fx.coin(pay>=20?3:1)},420);
@@ -2064,6 +2067,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-multikill',date:'November 2, 2026',title:'Multi-kill callouts',items:[
+    'When one action kills several enemies at once, like a sniper round punching through a line or a grenade, you now hear one callout such as 5 kills, instead of every kill read out one by one.',
+    'The callout also tells you how many were headshots, and still names any boss or mini boss you took down.']},
   {id:'2026-11-02-thunderclap',date:'November 2, 2026',title:'Thunderclap storm upgrade',items:[
     'The Thunderclap now sounds like a real thunder clap when it fires, instead of a shotgun.',
     'When the lightning rod is charged, you hear electricity crackling around you until you fire the supercharged shot.',
