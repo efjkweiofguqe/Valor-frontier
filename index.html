@@ -1800,6 +1800,11 @@ function launchHole(w,e){
 /* removes dead enemies, pays silver, counts weapon mastery. src = weapon id or null (grenades) */
 /* Jack Frost chill: up to 5 stacks, each slows 25 percent more, down to a tenth of normal speed, lasts 10 seconds from the latest hit */
 function chill(e){e.ice=Math.min(5,(e.ice||0)+1);e.iceT=10}
+/* multi-kill callout for bosses and mini bosses: grouped by type, so ten giants is one line, not ten.
+   When every kill was the same kind, the kill count already says it all; a mega boss is always named. */
+function bigWords(bigs,n){const g={};bigs.forEach(e=>{if(G.zg&&!e.mega)return;   // giants only: every kill is a giant, so only the mega is worth naming
+  const k=(e.mega?'Mega ':'')+EN[e.type].name;g[k]=(g[k]||0)+1});
+  return Object.entries(g).map(([k,c])=>c===1?` ${k} is down!`:c===n?'':` ${c} ${k.toLowerCase()}s down!`).join('')}
 function processDead(src){
   const dead=G.enemies.filter(e=>e.hp<=0);if(!dead.length)return 0;
   G.enemies=G.enemies.filter(e=>e.hp>0);
@@ -1813,7 +1818,7 @@ function processDead(src){
     return (src==='fence'?'Fried! ':'')+(e.hk?'Headshot! ':'')+(t.boss?`${e.mega?'Mega ':''}${t.name} is down!`:`${t.name} down.`)});
   // several kills from one action: one short callout instead of repeating every kill
   if(dead.length>1){const hs=dead.filter(e=>e.hk).length,bigs=dead.filter(e=>EN[e.type].boss||EN[e.type].mini);
-    msg.length=0;msg.push((src==='fence'?'Fried! ':'')+`${dead.length} kills!`+(hs?` ${hs===dead.length?'All headshots':hs+' headshot'+(hs>1?'s':'')}.`:'')+bigs.map(e=>` ${e.mega?'Mega ':''}${EN[e.type].name} is down!`).join(''))}
+    msg.length=0;msg.push((src==='fence'?'Fried! ':'')+`${dead.length} kills!`+(hs?` ${hs===dead.length?'All headshots':hs+' headshot'+(hs>1?'s':'')}.`:'')+bigWords(bigs,dead.length))}
   if(P.armor.on==='berserk')MARMUP.forEach(u=>{if(u.kind!=='trait'||u.arm!=='berserk'||!P.marm[u.id])return;const b=tlv(u.id);P.marm[u.id].kills+=dead.length;const a=tlv(u.id);if(a>b)lv+=` ${u.name} is now level ${a}.`});
   pay=Math.round(pay*(1+scavBonus(P.perk.scav||0)/100)*(G.pk&&G.pk.gold?2:1));
   if(G.pk&&G.pk.blood&&G.hp>0){const h0=G.hp,amt=dead.reduce((a,e)=>a+(EN[e.type].boss||EN[e.type].mini?10:3),0);G.hp=Math.min(G.maxhp,G.hp+amt);const got=Math.round(G.hp-h0);
@@ -2224,6 +2229,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-killcall',date:'November 2, 2026',title:'Shorter multi-kill callouts',items:[
+    'When one shot or blast kills several giant zombies, you now hear one line like 10 kills, instead of Giant zombie is down repeated 10 times.',
+    'In Giants only, regular giants are never named in a multi-kill, only the kill count. Elsewhere, bosses in a mixed group are grouped, for example 2 giant zombies down. A mega boss is always named on its own.']},
   {id:'2026-11-02-audiofix',date:'November 2, 2026',title:'Fix: sound cutting out',items:[
     'Fixed sound getting choppy and then cutting out for good, which could happen when an event horizon held a big crowd of giant zombies.',
     'Held enemies now roar less often, and enemy cries share a limit so dozens of them can no longer pile up at once. You still hear where they are.',
