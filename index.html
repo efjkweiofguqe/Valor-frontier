@@ -116,7 +116,9 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 .item.owned .meta{color:var(--ok)}
 .item .acts{display:grid;grid-template-columns:2fr 1fr;gap:8px}
 .item .att small{display:block;font-weight:400;font-size:14px;color:var(--muted)}
-#mods-stats{color:var(--muted)}
+#mods-stats h3{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
+#mods-stats ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+#mods-stats .note{margin:0}
 .item .acts .btn{text-align:center;font-size:16px;padding:12px 8px}
 @media (prefers-reduced-motion:reduce){.pad button:active,.aim button:active{transform:none}}
 </style>
@@ -245,7 +247,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Holding fire.</b> Tap Fire for one trigger pull. To keep firing, press and hold the Fire button. With VoiceOver, double-tap and hold. On a keyboard, hold Space. A faint tick on each shot means your magazine is running low.</p>
     <p><b>Cover.</b> Take cover halves the damage you take, but your aim gets shakier and the battle sounds muffled. Leave cover to aim steady again. Bosses roar as they wind up a big attack: that is your cue to take cover. The Iron Revenant fires rockets from range, so listen for the whistle.</p>
     <p><b>Grenades</b> go off around you, so there is no aiming. Frag grenades blast every enemy within 5 feet, perfect when enemies are attacking you. Cryo grenades freeze every enemy within 8 feet to about a third of their speed for 8 seconds. The Fat Man destroys everything within 50 feet instantly, bosses included, after a falling whistle. A jack-in-the-box is a proximity bomb: it sits 10 feet in front of you playing a little music-box tune, and when an enemy comes within 7 feet of it, the lid pops with a boing and it explodes, hitting everything within 15 feet of the box. An event horizon is a gravity trap: it sits 10 feet in front of you giving off a slow, deep double pulse. When any enemy comes within 13 feet of you, from any side, it switches on with a warbling energy charge that wobbles faster and faster, then snaps into a deep roar, then for one minute it drags every enemy that comes within 13 feet of you into a tight cluster around itself and holds them there, with a throbbing hum. Held enemies cannot move or attack, and it does no damage, so line them up and open fire. Three quick beeps mean it fades in 10 seconds. None of them hurt you. Grenade type cycles between all five.</p>
-    <p><b>Modes.</b> Campaign is five waves ending in the battlefield's boss. Endless survival never stops, brings a boss every fifth wave and a mega boss with twice a boss's health every seventh wave, and pays a bonus for every wave you clear. Boss rush is only bosses: it starts with one weakened boss and gets brutal far faster than endless, with a mega boss every seventh wave. Practice range has still targets that cannot hurt you, for learning a gun. Zombie siege is endless waves of the undead. Four glass windows surround you about 50 feet out, at north, east, south and west. A zombie has to smash through a window to reach you, which takes a few seconds: you hear banging and cracking glass from that direction, then a crash when it shatters. Broken windows seal themselves again about 6 seconds later. Every fifth wave brings a giant zombie boss, and every tenth wave also brings a mega giant zombie boss with twice a giant's health, so waves 10, 20, 30 and so on have both. In Giants only, there is just the mega giant every tenth wave. The horde grows every wave, to about 200 zombies by wave 50. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Status reads the state of every window. That is the Standard zombie mode. In Advanced options, the Giants only checkbox makes every zombie a giant zombie boss, in the same numbers as a normal wave, so by wave 50 you face about 200 giants, plus a mega giant every tenth wave. Giants only keeps its own best records.</p>
+    <p><b>Modes.</b> Campaign is five waves ending in the battlefield's boss. Endless survival never stops, brings a boss every fifth wave and a mega boss with twice a boss's health every seventh wave, and pays a bonus for every wave you clear. Boss rush is only bosses: it starts with one weakened boss and gets brutal far faster than endless, with a mega boss every seventh wave. Practice range has still targets that cannot hurt you, for learning a gun. Zombie siege is endless waves of the undead. Four glass windows surround you about 50 feet out, at north, east, south and west. A zombie has to smash through a window to reach you, which takes a few seconds: you hear banging and cracking glass from that direction, then a crash when it shatters. Broken windows seal themselves again about 6 seconds later. Every fifth wave brings a giant zombie boss, and every tenth wave also brings a mega giant zombie boss with five times a giant's health, paying five times a giant's silver, so waves 10, 20, 30 and so on have both. In Giants only, there is just the mega giant every tenth wave. The horde grows every wave, to about 200 zombies by wave 50. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Status reads the state of every window. That is the Standard zombie mode. In Advanced options, the Giants only checkbox makes every zombie a giant zombie boss, in the same numbers as a normal wave, so by wave 50 you face about 200 giants, plus a mega giant every tenth wave. Giants only keeps its own best records.</p>
     <p><b>Watch my six.</b> A zombie mode with only two windows: one straight ahead of you at 12 o'clock and one right behind you at 6 o'clock. Nothing comes from the left or right, so About face is your best friend.</p>
     <p><b>Horror hallway.</b> A zombie mode where you walk down a long hallway on your own, with no walk button. Your footsteps tell you your pace: quick, close together steps when the hallway ahead is clear, slowing down the more zombies are ahead, until you stop completely. You also stop while a zombie is right in front of you or grabbing you. Zombies break out of wooden barriers and glass windows in the walls ahead: you hear wood thudding and splintering, or glass banging and cracking, then the crash as they get through. If you walk past one, it chases you from behind, fast. A soft double tick plays every 100 feet. Your score is every foot you walk plus 10 points for every kill. Status reads your distance, kills and score.</p>
     <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: an electrified band from 20 feet in to 14 feet around you. A zombie touching it makes a loud electric crack, then sharp zaps while it struggles through at 60 percent speed, taking damage every second. Weaker zombies usually fry, but tougher zombies in later waves get through hurt, and runners can dash across. Giant zombies take more damage but are not slowed. A soft hum every few seconds tells you the fence is on. The electric fence is not offered in Horror hallway, since you keep walking forward. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health. Bloodthirst: every kill heals you 3 health, or 10 for a mini boss or boss. Gold rush: double silver for the rest of the run. Frost skin: any zombie that hits you is frozen for 2 seconds, bosses for 1. Last stand: when your health drops below a quarter, a shockwave hits every zombie within 15 feet for 150 damage and throws survivors back, once per wave.</p>
@@ -366,7 +368,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <button class="btn back" id="mods-back">Back to the shop</button>
   <div class="wallet"><b id="mods-coins">0</b><span>silver coins</span></div>
   <p class="note">Attachments you buy stay on this gun. Turn them on or off for free.</p>
-  <p id="mods-stats"></p>
+  <div id="mods-stats" class="stack"></div>
   <button class="btn" id="mods-hear">Hear it with these attachments</button>
   <div class="stack" id="mods-list"></div>
 </section>
@@ -1164,7 +1166,7 @@ const ENINFO={soldier:'Light. Rainforest. Medium speed, fires short rifle bursts
   zombie:'Light. Zombie siege. Slow shambler with a long groan.',
   zrunner:'Light. Zombie siege. Fast, rasping snarl. Gets through a broken window quickly.',
   zbrute:'Heavy. Zombie siege. Slow and gurgling, soaks up bullets.',
-  zgiant:'Boss of Zombie siege, every fifth wave. Every tenth wave also brings a mega giant with double health. Smashes through a window in about a second. Footsteps shake the ground.'};
+  zgiant:'Boss of Zombie siege, every fifth wave. Every tenth wave also brings a mega giant with five times the health. Smashes through a window in about a second. Footsteps shake the ground.'};
 const ARMOR=[
   {id:'vest',name:'Light vest',prot:.15,price:100,desc:'A soft vest. Cuts all damage you take by 15 percent.'},
   {id:'kevlar',name:'Kevlar armor',prot:.3,price:250,desc:'Military Kevlar. Cuts all damage you take by 30 percent.'},
@@ -1600,7 +1602,7 @@ function symGrow(n){
   if(Math.floor(G.symMult)>Math.floor(m0))return ` Symbiote damage ${n1(G.symMult)} times. Maximum health ${G.maxhp}.`;
   return '';
 }
-const zBossWords=()=>G.zMegaDue&&G.zBossDue?', plus a giant zombie boss and a mega giant zombie boss with double health':G.zMegaDue?', plus a mega giant zombie boss with double health':G.zBossDue?', plus a giant zombie boss':'';
+const zBossWords=()=>G.zMegaDue&&G.zBossDue?', plus a giant zombie boss and a mega giant zombie boss with five times the health':G.zMegaDue?', plus a mega giant zombie boss with five times the health':G.zBossDue?', plus a giant zombie boss':'';
 const zIntro=()=>`${G.toSpawn} ${G.zg?(G.toSpawn>1?'giant zombies':'giant zombie'):'zombies'}`;
 function startWave(){
   const w=G.wave,end=G.mode==='endless',sym='';
@@ -1625,7 +1627,7 @@ function spawn(type,mega){
   let hp=t.hp*(S.diff>1.5?1.5:1),dm=1,sm=1,am=1;
   if(G.mode==='endless')hp*=1+.08*(G.wave-1);
   if(G.mode==='zombies'){hp*=1+zDf().hp*(G.wave-1);dm*=1+zDf().dmg*(G.wave-1)}
-  if(mega)hp*=2;
+  if(mega)hp*=G.mode==='zombies'?5:2;   // zombie mega giants have five times a giant's health, other mega bosses double
   // boss rush starts soft and climbs far faster than endless
   if(br){const w=G.wave-1;hp*=.35*Math.pow(1.25,w);dm=.5*Math.pow(1.12,w);sm=Math.min(1.8,.75*Math.pow(1.04,w));am=Math.max(.45,1.15*Math.pow(.96,w))}
   hp=Math.max(1,Math.ceil(hp));
@@ -1799,7 +1801,7 @@ function processDead(src){
   let pay=0,lv='',heal='';
   if(src==='symbiote'){lv+=symGrow(dead.length);const sw=G.lo.find(x=>x.id==='symbiote');
     if(sw&&sw.vamp){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal=` Plus ${got} health.`;fx.symHeal();hud()}}}
-  const msg=dead.map(e=>{G.kills++;const t=EN[e.type];pay+=e.mega?Math.round(250*paySc()/(1+.08*6)):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDf().pay:1));P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++;
+  const msg=dead.map(e=>{G.kills++;const t=EN[e.type];pay+=e.mega?(G.mode==='zombies'?Math.round(5*t.reward*paySc()*zDf().pay):Math.round(250*paySc()/(1+.08*6))):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDf().pay:1));P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++;
     if(src&&WBY[src]){const b=mlevel(src);P.mast[src]=(P.mast[src]||0)+1;const a=mlevel(src);
       if(a>b){lv=` ${WBY[src].name} mastery level ${a}. Attachments stronger.`;const i=G.lo.findIndex(x=>x.id===src);if(i>=0)G.lo[i]=build(WBY[src])}}
     return (src==='fence'?'Fried! ':'')+(e.hk?'Headshot! ':'')+(t.boss?`${e.mega?'Mega ':''}${t.name} is down!`:`${t.name} down.`)});
@@ -2210,12 +2212,16 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-truestats',date:'November 2, 2026',title:'True weapon stats, and tougher mega giants',items:[
+    'When you open a gun\'s attachments in the Armory, the top now lists its full current stats with every attachment you have turned on: damage, damage per second, fire rate, magazine, reload, headshots, range, piercing and special effects. For example, a Jet rifle with Ramjet ammo shows 500 damage instead of 200.',
+    'The list is a heading followed by a list, and it updates as you turn attachments on or off. Mastery and your Deadeye perk are counted in too.',
+    'The mega giant zombie boss now has five times a giant zombie\'s health instead of double, and pays five times a giant\'s silver.']},
   {id:'2026-11-02-zboss5',date:'November 2, 2026',title:'More zombie bosses',items:[
     'In Standard, Watch my six and Horror hallway, a giant zombie boss now comes every fifth wave instead of every tenth.',
     'The mega giant zombie boss still comes every tenth wave, so waves 10, 20, 30 and so on bring both a giant and a mega giant.',
     'Giants only is unchanged: a mega giant every tenth wave on top of the giants.']},
   {id:'2026-11-02-zmega',date:'November 2, 2026',title:'Mega giant zombie boss every tenth wave',items:[
-    'Every tenth wave in every zombie mode now brings a mega giant zombie boss with twice the health of a normal giant. It is announced as Mega boss when it arrives, and pays mega boss silver.',
+    'Every tenth wave in every zombie mode now brings a mega giant zombie boss with twice the health of a normal giant. It is announced as Mega boss when it arrives.',
     'In Standard, Watch my six and Horror hallway, it replaces the regular giant boss on those waves.',
     'In Giants only, it comes on top of the wave\'s giants, so wave 50 brings about 200 giants and one mega giant.']},
   {id:'2026-11-02-giants',date:'November 2, 2026',title:'Giants only, and no fence in the hallway',items:[
@@ -2308,7 +2314,7 @@ function show(id){
 const MODENOTE={campaign:'Four waves, each with a mini boss, then the battlefield\'s boss on wave five. Beat the boss to win.',
   endless:'Waves never stop and keep getting harder. A boss every fifth wave, and a mega boss with double a normal boss health every seventh wave, worth about 250 silver. Kills pay 8 percent more silver every wave. Each wave you clear pays a survival bonus of twice the wave number in silver.',
   bossrush:'Only bosses, from every battlefield. Wave 1 is a single weakened boss. Every few waves another joins, and they get tougher, faster and harder-hitting each wave, much faster than endless mode. Every seventh wave one boss is a mega boss with double health, worth about 250 silver. Kills pay 8 percent more silver every wave. Each wave cleared pays six times the wave number in silver.',
-  zombies:'Endless waves of the undead, on any battlefield, in three zombie modes. Windows stand about 50 feet out. Zombies take a few seconds to smash through a window, and a broken window seals itself again about 6 seconds later. A giant zombie boss every fifth wave, plus a mega giant with double health every tenth wave. The horde grows every wave, to about 200 zombies by wave 50. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Each wave you clear pays twice the wave number in silver.',
+  zombies:'Endless waves of the undead, on any battlefield, in three zombie modes. Windows stand about 50 feet out. Zombies take a few seconds to smash through a window, and a broken window seals itself again about 6 seconds later. A giant zombie boss every fifth wave, plus a mega giant with five times the health every tenth wave. The horde grows every wave, to about 200 zombies by wave 50. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Each wave you clear pays twice the wave number in silver.',
   practice:'Targets stand still and cannot hurt you. Grenades are free. Nothing here earns silver or mastery. Status reads your accuracy.'};
 const ZNOTE={standard:' Standard: four glass windows surround you at north, east, south and west.',
   six:' Watch my six: only two windows, straight ahead of you and right behind you. Nothing comes from the left or right.',
@@ -2517,6 +2523,40 @@ function perkAct(pk){
 /* ---------- attachments screen ---------- */
 let curMod='pistol';
 const r1=x=>Math.round(x*10)/10;
+/* attachments screen: the gun's true current power, with every attachment, its mastery and the Deadeye perk counted in */
+function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(P.perk.aim||0)/100,D=x=>n1(x*aim),out=[];
+  const pulls=1/b.cd,acc=b.acc||w.acc||.92;
+  if(b.charge){out.push(`Damage: ${D(b.dmg)} per round.`);out.push(`${r1(b.charge)} second charge-up before each shot.`)}
+  else if(b.lantern)out.push(`Damage: ${D(b.dmg)} on a direct hit, then fire burns ${b.fireDps} per second for 5 seconds on every enemy within ${ft(b.fireR)} feet.`,`${n1(pulls)} shots per second.`);
+  else if(b.hydra)out.push(`Damage: 3 rockets of ${D(b.dmg)} each per trigger pull.`,`${n1(pulls)} trigger pulls per second.`);
+  else if(b.hole)out.push(`Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${D(b.dmg)} on collapse to everything within 12 feet, half that to the rest it pulled in.`,`${n1(pulls)} shots per second.`);
+  else if(b.sonic)out.push(`Damage: ${D(b.dmg)} to every enemy in the cone within ${ft(b.full)} feet, plus a stun, fading to 40 percent at ${ft(b.reach)} feet.`,b.burst?`Bursts of ${b.shots} shrieks, ${n1(pulls)} bursts per second.`:`${n1(pulls)} screams per second.`);
+  else{out.push(b.spread?`Damage: ${D(b.dmg)} to every enemy in the blast${b.shots>1?`, ${b.shots} blasts per trigger pull`:''}.`:`Damage: ${D(b.dmg)} per ${b.slug?'slug':'bullet'}${b.shots>1?`, ${b.shots} bullets per trigger pull`:''}.`);
+    out.push(`${n1(pulls)} trigger pulls per second, about ${Math.round(b.dmg*aim*b.shots*pulls*(b.spread?1:acc))} damage per second${b.akimbo?' from each gun':''}.`)}
+  out.push(`Magazine: ${b.mag}${b.akimbo?' in each of your two guns':''}. Reload: ${r1(b.reload)} seconds.`);
+  if(b.jetHead)out.push('Headshots hit for 10,000.');
+  else if(!b.spread||b.grip)out.push(`Headshots: ${Math.round((b.hs-1)*100)} percent more damage, ${Math.round((b.hsBoss-1)*100)} percent more on bosses.`);
+  if(b.grip)out.push(`Grip: a wider dead-centre zone, and ${Math.round(b.grip*100)} percent of off-centre hits turn into headshots.`);
+  if(b.scope)out.push(`Scope: ${Math.round(b.scope*100)} percent of hits past 50 feet turn into headshots.`);
+  if(b.ap>1)out.push(`Armor piercing: ${Math.round((b.ap-1)*100)} percent more damage against armored and metal enemies, mini bosses and bosses.`);
+  if(b.hollow)out.push(`Hollow points: up to ${Math.round(50*b.hollow)} percent more damage within 25 feet, fading with distance, 15 percent less past 50 feet.`);
+  if(b.inc)out.push(`Incendiary: each hit splashes ${Math.round(b.splash*100)} percent of its damage onto enemies within 16 feet.`);
+  if(b.dragon)out.push("Dragon's breath: sets enemies in the blast on fire.");
+  if(b.chainN)out.push(`Chain lightning: leaps to up to ${b.chainN} more enemies within ${ft(b.chainR)} feet for ${Math.round(b.chainM*100)} percent damage each.${b.shock?' Shocked enemies move at half speed.':''}`);
+  if(b.vamp)out.push('Vampiric rounds: every kill gives you back 2 health.');
+  if(b.infect)out.push('Infects enemies, spreading to anyone within 3 feet.');
+  if(b.frenzy)out.push('Feeding frenzy: fires four times as fast.');
+  if(b.frag)out.push('Fragmenting icicles: shards hit everyone within 10 feet of each hit for half damage.');
+  if(b.blizz)out.push('Blizzard blast on reload: freezes every enemy within 40 feet solid for 15 seconds.');
+  if(b.vent)out.push('Heat vent: blasts nearby enemies when you reload, bigger the more rounds you fired.');
+  if(b.pen>1)out.push(`Punches through ${b.pen===Infinity?'every enemy in its line':'up to '+b.pen+' enemies'}${b.exit<Infinity?`, carrying ${ft(b.exit)} feet past each`:''}.`);
+  out.push(b.rng&&!(b.pen>1)?`Full damage out to ${ft(b.rng)} feet, weaker beyond.`:b.spread?`Full damage out to ${ft(b.range[0])} feet.`:'No damage falloff at any range.');
+  out.push(`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}: attachments ${(L-1)*5} percent stronger.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:''));
+  return out}
+function renderStats(w){const box=$('mods-stats');box.textContent='';
+  const h=document.createElement('h3');h.textContent=`${w.name}: current stats`;box.appendChild(h);
+  const n=document.createElement('p');n.className='note';n.textContent='With every attachment you have turned on. Changes as you turn attachments on or off.';box.appendChild(n);
+  const ul=document.createElement('ul');fullStats(w).forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li)});box.appendChild(ul)}
 function statLine(w){const b=build(w);
   const L=b.mlv,k=P.mast[w.id]||0;
   return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Attachments ${(L-1)*5} percent stronger. Right now: ${r1(b.dmg)} damage per round${b.shots>1?`, ${b.shots}-round bursts`:''}. Magazine ${b.mag}${b.akimbo?' in each gun':''}. Reload ${r1(b.reload)} seconds. ${b.charge?`${r1(b.charge)} second charge-up per shot.`:`${r1(1/b.cd)} trigger pulls per second.`} ${b.pen>1?`Punches through ${b.pen===Infinity?'every enemy in line':'up to '+b.pen+' enemies'}${b.exit<Infinity?`, carrying ${ft(b.exit)} feet past each`:''}. `:''}${b.rng&&!(b.pen>1)?`Full damage to ${ft(b.rng)} feet.`:b.spread?`Full damage to ${ft(b.range[0])} feet.`:'No falloff.'}`}
@@ -2557,7 +2597,7 @@ function buildMods(){
   updateMods();
 }
 function updateMods(){
-  const w=WBY[curMod];$('mods-coins').textContent=P.coins;$('mods-stats').textContent=statLine(w);
+  const w=WBY[curMod];$('mods-coins').textContent=P.coins;renderStats(w);
   ATT.filter(a=>attOK(a,w)).forEach(a=>{const it=$('m-'+a.id),L=modLabel(a,w),st=attOf(w.id);
     it.classList.toggle('owned',st.eq.includes(a.id));it.querySelector('.meta').textContent=L.meta;
     const b=it.querySelector('.act');b.textContent=L.act;b.setAttribute('aria-label',L.aria);
