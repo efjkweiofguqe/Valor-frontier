@@ -1,2 +1,5 @@
-# Valor-frontier
-This is a blind accessible first person shooter. I am working on very heavily. This is a project of mine That is close to heart.
+# Valor Frontier
+
+A blind-accessible, audio-first shooter you play by ear. Headphones strongly recommended.
+
+Play it here: https://efjkweiofguqe.github.io/valor-frontier/
