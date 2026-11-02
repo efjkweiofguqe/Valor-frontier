@@ -214,7 +214,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Watch my six.</b> A zombie mode with only two windows: one straight ahead of you at 12 o'clock and one right behind you at 6 o'clock. Nothing comes from the left or right, so About face is your best friend.</p>
     <p><b>Horror hallway.</b> A zombie mode where you walk down a long hallway on your own, with no walk button. Your footsteps tell you your pace: quick, close together steps when the hallway ahead is clear, slowing down the more zombies are ahead, until you stop completely. You also stop while a zombie is right in front of you or grabbing you. Zombies break out of wooden barriers and glass windows in the walls ahead: you hear wood thudding and splintering, or glass banging and cracking, then the crash as they get through. If you walk past one, it chases you from behind, fast. A soft double tick plays every 100 feet. Your score is every foot you walk plus 10 points for every kill. Status reads your distance, kills and score.</p>
     <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: a fence 20 feet around you zaps every 4 seconds with a loud electric crack, incinerating any regular zombie at or inside it and hitting giant zombies for 100. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health.</p>
-    <p><b>Mythical weapons.</b> Thunderclap chains lightning: listen for crackles jumping between enemies. Thunderclap upgrades: a static field makes shocked enemies buzz and move at half speed, the ball lightning slug fires a fizzing orb straight ahead that bursts into lightning, and the lightning rod hums when it is charged, making your next shot a supercharged blast with a long deep rumble. The Black Hole Cannon's orb hums where it lands, drags enemies toward it, then collapses with a boom. The Banshee's scream hits and stuns everything in front of you, and stunned enemies make a ringing sound. It is strongest within 40 feet and weakens out to 160 feet. The Hydra's three rockets each explode where their target is, so you hear up to three blasts in different places. The Alien Symbiote fires wet, fleshy bursts. At the start of each new wave you hear it feed, a squelch, a growl and a heartbeat: it eats 50 of your maximum health and its damage grows 40 percent, until your maximum health is down to 100. Status tells you how strong it has grown. With vampiric rounds, every kill it makes gives you back 2 health with a soft heartbeat pulse. With Hair trigger V2, the Banshee becomes a tactical rifle: each trigger pull is a tight burst of 3 quick shrieks that hit harder, with a short pause between bursts. The Jack Frost chills hard: each icicle slows an enemy more, down to a tenth of its speed after four hits. Its Blizzard blast goes off when you reload: a whirling wind storm circles you, then a crunch of ice as every enemy within 40 feet freezes completely still for 15 seconds. Ice cracking means they are moving again, and a crystal chime means the next blizzard is ready, 10 seconds after the last. The Jet rifle's heat vent goes off with a roaring rush of hot air, bigger the more rounds you fired. With both Ramjet upgrades, a Jet round punches through every enemy in its line, with no limit, and never skips one, even from cover.</p>
+    <p><b>Mythical weapons.</b> Thunderclap chains lightning: listen for crackles jumping between enemies. Thunderclap upgrades: a static field makes shocked enemies buzz and move at half speed, the ball lightning slug fires a fizzing orb straight ahead that bursts into lightning, and the lightning rod hums when it is charged, making your next shot a supercharged blast with a long deep rumble. The Black Hole Cannon's orb hums where it lands, drags enemies toward it, then collapses with a boom. The Banshee's scream hits and stuns everything in front of you, and stunned enemies make a ringing sound. It is strongest within 40 feet and weakens out to 160 feet. The Hydra's three rockets each explode where their target is, so you hear up to three blasts in different places. The Alien Symbiote fires wet, fleshy bursts. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, at 40 percent more damage for every 50 health eaten. Now and then you hear it feed, a squelch, a growl and a heartbeat, and you hear its damage each time it passes another whole multiple. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100. Status tells you how strong it has grown. Carrying it without using it never costs you health. With vampiric rounds, every kill it makes gives you back 2 health with a soft heartbeat pulse. With Hair trigger V2, the Banshee becomes a tactical rifle: each trigger pull is a tight burst of 3 quick shrieks that hit harder, with a short pause between bursts. The Jack Frost chills hard: each icicle slows an enemy more, down to a tenth of its speed after four hits. Its Blizzard blast goes off when you reload: a whirling wind storm circles you, then a crunch of ice as every enemy within 40 feet freezes completely still for 15 seconds. Ice cracking means they are moving again, and a crystal chime means the next blizzard is ready, 10 seconds after the last. The Jet rifle's heat vent goes off with a roaring rush of hot air, bigger the more rounds you fired. With both Ramjet upgrades, a Jet round punches through every enemy in its line, with no limit, and never skips one, even from cover.</p>
     <p><b>Silver and the Armory.</b> Every kill pays silver: 10 for light enemies, 16 for heavy ones, 50 for mini bosses, 83 for bosses and 250 for mega bosses. In endless survival, boss rush and zombie siege, every kill pays 8 percent more silver for each wave you have survived, so wave 11 pays almost double. Every regular wave has one mini boss: it announces itself with a rising two-note siren before its cry, and it is far tougher than a normal enemy. Spend it in the Armory shop on weapons, attachments, body armor, grenades and perks. Perks go up to level 50. Kills also raise each gun's mastery, up to level 10, making its attachments stronger.</p>
     <p><b>Keyboard.</b> Left and right arrows turn. Down arrow is about face. Hold Space to fire. R reloads. Q switches weapon. C takes cover. G throws a grenade. X switches grenade type. E reads enemy locations. T is status. Escape pauses.</p>
   </div>
@@ -1141,7 +1141,7 @@ const WPN=[
   {id:'banshee',rng:0,name:'Banshee',short:'BANSHEE',mag:15,dmg:20,cone:40,cd:.25,reload:3.0,shots:1,sonic:true,acc:1,full:12.2,reach:48.8,price:30000,
    traits:'Mythical semi-automatic sonic rifle, firing up to 4 screams a second. Its shriek hits every enemy in a wide cone in front of you for 20 each and never misses. Within 40 feet it hits at full power and stuns them in place for 1 and a half seconds so they cannot move or attack. It still carries out to 160 feet, getting weaker with distance down to 40 percent, with a shorter stun. Takes only a few of its own upgrades.'},
   {id:'symbiote',rng:15,name:'Alien Symbiote',short:'SYMBIOTE',mag:55,dmg:1.2,cone:16,cd:.25,reload:2.4,shots:5,acc:.92,sym:true,price:50000,
-   traits:'Mythical living submachine gun that feeds on you. Fast 5-round bursts, already stronger than any other submachine gun, fully effective to about 50 feet. At the start of every new wave it eats 50 of your maximum health and its damage grows by 40 percent, stacking every wave. Once your maximum health is down to 100 it is fully grown and both stop. Health perks give it more to feed on. Takes only its own upgrades.'},
+   traits:'Mythical living submachine gun that feeds on you. Fast 5-round bursts, already stronger than any other submachine gun, fully effective to about 50 feet. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, 40 percent for every 50 health eaten. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100, and then both stop. Carrying it without using it costs you nothing. Takes only its own upgrades.'},
   {id:'hydra',rng:0,name:'Hydra',short:'HYDRA',mag:4,dmg:35,cone:20,cd:1.3,reload:3.5,shots:1,hydra:true,price:40000,
    traits:'Mythical three-barrel launcher. Each trigger pull splits into 3 homing rockets, each locking onto a different enemy, the ones you are facing first, then the closest anywhere. Each rocket hits for 35 and splashes enemies within 5 feet for half. If there are fewer than 3 enemies, the spare rockets pile onto the same ones. Takes only a few of its own upgrades.'}
 ];
@@ -1202,7 +1202,7 @@ const ATT=[
   {id:'symbarrel2',name:'Extended barrel V2',price:8000,for:'symbiote',req:'symbarrel1',desc:()=>'Another 15 percent more damage, and full damage reaches 50 percent farther than stock, about 74 feet. Buy V1 first.'},
   {id:'vamp',name:'Vampiric rounds',price:10000,for:'symbiote',ammo:true,desc:()=>'Blood-drinking ammo. Every enemy the symbiote kills gives you back 2 health, up to your maximum. You hear a soft heartbeat pulse when it heals you.'},
   {id:'infect',name:'Infectious rounds',price:22000,for:'symbiote',ammo:true,desc:()=>'Alien spore ammo. Every enemy hit becomes infected and loses 30 health every 3 seconds until it dies. Enemies within 3 feet of the one you hit catch the infection too. Infected enemies gurgle each time it eats at them.'},
-  {id:'symfrenzy',name:'Feeding frenzy',price:30000,for:'symbiote',desc:()=>'Special ability. The symbiote fires 4 times as fast.'},
+  {id:'symfrenzy',name:'Feeding frenzy',price:30000,for:'symbiote',desc:()=>'Special ability. The symbiote fires 4 times as fast, so fully grown it reaches 2400 damage per second instead of 600.'},
   {id:'symbrake',name:'Muzzle brake',price:12000,for:'symbiote',req:'symmag2',desc:()=>'Tames the recoil so every round stays on target. Full damage reaches 120 feet, the longest of any submachine gun. Buy Extended magazine V2 first.'},
   {id:'bntrig',name:'Hair trigger',price:5000,for:'banshee',desc:()=>'Fires 30 percent faster, nearly 6 screams a second.'},
   {id:'bntrig2',name:'Hair trigger V2',price:9000,for:'banshee',req:'bntrig',desc:()=>'A tactical trigger group that turns the Banshee into a tactical rifle. Every trigger pull fires a tight burst of 3 screams, each hitting 25 percent harder, with a short pause between bursts. Fewer, harder, more controlled hits: about a third more damage per second than V1, 3 screams of ammo per burst. Hold fire to keep bursting. Buy the first hair trigger first.'},
@@ -1265,7 +1265,7 @@ function build(w){
   if(w.spread){const rm=w.rm||1;b.range=b.barrel?[11*rm,20*rm,.45]:[7*rm,14*rm,.25]}
   if(w.spread&&has('slug')){b.spread=false;b.slug=true;b.dmg*=2.5;b.cone=12;b.rng=(b.barrel?85:70)/3.281;b.acc=.9}
   if(w.spread&&has('dbreath')){b.dmg*=.85;b.dragon=true}
-  if(w.id==='symbiote'&&has('symfrenzy'))b.cd=b.cd/4;
+  if(w.id==='symbiote'&&has('symfrenzy')){b.cd=b.cd/4;b.frenzy=true}
   if(w.id==='banshee'){if(has('bntrig'))b.cd*=.7;if(has('bntrig2')){b.shots=3;b.burst=true;b.cd=.5;b.dmg*=1.25}if(has('bnbarrel2'))b.dmg*=1.15;if(has('bnamp')){b.dmg*=2;b.full=w.full+20/3.281;b.reach=w.reach+20/3.281}}
   if(w.id==='thunder'){
     b.chainN=has('tcap')?6:4;b.chainR=(has('tcap')?25:15)/3.281;b.chainM=has('tover')?.9:.6;b.shock=has('tstatic');b.rod=has('trod');
@@ -1464,16 +1464,32 @@ const BOSSES=['boss','queen','titan','revenant','yardle'];
 /* endless modes: kill silver climbs 8 percent per wave */
 const paySc=()=>G&&(G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies')?1+.08*(G.wave-1):1;
 const brCount=w=>Math.min(4,1+Math.floor((w-1)/3));
-/* Alien Symbiote: at the start of every new wave it eats 50 maximum health and grows 40 percent stronger,
-   until maximum health is down to 100. */
-function symFeed(){
-  if(G.mode==='practice'||!G.lo.some(x=>x.sym))return '';
-  if(G.maxhp<=100)return '';
-  const bite=Math.min(50,G.maxhp-100);G.maxhp-=bite;G.hp=Math.min(G.hp,G.maxhp);G.symMult*=1.4;fx.symFeed();hud();
-  return G.maxhp<=100?`The symbiote feeds one last time and is fully grown. Damage ${n1(G.symMult)} times. Maximum health 100. `
-    :`The symbiote feeds. Damage ${n1(G.symMult)} times. Maximum health ${G.maxhp}. `}
+/* Alien Symbiote: it grows only from its own kills. Every kill it makes eats 2 maximum health and raises its damage
+   at the same rate as the old per-wave feeding (40 percent for every 50 health eaten). It is fully grown when its
+   sustained damage reaches 600 per second (2400 with Feeding frenzy, which fires 4 times as fast), or when maximum
+   health is down to 100, whichever comes first. Carrying it without using it costs nothing. */
+const SYMBITE=2,SYMRATE=Math.pow(1.4,1/50),SYMDPS=600;
+function symCap(w){const cd=w.frenzy?w.cd*4:w.cd,dps=w.dmg*w.shots*(1/cd)*(w.acc||.92);return Math.max(1,SYMDPS/dps)}
+function symGrow(n){
+  if(!G||G.mode==='practice'||G.symFull)return '';
+  const w=G.lo.find(x=>x.sym);if(!w)return '';
+  const cap=symCap(w),m0=G.symMult;let ate=0;
+  for(let i=0;i<n;i++){
+    if(G.maxhp<=100||G.symMult>=cap)break;
+    const bite=Math.min(SYMBITE,G.maxhp-100);G.maxhp-=bite;ate+=bite;G.symMult=Math.min(cap,G.symMult*Math.pow(SYMRATE,bite));
+  }
+  if(!ate)return '';
+  G.hp=Math.min(G.hp,G.maxhp);
+  const now=performance.now(),done=G.maxhp<=100||G.symMult>=cap-1e-6;
+  if(done||!G.symSndAt||now-G.symSndAt>4000){G.symSndAt=now;fx.symFeed()}
+  hud();
+  if(done){G.symFull=true;return ` The symbiote is fully grown. Damage ${n1(G.symMult)} times. Maximum health ${G.maxhp}.`}
+  // a short spoken update each time its damage passes another whole multiple
+  if(Math.floor(G.symMult)>Math.floor(m0))return ` Symbiote damage ${n1(G.symMult)} times. Maximum health ${G.maxhp}.`;
+  return '';
+}
 function startWave(){
-  const w=G.wave,end=G.mode==='endless',sym=w>1?symFeed():'';
+  const w=G.wave,end=G.mode==='endless',sym='';
   G.spawnT=2.5;G.minionT=6;G.bossSpawned=false;fx.horn();
   if(G.mode==='bossrush'){G.bossWave=false;G.miniDue=false;G.mega=w%7===0;G.toSpawn=brCount(w);G.maxAlive=G.toSpawn;G.spawnT=3;
     say(sym+`Boss rush, wave ${w}. ${G.mega?'Mega boss wave! ':''}${G.toSpawn>1?G.toSpawn+' bosses':'One boss'} incoming${G.mega?', one of them a mega boss with double health':''}.`);return}
@@ -1661,7 +1677,7 @@ function processDead(src){
   G.enemies=G.enemies.filter(e=>e.hp>0);
   if(G.mode==='practice'){G.kills+=dead.length;G.spawnT=1.5;say((dead.some(e=>e.hk)?'Headshot! ':'')+`Target down. ${G.kills} so far.`);return dead.length}
   let pay=0,lv='',heal='';
-  if(src==='symbiote'){const sw=G.lo.find(x=>x.id==='symbiote');
+  if(src==='symbiote'){lv+=symGrow(dead.length);const sw=G.lo.find(x=>x.id==='symbiote');
     if(sw&&sw.vamp){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal=` Plus ${got} health.`;fx.symHeal();hud()}}}
   const msg=dead.map(e=>{G.kills++;const t=EN[e.type];pay+=e.mega?Math.round(250*paySc()/(1+.08*6)):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDf().pay:1));P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++;
     if(src&&WBY[src]){const b=mlevel(src);P.mast[src]=(P.mast[src]||0)+1;const a=mlevel(src);
@@ -1793,7 +1809,7 @@ function status(){
   if(G.mode==='practice'){say(`Practice range. ${G.kills} target${G.kills===1?'':'s'} down. Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
   const left=G.enemies.length+G.toSpawn;
   const wv=G.mode==='zombies'?(G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}`:`${G.zm==='six'?'Watch my six':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.name).join(', ')}${G.revUsed?', second wind used':''}.`:''):G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`;
-  say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.maxhp<=100?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.jack} jack-in-the-box, ${G.gren.fatman} Fat Man.${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} Facing ${facing()}. ${P.coins} silver.`);
+  say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.jack} jack-in-the-box, ${G.gren.fatman} Fat Man.${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} Facing ${facing()}. ${P.coins} silver.`);
 }
 
 /* ---------- loop ---------- */
