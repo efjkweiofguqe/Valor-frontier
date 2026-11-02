@@ -88,8 +88,9 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 .item{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 .item.owned{border-color:var(--ok)}
 .item h3,.item h4{font-family:var(--display);font-weight:400;font-size:24px;margin:0;line-height:1.1}
-#mods-list h3.grp{font-family:var(--display);font-weight:400;font-size:20px;color:var(--accent);margin:14px 0 0;padding-bottom:4px;border-bottom:2px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
+#mods-list h3.grp,#shop-list h3.grp{font-family:var(--display);font-weight:400;font-size:20px;color:var(--accent);margin:14px 0 0;padding-bottom:4px;border-bottom:2px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
 #mods-list h3.grp:first-child{margin-top:0}
+#arm-sub button small{display:block}
 .item .meta{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent)}
 .item.owned .meta{color:var(--ok)}
 .item .acts{display:grid;grid-template-columns:2fr 1fr;gap:8px}
@@ -270,6 +271,10 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-cat="armor">Body armor</button>
     <button data-cat="grenades">Grenades</button>
     <button data-cat="perks">Perks</button>
+  </div>
+  <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
+    <button data-arm="regular">Regular<small>Vests, plates and suits</small></button>
+    <button data-arm="mythic">Mythical<small>Legendary armor with special abilities and traits</small></button>
   </div>
   <p class="note" id="shop-note"></p>
   <div class="stack" id="shop-list"></div>
@@ -848,6 +853,7 @@ Object.assign(fx,{
   lowammo(at=0){tone(uiBus,{f:3200,dur:.03,vol:.06,at})},
   cover(on){const d=out(0,0,.8);noise(d,{dur:.25,vol:.18,type:'highpass',f:2000,attack:.05});noise(d,{dur:.08,vol:.4,type:'lowpass',f:400,at:on?.18:.02})},
   armorHit(){const d=out(0,0,.8);tone(d,{type:'triangle',f:1600,dur:.05,vol:.18,at:.02});noise(d,{dur:.04,vol:.28,f:2800,q:5,at:.02})},
+  rageRoar(){const d=out(0,0,.9);tone(d,{type:'sawtooth',f:110,f2:55,dur:1.1,vol:.45,attack:.05});tone(d,{type:'sawtooth',f:165,f2:70,dur:.9,vol:.25,at:.05,attack:.05});noise(d,{dur:1.2,vol:.4,type:'lowpass',f:600,f2:200,attack:.1})},
   levelup(){const d=out(0,0,.6);[784,988,1175,1568].forEach((f,i)=>tone(d,{type:'triangle',f,dur:.18,vol:.18,at:i*.08}))},
   windup(rel,dist,v=1){const d=out(rel,dist,v,enBus);tone(d,{type:'sawtooth',f:110,f2:260,dur:.85,vol:.45,attack:.3});noise(d,{dur:.85,vol:.45,f:300,f2:1400,q:1,attack:.5})},
   charge(rel,dist){const d=out(rel,dist,1,enBus);noise(d,{dur:.5,vol:.8,f:300,f2:1500,q:.8,attack:.05});tone(d,{f:70,f2:35,dur:.4,vol:.9,at:.35});noise(d,{dur:.4,vol:.8,type:'lowpass',f:700,at:.35})},
@@ -1003,8 +1009,16 @@ const ARMOR=[
   {id:'vest',name:'Light vest',prot:.15,price:100,desc:'A soft vest. Cuts all damage you take by 15 percent.'},
   {id:'kevlar',name:'Kevlar armor',prot:.3,price:250,desc:'Military Kevlar. Cuts all damage you take by 30 percent.'},
   {id:'plate',name:'Ceramic plate carrier',prot:.45,price:450,desc:'Hard ceramic plates. Cuts all damage you take by 45 percent.'},
-  {id:'jugg',name:'Juggernaut suit',prot:.6,price:800,desc:'Full bomb-disposal style armor. Cuts all damage you take by 60 percent.'}
+  {id:'jugg',name:'Juggernaut suit',prot:.6,price:800,desc:'Full bomb-disposal style armor. Cuts all damage you take by 60 percent.'},
+  {id:'berserk',name:'Viking berserker armor',prot:.6,price:50000,myth:true,desc:'Mythical armor of iron, fur and runes. Cuts all damage you take by 60 percent. Has its own special ability, Berserker rage, and special traits you buy below. Traits level up only from kills you make while wearing it.'}
 ];
+/* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
+const MARMUP=[
+  {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
+  {id:'tough',arm:'berserk',kind:'trait',name:'Toughness',price:12000,lv:[0,0,150,400],cut:[0,.1,.2,.3],desc:'Special trait with 3 levels. Cuts the damage you take by another 10 percent at level 1, 20 at level 2 and 30 at level 3, on top of the armor. Starts at level 1. Reaches level 2 after 150 kills and level 3 after 400 kills, counted only while you wear the armor after buying this trait.'}
+];
+const MUBY=Object.fromEntries(MARMUP.map(u=>[u.id,u]));
+const tlv=id=>{const o=P.marm[id],u=MUBY[id];if(!o||!u)return 0;if(u.kind!=='trait')return 1;let l=1;while(l<3&&o.kills>=u.lv[l+1])l++;return l};
 const NADE={
   frag:{name:'Frag grenade',plural:'frag grenades',price:30,r:5/3.281,fuse:1,desc:'Pull the pin and drop it. A second later it blasts outward from you, hitting every enemy within 5 feet, hardest up close. Use it when enemies are attacking you. It never hurts you.'},
   cryo:{name:'Cryo grenade',plural:'cryo grenades',price:40,r:8/3.281,fuse:.8,desc:'Bursts into freezing mist around you. Every enemy within 8 feet moves and attacks at about a third of the speed for 8 seconds. Frozen enemies give off an icy tinkle.'},
@@ -1211,7 +1225,7 @@ function build(w){
    Progress lives in two places: this device (instant, but a phone can wipe it) and your
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
-const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,jack:0,fatman:0},mast:{},perk:{hp:0,heal:0},armor:{own:[],on:''},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},
+const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,jack:0,fatman:0},mast:{},perk:{hp:0,heal:0},armor:{own:[],on:''},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},
   stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},ts:0};
 const num=(v,d=0)=>typeof v==='number'&&isFinite(v)?v:d;
 function loadP(s){
@@ -1225,6 +1239,7 @@ function loadP(s){
   P.mast={};if(s.mast&&typeof s.mast==='object')for(const k in s.mast)if(WBY[k])P.mast[k]=Math.max(0,num(s.mast[k])|0);
   if(s.perk)['hp','heal'].forEach(k=>{P.perk[k]=Math.max(0,Math.min(50,num(s.perk[k])|0))});
   if(s.armor){P.armor.own=(Array.isArray(s.armor.own)?s.armor.own:[]).filter(i=>ARMOR.some(a=>a.id===i));P.armor.on=P.armor.own.includes(s.armor.on)?s.armor.on:''}
+  P.marm={};if(s.marm&&typeof s.marm==='object')for(const k in s.marm)if(MUBY[k]&&s.marm[k])P.marm[k]={kills:Math.max(0,num(s.marm[k].kills)|0)};
   P.best={};if(s.best&&typeof s.best==='object')for(const k in s.best)if(MAPS[k])P.best[k]=Math.max(0,num(s.best[k])|0);
   P.bestBoss={};if(s.bestBoss&&typeof s.bestBoss==='object')for(const k in s.bestBoss)if(MAPS[k])P.bestBoss[k]=Math.max(0,num(s.bestBoss[k])|0);
   P.bestZ={};if(s.bestZ&&typeof s.bestZ==='object')for(const k in s.bestZ)if(MAPS[k])P.bestZ[k]=Math.max(0,num(s.bestZ[k])|0);
@@ -1507,6 +1522,7 @@ function processDead(src){
     if(src&&WBY[src]){const b=mlevel(src);P.mast[src]=(P.mast[src]||0)+1;const a=mlevel(src);
       if(a>b){lv=` ${WBY[src].name} mastery level ${a}. Attachments stronger.`;const i=G.lo.findIndex(x=>x.id===src);if(i>=0)G.lo[i]=build(WBY[src])}}
     return (src==='fence'?'Fried! ':'')+(e.hk?'Headshot! ':'')+(t.boss?`${e.mega?'Mega ':''}${t.name} is down!`:`${t.name} down.`)});
+  if(P.armor.on==='berserk')MARMUP.forEach(u=>{if(u.kind!=='trait'||u.arm!=='berserk'||!P.marm[u.id])return;const b=tlv(u.id);P.marm[u.id].kills+=dead.length;const a=tlv(u.id);if(a>b)lv+=` ${u.name} is now level ${a}.`});
   G.earned+=pay;P.coins+=pay;P.stats.earned+=pay;saveP();
   setTimeout(()=>{if(ctx)fx.coin(pay>=20?3:1)},420);
   if(lv)setTimeout(()=>{if(ctx)fx.levelup()},800);
@@ -1518,11 +1534,22 @@ function hurtPlayer(dmg){
   if(!G||G.over||G.mode==='practice')return;
   let d=dmg*(S.diff<1?.7:S.diff>1.5?1.6:1);const ar=ARMBY[P.armor.on];
   if(ar)d*=1-ar.prot;if(G.cover)d*=.5;
+  const zerk=P.armor.on==='berserk';if(zerk){const tl=tlv('tough');if(tl)d*=1-MUBY.tough.cut[tl]}
   G.hp-=d;fx.hurt();if(ar)fx.armorHit();vib(140);
+  if(zerk&&P.marm.rage&&!(G.ringT>0)){const r0=G.rage||0;G.rage=r0+d;if(G.rage>=100){G.rage=0;berserkRage()}else if(r0<50&&G.rage>=50){fx.rageRoar();say('Rage half full.')}}
   if(G.hp<=0&&G.pk&&G.pk.revive&&!G.revUsed){G.revUsed=true;G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);
     G.enemies.forEach(e=>{if(e.dist<=MELEE+.3&&!EN[e.type].boss){e.dist=Math.max(e.dist,3);e.engaged=false}});
     say(`Second wind! You get back up with ${G.hp} health. Nearby zombies are shoved back.`)}
   hud();if(G.hp<=0)endGame(false);
+}
+/* Berserker rage: a ring of fire 10 feet around the player for 5 seconds. 100 damage on contact, then survivors burn 10 per second for 10 seconds */
+function berserkRage(){const r=10/3.281,hit=new Set();let t=5,cue=0;G.ringT=5;fx.rageRoar();fx.ventBlast(15);vib(300);
+  setTimeout(()=>{if(G&&!G.over)say('Berserker rage! Ring of fire.')},250);
+  later(dt=>{if(G.over)return true;t-=dt;G.ringT=t;cue-=dt;if(cue<=0){cue=.6;[-90,0,90,180].forEach(a=>fx.crackle(a,r))}
+    let died=false;G.enemies.forEach(e=>{if(e.hp<=0||hit.has(e)||e.dist>r)return;hit.add(e);const rel=norm(e.angle-G.heading);e.hp-=100;fx.burn(rel,e.dist,0);
+      if(e.hp<=0){fx.kill(rel,e.dist,.1,e.type);died=true}else{e.fireT=10;e.fireDps=Math.max(e.fireDps||0,10);e.fireSrc='berserk'}});
+    if(died)processDead('berserk');
+    if(t<=0){G.ringT=0;if(!G.over)say('The ring of fire dies down. Rage building again.');return true}return false});
 }
 function startReload(wi,side){const w=G.lo[wi];if(w.vent&&G.heat&&G.heat[wi]){heatVent(G.heat[wi]);G.heat[wi]=0}
   if(w.blizz&&!(G.blizzT>0))blizzard();const rt=w.reload*(G.pk&&G.pk.quick?.5:1);G.jobs.push({wi,side,total:rt,left:rt,i:0,ev:RSEQ[RKIND[w.id]],pan:w.akimbo?(side?.45:-.45):0})}
@@ -1938,7 +1965,7 @@ $('b-record').onclick=record;
 const WCAT={pistol:['pistol','deagle','beretta','glock'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','symbiote','banshee','thunder','hydra','blackhole','salvo']};
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
 const catW=()=>WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
-let curCat='pistol';
+let curCat='pistol',curArm='regular';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
 const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
@@ -1964,12 +1991,20 @@ function setItem(id,meta,act,aria,primary,on){const it=$(id);if(!it)return;it.cl
   const b=it.querySelector('.act');b.textContent=act;b.setAttribute('aria-label',aria);b.classList.toggle('primary',!!primary)}
 $('b-unequip').onclick=()=>{initAudio();if(!P.carry.length)return;P.carry=[];fx.reload(.3);saveP();updateShop();say(`All guns put in storage. Choose Carry into battle on up to ${MAXCARRY} guns before you deploy.`)};
 document.querySelectorAll('#shop-cats button').forEach(b=>b.onclick=()=>{initAudio();curCat=b.dataset.cat;buildShop(true)});
+document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(curArm==='mythic'?'Mythical armor.':'Regular armor.')});
+const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
+const armList=()=>ARMOR.filter(a=>curArm==='mythic'?a.myth:!a.myth);
 function buildShop(keepFocus){
   document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=CATNOTE[curCat];
+  $('arm-sub').hidden=curCat!=='armor';
+  document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+  $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)} Magazine ${w.mag}. Reload ${w.reload} seconds. ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
-  if(curCat==='armor')ARMOR.forEach(a=>mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)}));
+  if(curCat==='armor')armList().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
+    const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
+    const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
+    ups.forEach(u=>mkItem(list,'mu-'+u.id,u.name,u.desc,{act:()=>marmAct(u)}))});
   if(curCat==='grenades')Object.entries(NADE).forEach(([k,N])=>mkItem(list,'gr-'+k,k==='fatman'?'Fat Man':k==='jack'?'Jack-in-the-boxes':N.name+'s',N.desc,{act:()=>nadeBuy(k,1),extra:()=>nadeBuy(k,5),
     hear:()=>{initAudio();if(k==='jack'){fx.jackSet();setTimeout(()=>fx.jackTune(0,3),400);setTimeout(()=>{fx.jackPop(0,3);setTimeout(()=>fx.boom(0,3),450)},1700);return}fx.pin();if(k==='fatman'){fx.fall();fx.nuke(2)}else{fx.drop(.25);(k==='frag'?fx.boom:fx.cryo)(0,1.5,1)}}}));
   if(curCat==='perks')PERKS.forEach(pk=>mkItem(list,'pk-'+pk.id,pk.name,pk.desc,{act:()=>perkAct(pk)}));
@@ -1982,7 +2017,13 @@ function updateShop(){
     setItem('it-'+w.id,L.meta,L.act,L.aria,!owned&&P.coins>=w.price,owned);
     const at=it.querySelector('.att');at.hidden=!owned;const n=attOf(w.id).eq.length;
     at.innerHTML=`Attachments<small>${n?n+' on':'Ammo, barrels, mags and more'}</small>`;at.setAttribute('aria-label',`${w.name} attachments. ${n?n+' on.':'None on.'}`)});
-  if(curCat==='armor')ARMOR.forEach(a=>{const own=P.armor.own.includes(a.id),on=P.armor.on===a.id;
+  if(curCat==='armor')MARMUP.forEach(u=>{if(!$('mu-'+u.id))return;const a=ARMBY[u.arm],own=!!P.marm[u.id];
+    if(!own&&!P.armor.own.includes(a.id))setItem('mu-'+u.id,`Price ${u.price} silver · Needs ${a.name} first`,'Locked',`${u.name}, ${u.price} silver. Locked: buy ${a.name} first`,false,false);
+    else if(!own)setItem('mu-'+u.id,`Price ${u.price} silver`,`Buy for ${u.price}`,`Buy ${u.name} for ${u.price} silver`,P.coins>=u.price,false);
+    else if(u.kind==='ability')setItem('mu-'+u.id,`Owned · Active while you wear the ${a.name}`,'Owned',`${u.name} is owned and active while you wear the ${a.name}`,false,true);
+    else{const l=tlv(u.id),k=P.marm[u.id].kills,next=l<3?` · ${u.lv[l+1]-k} kills to level ${l+1}`:' · Maxed out';
+      setItem('mu-'+u.id,`Owned · Level ${l} of 3${next}`,`Level ${l} of 3`,`${u.name} level ${l} of 3.${l<3?` ${u.lv[l+1]-k} more kills in the ${a.name} to level ${l+1}.`:' Maxed out.'}`,false,true)}});
+  if(curCat==='armor')armList().forEach(a=>{const own=P.armor.own.includes(a.id),on=P.armor.on===a.id;
     if(!own)setItem('ar-'+a.id,`Price ${a.price} silver`,`Buy for ${a.price}`,`Buy ${a.name} for ${a.price} silver`,P.coins>=a.price,false);
     else if(on)setItem('ar-'+a.id,'Owned · Wearing','Take off',`Wearing ${a.name}. Take it off`,false,true);
     else setItem('ar-'+a.id,'Owned','Wear it',`Wear ${a.name}`,false,false)});
@@ -2025,6 +2066,14 @@ function armorAct(a){
   else if(P.armor.on===a.id){P.armor.on='';fx.cover(false);say(`${a.name} off. No armor worn.`)}
   else{P.armor.on=a.id;fx.armorHit();say(`Wearing ${a.name}.`)}
   saveP();updateShop();
+}
+function marmAct(u){
+  initAudio();const a=ARMBY[u.arm];
+  if(P.marm[u.id]){fx.click();if(u.kind==='ability')say(`You already own ${u.name}. It works whenever you wear the ${a.name}.`);else{const l=tlv(u.id);say(`${u.name} is level ${l} of 3.`+(l<3?` ${u.lv[l+1]-P.marm[u.id].kills} more kills in the ${a.name} to reach level ${l+1}.`:' Maxed out.'))}return}
+  if(!P.armor.own.includes(a.id)){fx.click();say(`Buy the ${a.name} first.`);return}
+  if(P.coins<u.price)return broke(u.price,u.name);
+  P.coins-=u.price;P.marm[u.id]={kills:0};fx.buy();saveP();updateShop();
+  say(`Bought ${u.name} for the ${a.name}. `+(u.kind==='trait'?'It starts at level 1. Get kills while wearing the armor to level it up. ':'')+`${P.coins} silver left.`);
 }
 function nadeBuy(k,n){
   initAudio();const N=NADE[k],price=n===5?Math.round(N.price*5*.9):N.price;
