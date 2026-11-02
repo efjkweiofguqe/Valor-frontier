@@ -227,7 +227,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Modes.</b> Campaign is five waves ending in the battlefield's boss. Endless survival never stops, brings a boss every fifth wave and a mega boss with twice a boss's health every seventh wave, and pays a bonus for every wave you clear. Boss rush is only bosses: it starts with one weakened boss and gets brutal far faster than endless, with a mega boss every seventh wave. Practice range has still targets that cannot hurt you, for learning a gun. Zombie siege is endless waves of the undead. Four glass windows surround you about 50 feet out, at north, east, south and west. A zombie has to smash through a window to reach you, which takes a few seconds: you hear banging and cracking glass from that direction, then a crash when it shatters. Broken windows seal themselves again about 6 seconds later. Every tenth wave brings a giant zombie boss. The horde grows every wave, to about 200 zombies by wave 50. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Status reads the state of every window. That is the Standard zombie mode.</p>
     <p><b>Watch my six.</b> A zombie mode with only two windows: one straight ahead of you at 12 o'clock and one right behind you at 6 o'clock. Nothing comes from the left or right, so About face is your best friend.</p>
     <p><b>Horror hallway.</b> A zombie mode where you walk down a long hallway on your own, with no walk button. Your footsteps tell you your pace: quick, close together steps when the hallway ahead is clear, slowing down the more zombies are ahead, until you stop completely. You also stop while a zombie is right in front of you or grabbing you. Zombies break out of wooden barriers and glass windows in the walls ahead: you hear wood thudding and splintering, or glass banging and cracking, then the crash as they get through. If you walk past one, it chases you from behind, fast. A soft double tick plays every 100 feet. Your score is every foot you walk plus 10 points for every kill. Status reads your distance, kills and score.</p>
-    <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: a fence 20 feet around you zaps every 4 seconds with a loud electric crack, incinerating any regular zombie at or inside it and hitting giant zombies for 100. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health.</p>
+    <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: an electrified band from 20 feet in to 14 feet around you. A zombie touching it makes a loud electric crack, then sharp zaps while it struggles through at 60 percent speed, taking damage every second. Weaker zombies usually fry, but tougher zombies in later waves get through hurt, and runners can dash across. Giant zombies take more damage but are not slowed. A soft hum every few seconds tells you the fence is on. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health.</p>
     <p><b>Mythical weapons.</b> Thunderclap chains lightning: listen for crackles jumping between enemies. Thunderclap upgrades: a static field makes shocked enemies buzz and move at half speed, the ball lightning slug fires a fizzing orb straight ahead that passes through up to 7 enemies, scorches anyone within 2 feet of them and bursts into chain lightning, and when the lightning rod is charged you hear a rising hum and then electricity crackling around you until you fire your supercharged blast with its long deep rumble. The Black Hole Cannon's orb hums where it lands, drags enemies toward it, then collapses with a boom. The Banshee's scream hits and stuns everything in front of you, and stunned enemies make a ringing sound. It is strongest within 40 feet and weakens out to 160 feet. The Hydra's three rockets each explode where their target is, so you hear up to three blasts in different places. The Alien Symbiote fires wet, fleshy bursts. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, at 40 percent more damage for every 50 health eaten. Now and then you hear it feed, a squelch, a growl and a heartbeat, and you hear its damage each time it passes another whole multiple. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100. Status tells you how strong it has grown. Carrying it without using it never costs you health. With vampiric rounds, every kill it makes gives you back 2 health with a soft heartbeat pulse. With Hair trigger V2, the Banshee becomes a tactical rifle: each trigger pull is a tight burst of 3 quick shrieks that hit harder, with a short pause between bursts. The Jack Frost chills hard: each icicle slows an enemy more, down to a tenth of its speed after four hits. Its Blizzard blast goes off when you reload: a whirling wind storm circles you, then a crunch of ice as every enemy within 40 feet freezes completely still for 15 seconds. Ice cracking means they are moving again, and a crystal chime means the next blizzard is ready, 10 seconds after the last. The Jet rifle's heat vent goes off with a roaring rush of hot air, bigger the more rounds you fired. With both Ramjet upgrades, a Jet round punches through every enemy in its line, with no limit, and never skips one, even from cover.</p>
     <p><b>Silver and the Armory.</b> Every kill pays silver: 10 for light enemies, 16 for heavy ones, 50 for mini bosses, 83 for bosses and 250 for mega bosses. In endless survival, boss rush and zombie siege, every kill pays 8 percent more silver for each wave you have survived, so wave 11 pays almost double. Every regular wave has one mini boss: it announces itself with a rising two-note siren before its cry, and it is far tougher than a normal enemy. Spend it in the Armory shop on weapons, attachments, body armor, grenades and perks. Perks go up to level 50. Kills also raise each gun's mastery, up to level 10, making its attachments stronger.</p>
     <p><b>Keyboard.</b> Left and right arrows turn. Down arrow is about face. Hold Space to fire. R reloads. Q switches weapon. C takes cover. G throws a grenade. X switches grenade type. E reads enemy locations. T is status. Escape pauses.</p>
@@ -1895,21 +1895,28 @@ function stepHall(dt){
   else if(G.stopped&&G.spd>HALLV*.4&&G.moveSayT<=0){G.stopped=false;G.moveSayT=3;say('Moving again.')}
   if(Math.random()<dt)hud();
 }
-/* Electric fence perk: every 4 seconds it zaps every zombie at or inside 20 feet.
-   Regular zombies are incinerated outright, giant zombies take 100. */
-function fenceZap(){
-  const hit=G.enemies.filter(e=>e.hp>0&&e.dist<=FENCE);
-  if(!hit.length){fx.fenceIdle();return}
-  vib(80);let boss=null;
-  hit.forEach((e,i)=>{const rel=norm(e.angle-G.heading),at=i*.05;setTimeout(()=>{if(ctx)fx.fenceZap(rel,e.dist)},at*1000);
-    if(EN[e.type].boss){e.hp-=100;boss=e}else e.hp=0;
-    if(e.hp<=0){fx.burn(rel,e.dist,.15+at);fx.kill(rel,e.dist,.3+at,e.type)}});
-  const k=processDead('fence');
-  if(!G.over&&boss&&boss.hp>0)setTimeout(()=>{if(G&&!G.over&&alive(boss))say(`Fence zapped the giant zombie. ${Math.max(1,Math.round(boss.hp/boss.maxhp*100))} percent.`)},k?1800:0);
+/* Electric fence perk: an electrified band from 20 feet in to 14 feet around you. Zombies crossing it are shocked
+   for damage every second and slowed to 60 percent speed until they are through. It no longer kills outright,
+   so tougher zombies in later waves get through hurt, and runners can dash across. Giant zombies take more
+   damage but are not slowed. A soft hum every few seconds tells you it is on. */
+const FENCE_IN=14/3.281,FENCE_DPS=2,FENCE_DPS_BOSS=5;
+function fenceTick(dt){
+  let any=false;
+  for(const e of G.enemies){
+    const inBand=e.hp>0&&!(e.hb>0)&&e.dist<=FENCE&&e.dist>FENCE_IN;
+    if(!inBand){e.fenceIn=false;continue}
+    any=true;const boss=!!EN[e.type].boss,rel=norm(e.angle-G.heading);
+    if(!e.fenceIn){e.fenceIn=!boss;e.fenceSnd=.6;if(ctx)fx.fenceZap(rel,e.dist);vib(40)}   // touching the fence: big crack
+    e.hp-=(boss?FENCE_DPS_BOSS:FENCE_DPS)*dt;
+    e.fenceSnd-=dt;if(e.fenceSnd<=0){e.fenceSnd=.55+Math.random()*.2;if(ctx)fx.zap(rel,e.dist)}   // still crossing: sharp zaps
+    if(e.hp<=0){e.fenceIn=false;fx.burn(rel,e.dist,.05);fx.kill(rel,e.dist,.15,e.type)}
+  }
+  if(G.enemies.some(e=>e.hp<=0))processDead('fence');
+  G.fenceT-=dt;if(G.fenceT<=0){G.fenceT=4;if(!any&&ctx)fx.fenceIdle()}
 }
 /* perk machine: opens after every fifth zombie wave. Perks cost silver and last for the run */
 const PERKZ=[
-  {id:'fence',name:'Electric fence',price:600,desc:'A fence 20 feet around you zaps every 4 seconds with a loud crack. Any regular zombie at or inside it is incinerated. Giant zombies take 100 damage.'},
+  {id:'fence',name:'Electric fence',price:600,desc:'An electrified fence band 20 to 14 feet around you. Zombies crossing it are shocked for damage every second and slowed to 60 percent speed until they get through. Weaker zombies usually fry, tougher ones get through hurt. Giant zombies take more damage but are not slowed.'},
   {id:'jugg',name:'Iron gut',price:300,desc:'50 more maximum health, and you heal 50 right away.'},
   {id:'quick',name:'Quick hands',price:250,desc:'Every gun reloads twice as fast.'},
   {id:'dtap',name:'Double tap',price:400,desc:'Your shots hit 35 percent harder.'},
@@ -1944,7 +1951,7 @@ function stepEnemy(e,dt){
   if(e.stunT>0)e.stunT-=dt;
   if(e.shockT>0)e.shockT-=dt;
   if(e.frozeT>0)e.frozeT-=dt;
-  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1);
+  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1);
   if(e.slowT>0)e.slowT-=dt;
   if(e.hb>0){e.hb-=dt*(slow>0?1:0);e.bt-=dt;const pg=1-e.hb/e.hb0;
     if(e.bt<=0){e.bt=.45;e.kind==='bar'?fx.boardBang(rel,pg,e.dist):fx.glassBang(rel,pg,e.dist);
@@ -2011,7 +2018,7 @@ function step(dt){
   if(G.mode==='practice')G.enemies.forEach(e=>{e.cue-=dt;if(e.cue<=0){CRY[e.type](out(norm(e.angle-G.heading),e.dist,1,enBus));e.cue=.9+e.dist*.025}});
   else G.enemies.forEach(e=>stepEnemy(e,dt));
   if(G.mode==='zombies'&&G.win)stepWindows(dt);
-  if(G.mode==='zombies'&&G.pk&&G.pk.fence){G.fenceT-=dt;if(G.fenceT<=0){G.fenceT=4;fenceZap()}if(G.over)return}
+  if(G.mode==='zombies'&&G.pk&&G.pk.fence){fenceTick(dt);if(G.over)return}
   // jack-o-lantern fire burns down health over time
   G.enemies.forEach(e=>{if(!(e.fireT>0)||e.hp<=0)return;e.fireT-=dt;e.hp-=e.fireDps*dt;e.fireCue=(e.fireCue||0)-dt;
     if(e.fireCue<=0){fx.crackle(norm(e.angle-G.heading),e.dist);e.fireCue=.9}if(e.hp<=0)fx.kill(norm(e.angle-G.heading),e.dist,0,e.type)});
@@ -2085,6 +2092,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-fence',date:'November 2, 2026',title:'Electric fence rebalance',items:[
+    'The electric fence perk no longer incinerates every zombie that reaches it.',
+    'It is now an electrified band from 20 feet in to 14 feet around you. Zombies crossing it take damage every second and slow to 60 percent speed until they get through.',
+    'Weaker zombies usually fry, but tougher zombies in later waves and on harder difficulties get through hurt, and runners can dash across. Giant zombies take more damage but are not slowed.',
+    'You hear a loud crack when a zombie touches the fence, then sharp zaps while it struggles through.']},
   {id:'2026-11-02-thunderboom',date:'November 2, 2026',title:'Bigger Thunderclap boom',items:[
     'The Thunderclap firing sound was rebuilt as a huge thunder boom: a sharp crack, a heavy chest-shaking boom, then thunder rolling away for a few seconds.',
     'The boom is shaped so it comes through on phone speakers and earbuds, not just big headphones.']},
