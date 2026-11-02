@@ -47,6 +47,10 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .seg button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 .btn.disclose{text-align:left}.btn.disclose::before{content:"\25B8  " / ""}.btn.disclose[aria-expanded=true]::before{content:"\25BE  " / ""}
 .adv{display:flex;flex-direction:column;gap:8px;padding-left:10px;border-left:3px solid var(--line)}
+.btn.quiet{width:auto;align-self:flex-start;padding:10px 16px;font-size:16px;font-weight:700;background:transparent}
+.logent{border-top:2px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
+.logent h3{font-family:var(--display);font-weight:400;font-size:22px;margin:0;line-height:1.15}
+.logent ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .note{border-left:4px solid var(--accent);padding:4px 0 4px 12px;color:var(--muted)}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 .row .btn{text-align:center;font-size:16px;padding:14px 10px}
@@ -120,6 +124,16 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-go="pid" id="menu-pid">Player ID<small id="menu-pid-s">Create a username so the developer can send you testing items</small></button>
   </div>
   <p class="note" id="save-state" role="status">Checking your saved progress…</p>
+  <button class="btn quiet" data-go="log" id="menu-log">Update log</button>
+</section>
+
+<!-- UPDATE LOG -->
+<section id="log" class="screen" hidden>
+  <p class="tag">What is new</p>
+  <h2 id="log-h" tabindex="-1">Update log</h2>
+  <button class="btn back" data-go="menu">Back</button>
+  <p class="note">Newest updates first. Each update is a heading, so you can jump between them with your screen reader.</p>
+  <div class="stack" id="log-list"></div>
 </section>
 
 <!-- PLAYER ID -->
@@ -2028,8 +2042,47 @@ function hud(){
   const hall=G.mode==='zombies'&&G.zm==='hall';$('v-wave').previousElementSibling.textContent=hall?'Score':'Wave';if(hall)$('v-wave').textContent=hallScore();
 }
 
+/* ---------- update log ----------
+   Newest first. To announce a new update, add an entry at the top with a new id. */
+const UPDATES=[
+  {id:'2026-11-02-symbiote',date:'November 2, 2026',title:'Alien Symbiote rework',items:[
+    'The Symbiote no longer feeds at the start of every wave. It only feeds when you use it.',
+    'Every kill it makes eats 2 maximum health and makes it stronger, at the same rate as before.',
+    'Fully grown it reaches 600 damage per second, or 2400 with Feeding frenzy. It also stops growing once your maximum health is down to 100.',
+    'Carrying it without using it never costs you health.']},
+  {id:'2026-11-02-zombies',date:'November 2, 2026',title:'Zombie siege advanced options',items:[
+    'New Advanced options under Zombie mode, on the Deploy screen.',
+    'Zombie spawn rate: Normal, Fast, Faster or Hyperspeed.',
+    'Zombie difficulty: Normal, Hard, Hardcore or Hellish. Harder settings make zombies tougher every wave and pay more silver per kill.',
+    'Best records are now kept separately for each zombie difficulty.']},
+  {id:'2026-11-01-pid',date:'November 1, 2026',title:'Player ID and developer gifts',items:[
+    'Create a username from Player ID on the main menu. It is linked to your save file.',
+    'The developer can send you silver, weapons, armor and grenades for testing. Gifts arrive on their own when you open the game.']},
+  {id:'2026-11-01-armor',date:'November 1, 2026',title:'Mythical armor',items:[
+    'Body armor in the Armory shop now has a Mythical tab.',
+    'First mythical armor: Viking berserker armor. It cuts damage by 60 percent, has the Berserker rage ability, and traits that level up from kills you make while wearing it.']},
+  {id:'2026-11-01-beta',date:'November 1, 2026',title:'Open beta on the web',items:[
+    'Valor Frontier is now playable on the web for beta testers.',
+    'Five battlefields, campaign, endless survival, zombie siege, boss rush and a practice range.',
+    'Armory shop with pistols, submachine guns, rifles, machine guns, sniper rifles, shotguns, mythical weapons, armor, grenades and perks.']}
+];
+const LOGKEY='vf-log-seen';
+function logSeen(){try{return localStorage.getItem(LOGKEY)||''}catch(e){return ''}}
+function updateLogBtn(){const b=$('menu-log');if(!b)return;const fresh=UPDATES.length&&logSeen()!==UPDATES[0].id;
+  b.textContent=fresh?'Update log, new update':'Update log'}
+function buildLog(){
+  const box=$('log-list');box.textContent='';
+  UPDATES.forEach(u=>{const d=document.createElement('div');d.className='logent';
+    const h=document.createElement('h3');h.textContent=u.title;
+    const t=document.createElement('p');t.className='tag';t.textContent=u.date;
+    const ul=document.createElement('ul');u.items.forEach(x=>{const li=document.createElement('li');li.textContent=x;ul.appendChild(li)});
+    d.append(h,t,ul);box.appendChild(d)});
+  try{if(UPDATES.length)localStorage.setItem(LOGKEY,UPDATES[0].id)}catch(e){}
+}
+updateLogBtn();
+
 /* ---------- screens ---------- */
-const screens=['menu','maps','shop','mods','tutorial','settings','pid','game'];
+const screens=['menu','maps','shop','mods','tutorial','settings','pid','log','game'];
 function show(id){
   screens.forEach(s=>$(s).hidden=s!==id);$('pause').hidden=true;$('over').hidden=true;$('perks').hidden=true;
   if(id==='menu')$('menu-coins').textContent=`Weapons, attachments, armor, grenades and perks. You have ${P.coins} silver.`;
@@ -2037,6 +2090,8 @@ function show(id){
   if(id==='shop')buildShop();
   if(id==='mods')buildMods();
   if(id==='pid')updatePid();
+  if(id==='log')buildLog();
+  if(id==='menu')updateLogBtn();
   if(id==='menu'){updatePidMenu();checkGifts(true)}
   const h=$(id+'-h');if(h)setTimeout(()=>h.focus(),50);
 }
