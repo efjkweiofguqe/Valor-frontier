@@ -1,10 +1,9 @@
 rules_version = '2';
 // Valor Frontier player IDs and developer gifts.
-// Replace ADMIN_UID with the User UID of your developer account (Firebase console > Authentication > Users).
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isAdmin() { return signedIn() && request.auth.uid == 'ADMIN_UID'; }
+    function isAdmin() { return signedIn() && request.auth.uid == 'RDRWH8Vm6qMgjWJgQm89G5NoIVZ2'; }
 
     // usernames/{lowercase name} -> { uid, name }. Claimed once, never changed by players.
     match /usernames/{key} {
