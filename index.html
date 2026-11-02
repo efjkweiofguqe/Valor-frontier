@@ -46,6 +46,14 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .seg button.on small{color:var(--accent-ink)}
 .seg button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 .btn.disclose{text-align:left}.btn.disclose::before{content:"\25B8  " / ""}.btn.disclose[aria-expanded=true]::before{content:"\25BE  " / ""}
+.stepper{display:grid;grid-template-columns:72px 1fr 72px;align-items:stretch;gap:10px}
+.stepper button{background:var(--panel);border:2px solid var(--line);border-radius:12px;font-family:var(--display);font-size:34px;line-height:1;min-height:64px;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.stepper button:active{transform:scale(.97)}
+.stepper button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.stepper button:disabled{opacity:.4}
+.stepper .val{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--panel);border:2px solid var(--accent);border-radius:12px;margin:0;font-variant-numeric:tabular-nums}
+.stepper .val b{font-family:var(--display);font-weight:400;font-size:34px;color:var(--accent);line-height:1.05}
+.stepper .val span{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
 .adv{display:flex;flex-direction:column;gap:8px;padding-left:10px;border-left:3px solid var(--line)}
 .btn.quiet{width:auto;align-self:flex-start;padding:10px 16px;font-size:16px;font-weight:700;background:transparent}
 .logent{border-top:2px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
@@ -186,6 +194,13 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
         <button role="radio" data-val="faster" data-name="Faster">Faster<small>Spawn twice as fast</small></button>
         <button role="radio" data-val="hyper" data-name="Hyperspeed">Hyperspeed<small>Spawn eight times as fast</small></button>
       </div>
+      <p class="flabel" id="zst-l">Starting wave</p>
+      <div class="stepper" role="group" aria-labelledby="zst-l">
+        <button id="zst-minus" aria-label="Lower starting wave">&minus;</button>
+        <p class="val" id="zst-val"><span aria-hidden="true">Start wave</span><b id="zst-num">1</b></p>
+        <button id="zst-plus" aria-label="Raise starting wave">+</button>
+      </div>
+      <p class="note" id="zst-hint">Hold plus or minus to change it faster. Zombies start as tough as that wave, and silver pays as if you had reached it. Best records count the waves you actually survive.</p>
       <button class="btn disclose" id="zdiff-btn" aria-expanded="false" aria-controls="zdiff">Difficulty<small id="zdiff-sum"></small></button>
       <div id="zdiff" hidden>
         <div class="seg" role="radiogroup" aria-label="Zombie difficulty" data-key="zdiff">
@@ -475,7 +490,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 <script>
 (function(){
 /* ---------- settings ---------- */
-const S={voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal'};
+const S={voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1};
 try{Object.assign(S,JSON.parse(localStorage.getItem('vf-settings')||'{}'))}catch(e){}
 function saveS(){try{localStorage.setItem('vf-settings',JSON.stringify(S))}catch(e){}if(typeof cloud!=='undefined'&&cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1500)}}
 const $=id=>document.getElementById(id);
@@ -493,7 +508,19 @@ const ZDIFF={normal:{n:'Normal',hp:.05,dmg:0,pay:1},hard:{n:'Hard',hp:.08,dmg:0,
 const zSp=()=>ZSPAWN[S.zspawn]||ZSPAWN.normal,zDf=()=>ZDIFF[S.zdiff]||ZDIFF.normal;
 const zKey=(map,zd)=>zd&&zd!=='normal'&&ZDIFF[zd]?map+'|'+zd:map;
 const zKeyOk=k=>{const [m,d]=k.split('|');return !!MAPS[m]&&(d==null||(!!ZDIFF[d]&&d!=='normal'))};
-function zadvSync(){$('zadv-sum').textContent=`Spawn rate ${zSp().n}, difficulty ${zDf().n}`;$('zdiff-sum').textContent=zDf().n}
+const ZMAXSTART=150,zStart=()=>Math.max(1,Math.min(ZMAXSTART,Math.round(+S.zstart||1)));
+function zadvSync(){const w=zStart();$('zadv-sum').textContent=`Spawn rate ${zSp().n}, start wave ${w}, difficulty ${zDf().n}`;$('zdiff-sum').textContent=zDf().n;
+  $('zst-num').textContent=w;$('zst-val').setAttribute('aria-label',`Starting wave ${w}`);$('zst-minus').disabled=w<=1;$('zst-plus').disabled=w>=ZMAXSTART}
+/* starting wave stepper: tap to move by 1, hold to keep going and speed up */
+(function(){let rep=null,repT=null,held=false,skipClick=false;
+  const step=(d,speak)=>{const w=Math.max(1,Math.min(ZMAXSTART,zStart()+d));if(w===zStart()){if(speak)say(`Starting wave ${w}. ${w>=ZMAXSTART?'That is the highest.':'That is the lowest.'}`);return false}
+    S.zstart=w;zadvSync();if(speak)say(`Starting wave ${w}.`);return true};
+  const stop=()=>{clearTimeout(repT);clearInterval(rep);rep=repT=null;if(held){held=false;saveS();say(`Starting wave ${zStart()}.`)}};
+  [['zst-minus',-1],['zst-plus',1]].forEach(([id,d])=>{const b=$(id);
+    b.addEventListener('pointerdown',e=>{skipClick=true;initAudio();if(step(d,true))saveS();
+      repT=setTimeout(()=>{held=true;let n=0;rep=setInterval(()=>{n++;if(!step(n>15?d*5:d,false))stop()},110)},450)});
+    ['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,stop));
+    b.addEventListener('click',()=>{if(skipClick){skipClick=false;return}if(step(d,true))saveS()})})})();
 function disclose(btnId,boxId){const b=$(btnId),box=$(boxId);b.onclick=()=>{const open=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',open?'true':'false');box.hidden=!open}}
 disclose('zadv-btn','zadv');disclose('zdiff-btn','zdiff');
 document.querySelectorAll('[data-key=zspawn] button,[data-key=zdiff] button').forEach(b=>b.addEventListener('click',zadvSync));
@@ -1499,7 +1526,7 @@ function newGame(map,mode){
      wave:1,toSpawn:0,spawnT:2,enemies:[],kills:0,lockT:0,lockE:null,beatT:0,ambT:3,breakT:0,paused:false,over:false,
      bossWave:false,bossSpawned:false,minionT:6,cover:false,gt:'frag',nades:[],rockets:[],ncd:0,hpT:0,told:{},
      symMult:1,gren:mode==='practice'?{frag:99,cryo:99,jack:99,fatman:99}:{...P.gren},pShots:0,pHits:0,duck:false};
-  if(mode==='zombies'){G.zm=['standard','six','hall'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.pk={};G.fenceT=4;
+  if(mode==='zombies'){G.zm=['standard','six','hall'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.pk={};G.fenceT=4;G.zStart=zStart();G.wave=G.zStart;
     if(G.zm==='hall'){G.win=null;G.pos=0;G.spd=HALLV;G.stepT=0;G.stepSide=0;G.mileAt=100/3.281;G.stopped=false;G.moveSayT=0}
     else G.win=(G.zm==='six'?[0,180]:[0,90,180,270]).map(a=>({a,broken:false,regenT:0,bang:0,busy:0,bt:0}))}
   if(mode==='practice'){G.miniDue=false;G.toSpawn=Infinity;G.spawnT=1.5}else startWave();
@@ -2092,6 +2119,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-zstart',date:'November 2, 2026',title:'Choose your starting zombie wave',items:[
+    'Zombie siege Advanced options now has a Starting wave setting, from wave 1 up to wave 150.',
+    'Use the minus button on the left and the plus button on the right. Hold either one to change it faster.',
+    'Zombies start as tough as the wave you pick, and silver pays as if you had reached it.',
+    'Best records count only the waves you actually survive, so starting high does not inflate them.']},
   {id:'2026-11-02-fence',date:'November 2, 2026',title:'Electric fence rebalance',items:[
     'The electric fence perk no longer incinerates every zombie that reaches it.',
     'It is now an electrified band from 20 feet in to 14 feet around you. Zombies crossing it take damage every second and slow to 60 percent speed until they get through.',
@@ -2180,7 +2212,7 @@ function begin(map){
   if(!P.carry.length){fx.click();say('You are not carrying any guns. Open the Armory shop and choose Carry into battle on up to 4 guns.');return}lastMap=map;const mode=S.mode||'campaign';show('game');newGame(map,mode);if(mode!=='practice'){P.stats.games++;saveP()}hud();startAmb(map);
   const bc=$('b-cover');bc.textContent='Take cover';bc.setAttribute('aria-pressed','false');
   const lead=MAPS[map].intro+' '+G.lo[0].name+' drawn. ';
-  say(lead+(mode==='practice'?'Practice range. Targets stand still and cannot hurt you. Grenades are free.':mode==='zombies'?(G.zm==='hall'?`Horror hallway. You walk on your own. Quick footsteps mean the way is clear. You slow down as zombies gather ahead, and stop when it is packed. Wave 1. ${G.toSpawn} zombies ahead.`:G.zm==='six'?`Watch my six. Two windows, 50 feet out, straight ahead and right behind you. Wave 1. ${G.toSpawn} zombies.`:`Zombie siege. Four windows surround you, 50 feet out, at north, east, south and west. Wave 1. ${G.toSpawn} zombies.`):mode==='endless'?`Endless survival. Wave 1. ${G.toSpawn} hostiles and a mini boss.`:mode==='bossrush'?'Boss rush. One boss incoming.':`Wave 1. ${G.toSpawn} hostiles and a mini boss.`));
+  say(lead+(mode==='practice'?'Practice range. Targets stand still and cannot hurt you. Grenades are free.':mode==='zombies'?(G.zm==='hall'?`Horror hallway. You walk on your own. Quick footsteps mean the way is clear. You slow down as zombies gather ahead, and stop when it is packed. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${G.toSpawn} zombies ahead${G.zBossDue?', and a giant zombie boss':''}.`:G.zm==='six'?`Watch my six. Two windows, 50 feet out, straight ahead and right behind you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${G.toSpawn} zombies${G.zBossDue?', and a giant zombie boss':''}.`:`Zombie siege. Four windows surround you, 50 feet out, at north, east, south and west. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${G.toSpawn} zombies${G.zBossDue?', and a giant zombie boss':''}.`):mode==='endless'?`Endless survival. Wave 1. ${G.toSpawn} hostiles and a mini boss.`:mode==='bossrush'?'Boss rush. One boss incoming.':`Wave 1. ${G.toSpawn} hostiles and a mini boss.`));
   setTimeout(()=>$('b-fire').focus(),60);
 }
 document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>begin(b.dataset.map));
@@ -2189,8 +2221,8 @@ function endGame(won){
   let msg;
   if(G.mode==='zombies'&&G.zm==='hall'){const B=P.bestZH,K=zKey(G.map,G.zd),n=hallScore(),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
     msg=`${ZDIFF[G.zd].n} horror hallway score ${n}: ${hallFt()} feet walked and ${G.kills} kills, reaching wave ${G.wave}. ${nb?'New best! ':`Best: ${best}. `}`}
-  else if(bestOf(G.mode,G.zm)){const K=G.mode==='zombies'?zKey(G.map,G.zd):G.map,B=bestOf(G.mode,G.zm),n=G.wave-1,best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
-    msg=`${G.mode==='zombies'?ZDIFF[G.zd].n+' difficulty. ':''}${G.zm==='six'?'Watch my six. ':''}You survived ${n} wave${n===1?'':'s'} on ${MAPS[G.map].name}. ${nb?'New best! ':`Best: ${best}. `}${G.kills} kills.`}
+  else if(bestOf(G.mode,G.zm)){const K=G.mode==='zombies'?zKey(G.map,G.zd):G.map,B=bestOf(G.mode,G.zm),n=G.wave-(G.mode==='zombies'?(G.zStart||1):1),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
+    msg=`${G.mode==='zombies'?ZDIFF[G.zd].n+' difficulty. ':''}${G.zm==='six'?'Watch my six. ':''}You survived ${n} wave${n===1?'':'s'}${G.mode==='zombies'&&G.zStart>1?`, from wave ${G.zStart} to wave ${G.wave}`:''} on ${MAPS[G.map].name}. ${nb?'New best! ':`Best: ${best}. `}${G.kills} kills.`}
   else msg=won?`Victory on ${MAPS[G.map].name}. ${G.kills} kills.`:`You fell on wave ${G.wave}. ${G.kills} kills.`;
   msg+=` Earned ${G.earned} silver. You have ${P.coins}.`;
   $('over-h').textContent=won?'Victory':'Killed in action';$('over-sum').textContent=msg;$('over').hidden=false;
