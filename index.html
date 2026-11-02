@@ -1279,7 +1279,7 @@ const ATT=[
   {id:'fmj',name:'FMJ rounds',price:80,ammo:true,desc:()=>'Full metal jacket ammo. Slightly more damage per round, plus 20 percent.'},
   {id:'hollow',name:'Hollow point rounds',price:100,ammo:true,only:HOLLOW,desc:()=>'Expanding ammo. Hits 50 percent harder within 25 feet, but fades past that, and beyond 50 feet it does 15 percent less damage than normal. Full metal jacket is better at range.'},
   {id:'inc',name:'Incendiary rounds',price:160,ammo:true,only:HEAVY,desc:()=>'Heavy sniper ammo. Greatly increases damage, plus 60 percent, and every hit bursts into flame, burning all enemies within 16 feet for half damage.'},
-  {id:'ap',name:'Armor piercing rounds',price:250,only:APGUNS,desc:w=>'Hardened penetrator ammo. 50 percent more damage against armored enemies, metal enemies, mini bosses and bosses. Stacks with full metal jacket or incendiary rounds. '+(w.id==='m249'?'Each bullet also punches through up to 8 enemies in line with no damage lost to distance, but it only carries about 13 feet past each enemy before it runs out of speed.':`Rounds punch through up to ${PEN[w.id][1]} enemies in line instead of ${PEN[w.id][0]}.`)},
+  {id:'ap',name:'Armor piercing rounds',price:250,only:APGUNS,desc:w=>'Hardened penetrator ammo. 50 percent more damage against armored enemies, metal enemies, mini bosses and bosses. Stacks with full metal jacket or incendiary rounds. '+(w.id==='m249'?'Each bullet also punches through up to 8 enemies in line with no damage lost to distance, but it only carries about 13 feet past each enemy before it runs out of speed.':PEN[w.id]?`Rounds punch through up to ${PEN[w.id][1]} enemies in line instead of ${PEN[w.id][0]}.`:'')},
   {id:'ramjet',name:'Ramjet rounds V1',price:3500,ammo:true,for:'jet',desc:()=>'Ramjet-boosted ammo. Plus 300 damage per round, 500 in total, the charge-up drops from 0.7 to 0.5 seconds, and the round punches through 20 enemies instead of 10.'},
   {id:'ramjet2',name:'Ramjet rounds V2',price:7000,for:'jet',req:'ramjet',desc:()=>'Twin-stage ramjet ammo. Another 500 damage per round, stacking with V1 for 1000 in total, and the charge-up drops to 0.35 seconds. With both on, the round punches through every enemy in its line of fire, no limit, and every headshot hits for 10,000 damage. Buy V1 first.'},
   {id:'ionic',name:'Ionic plasma jet rounds',price:9000,for:'jet',req:'ramjet2',desc:()=>'Ionized plasma ammo, the third ramjet stage. Another 900 damage per round, stacking with Ramjet V1 and V2 for 1900 damage in total. Buy Ramjet rounds V2 first.'},
@@ -1405,7 +1405,7 @@ const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett']
 const num=(v,d=0)=>typeof v==='number'&&isFinite(v)?v:d;
 function loadP(s){
   if(!s||typeof s!=='object')return;
-  P.coins=Math.max(0,num(s.coins,P.coins)|0);P.ts=num(s.ts,0);
+  P.coins=Math.max(0,Math.floor(num(s.coins,P.coins)));P.ts=num(s.ts,0);
   if(Array.isArray(s.owned))P.owned=[...new Set(['pistol','ak','barrett',...s.owned.filter(i=>WBY[i])])];
   P.att={};if(s.att&&typeof s.att==='object')for(const k in s.att){if(!WBY[k]||!P.owned.includes(k))continue;const o=s.att[k]||{};
     let own0=Array.isArray(o.own)?o.own:[],eq0=Array.isArray(o.eq)?o.eq:[];if(k==='banshee'&&own0.includes('extmag')){own0=[...new Set(own0.map(i=>i==='extmag'?'bnmag1':i))];eq0=eq0.map(i=>i==='extmag'?'bnmag1':i)}
@@ -1419,7 +1419,7 @@ function loadP(s){
   P.bestBoss={};if(s.bestBoss&&typeof s.bestBoss==='object')for(const k in s.bestBoss)if(MAPS[k])P.bestBoss[k]=Math.max(0,num(s.bestBoss[k])|0);
   P.bestZ={};if(s.bestZ&&typeof s.bestZ==='object')for(const k in s.bestZ)if(zKeyOk(k))P.bestZ[k]=Math.max(0,num(s.bestZ[k])|0);
   ['bestZ6','bestZH'].forEach(b=>{P[b]={};if(s[b]&&typeof s[b]==='object')for(const k in s[b])if(zKeyOk(k))P[b][k]=Math.max(0,num(s[b][k])|0)});
-  if(s.stats&&typeof s.stats==='object')for(const k in P.stats)P.stats[k]=Math.max(0,num(s.stats[k])|0);
+  if(s.stats&&typeof s.stats==='object')for(const k in P.stats)P.stats[k]=Math.max(0,Math.floor(num(s.stats[k])));
   if(typeof s.player==='string'&&/^[A-Za-z0-9_]{3,16}$/.test(s.player))P.player=s.player;
   P.carry=['pistol','ak','barrett'];if(Array.isArray(s.carry)){const c=s.carry.filter(i=>P.owned.includes(i)).slice(0,MAXCARRY);P.carry=c}
 }
@@ -1753,7 +1753,7 @@ function fire(){
       e.hp-=dmg*.5;chill(e);const rel=norm(e.angle-G.heading),t=.1+e.dist*.006;fx.frost(rel,e.dist,t);fx.impact(rel,e.dist,e.type,t);if(e.hp<=0)fx.kill(rel,e.dist,t+.1,e.type)})})}
   const killed=processDead(w.id);
   if(G.over)return;
-  if(w.rod&&killed&&(G.rod||0)<5){G.rod=Math.min(5,(G.rod||0)+killed);if(G.rod>=5){fx.rodReady();setTimeout(()=>{if(G&&!G.over)say('Lightning rod charged. Next shot is supercharged.')},1300)}}
+  if(w.rod&&killed&&(G.rod||0)<5){G.rod=Math.min(5,(G.rod||0)+killed);if(G.rod>=5){fx.rodReady();(g=>setTimeout(()=>{if(G===g&&!G.over)say('Lightning rod charged. Next shot is supercharged.')},1300))(G)}}
   if(!killed&&blastN>1)say(w.sonic?`Scream hit ${blastN} enemies.`:`Blast hit ${blastN} enemies.`);
   else if(!killed&&callE&&S.hpcall&&callE.hp>0){const now=performance.now();
     if(now-G.hpT>700){G.hpT=now;say(`${callHead?'Headshot. ':''}${callE.mega?'Mega ':''}${EN[callE.type].name}, ${Math.max(1,Math.round(callE.hp/callE.maxhp*100))} percent.`)}}
@@ -1849,11 +1849,11 @@ function lastStand(){G.lastUsed=true;const r=15/3.281;let n=0;fx.lastStand();vib
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;n++;const rel=norm(e.angle-G.heading);e.hp-=150;fx.impact(rel,e.dist,e.type,.15);
     if(e.hp<=0)fx.kill(rel,e.dist,.25,e.type);else{if(!EN[e.type].boss)e.dist=Math.max(e.dist,r);e.engaged=false;e.wind=0}});
   const k=processDead('last');
-  setTimeout(()=>{if(G&&!G.over)say(`Last stand! ${n?n+(n>1?' zombies':' zombie')+' caught in the shockwave'+(k?`, ${k} killed`:'')+'.':'Nobody was close enough.'} It recharges next wave.`)},k?1600:300);
+  (g=>setTimeout(()=>{if(G===g&&!G.over)say(`Last stand! ${n?n+(n>1?' zombies':' zombie')+' caught in the shockwave'+(k?`, ${k} killed`:'')+'.':'Nobody was close enough.'} It recharges next wave.`)},k?1600:300))(G);
 }
 /* Berserker rage: a ring of fire 10 feet around the player for 5 seconds. 100 damage on contact, then survivors burn 10 per second for 10 seconds */
 function berserkRage(){const r=10/3.281,hit=new Set();let t=5,cue=0;G.ringT=5;fx.rageRoar();fx.ventBlast(15);vib(300);
-  setTimeout(()=>{if(G&&!G.over)say('Berserker rage! Ring of fire.')},250);
+  (g=>setTimeout(()=>{if(G===g&&!G.over)say('Berserker rage! Ring of fire.')},250))(G);
   later(dt=>{if(G.over)return true;t-=dt;G.ringT=t;cue-=dt;if(cue<=0){cue=.6;[-90,0,90,180].forEach(a=>fx.crackle(a,r))}
     let died=false;G.enemies.forEach(e=>{if(e.hp<=0||hit.has(e)||e.dist>r)return;hit.add(e);const rel=norm(e.angle-G.heading);e.hp-=100;fx.burn(rel,e.dist,0);
       if(e.hp<=0){fx.kill(rel,e.dist,.1,e.type);died=true}else{e.fireT=10;e.fireDps=Math.max(e.fireDps||0,10);e.fireSrc='berserk'}});
@@ -1865,11 +1865,11 @@ function startReload(wi,side){const w=G.lo[wi];if(w.vent&&G.heat&&G.heat[wi]){he
 /* Jack Frost Blizzard blast: on reload, freeze every enemy within 40 feet solid for 15 seconds. Recharges in 10 seconds */
 function blizzard(){const r=40/3.281;G.blizzT=10;fx.blizzard();vib(250);let c=0;
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;e.frozeT=15;e.wind=0;c++;fx.frost(norm(e.angle-G.heading),e.dist,1.5+Math.random()*.8)});if(c)G.thawT=15;
-  const msg=`Blizzard blast! ${c?c+(c>1?' enemies':' enemy')+' frozen solid for 15 seconds.':'Nothing within 40 feet.'}`;setTimeout(()=>{if(G&&!G.over)say(msg)},400)}
+  const msg=`Blizzard blast! ${c?c+(c>1?' enemies':' enemy')+' frozen solid for 15 seconds.':'Nothing within 40 feet.'}`;(g=>setTimeout(()=>{if(G===g&&!G.over)say(msg)},400))(G)}
 /* Jet rifle heat vent: on reload, burn everyone around the player. Radius grows with rounds fired since the last reload */
 function heatVent(n){const f=n>=3?25:n===2?15:7,r=f/3.281;fx.ventBlast(f);vib(60);let c=0;
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;e.fireT=5;e.fireDps=Math.max(e.fireDps||0,20);e.fireSrc='jet';c++;fx.burn(norm(e.angle-G.heading),e.dist,.15)});
-  const msg=`Heat vent, ${f} feet. ${c?c+(c>1?' enemies':' enemy')+' burning.':'Nothing in range.'}`;setTimeout(()=>{if(G&&!G.over)say(msg)},400)}
+  const msg=`Heat vent, ${f} feet. ${c?c+(c>1?' enemies':' enemy')+' burning.':'Nothing in range.'}`;(g=>setTimeout(()=>{if(G===g&&!G.over)say(msg)},400))(G)}
 function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
 function reload(){
   if(!G||G.paused||G.over)return;
@@ -2009,7 +2009,7 @@ function stepHall(dt){
   const d=G.spd*dt;
   if(d>0){G.pos+=d;
     const shift=o=>{const[x,y]=xy(o.angle,o.dist),ny=y-d;o.angle=(Math.atan2(x,ny)*180/Math.PI+360)%360;o.dist=Math.max(.3,Math.hypot(x,ny))};
-    G.enemies.forEach(shift);if(G.boxes)G.boxes.forEach(shift);
+    G.enemies.forEach(shift);if(G.boxes)G.boxes.forEach(shift);if(G.hz)shift(G.hz);
     if(G.pos>=G.mileAt){G.mileAt+=100/3.281;fx.mile();hud()}}
   // footsteps: closer together the faster you go
   if(G.spd>.15){G.stepT-=dt;if(G.stepT<=0){G.stepSide^=1;fx.step(G.stepSide);G.stepT=.3*HALLV/G.spd}}
@@ -2112,7 +2112,7 @@ function stepEnemy(e,dt){
     e.atkT-=dt*slow;
     if(e.atkT<=0){e.atkT=t.atk*(e.am||1);
       if(t.boss){e.wind=.9;fx.windup(rel,e.dist,1);if(!G.told.wind){G.told.wind=1;say(`${t.name} winds up. Take cover!`)}}
-      else{ATTACK[e.type](out(rel,e.dist,1,enBus));setTimeout(()=>{if(G&&!G.over&&!G.paused)hurtPlayer(t.dmg*(e.dm||1),e)},250)}}
+      else{ATTACK[e.type](out(rel,e.dist,1,enBus));const g=G;setTimeout(()=>{if(G===g&&!G.over&&!G.paused&&e.hp>0)hurtPlayer(t.dmg*(e.dm||1),e)},250)}}   // only this game, and only if the attacker is still alive
   }
 }
 function step(dt){
@@ -2229,6 +2229,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-bugsweep',date:'November 2, 2026',title:'Bug fixes',items:[
+    'Fixed the M2 machine gun\'s attachments screen not opening.',
+    'Fixed Fight again sometimes starting a new battle already hurt or dead, from an enemy hit that was still on its way when you fell.',
+    'Fixed buying a Deadeye or Scavenger level announcing the Field medic healing message. It now tells you the perk\'s new bonus.',
+    'In Horror hallway, an event horizon now stays where you set it while you walk, instead of moving along with you.',
+    'Fixed the Killed in action announcement playing over a new battle started very quickly.',
+    'Saves now keep very large silver totals correctly.']},
   {id:'2026-11-02-killcall',date:'November 2, 2026',title:'Shorter multi-kill callouts',items:[
     'When one shot or blast kills several giant zombies, you now hear one line like 10 kills, instead of Giant zombie is down repeated 10 times.',
     'In Giants only, regular giants are never named in a multi-kill, only the kill count. Elsewhere, bosses in a mixed group are grouped, for example 2 giant zombies down. A mega boss is always named on its own.']},
@@ -2371,7 +2378,7 @@ function endGame(won){
   else msg=won?`Victory on ${MAPS[G.map].name}. ${G.kills} kills.`:`You fell on wave ${G.wave}. ${G.kills} kills.`;
   msg+=` Earned ${G.earned} silver. You have ${P.coins}.`;
   $('over-h').textContent=won?'Victory':'Killed in action';$('over-sum').textContent=msg;$('over').hidden=false;
-  setTimeout(()=>{$('over-h').focus();say(($('over-h').textContent)+'. '+msg)},400);
+  const g=G;setTimeout(()=>{if(G!==g||$('over').hidden)return;$('over-h').focus();say(($('over-h').textContent)+'. '+msg)},400);
 }
 function pause(){if(!G||G.over||G.paused)return;G.paused=true;G.hold=false;if(ambBus)ambBus.gain.value=0;$('pause').hidden=false;setTimeout(()=>$('pause-h').focus(),50);say('Paused.')}
 function resume(){if(!G)return;wakeAudio();G.paused=false;if(ambBus&&S.amb)ambBus.gain.value=S.avol;$('pause').hidden=true;setTimeout(()=>$('b-fire').focus(),50);say('Resumed.')}
@@ -2541,7 +2548,7 @@ function perkAct(pk){
   initAudio();const l=P.perk[pk.id];if(l>=pk.max){fx.click();say(`${pk.name} is already maxed out.`);return}
   const pr=perkPrice(pk,l);if(P.coins<pr)return broke(pr,`${pk.name} level ${l+1}`);
   P.coins-=pr;P.perk[pk.id]=l+1;fx.levelup();saveP();updateShop();
-  say(`${pk.name} level ${l+1}. ${pk.id==='hp'?`Max health is now ${100+hpBonus(l+1)}.`:`You now heal ${25+healBonus(l+1)} between waves.`} ${P.coins} silver left.`);
+  say(`${pk.name} level ${l+1}. ${PERKEFF[pk.id](l+1)}. ${P.coins} silver left.`);
 }
 
 /* ---------- attachments screen ---------- */
