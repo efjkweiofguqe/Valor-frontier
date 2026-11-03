@@ -61,6 +61,8 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .check:has(input:focus-visible){outline:3px solid var(--fg);outline-offset:2px}
 .adv{display:flex;flex-direction:column;gap:8px;padding-left:10px;border-left:3px solid var(--line)}
 .btn.quiet{width:auto;align-self:flex-start;padding:10px 16px;font-size:16px;font-weight:700;background:transparent}
+.screen select{width:100%;box-sizing:border-box;font-size:19px;padding:14px 16px;border-radius:10px}
+#req-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .logent{border-top:2px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
 .logent h3{font-family:var(--display);font-weight:400;font-size:22px;margin:0;line-height:1.15}
 .logent ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
@@ -136,6 +138,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-go="tutorial">Training and sound check<small>Learn the controls and every enemy sound</small></button>
     <button class="btn" data-go="settings">Settings<small>Voice, volume, difficulty</small></button>
     <button class="btn" id="b-record">Service record<small>Hear your lifetime stats</small></button>
+    <button class="btn" data-go="req" id="menu-req" hidden>Request items<small>Ask the developer for weapons, silver and more to test</small></button>
     <button class="btn" data-go="pid" id="menu-pid">Player ID<small id="menu-pid-s">Create a username so the developer can send you testing items</small></button>
   </div>
   <p class="note" id="save-state" role="status">Checking your saved progress…</p>
@@ -168,6 +171,25 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn primary" id="pid-check">Check for gifts<small>Gifts also arrive on their own when you open the game</small></button>
   </div>
   <p id="pid-status" role="status" aria-live="polite"></p>
+</section>
+
+<!-- REQUESTS -->
+<section id="req" class="screen" hidden>
+  <p class="tag">Player ID</p>
+  <h2 id="req-h" tabindex="-1">Request items</h2>
+  <button class="btn back" data-go="menu">Back</button>
+  <p class="note">Ask the developer for things you want to test. They can approve your request, send you something different, or decline it. Approved items arrive on their own the next time you open the game or go back to the main menu. You can have up to 3 requests waiting at once.</p>
+  <label for="req-silver">Silver<input id="req-silver" class="inp" type="number" min="0" max="1000000" step="1" inputmode="numeric" value="0"></label>
+  <label for="req-w">Weapon<select id="req-w"></select></label>
+  <label for="req-a">Armor<select id="req-a"></select></label>
+  <label for="req-g">Grenades<select id="req-g"></select></label>
+  <label for="req-gn">How many grenades<input id="req-gn" class="inp" type="number" min="0" max="1000" step="1" inputmode="numeric" value="0"></label>
+  <label for="req-note">Message to the developer, optional<textarea id="req-note" class="inp" maxlength="300" rows="3"></textarea></label>
+  <button class="btn primary" id="req-send">Send request<small>The developer sees it on their gift page</small></button>
+  <p id="req-status" role="status" aria-live="polite"></p>
+  <h2 id="req-mine-h">Your requests</h2>
+  <button class="btn" id="req-refresh">Check your requests<small>Hear whether the developer has answered them</small></button>
+  <ul id="req-list"></ul>
 </section>
 
 <!-- MAPS -->
@@ -1628,10 +1650,10 @@ function fbInit(){
   return fbP;
 }
 function pidMsg(t,speak=true){$('pid-status').textContent=t;if(speak)say(t)}
-function updatePidMenu(){const el=$('menu-pid-s');if(el)el.textContent=P.player?`Your username is ${P.player}. Check for gifts from the developer`:'Create a username so the developer can send you testing items'}
+function updatePidMenu(){const rb=$('menu-req');if(rb)rb.hidden=!P.player;const el=$('menu-pid-s');if(el)el.textContent=P.player?`Your username is ${P.player}. Check for gifts from the developer`:'Create a username so the developer can send you testing items'}
 function updatePid(){
   const has=!!P.player;$('pid-new').hidden=has;$('pid-have').hidden=!has;
-  if(has)$('pid-cur').textContent=`Your username is ${P.player}. It is linked to this save file. Ask the developer for anything you want to test, and tell them this username.`;
+  if(has)$('pid-cur').textContent=`Your username is ${P.player}. It is linked to this save file. To ask the developer for things to test, use Request items on the main menu.`;
   $('pid-status').textContent=FB_CONFIG.apiKey?'':'Player IDs are not switched on yet. Check back after the next update.';
 }
 async function createName(){
@@ -1692,6 +1714,57 @@ async function checkGifts(quiet){
   }catch(e){if(!quiet)pidMsg('Could not reach the server. Check your internet connection and try again.')}
   giftBusy=false;
 }
+/* ---------- item requests to the developer ----------
+   Players with a username send requests; the developer approves, answers or declines them on admin.html. */
+const REQST={open:'Waiting for the developer',approved:'Approved. The gift is on its way, or already with you',gifted:'Answered. The developer sent you something different',declined:'Declined'};
+let reqBusy=false;
+function reqText(it){const p=[];it=it||{};if(it.silver)p.push(`${it.silver} silver`);
+  (it.weapons||[]).forEach(i=>p.push(WBY[i]?WBY[i].name:i));(it.armor||[]).forEach(i=>{const a=ARMOR.find(x=>x.id===i);p.push(a?a.name:i)});
+  for(const k in it.grenades||{})p.push(`${it.grenades[k]} ${NADE[k]?(it.grenades[k]>1?NADE[k].plural:NADE[k].name):k}`);return p.join(', ')}
+function fillReq(){
+  const opt=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o};
+  const ws=$('req-w');ws.textContent='';ws.appendChild(opt('','No weapon'));
+  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',mythic:'Mythical weapons'};
+  Object.keys(WCAT).forEach(c=>{const ids=WCAT[c].filter(i=>!P.owned.includes(i));if(!ids.length)return;const g=document.createElement('optgroup');g.label=CN[c]||c;ids.forEach(i=>g.appendChild(opt(i,WBY[i].name)));ws.appendChild(g)});
+  const as=$('req-a');as.textContent='';as.appendChild(opt('','No armor'));ARMOR.filter(a=>!P.armor.own.includes(a.id)).forEach(a=>as.appendChild(opt(a.id,a.name)));
+  const gs=$('req-g');gs.textContent='';gs.appendChild(opt('','No grenades'));NTYPES.forEach(k=>gs.appendChild(opt(k,NADE[k].plural[0].toUpperCase()+NADE[k].plural.slice(1))));
+  $('req-status').textContent=FB_CONFIG.apiKey?'':'Requests are not switched on yet.';loadReqs(true);
+}
+function reqMsg(t,speak=true){$('req-status').textContent=t;if(speak)say(t)}
+async function myReqs(){const {db,uid,fs}=await fbInit();const snap=await fs.getDocs(fs.query(fs.collection(db,'requests'),fs.where('uid','==',uid)));
+  return snap.docs.map(d=>d.data()).sort((a,b)=>((b.created&&b.created.seconds)||0)-((a.created&&a.created.seconds)||0))}
+async function loadReqs(quiet){
+  if(!P.player||!FB_CONFIG.apiKey)return;
+  try{const list=(await myReqs()).slice(0,10),ul=$('req-list');ul.textContent='';
+    list.forEach(r=>{const li=document.createElement('li');const what=reqText(r.items)||'No items';li.textContent=`${what}${r.note?'. Your message: '+r.note:''}. ${REQST[r.status]||'Waiting for the developer'}.`;ul.appendChild(li)});
+    if(!list.length){const li=document.createElement('li');li.textContent='No requests yet.';ul.appendChild(li)}
+    if(!quiet){const op=list.filter(r=>r.status==='open').length,done=list.length-op;reqMsg(list.length?`${list.length} request${list.length>1?'s':''}. ${op} waiting, ${done} answered. They are listed under Your requests.`:'You have not sent any requests yet.')}
+  }catch(e){if(!quiet)reqMsg('Could not reach the server. Check your internet connection and try again.')}
+}
+async function sendReq(){
+  if(reqBusy)return;
+  if(!P.player)return reqMsg('Create a username first, from Player ID on the main menu.');
+  if(!FB_CONFIG.apiKey)return reqMsg('Requests are not switched on yet.');
+  const n=(id,max)=>Math.max(0,Math.min(max,parseInt($(id).value)||0));
+  const w=$('req-w').value,a=$('req-a').value,g=$('req-g').value,gn=n('req-gn',1000),note=$('req-note').value.trim().slice(0,300);
+  const items={silver:n('req-silver',1000000),weapons:w?[w]:[],armor:a?[a]:[],grenades:g&&gn?{[g]:gn}:{}};
+  if(g&&!gn)return reqMsg('Type how many grenades you want, or choose No grenades.');
+  if(!reqText(items)&&!note)return reqMsg('Choose something to ask for, or write a message to the developer.');
+  reqBusy=true;const btn=$('req-send');btn.disabled=true;reqMsg('Sending your request…');
+  try{
+    const {db,uid,fs}=await fbInit();
+    const me=await fs.getDoc(fs.doc(db,'players',uid));
+    if(!me.exists()){reqMsg(`The username ${P.player} was created on a different device or browser, so requests have to be sent from there.`)}
+    else if((await myReqs()).filter(r=>r.status==='open').length>=3){reqMsg('You already have 3 requests waiting. Wait for the developer to answer one first.')}
+    else{
+      await fs.addDoc(fs.collection(db,'requests'),{uid,name:me.data().name,items,note,status:'open',created:fs.serverTimestamp()});
+      fx.buy();['req-silver','req-gn'].forEach(i=>$(i).value=0);['req-w','req-a','req-g'].forEach(i=>$(i).value='');$('req-note').value='';
+      reqMsg(`Request sent: ${reqText(items)||'your message'}. The developer will see it on their gift page.`);loadReqs(true)}
+  }catch(e){reqMsg('Could not send your request. Check your internet connection and try again.')}
+  reqBusy=false;btn.disabled=false;
+}
+$('req-send').onclick=()=>{initAudio();sendReq()};
+$('req-refresh').onclick=()=>{initAudio();loadReqs(false)};
 $('pid-make').onclick=()=>{initAudio();createName()};
 $('pid-name').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();initAudio();createName()}});
 $('pid-check').onclick=()=>{initAudio();checkGifts(false)};
@@ -2440,6 +2513,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-requests',date:'November 2, 2026',title:'Request items from the developer',items:[
+    'If you have a username, there is a new Request items button on the main menu. Ask for silver, a weapon, armor or grenades, and add a message if you like.',
+    'The developer can approve your request, send you something different, or decline it. Approved gifts arrive on their own, and Check your requests tells you what happened to each one.'
+  ]},
   {id:'2026-11-02-rivet',date:'November 2, 2026',title:'Rivet Storm and mythical weapon types',items:[
     'New mythical weapon, the Rivet Storm, 30,000 silver. A pneumatic nail gun firing 5 nails a second, each hitting for 5, with 50 nails per load. Every 10th nail to land in the same enemy pins it in place for a second with a ringing clang. It also takes the regular submachine gun attachments.',
     'Rivet Storm upgrades: three extended magazines, taking it to 100, 150 and 200 nails. Hot nails set enemies on fire. Sharper nails punch through up to 4 enemies. Hot nails and sharper nails stack.',
@@ -2587,7 +2664,7 @@ function buildLog(){
 updateLogBtn();
 
 /* ---------- screens ---------- */
-const screens=['menu','maps','shop','mods','tutorial','settings','pid','log','game'];
+const screens=['menu','maps','shop','mods','tutorial','settings','pid','req','log','game'];
 function show(id){
   curScr=id;setTimeout(menuAmbSync,0);
   screens.forEach(s=>$(s).hidden=s!==id);$('pause').hidden=true;$('over').hidden=true;$('perks').hidden=true;
@@ -2596,6 +2673,7 @@ function show(id){
   if(id==='shop')buildShop();
   if(id==='mods')buildMods();
   if(id==='pid')updatePid();
+  if(id==='req')fillReq();
   if(id==='log')buildLog();
   if(id==='menu')updateLogBtn();
   if(id==='menu'){updatePidMenu();checkGifts(true)}

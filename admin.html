@@ -21,6 +21,10 @@ button.primary{background:var(--accent);color:var(--ink);border-color:var(--acce
 button:disabled{opacity:.5}
 :focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 .status{border-left:4px solid var(--accent);padding:4px 0 4px 12px;color:var(--muted)}
+.req{background:var(--panel);border:2px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.req h3{font-size:19px;margin:0}
+.req .acts{display:flex;flex-direction:column;gap:8px}
+.ans{border:2px solid var(--accent);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:2px 12px}
 ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 [hidden]{display:none!important}
@@ -40,13 +44,19 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 </section>
 
 <section id="app" hidden style="display:flex;flex-direction:column;gap:18px">
+  <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="req-h">
+    <h2 id="req-h">Player requests</h2>
+    <p id="req-n" class="muted"></p>
+    <div id="reqs" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button id="req-refresh" type="button">Refresh requests</button>
+  </section>
   <form id="gift-f" style="display:flex;flex-direction:column;gap:14px">
-    <h2>Send a gift</h2>
-    <label>Player username
-      <input id="who" type="text" list="players" autocomplete="off" autocapitalize="none" spellcheck="false" required aria-describedby="who-n">
+    <h2 id="gift-h" tabindex="-1">Send a gift</h2>
+    <div id="ans" class="ans" hidden><p id="ans-t"></p><button type="button" id="ans-x">Stop answering this request<small style="display:block;font-weight:400;font-size:15px">The request stays waiting</small></button></div>
+    <label>Player
+      <select id="who" required aria-describedby="who-n"><option value="">Loading players…</option></select>
     </label>
-    <p id="who-n" class="muted">Type the username the player gave you. <span id="pcount"></span></p>
-    <datalist id="players"></datalist>
+    <p id="who-n" class="muted"></p>
     <label>Silver<input id="silver" type="number" min="0" max="10000000" step="1" inputmode="numeric" value="0"></label>
     <fieldset><legend>Weapons</legend><div class="grid" id="weps"></div></fieldset>
     <fieldset><legend>Armor</legend><div class="grid" id="arms"></div></fieldset>
@@ -64,7 +74,7 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 </main>
 <script type="module">
 const FB_CONFIG={apiKey:'AIzaSyDXXzj2-7d3ECofdWktK5zDHJl_7HKJs8A',authDomain:'valor-frontier.firebaseapp.com',projectId:'valor-frontier',appId:'1:260608116849:web:00d38a0a8b0a8535c4b3d0'};
-const ITEMS={"w":[["pistol","Colt 1911"],["ak","AK-47"],["barrett","Barrett .50 cal"],["deagle","Desert Eagle"],["skorpion","Skorpion vz. 61"],["beretta","Beretta 93R"],["an94","AN-94"],["spas","SPAS-12 shotgun"],["svd","Dragunov SVD"],["m249","M249 SAW"],["jackfrost","Jack Frost"],["jet","Jet rifle"],["salvo","Pumpkin Salvo"],["antitank","Boys anti-tank rifle"],["glock","Glock 18"],["p90","FN P90"],["m4","M4A1 carbine"],["m2","M2 Browning"],["mg42","MG42"],["aa12","AA-12 automatic shotgun"],["bshot","Tri-burst shotgun"],["ksg","KSG pump shotgun"],["coach","Double-barrel coach gun"],["thunder","Thunderclap"],["blackhole","Black Hole Cannon"],["banshee","Banshee"],["symbiote","Alien Symbiote"],["hydra","Hydra"]],"a":[["vest","Light vest"],["kevlar","Kevlar armor"],["plate","Ceramic plate carrier"],["jugg","Juggernaut suit"],["berserk","Viking berserker armor"]]};
+const ITEMS={"w":[["pistol","Colt 1911"],["ak","AK-47"],["barrett","Barrett .50 cal"],["deagle","Desert Eagle"],["skorpion","Skorpion vz. 61"],["beretta","Beretta 93R"],["an94","AN-94"],["spas","SPAS-12 shotgun"],["svd","Dragunov SVD"],["m249","M249 SAW"],["jackfrost","Jack Frost"],["jet","Jet rifle"],["salvo","Pumpkin Salvo"],["antitank","Boys anti-tank rifle"],["glock","Glock 18"],["p90","FN P90"],["m4","M4A1 carbine"],["m2","M2 Browning"],["mg42","MG42"],["aa12","AA-12 automatic shotgun"],["bshot","Tri-burst shotgun"],["ksg","KSG pump shotgun"],["coach","Double-barrel coach gun"],["thunder","Thunderclap"],["blackhole","Black Hole Cannon"],["banshee","Banshee"],["symbiote","Alien Symbiote"],["hydra","Hydra"],["osv96","OSV-96"],["cheytac","CheyTac M200 Intervention"],["rivet","Rivet Storm"]],"a":[["vest","Light vest"],["kevlar","Kevlar armor"],["plate","Ceramic plate carrier"],["jugg","Juggernaut suit"],["berserk","Viking berserker armor"]]};
 const NADES=[['frag','Frag grenades'],['cryo','Cryo grenades'],['jack','Jack-in-the-boxes'],['horizon','Event horizons'],['fatman','Fat Man bombs']];
 const $=id=>document.getElementById(id);
 const status=t=>{$('status').textContent=t};
@@ -82,7 +92,7 @@ const app=initializeApp(FB_CONFIG,'admin'),auth=A.getAuth(app),db=F.getFirestore
 A.onAuthStateChanged(auth,u=>{
   const admin=u&&!u.isAnonymous;
   $('login').hidden=!!admin;$('app').hidden=!admin;
-  if(admin){status(`Signed in as ${u.email}.`);loadPlayers();loadSent()}else status('Sign in with your developer account.');
+  if(admin){status(`Signed in as ${u.email}.`);loadPlayers();loadReqs();loadSent()}else status('Sign in with your developer account.');
 });
 $('login-f').onsubmit=async e=>{e.preventDefault();status('Signing in…');
   try{await A.signInWithEmailAndPassword(auth,$('em').value.trim(),$('pw').value)}catch(err){const c=String(err&&err.code||'unknown').replace('auth/','');
@@ -94,12 +104,58 @@ $('reset').onclick=async()=>{const em=$('em').value.trim();if(!em){status('Type 
   catch(err){status(`Could not send the reset email. Error code: ${String(err&&err.code||'unknown').replace('auth/','')}.`)}};
 $('out').onclick=()=>A.signOut(auth);
 
+let PL={};   // uid -> username
 async function loadPlayers(){
-  try{const s=await F.getDocs(F.collection(db,'players'));
-    $('players').innerHTML=s.docs.map(d=>`<option value="${esc(d.data().name)}"></option>`).join('');
-    $('pcount').textContent=`${s.size} player${s.size===1?'':'s'} registered.`;
+  try{const s=await F.getDocs(F.collection(db,'players'));PL={};
+    s.docs.forEach(d=>{const n=d.data().name;if(typeof n==='string')PL[d.id]=n});
+    const keep=$('who').value,ids=Object.keys(PL).sort((a,b)=>PL[a].toLowerCase().localeCompare(PL[b].toLowerCase()));
+    $('who').innerHTML=`<option value="">Choose a player</option>`+ids.map(u=>`<option value="${esc(u)}">${esc(PL[u])}</option>`).join('');
+    if(PL[keep])$('who').value=keep;
+    $('who-n').textContent=`${ids.length} player${ids.length===1?' has':'s have'} created a username.`;
   }catch(e){status('Could not load players. Is this account set as the admin in the Firestore rules?')}
 }
+/* ---------- player requests ---------- */
+const WIDS=new Set(ITEMS.w.map(x=>x[0])),AIDS=new Set(ITEMS.a.map(x=>x[0])),NIDS=new Set(NADES.map(x=>x[0]));
+const clean=it=>{it=it||{};const g={};for(const k in it.grenades||{}){const n=Math.max(0,Math.min(1000,parseInt(it.grenades[k])||0));if(NIDS.has(k)&&n)g[k]=n}
+  return{silver:Math.max(0,Math.min(10000000,parseInt(it.silver)||0)),weapons:(it.weapons||[]).filter(i=>WIDS.has(i)),armor:(it.armor||[]).filter(i=>AIDS.has(i)),grenades:g}};
+const empty=it=>!it.silver&&!it.weapons.length&&!it.armor.length&&!Object.keys(it.grenades).length;
+const RST={approved:'Approved and sent',gifted:'Answered with a different gift',declined:'Declined'};
+let REQ={},answering=null;
+const when=t=>t&&t.toDate?t.toDate().toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+async function loadReqs(){
+  try{const s=await F.getDocs(F.query(F.collection(db,'requests'),F.orderBy('created','desc'),F.limit(50)));REQ={};
+    const open=[],done=[];s.docs.forEach(d=>{REQ[d.id]=d.data();(d.data().status==='open'?open:done).push(d.id)});
+    $('req-n').textContent=open.length?`${open.length} request${open.length===1?'':'s'} waiting, oldest first.`:'No requests waiting.';
+    const box=$('reqs');box.innerHTML='';
+    open.reverse().forEach(id=>{const r=REQ[id],it=clean(r.items),el=document.createElement('article');el.className='req';
+      el.innerHTML=`<h3>${esc(r.name)} asks for ${esc(empty(it)?'nothing specific':summary(it))}</h3>${r.note?`<p>Message: ${esc(r.note)}</p>`:''}<p class="muted">Sent ${esc(when(r.created))}</p>
+        <div class="acts">${empty(it)?'':`<button class="primary" data-act="ok">Approve and send<small style="display:block;font-weight:400;font-size:15px">Sends exactly what they asked for</small></button>`}
+        <button data-act="other">Give something else<small style="display:block;font-weight:400;font-size:15px">Fills in the gift form below so you can change it</small></button>
+        <button data-act="no">Decline</button></div>`;
+      el.querySelectorAll('button').forEach(b=>b.onclick=()=>reqAct(id,b.dataset.act));box.appendChild(el)});
+    if(done.length){const h=document.createElement('h3');h.textContent='Answered recently';h.style.cssText='font-size:19px;margin:6px 0 0';box.appendChild(h);
+      const ul=document.createElement('ul');ul.innerHTML=done.slice(0,15).map(id=>{const r=REQ[id],it=clean(r.items);return `<li><b>${esc(r.name)}</b>: ${esc(empty(it)?'a message':summary(it))}. ${RST[r.status]||r.status}.</li>`}).join('');box.appendChild(ul)}
+  }catch(e){$('req-n').textContent='Could not load requests. If this keeps happening, the new Firestore rules may not be published yet.'}
+}
+async function reqAct(id,act){const r=REQ[id];if(!r)return;
+  if(act==='other'){answering={id,uid:r.uid,name:r.name};
+    $('gift-f').reset();if(!PL[r.uid]){PL[r.uid]=r.name;$('who').insertAdjacentHTML('beforeend',`<option value="${esc(r.uid)}">${esc(r.name)}</option>`)}$('who').value=r.uid;
+    const it=clean(r.items);$('silver').value=it.silver;
+    document.querySelectorAll('input[name=w],input[name=a]').forEach(x=>x.checked=it.weapons.includes(x.value)||it.armor.includes(x.value));
+    document.querySelectorAll('[data-n]').forEach(x=>x.value=it.grenades[x.dataset.n]||0);
+    $('ans-t').textContent=`Answering ${r.name}'s request. Their requested items are filled in below. Change anything, then send the gift. The request is marked answered when you send.`;$('ans').hidden=false;
+    $('gift-h').focus();status(`Answering ${r.name}'s request. The gift form is filled in with what they asked for.`);return}
+  try{
+    if(act==='ok'){const it=clean(r.items);await F.addDoc(F.collection(db,'gifts'),{uid:r.uid,name:r.name,items:it,note:'Your request was approved.',claimed:false,created:F.serverTimestamp()});
+      await F.updateDoc(F.doc(db,'requests',id),{status:'approved',answered:F.serverTimestamp()});status(`Approved. Sent ${summary(it)} to ${r.name}.`);loadSent()}
+    if(act==='no'){await F.updateDoc(F.doc(db,'requests',id),{status:'declined',answered:F.serverTimestamp()});status(`Declined ${r.name}'s request.`)}
+    if(answering&&answering.id===id)stopAnswer();
+  }catch(e){status('Could not update the request. Check your connection.')}
+  loadReqs();
+}
+function stopAnswer(){answering=null;$('ans').hidden=true}
+$('ans-x').onclick=()=>{stopAnswer();status('Stopped answering. The request is still waiting.')};
+$('req-refresh').onclick=()=>{loadReqs();status('Requests refreshed.')};
 const summary=it=>{const p=[];if(it.silver)p.push(`${it.silver} silver`);(it.weapons||[]).forEach(i=>p.push(NAME[i]||i));(it.armor||[]).forEach(i=>p.push(NAME[i]||i));
   for(const k in it.grenades||{})p.push(`${it.grenades[k]} ${NAME[k]||k}`);return p.join(', ')||'nothing'};
 async function loadSent(){
@@ -107,10 +163,11 @@ async function loadSent(){
     $('sent').innerHTML=s.size?s.docs.map(d=>{const g=d.data();return `<li><b>${esc(g.name)}</b>: ${esc(summary(g.items||{}))}. ${g.claimed?'Received.':'Waiting for them to open the game.'}</li>`}).join(''):'<li>No gifts sent yet.</li>';
   }catch(e){$('sent').innerHTML='<li>Could not load gifts.</li>'}
 }
-$('refresh').onclick=()=>{loadPlayers();loadSent()};
+$('refresh').onclick=()=>{loadPlayers();loadReqs();loadSent()};
 
 $('gift-f').onsubmit=async e=>{e.preventDefault();
-  const key=$('who').value.trim().toLowerCase();
+  const uid=$('who').value,name=PL[uid];
+  if(!uid||!name){status('Choose a player first.');$('who').focus();return}
   const items={silver:Math.max(0,Math.min(10000000,parseInt($('silver').value)||0)),
     weapons:[...document.querySelectorAll('input[name=w]:checked')].map(x=>x.value),
     armor:[...document.querySelectorAll('input[name=a]:checked')].map(x=>x.value),grenades:{}};
@@ -118,11 +175,10 @@ $('gift-f').onsubmit=async e=>{e.preventDefault();
   if(!items.silver&&!items.weapons.length&&!items.armor.length&&!Object.keys(items.grenades).length){status('Choose at least one thing to send.');return}
   $('send').disabled=true;status('Sending…');
   try{
-    const u=await F.getDoc(F.doc(db,'usernames',key));
-    if(!u.exists()){status(`No player has the username ${$('who').value.trim()}. Check the spelling.`);$('send').disabled=false;return}
-    const {uid,name}=u.data();
     await F.addDoc(F.collection(db,'gifts'),{uid,name,items,note:$('note').value.trim().slice(0,300),claimed:false,created:F.serverTimestamp()});
-    status(`Sent ${summary(items)} to ${name}. They get it next time they open the game or go back to the main menu.`);
+    let extra='';
+    if(answering&&answering.uid===uid){try{await F.updateDoc(F.doc(db,'requests',answering.id),{status:'gifted',answered:F.serverTimestamp()});extra=' Their request is marked answered.'}catch(e){extra=' The gift was sent, but the request could not be marked answered.'}stopAnswer();loadReqs()}
+    status(`Sent ${summary(items)} to ${name}. They get it next time they open the game or go back to the main menu.${extra}`);
     $('gift-f').reset();$('who').focus();loadSent();
   }catch(err){status('Could not send the gift. Check your connection, and that this account is the admin in the Firestore rules.')}
   $('send').disabled=false;
