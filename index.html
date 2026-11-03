@@ -323,6 +323,8 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="banshee">Banshee</button>
     <button class="btn" data-test="hydra">Hydra</button>
     <button class="btn" data-test="symbiote">Alien Symbiote</button>
+    <button class="btn" data-test="rivet">Rivet Storm</button>
+    <button class="btn" data-test="rivetpin">Rivet Storm pinning an enemy</button>
     <button class="btn" data-test="holefx">Black hole pulling and collapsing</button>
     <button class="btn" data-test="zapfx">Chain lightning</button>
     <button class="btn" data-test="dbreathfx">Dragon's breath blast</button>
@@ -352,6 +354,13 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-cat="armor">Body armor</button>
     <button data-cat="grenades">Grenades</button>
     <button data-cat="perks">Perks</button>
+  </div>
+  <div class="seg" id="myth-sub" role="group" aria-label="Mythical weapon type" hidden>
+    <button data-myth="rifle">Rifles<small>Jet rifle, Banshee</small></button>
+    <button data-myth="sniper">Sniper rifles<small>Jack Frost</small></button>
+    <button data-myth="smg">Submachine guns<small>Alien Symbiote, Rivet Storm</small></button>
+    <button data-myth="shotgun">Shotguns<small>Thunderclap</small></button>
+    <button data-myth="launcher">Launchers<small>Black Hole Cannon, Hydra, Pumpkin Salvo</small></button>
   </div>
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Regular<small>Vests, plates and suits</small></button>
@@ -776,7 +785,7 @@ const PR={
 };
 const SND={pistol:{gap:0,mech:'slide',cas:1},deagle:{gap:0,mech:'slide',cas:1},ak:{gap:.1,cas:1},an94:{gap:.033,cas:1},
   skorpion:{gap:.062,cas:.4},m249:{gap:.075,cas:.5},spas:{gap:0,mech:'pump'},barrett:{gap:0,cas:1},antitank:{gap:0,mech:'bolt'},
-  beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},salvo:{gap:0},jet:{gap:0},
+  beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},salvo:{gap:0},jet:{gap:0},rivet:{gap:0},
   glock:{gap:.035,mech:'slide',cas:.5},p90:{gap:.04,cas:.4},m4:{gap:.075,cas:1},mg42:{gap:.042,cas:.4},m2:{gap:.13,cas:1},aa12:{gap:0,cas:1},bshot:{gap:.11,cas:1},ksg:{gap:0,mech:'pump'},coach:{gap:.018},
   thunder:{gap:0},blackhole:{gap:0},banshee:{gap:.09},hydra:{gap:0},symbiote:{gap:.045}};
 function gunDest(pan,bus){const g=ctx.createGain();bus=bus||gunBus;
@@ -915,6 +924,13 @@ function symShot(d,n,barrel){let t=0;const lo=barrel?.8:1;
     tone(d,{type:'sine',f:900*v,f2:2400*v,dur:.04,vol:.08,at:t+.01});
     noise(d,{dur:.09,vol:.12,type:'highpass',f:5000,at:t+.02,attack:.005});t+=.045*(1+(Math.random()-.5)*.1)}
   noise(d,{dur:.35,vol:.18,type:'lowpass',f:500,f2:150,at:t,attack:.03});tone(d,{type:'sine',f:55,f2:42,dur:.3,vol:.25,at:t+.02})}
+/* Rivet Storm: a pneumatic hiss and a metal thunk per nail; the hiss climbs in pitch as overdrive builds */
+function rivetShot(d,lvl=0){const p=1+Math.min(lvl,20)*.025,v=1+(Math.random()-.5)*.08;
+  noise(d,{dur:.05,vol:.32,type:'highpass',f:3800*p*v,at:0,attack:.002});
+  noise(d,{dur:.035,vol:.32,type:'bandpass',f:2600*p*v,q:4,at:.008,attack:.001});
+  tone(d,{type:'square',f:420*p*v,f2:170,dur:.03,vol:.18,at:.006});
+  tone(d,{type:'triangle',f:150*v,f2:60,dur:.06,vol:.42,at:.006});
+  noise(d,{dur:.11,vol:.07,type:'bandpass',f:6200*p,q:1,at:.03,attack:.01})}
 function hydraShot(d,at=0){[0,.08,.16].forEach(t=>{noise(d,{dur:.35,vol:.6,type:'bandpass',f:700,f2:2600,q:1,at:at+t,attack:.005});tone(d,{f:110,f2:60,dur:.15,vol:.6,at:at+t})})}
 /* Boys anti-tank rifle: a recorded heavy sniper rifle shot in an open field (qubodup, Freesound), with its full
    echo rolling off the hills. The recording is EQ'd for more body and compressed so the echo stays big, and a
@@ -947,6 +963,7 @@ function gunSound(w,n=1,side=-1){
   if(w.id==='banshee'){const d=gunDest(0);for(let i=0;i<n;i++)bansheeScream(d,i*.09);return}
   if(w.id==='hydra'){hydraShot(gunDest(0));return}
   if(w.id==='symbiote'){symShot(gunDest(0),n,w.barrel);return}
+  if(w.id==='rivet'){const d=gunDest(0);if(w.sil)d.gain.value=.55;for(let i=0;i<n;i++)rivetShot(d,w.odLvl||0);return}
   if(w.dragon){const d=gunDest(0);noise(d,{dur:.6,vol:.55,type:'bandpass',f:700,f2:2200,q:.8,at:.02,attack:.03});for(let i=0;i<8;i++)noise(d,{dur:.012,vol:.25,type:'highpass',f:3000,at:.1+Math.random()*.5,attack:.001})}
   if(w.id==='jet'){const d=gunDest(0);if(w.sil)d.gain.value=.6;jetShot(d);return}
   if(w.id==='salvo'){const d=gunDest(0);lanternShot(d);return}
@@ -978,9 +995,11 @@ const RSEQ={
   bolt:[[.05,d=>{RK.clack(d,0,1500,.45);RK.scrape(d,.06,2500,1600,.12,.12)}],[.22,d=>RK.thud(d,0,.25)],[.55,d=>RK.clack(d,0,1100,.6)],[.8,d=>RK.scrape(d,0,1600,2600,.12,.14)],[.9,d=>RK.clack(d,0,1800,.55)]]
 };
 const RKIND={pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',salvo:'heavy',jet:'heavy',
-  glock:'hand',p90:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',blackhole:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle'};
+  glock:'hand',p90:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',blackhole:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle',rivet:'rifle'};
 function rdest(pan){const g=gunDest(pan,sfx);g.gain.value=.9;return g}
 const fx={
+  /* Rivet Storm pinning an enemy in place: a ringing metal clang right where it stands */
+  pinned(rel,dist,at=0){const d=out(rel,dist,.9,enBus);noise(d,{dur:.05,vol:.3,type:'bandpass',f:3200,q:3,at,attack:.001});tone(d,{type:'square',f:1650,f2:1560,dur:.2,vol:.1,at});tone(d,{type:'triangle',f:260,f2:210,dur:.28,vol:.32,at})},
   /* vampiric rounds healing you: a warm, soft double pulse with a gentle rising shimmer */
   symHeal(){const d=gunDest(0);[0,.16].forEach(t=>tone(d,{f:80,f2:55,dur:.12,vol:.35,at:t,attack:.01}));tone(d,{f:520,f2:780,dur:.25,vol:.07,at:.05,attack:.04})},
   /* the symbiote feeding: a wet squelch, a low growl and two heavy heartbeats */
@@ -1366,6 +1385,8 @@ const WPN=[
    traits:'Mythical semi-automatic sonic rifle, firing up to 4 screams a second. Its shriek hits every enemy in a wide cone in front of you for 20 each and never misses. Within 40 feet it hits at full power and stuns them in place for 1 and a half seconds so they cannot move or attack. It still carries out to 160 feet, getting weaker with distance down to 40 percent, with a shorter stun. Takes only a few of its own upgrades.'},
   {id:'symbiote',rng:15,name:'Alien Symbiote',short:'SYMBIOTE',mag:55,dmg:1.2,cone:16,cd:.25,reload:2.4,shots:5,acc:.92,sym:true,price:50000,
    traits:'Mythical living submachine gun that feeds on you. Fast 5-round bursts, already stronger than any other submachine gun, fully effective to about 50 feet. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, 40 percent for every 50 health eaten. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100, and then both stop. Carrying it without using it costs you nothing. Takes only its own upgrades.'},
+  {id:'rivet',rng:15,name:'Rivet Storm',short:'RIVET',mag:50,dmg:2,cone:16,cd:.2,reload:2.6,shots:1,acc:.92,rivet:true,price:30000,
+   traits:'Mythical pneumatic nail gun. Fires 5 nails a second, each with a hiss and a metal thunk, and hold fire to keep it going. Every 10th nail to land in the same enemy pins it in place for a second, so it cannot move or attack, with a ringing clang. 50 nails. Unlike the other mythical weapons, it also takes the regular submachine gun attachments.'},
   {id:'hydra',rng:0,name:'Hydra',short:'HYDRA',mag:4,dmg:35,cone:20,cd:1.3,reload:3.5,shots:1,hydra:true,price:40000,
    traits:'Mythical three-barrel launcher. Each trigger pull splits into 3 homing rockets, each locking onto a different enemy, the ones you are facing first, then the closest anywhere. Each rocket hits for 35 and splashes enemies within 5 feet for half. If there are fewer than 3 enemies, the spare rockets pile onto the same ones. Takes only a few of its own upgrades.'}
 ];
@@ -1376,7 +1397,7 @@ const REWARD=Object.fromEntries(Object.entries(EN).map(([k,v])=>[k,v.reward]));
 /* ---------- attachments ---------- */
 const HEAVY=['barrett','svd','antitank','osv96','cheytac'],HAND=['pistol','deagle','beretta','glock'];
 const SHOTS=['spas','aa12','bshot','ksg','coach'],MYTHNEW=['thunder','blackhole','banshee','hydra'],MYTHOK=['barrel','silencer','fastmag','extmag'];
-const HOLLOW=['pistol','deagle','beretta','skorpion','ak','an94','m249','glock','p90','m4','mg42'],SLOW=['spas','barrett','antitank','ksg','cheytac'],LMG=['m249','mg42','m2'];
+const HOLLOW=['rivet','pistol','deagle','beretta','skorpion','ak','an94','m249','glock','p90','m4','mg42'],SLOW=['spas','barrett','antitank','ksg','cheytac'],LMG=['m249','mg42','m2'];
 const SNIPERS=['barrett','svd','antitank','osv96','cheytac','jackfrost'],APGUNS=['m249','m2','barrett','svd','antitank','osv96','cheytac'];
 const PEN={barrett:[5,8],svd:[3,5],antitank:[20,30],osv96:[5,8],cheytac:[8,12]};   // [stock, with armor piercing rounds]
 const ATT=[
@@ -1406,8 +1427,8 @@ const ATT=[
   {id:'svtrig1',name:'Hair trigger V1',price:2000,for:'salvo',desc:()=>'Fires about 1 and a half times as fast.'},
   {id:'svtrig2',name:'Hair trigger V2',price:3000,for:'salvo',req:'svtrig1',desc:()=>'Fires about 2 and a half times as fast as stock. Buy V1 first.'},
   {id:'svtrig3',name:'Hair trigger V3',price:5000,for:'salvo',req:'svtrig2',desc:()=>'Fires 5 times as fast as stock. A hellstorm of rapid blaze. Buy V2 first.'},
-  {id:'extmag',name:'Extended magazine',price:75,desc:w=>`50 percent more rounds. ${w.mag} becomes ${Math.round(w.mag*1.5)}.`},
-  {id:'extmag2',name:'Extended magazine V2',price:400,not:SNIPERS,desc:w=>`Another 50 percent more rounds, stacking with the first extended magazine. With both on, ${w.mag} becomes ${w.mag*2}.`},
+  {id:'extmag',name:'Extended magazine',price:75,not:['rivet'],desc:w=>`50 percent more rounds. ${w.mag} becomes ${Math.round(w.mag*1.5)}.`},
+  {id:'extmag2',name:'Extended magazine V2',price:400,not:[...SNIPERS,'rivet'],desc:w=>`Another 50 percent more rounds, stacking with the first extended magazine. With both on, ${w.mag} becomes ${w.mag*2}.`},
   {id:'extbelt',name:'Extended belt',price:1200,only:LMG,desc:w=>w.id==='m2'?`A longer ammo belt. Doubles the belt, ${w.mag} rounds becomes ${w.mag*2}.`:`A longer ammo belt. 50 percent more rounds, ${w.mag} becomes ${Math.round(w.mag*1.5)}.`},
   {id:'jetmag1',name:'Extended magazine',price:1500,for:'jet',desc:()=>'Holds 2 rounds instead of 1.'},
   {id:'jetmag2',name:'Extended magazine V2',price:3000,for:'jet',req:'jetmag1',desc:()=>'Holds 3 rounds. Buy the first extended magazine first.'},
@@ -1425,6 +1446,12 @@ const ATT=[
   {id:'tchoke',name:'Thunder choke',price:6000,for:'thunder',desc:()=>'Tightens the spread. The close-range damage bands reach 60 percent farther, but the blast covers a narrower area, so it hits fewer enemies at once. Has no effect with the ball lightning slug.'},
   {id:'trod',name:'Lightning rod',price:15000,for:'thunder',desc:()=>'Every kill builds charge. After 5 kills you hear a rising hum and a voice tells you it is ready. While it stays charged, electricity crackles around you whenever the Thunderclap is in your hands. Your next shot is a supercharged thunderclap with double damage and a huge rumble.'},
   {id:'tdrum',name:'Conductive drum',price:5000,for:'thunder',desc:w=>`Doubles the magazine, 6 shells becomes 12. Stacks with the extended magazine.`},
+  {id:'rvmag1',name:'Extended magazine V1',price:3000,for:'rivet',desc:()=>'Holds 100 nails instead of 50.'},
+  {id:'rvmag2',name:'Extended magazine V2',price:6000,for:'rivet',req:'rvmag1',desc:()=>'Holds 150 nails. Buy V1 first.'},
+  {id:'rvmag3',name:'Extended magazine V3',price:9000,for:'rivet',req:'rvmag2',desc:()=>'Holds 200 nails. Buy V2 first.'},
+  {id:'rvhot',name:'Hot nails',price:8000,for:'rivet',desc:()=>'Red-hot nails. Every enemy a nail hits catches fire, burning 3 health a second for 4 seconds, and each new nail keeps it burning. Stacks with sharper nails and any other ammo.'},
+  {id:'rvsharp',name:'Sharper nails',price:6000,for:'rivet',desc:()=>'Alternate nails with hardened needle tips. Each nail punches through up to 4 enemies in a line instead of stopping in the first. Stacks with hot nails and any other ammo.'},
+  {id:'rvover',name:'Overdrive',price:15000,for:'rivet',desc:()=>'Special ability. The longer you hold fire, the faster it nails: 10 percent faster for every 10 nails in a row, adding up, so after 50 nails it fires 50 percent faster and after 100 nails twice as fast. The hiss climbs in pitch as it speeds up. Letting go of fire for a moment, switching guns or reloading starts it over.'},
   {id:'symmag1',name:'Extended magazine V1',price:3000,for:'symbiote',desc:()=>'Holds 110 rounds instead of 55.'},
   {id:'symmag2',name:'Extended magazine V2',price:6000,for:'symbiote',req:'symmag1',desc:()=>'Holds 165 rounds. Buy V1 first.'},
   {id:'symmag3',name:'Extended magazine V3',price:9000,for:'symbiote',req:'symmag2',desc:()=>'Holds 220 rounds. Buy V2 first.'},
@@ -1457,7 +1484,7 @@ const ATT=[
 ];
 const ATTBY=Object.fromEntries(ATT.map(a=>[a.id,a]));
 const OWNUP=['jackfrost','salvo','jet','symbiote',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
-const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||(w.id==='symbiote'&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):!a.for&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
+const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||(w.id==='symbiote'&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
 function build(w){
@@ -1486,6 +1513,7 @@ function build(w){
   // penetration: pen = most enemies one round can pass through, exit = how far it carries past each one
   b.pen=1;b.exit=Infinity;if(PEN[w.id])b.pen=PEN[w.id][has('ap')?1:0];
   if(w.id==='m249'&&has('ap')){b.pen=8;b.exit=13/3.281}
+  if(w.id==='rivet'){b.mag=has('rvmag3')?200:has('rvmag2')?150:has('rvmag1')?100:50;b.overdrive=has('rvover');b.hot=has('rvhot');if(has('rvsharp'))b.pen=4}
   if(w.id==='jet'){const r=(has('ramjet')?1:0)+(has('ramjet2')?1:0);b.pen=r===2?Infinity:r?20:10;
     // full ramjet ammo: the round never stops and never skips anyone in its line, even from cover
     if(r===2){b.exit=Infinity;b.sure=true;if(has('ionic'))b.cone=w.cone+3}}
@@ -1788,6 +1816,8 @@ function fire(){
   }
   if(w.charge&&!G.charged){G.chargeT=w.charge;G.chargeW=wi;G.cd=w.charge+.05;jetSpool(w.charge);vib(30);return}
   if(w.rod&&(G.rod||0)>=5){w={...w,dmg:w.dmg*2,sup:true};G.rod=0}
+  // Rivet Storm overdrive: 10 percent faster for every 10 nails in a row, additive; a pause, a switch or a reload starts it over
+  if(w.overdrive){const now=performance.now();if(G.odW!==wi||now-(G.odT||0)>w.cd*1000+300)G.odN=0;G.odW=wi;G.odT=now;const lvl=Math.floor((G.odN||0)/10);G.odN=(G.odN||0)+1;w={...w,cd:w.cd/(1+.1*lvl),odLvl:lvl}}
   const shots=Math.min(w.shots,A[side]);A[side]-=shots;if(w.vent){G.heat=G.heat||{};G.heat[wi]=(G.heat[wi]||0)+shots}G.cd=w.cd;gunSound(w,shots,w.akimbo?side:-1);
   const pr=G.mode==='practice';if(pr)G.pShots++;
   const gap=w.gap||SND[w.id].gap,acc=w.sure?1:(w.acc||.92)*(G.cover?.65:1);
@@ -1809,7 +1839,7 @@ function fire(){
     if(!head&&w.scope&&e.dist>=50/3.281&&Math.random()<w.scope)head=true;
     const T=EN[e.type],hm=(head?(T.boss?w.hsBoss:w.hs):1)*(w.ap>1&&(T.boss||T.mini||T.mat!=='flesh')?w.ap:1);
     // past a gun's effective range, damage and accuracy fall off (snipers never do)
-    const over=w.rng&&e.dist>w.rng?(e.dist-w.rng)/w.rng:0,fm=w.pen>1?1:Math.max(.3,1-.45*over),am2=Math.max(.45,1-.35*over);
+    const over=w.rng&&e.dist>w.rng?(e.dist-w.rng)/w.rng:0,fm=w.pen>1&&!w.rivet?1:Math.max(.3,1-.45*over),am2=Math.max(.45,1-.35*over);
     // hollow points: big boost up close, fades with distance, weaker than normal far away
     const hk=w.hollow,dft=e.dist*3.281,hpm=!hk?1:dft<=25?1+.5*hk:dft<=50?1+.5*hk-(.5*hk+.15)*(dft-25)/25:.85;
     let dmg=0,sfo=1;const rounds=[];
@@ -1824,12 +1854,13 @@ function fire(){
     if(w.inc){fx.burn(rel,e.dist,tEnd);burned.push([e,dmg])}
     if(w.dragon)ignite(e,w.id,tEnd);
     if(w.sonic){e.stunT=Math.max(e.stunT||0,1.5*sfo);fx.stun(rel,e.dist,tEnd)}
+    if(w.rivet){if(w.hot)ignite(e,'rivet',tEnd);e.nails=(e.nails||0)+rounds.length;if(e.nails>=10){e.nails-=10;if(e.hp>0){e.stunT=Math.max(e.stunT||0,1);fx.pinned(rel,e.dist,tEnd+.03)}}}
     if(w.lantern){fx.lantern(rel,e.dist,tEnd,w.loaded);lanterns.push(e)}
     if(w.infect){[e,...G.enemies.filter(o=>o!==e&&o.hp>0&&(()=>{const[a1,b1]=xy(e.angle,e.dist),[a2,b2]=xy(o.angle,o.dist);return Math.hypot(a1-a2,b1-b2)<=3/3.281})())]
       .forEach(o=>{if(o.inf||o.hp<=0)return;o.inf=true;o.infCue=3;fx.infect(norm(o.angle-G.heading),o.dist,tEnd+.05)})}
     if(w.ice){chill(e);fx.frost(rel,e.dist,tEnd+.05);if(w.frag)frags.push([e,dmg])}
     if(e.hp<=0){e.hk=head;fx.kill(rel,e.dist,tEnd+.08,e.type)}
-    else{const big=EN[e.type].boss||EN[e.type].mini;if(w.lantern){if(!callE){callE=e;callHead=false}return}if(!(e.hb>0))e.dist=Math.min(e.dist+(big?(w.knock?2:0):(w.knock||1.5)),50);if(!callE){callE=e;callHead=head}}
+    else{const big=EN[e.type].boss||EN[e.type].mini;if(w.lantern){if(!callE){callE=e;callHead=false}return}if(!(e.hb>0))e.dist=Math.min(e.dist+(w.rivet?(big?0:.5):big?(w.knock?2:0):(w.knock||1.5)),50);if(!callE){callE=e;callHead=head}}
   });
   // shotgun area damage: the blast also catches anyone within 10 feet of the first enemy hit
   let blastN=0;
@@ -2409,6 +2440,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-rivet',date:'November 2, 2026',title:'Rivet Storm and mythical weapon types',items:[
+    'New mythical weapon, the Rivet Storm, 30,000 silver. A pneumatic nail gun firing 5 nails a second with 50 nails per load. Every 10th nail to land in the same enemy pins it in place for a second with a ringing clang. It also takes the regular submachine gun attachments.',
+    'Rivet Storm upgrades: three extended magazines, taking it to 100, 150 and 200 nails. Hot nails set enemies on fire. Sharper nails punch through up to 4 enemies. Hot nails and sharper nails stack.',
+    'Rivet Storm special ability, Overdrive: the longer you hold fire, the faster it gets, 10 percent faster for every 10 nails in a row, adding up. The hiss climbs in pitch as it speeds up.',
+    'The mythical weapons section of the shop is now split into types: rifles, sniper rifles, submachine guns, shotguns, and a new launchers type with the Black Hole Cannon, the Hydra and the Pumpkin Salvo.'
+  ]},
   {id:'2026-11-02-snipers',date:'November 2, 2026',title:'Two new sniper rifles',items:[
     'New OSV-96, 1,200 silver. A Russian semi-automatic .50 caliber that hits as hard as the Barrett but fires about 1 and a half times as fast. 5 rounds.',
     'New OSV-96 hair trigger, 900 silver. Fires 25 percent faster.',
@@ -2648,12 +2685,15 @@ function record(){
 $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
-const WCAT={pistol:['pistol','deagle','beretta','glock'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','symbiote','banshee','thunder','hydra','blackhole','salvo']};
+const WCAT={pistol:['pistol','deagle','beretta','glock'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','symbiote','rivet','banshee','thunder','hydra','blackhole','salvo']};
+const MCAT={rifle:['jet','banshee'],sniper:['jackfrost'],smg:['symbiote','rivet'],shotgun:['thunder'],launcher:['blackhole','hydra','salvo']};
+const MCATN={rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.'};
+const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
-const catW=()=>WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
-let curCat='pistol',curArm='regular';
+const catW=()=>curCat==='mythic'?MCAT[curMyth].map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
+let curCat='pistol',curArm='regular',curMyth='rifle';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
-const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades.'+WNOTE,
+const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
   grenades:'Grenades go off around you, so there is no aiming: everything inside the blast radius is hit. They are used up when thrown. In battle, Grenade uses one, and Grenade type cycles frag, cryo, jack-in-the-box, event horizon and Fat Man.',
   perks:'Permanent upgrades to your soldier, up to level 50. Every level up to 20 gives the full boost, after that each level gives a smaller one. Past level 5, every level costs 10 percent more than the one before.'};
@@ -2678,14 +2718,16 @@ function setItem(id,meta,act,aria,primary,on){const it=$(id);if(!it)return;it.cl
   const b=it.querySelector('.act');b.textContent=act;b.setAttribute('aria-label',aria);b.classList.toggle('primary',!!primary)}
 $('b-unequip').onclick=()=>{initAudio();if(!P.carry.length)return;P.carry=[];fx.reload(.3);saveP();updateShop();say(`All guns put in storage. Choose Carry into battle on up to ${MAXCARRY} guns before you deploy.`)};
 document.querySelectorAll('#shop-cats button').forEach(b=>b.onclick=()=>{initAudio();curCat=b.dataset.cat;buildShop(true)});
+document.querySelectorAll('#myth-sub button').forEach(b=>b.onclick=()=>{initAudio();curMyth=b.dataset.myth;buildShop(true);say(MCATN[curMyth])});
 document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(curArm==='mythic'?'Mythical armor.':'Regular armor.')});
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
 const armList=()=>ARMOR.filter(a=>curArm==='mythic'?a.myth:!a.myth);
 function buildShop(keepFocus){
   document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('arm-sub').hidden=curCat!=='armor';
+  $('arm-sub').hidden=curCat!=='armor';$('myth-sub').hidden=curCat!=='mythic';
+  document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)} Magazine ${w.mag}. Reload ${w.reload} seconds. ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
   if(curCat==='armor')armList().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
@@ -2828,7 +2870,7 @@ const ATTGRP=[{id:'ammo',name:'Ammo'},{id:'barrel',name:'Barrel and muzzle'},{id
 const ATTCAT={ap:'ammo',ramjet2:'ammo',ionic:'ammo',jffrag:'ammo',svloaded:'ammo',tover:'ammo',
   barrel:'barrel',jetbarrel2:'barrel',gauss:'barrel',symbarrel1:'barrel',symbarrel2:'barrel',bnbarrel2:'barrel',bnamp:'barrel',silencer:'barrel',symbrake:'barrel',tchoke:'barrel',
   reflex:'optic',scope:'optic',pscope:'optic',grip:'optic',
-  trigger:'trigger',trigger2:'trigger',bump:'trigger',osvtrig:'trigger',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
+  trigger:'trigger',trigger2:'trigger',bump:'trigger',osvtrig:'trigger',rvhot:'ammo',rvsharp:'ammo',rvmag1:'mag',rvmag2:'mag',rvmag3:'mag',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
   extmag:'mag',extmag2:'mag',extbelt:'mag',jetmag1:'mag',jetmag2:'mag',svmag1:'mag',jfmag1:'mag',jfmag2:'mag',jfmag3:'mag',symmag1:'mag',symmag2:'mag',symmag3:'mag',bnmag1:'mag',bnmag2:'mag',bnmag3:'mag',tdrum:'mag',
   fastmag:'reload',jetfast1:'reload',jetfast2:'reload',jetfast3:'reload',svfast1:'reload',svfast2:'reload',svfast3:'reload',jffast1:'reload',jffast2:'reload'};
 const attGrp=a=>a.ammo?'ammo':ATTCAT[a.id]||'special';
@@ -2874,7 +2916,7 @@ function modAct(a){
   saveP();updateMods();
 }
 $('mods-hear').onclick=()=>hearGun(WBY[curMod]);
-$('mods-back').onclick=()=>{initAudio();curCat=catOf(curMod);show('shop');setTimeout(()=>{const b=document.querySelector(`#it-${curMod} .att`);if(b)b.focus()},140)};
+$('mods-back').onclick=()=>{initAudio();curCat=catOf(curMod);if(curCat==='mythic')curMyth=mcatOf(curMod);show('shop');setTimeout(()=>{const b=document.querySelector(`#it-${curMod} .att`);if(b)b.focus()},140)};
 
 /* sound check */
 document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
@@ -2887,6 +2929,7 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
   if(k==='hall-steps'){let t=0;[.32,.32,.32,.32,.4,.48,.58,.7,.85,1].forEach((g,i)=>{setTimeout(()=>fx.step(i%2),t*1000);t+=g});return}
   if(k==='hall-mile'){fx.mile();return}
   if(k==='perk-open'){fx.perkOpen();return}
+  if(k==='rivetpin'){fx.pinned(0,6);return}
   if(k==='fence'){fx.fenceZap(-30,6);setTimeout(()=>fx.burn(-30,6),150);setTimeout(()=>fx.fenceIdle(),2200);return}
   if(k==='revive'){fx.revive();return}
   if(k==='ventfx'){fx.ventBlast(25);return}
