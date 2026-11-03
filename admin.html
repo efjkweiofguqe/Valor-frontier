@@ -178,7 +178,7 @@ $('gift-f').onsubmit=async e=>{e.preventDefault();
     await F.addDoc(F.collection(db,'gifts'),{uid,name,items,note:$('note').value.trim().slice(0,300),claimed:false,created:F.serverTimestamp()});
     let extra='';
     if(answering&&answering.uid===uid){try{await F.updateDoc(F.doc(db,'requests',answering.id),{status:'gifted',answered:F.serverTimestamp()});extra=' Their request is marked answered.'}catch(e){extra=' The gift was sent, but the request could not be marked answered.'}stopAnswer();loadReqs()}
-    status(`Sent ${summary(items)} to ${name}. They get it next time they open the game or go back to the main menu.${extra}`);
+    status(`Sent ${summary(items)} to ${name}. They get it next time they open or reload the game, or tap Check for gifts.${extra}`);
     $('gift-f').reset();$('who').focus();loadSent();
   }catch(err){status('Could not send the gift. Check your connection, and that this account is the admin in the Firestore rules.')}
   $('send').disabled=false;

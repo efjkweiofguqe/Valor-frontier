@@ -168,7 +168,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   </div>
   <div id="pid-have" class="stack" hidden>
     <p id="pid-cur"></p>
-    <button class="btn primary" id="pid-check">Check for gifts<small>Gifts also arrive on their own when you open the game</small></button>
+    <button class="btn primary" id="pid-check">Check for gifts<small>Gifts also arrive on their own when you open or reload the game</small></button>
   </div>
   <p id="pid-status" role="status" aria-live="polite"></p>
 </section>
@@ -178,7 +178,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <p class="tag">Player ID</p>
   <h2 id="req-h" tabindex="-1">Request items</h2>
   <button class="btn back" data-go="menu">Back</button>
-  <p class="note">Ask the developer for things you want to test. They can approve your request, send you something different, or decline it. Approved items arrive on their own the next time you open the game or go back to the main menu. You can have up to 3 requests waiting at once.</p>
+  <p class="note">Ask the developer for things you want to test. They can approve your request, send you something different, or decline it. Approved items arrive on their own the next time you open or reload the game, or right away if you tap Check for gifts on the Player ID screen. You can have up to 3 requests waiting at once.</p>
   <label for="req-silver">Silver<input id="req-silver" class="inp" type="number" min="0" max="1000000" step="1" inputmode="numeric" value="0"></label>
   <label for="req-w">Weapon<select id="req-w"></select></label>
   <label for="req-a">Armor<select id="req-a"></select></label>
@@ -2514,6 +2514,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-03-gifts',date:'November 3, 2026',title:'Gift delivery',items:[
+    'Gifts from the developer now arrive when you open or reload the game, instead of every time you go back to the main menu. To get a gift right away, tap Check for gifts on the Player ID screen.'
+  ]},
   {id:'2026-11-02-requests',date:'November 2, 2026',title:'Request items from the developer',items:[
     'If you have a username, there is a new Request items button on the main menu. Ask for silver, a weapon, armor or grenades, and add a message if you like.',
     'The developer can approve your request, send you something different, or decline it. Approved gifts arrive on their own, and Check your requests tells you what happened to each one.'
@@ -2677,7 +2680,7 @@ function show(id){
   if(id==='req')fillReq();
   if(id==='log')buildLog();
   if(id==='menu')updateLogBtn();
-  if(id==='menu'){updatePidMenu();checkGifts(true)}
+  if(id==='menu')updatePidMenu();
   const h=$(id+'-h');if(h)setTimeout(()=>h.focus(),50);
 }
 const MODENOTE={campaign:'Four waves, each with a mini boss, then the battlefield\'s boss on wave five. Beat the boss to win.',
@@ -3042,6 +3045,7 @@ document.querySelectorAll('[data-test]').forEach(b=>{const t=EN[b.dataset.test];
   b.appendChild(sm);b.classList.add('enemy')});
 raf=requestAnimationFrame(frame);
 show('menu');
+checkGifts(true);   // gifts are checked once when the game loads, plus whenever the player taps Check for gifts
 if(window.claude&&claude.use)initCloud();else setCloud('local');
 })();
 </script>
