@@ -1532,8 +1532,8 @@ const ATT=[
   {id:'rvmag3',name:'Extended magazine V3',price:9000,for:'rivet',req:'rvmag2',desc:()=>'Holds 300 nails. Buy V2 first.'},
   {id:'rvhot',name:'Hot nails',price:8000,for:'rivet',desc:()=>'Red-hot nails. Every enemy a nail hits catches fire, burning 3 health a second for 4 seconds, and each new nail keeps it burning. Stacks with sharper nails and any other ammo.'},
   {id:'rvsharp',name:'Sharper nails',price:6000,for:'rivet',desc:()=>'Alternate nails with hardened needle tips. Each nail punches through up to 4 enemies in a line instead of stopping in the first. Stacks with hot nails and any other ammo.'},
-  {id:'rvmgn1',name:'Magnetic nails V1',price:12000,for:'rivet',desc:()=>'Special ability. The gun gains a strong magnetic field that pulls spent nails back in. Kill an enemy within 10 feet with a nail, and every nail you fired at it flies back into your magazine, with a quick magnetic zip. Kill only up close and you never have to reload, which keeps Overdrive building.'},
-  {id:'rvmgn2',name:'Magnetic nails V2',price:20000,for:'rivet',req:'rvmgn1',desc:()=>'A stronger magnetic field. Nails come back from kills within 20 feet instead of 10. Buy V1 first.'},
+  {id:'rvmgn1',name:'Magnetic nails V1',price:12000,for:'rivet',desc:()=>'Special ability. The gun gains a strong magnetic field that pulls spent nails back in. Every nail that lands in an enemy within 10 feet flies straight back into your magazine, with a quick magnetic zip, and killing it up close brings back the nails that missed it too. Even a huge boss can be nailed nonstop without reloading while it stays within range, which keeps Overdrive building.'},
+  {id:'rvmgn2',name:'Magnetic nails V2',price:20000,for:'rivet',req:'rvmgn1',desc:()=>'A stronger magnetic field. Nails come back from enemies within 20 feet instead of 10. Buy V1 first.'},
   {id:'rvover',name:'Overdrive',price:15000,for:'rivet',desc:()=>'Special ability. The longer you hold fire, the faster it nails: 10 percent faster for every 10 nails in a row, adding up, so after 50 nails it fires 50 percent faster and after 100 nails twice as fast. The hiss climbs in pitch as it speeds up. Letting go of fire for a moment, switching guns or reloading starts it over.'},
   {id:'symmag1',name:'Extended magazine V1',price:3000,for:'symbiote',desc:()=>'Holds 110 rounds instead of 55.'},
   {id:'symmag2',name:'Extended magazine V2',price:6000,for:'symbiote',req:'symmag1',desc:()=>'Holds 165 rounds. Buy V1 first.'},
@@ -1978,9 +1978,8 @@ function fire(){
   else if(w.pen>1){hits=[];for(const e of tgt){if(hits.length>=w.pen)break;if(hits.length&&e.dist-hits[hits.length-1].dist>w.exit)break;hits.push(e)}}
   const burned=[],frags=[],lanterns=[];
   let callE=null,callHead=false,anyHit=false,missAt=null;
-  let magBack=0;   // Rivet Storm magnetic nails: nails pulled back from close kills
+  let magBack=0;   // Rivet Storm magnetic nails: every nail that lands within range flies straight back; a close kill also returns the ones that missed it
   hits.forEach(e=>{
-    if(w.magR&&e===hits[0])e.rvShot=(e.rvShot||0)+shots;
     const rel=norm(e.angle-G.heading),fly=.03+e.dist*.006;
     let head=!w.spread&&!w.lantern&&!w.sonic&&Math.abs(rel)<=(w.hz||HEADZONE);
     if(!head&&w.grip&&Math.random()<w.grip)head=true;
@@ -1994,6 +1993,7 @@ function fire(){
     if(w.spread){const r=w.range;dmg=w.dmg*shots*(w.tband?tMult(w,e.dist):e.dist<r[0]?1:e.dist<r[1]?.55:r[2])*(G.cover?.65:1)*hm;for(let i=0;i<shots;i++)rounds.push(i)}
     else if(w.sonic){sfo=e.dist<=w.full?1:Math.max(.4,1-.6*(e.dist-w.full)/(w.reach-w.full));dmg=w.dmg*hm*sfo*(G.cover?.65:1)*shots;for(let i=0;i<shots;i++)rounds.push(i)}
     else for(let i=0;i<shots;i++){if(w.sure||Math.random()<acc*am2){dmg+=head&&w.jetHead?Math.max(10000,w.dmg*hm):w.dmg*hm*fm*hpm*(w.sym?G.symMult||1:1);rounds.push(i)}else if(!missAt)missAt=[rel,e.dist,i*gap+fly]}
+    if(w.rivet&&w.magR&&e===hits[0])e.rvShot=(e.rvShot||0)+shots-rounds.length;   // rvShot: nails that missed it, returned on a close kill
     if(!dmg)return;
     dmg*=gunMult();
     anyHit=true;e.hp-=dmg;
@@ -2002,6 +2002,7 @@ function fire(){
     if(w.inc){fx.burn(rel,e.dist,tEnd);burned.push([e,dmg])}
     if(w.dragon)ignite(e,w.id,tEnd);
     if(w.sonic){e.stunT=Math.max(e.stunT||0,1.5*sfo);fx.stun(rel,e.dist,tEnd)}
+    if(w.rivet&&w.magR&&e===hits[0]&&e.dist<=w.magR)magBack+=rounds.length;
     if(w.rivet){if(w.hot)ignite(e,'rivet',tEnd);e.nails=(e.nails||0)+rounds.length;if(e.nails>=10){e.nails-=10;if(e.hp>0){e.stunT=Math.max(e.stunT||0,1);fx.pinned(rel,e.dist,tEnd+.03)}}}
     if(w.lantern){fx.lantern(rel,e.dist,tEnd,w.loaded);lanterns.push(e)}
     if(w.infect){[e,...G.enemies.filter(o=>o!==e&&o.hp>0&&(()=>{const[a1,b1]=xy(e.angle,e.dist),[a2,b2]=xy(o.angle,o.dist);return Math.hypot(a1-a2,b1-b2)<=3/3.281})())]
@@ -2062,7 +2063,7 @@ function fire(){
   if(!killed&&blastN>1)say(w.sonic?`Scream hit ${blastN} enemies.`:`Blast hit ${blastN} enemies.`);
   else if(!killed&&callE&&S.hpcall&&callE.hp>0){const now=performance.now();
     if(now-G.hpT>700){G.hpT=now;say(`${callHead?'Headshot. ':''}${callE.mega?'Mega ':''}${EN[callE.type].name}, ${Math.max(1,Math.round(callE.hp/callE.maxhp*100))} percent.`)}}
-  if(magBack){A[side]=Math.min(w.mag,A[side]+magBack);fx.magnet()}
+  if(magBack){A[side]=Math.min(w.mag,A[side]+magBack);const now=performance.now();if(!(G.magFxT>now)){fx.magnet();G.magFxT=now+1200}}   // zip at most about once a second during a long burst
   const th=Math.max(2,Math.ceil(w.mag*.2));if(A[side]>0&&A[side]<=th)fx.lowammo(gap*shots+.05);
   if(w.akimbo){
     if(A[side]===0){startReload(wi,side);const o=1-side,h=side?'Right':'Left';
@@ -2590,6 +2591,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-03-magnetfix',date:'November 3, 2026',title:'Magnetic nails fix',items:[
+    'Rivet Storm magnetic nails now pull back every nail that lands in an enemy within range, right away, instead of only when that enemy dies. Before, bosses with huge health, like the Ancient One, drained your magazine because they took too long to kill.',
+    'Killing an enemy within range still brings back the nails that missed it, too. The magnetic zip plays about once a second during long bursts instead of on every nail.']},
   {id:'2026-11-03-ancient',date:'November 3, 2026',title:'The Ancient One',items:[
     'A new zombie boss, the Ancient One, rises every 50th wave in every zombie mode, including Watch my six, Horror hallway and Giants only.',
     'It has 10,000 health, the same on every difficulty and every wave, hits for 25, and is worth 2,000 silver.',
