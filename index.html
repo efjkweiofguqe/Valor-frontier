@@ -1701,7 +1701,8 @@ async function checkGifts(quiet){
     const {db,uid,fs}=await fbInit();
     const me=await fs.getDoc(fs.doc(db,'players',uid));
     if(!me.exists()){if(!quiet)pidMsg(`The username ${P.player} was created on a different device or browser, so gifts for it go there. Ask the developer to help move it.`);giftBusy=false;return}
-    fs.updateDoc(me.ref,{seen:fs.serverTimestamp()}).catch(()=>{});
+    // record when the player was last online, at most once a day, to save Firebase writes
+    {const sn=me.data().seen;if(!(sn&&sn.toMillis)||Date.now()-sn.toMillis()>864e5)fs.updateDoc(me.ref,{seen:fs.serverTimestamp()}).catch(()=>{})}
     const snap=await fs.getDocs(fs.query(fs.collection(db,'gifts'),fs.where('uid','==',uid),fs.where('claimed','==',false)));
     const got=[],notes=[];
     for(const d of snap.docs){
