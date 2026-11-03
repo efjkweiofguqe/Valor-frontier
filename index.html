@@ -1327,7 +1327,7 @@ const WPN=[
   {id:'svd',rng:0,name:'Dragunov SVD',short:'SVD',mag:10,dmg:4.5,cone:10,cd:.55,reload:2.4,shots:1,pierce:true,price:400,
    traits:'Semi-automatic sniper rifle, 10 rounds. Fires more than twice as fast as the anti-tank rifle, but hits much lighter. Punches through up to 3 enemies in line, 5 with armor piercing rounds.'},
   {id:'osv96',rng:0,name:'OSV-96',short:'OSV-96',mag:5,dmg:6,cone:10,cd:.7,reload:3.2,shots:1,pierce:true,price:1200,
-   traits:'Russian semi-automatic .50 caliber sniper rifle that folds in half to carry. Hits as hard as the Barrett but fires about half again as fast. 5 rounds. Punches through up to 5 enemies in line, 8 with armor piercing rounds.'},
+   traits:'Russian semi-automatic .50 caliber sniper rifle that folds in half to carry. Hits as hard as the Barrett but fires about 1 and a half times as fast. 5 rounds. Punches through up to 5 enemies in line, 8 with armor piercing rounds.'},
   {id:'cheytac',rng:0,name:'CheyTac M200 Intervention',short:'INTERVENTION',mag:7,dmg:11,cone:10,cd:1.3,reload:3.4,shots:1,pierce:true,price:1800,
    traits:'Extreme long-range bolt-action sniper rifle with a deep, booming shot. The hardest-hitting sniper below the anti-tank rifle, nearly twice the Barrett per round. 7 rounds, and you hear the bolt work after every shot. Punches through up to 8 enemies in line, 12 with armor piercing rounds.'},
   {id:'m249',rng:26,name:'M249 SAW',short:'M249',mag:200,dmg:.8,cone:15,cd:.55,reload:4.5,shots:6,acc:.88,price:450,
@@ -1399,7 +1399,8 @@ const ATT=[
   {id:'scope',name:'Sniper scope',price:120,only:HEAVY,desc:()=>'A long-range optic. Beyond 50 feet, 7 in 10 hits that are not already dead centre still land as headshots.'},
   {id:'pscope',name:'Precision scope',price:1000,only:SNIPERS,myth:true,desc:()=>'A high-power tactical scope. Headshots hit much harder: 60 percent extra on top of your usual headshot bonus, 30 on bosses. Almost every shot lands, and enemies count as in your sights a little further off centre. Stacks with the sniper scope.'},
   {id:'grip',name:'Grip',price:1300,not:['jackfrost','salvo'],desc:w=>w.spread?'A steadying foregrip. Gives the shotgun a 1 in 5 chance per blast to land headshots, which it normally cannot.':'A steadying foregrip. The dead-centre headshot zone gets 50 percent wider, so the double chirp comes sooner, and 1 in 5 hits that are not dead centre still land as headshots.'},
-  {id:'trigger',name:'Hair trigger',price:90,desc:()=>'Fires 30 percent faster.'},
+  {id:'trigger',name:'Hair trigger',price:90,not:['osv96'],desc:()=>'Fires 30 percent faster.'},
+  {id:'osvtrig',name:'Hair trigger',price:900,only:['osv96'],desc:()=>'A lighter trigger for the OSV-96. Fires 25 percent faster.'},
   {id:'trigger2',name:'Hair trigger V2',price:1500,only:[...SLOW,'svd'],desc:()=>'A competition trigger for slow-firing guns. Fires 40 percent faster, and it stacks with the first hair trigger: with both on, this gun fires about 2 and a half times as fast as stock.'},
   {id:'bump',name:'Bump stock',price:1200,only:['m249'],desc:()=>'A sliding stock that lets the gun bounce off your shoulder. Fires 30 percent faster: each 6-round burst rips out quicker and shorter, and the pause between bursts is a little shorter too. Stacks with the hair trigger.'},
   {id:'svtrig1',name:'Hair trigger V1',price:2000,for:'salvo',desc:()=>'Fires about 1 and a half times as fast.'},
@@ -1469,6 +1470,7 @@ function build(w){
   if(has('fastmag'))b.reload=w.reload*(1-.4*k);
   b.cd=w.cd;if(has('trigger'))b.cd*=1-.3*k;if(has('trigger2'))b.cd*=1-.4*k;
   if(has('extbelt')&&LMG.includes(w.id))b.mag=Math.round((b.mag||w.mag)*(w.id==='m2'?2:1.5));
+  if(has('osvtrig')&&w.id==='osv96')b.cd/=1+.25*k;
   if(has('bump')&&w.id==='m249'){b.cd/=1.3;b.gap=SND[w.id].gap/1.3}
   b.hollow=has('hollow')?k:0;
   if(w.id==='salvo'){const ld=has('svloaded');b.mag=has('svmag1')?6:4;b.reload=w.reload*(has('svfast3')?.35:has('svfast2')?.55:has('svfast1')?.75:1);
@@ -2408,7 +2410,8 @@ function hud(){
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
   {id:'2026-11-02-snipers',date:'November 2, 2026',title:'Two new sniper rifles',items:[
-    'New OSV-96, 1,200 silver. A Russian semi-automatic .50 caliber that hits as hard as the Barrett but fires about half again as fast. 5 rounds.',
+    'New OSV-96, 1,200 silver. A Russian semi-automatic .50 caliber that hits as hard as the Barrett but fires about 1 and a half times as fast. 5 rounds.',
+    'New OSV-96 hair trigger, 900 silver. Fires 25 percent faster.',
     'New CheyTac M200 Intervention, 1,800 silver. An extreme long-range bolt-action that hits nearly twice as hard as the Barrett, with a deep boom and a bolt you hear after every shot. 7 rounds. It can take the Hair trigger V2.'
   ]},
   {id:'2026-11-02-belts',date:'November 2, 2026',title:'Machine gun belts and new triggers',items:[
@@ -2825,7 +2828,7 @@ const ATTGRP=[{id:'ammo',name:'Ammo'},{id:'barrel',name:'Barrel and muzzle'},{id
 const ATTCAT={ap:'ammo',ramjet2:'ammo',ionic:'ammo',jffrag:'ammo',svloaded:'ammo',tover:'ammo',
   barrel:'barrel',jetbarrel2:'barrel',gauss:'barrel',symbarrel1:'barrel',symbarrel2:'barrel',bnbarrel2:'barrel',bnamp:'barrel',silencer:'barrel',symbrake:'barrel',tchoke:'barrel',
   reflex:'optic',scope:'optic',pscope:'optic',grip:'optic',
-  trigger:'trigger',trigger2:'trigger',bump:'trigger',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
+  trigger:'trigger',trigger2:'trigger',bump:'trigger',osvtrig:'trigger',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
   extmag:'mag',extmag2:'mag',extbelt:'mag',jetmag1:'mag',jetmag2:'mag',svmag1:'mag',jfmag1:'mag',jfmag2:'mag',jfmag3:'mag',symmag1:'mag',symmag2:'mag',symmag3:'mag',bnmag1:'mag',bnmag2:'mag',bnmag3:'mag',tdrum:'mag',
   fastmag:'reload',jetfast1:'reload',jetfast2:'reload',jetfast3:'reload',svfast1:'reload',svfast2:'reload',svfast3:'reload',jffast1:'reload',jffast2:'reload'};
 const attGrp=a=>a.ammo?'ammo':ATTCAT[a.id]||'special';
