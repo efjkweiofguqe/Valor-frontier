@@ -347,6 +347,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="symbiote">Alien Symbiote</button>
     <button class="btn" data-test="rivet">Rivet Storm</button>
     <button class="btn" data-test="rivetpin">Rivet Storm pinning an enemy</button>
+    <button class="btn" data-test="rivetmag">Rivet Storm magnetic nails coming back</button>
     <button class="btn" data-test="holefx">Black hole pulling and collapsing</button>
     <button class="btn" data-test="zapfx">Chain lightning</button>
     <button class="btn" data-test="dbreathfx">Dragon's breath blast</button>
@@ -1020,6 +1021,9 @@ const RKIND={pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle
   glock:'hand',p90:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',blackhole:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle',rivet:'rifle'};
 function rdest(pan){const g=gunDest(pan,sfx);g.gain.value=.9;return g}
 const fx={
+  /* Rivet Storm magnetic nails coming back: a rising magnetic zip, then nails clinking into the magazine */
+  magnet(){const d=gunDest(0);tone(d,{type:'sawtooth',f:180,f2:900,dur:.18,vol:.08,attack:.02});noise(d,{dur:.16,vol:.12,type:'bandpass',f:1500,f2:4000,q:3,attack:.03});
+    [.17,.22,.26].forEach(t=>tone(d,{type:'triangle',f:2600+Math.random()*600,f2:2200,dur:.05,vol:.12,at:t}))},
   /* Rivet Storm pinning an enemy in place: a ringing metal clang right where it stands */
   pinned(rel,dist,at=0){const d=out(rel,dist,.9,enBus);noise(d,{dur:.05,vol:.3,type:'bandpass',f:3200,q:3,at,attack:.001});tone(d,{type:'square',f:1650,f2:1560,dur:.2,vol:.1,at});tone(d,{type:'triangle',f:260,f2:210,dur:.28,vol:.32,at})},
   /* vampiric rounds healing you: a warm, soft double pulse with a gentle rising shimmer */
@@ -1408,7 +1412,7 @@ const WPN=[
   {id:'symbiote',rng:15,name:'Alien Symbiote',short:'SYMBIOTE',mag:55,dmg:1.2,cone:16,cd:.25,reload:2.4,shots:5,acc:.92,sym:true,price:50000,
    traits:'Mythical living submachine gun that feeds on you. Fast 5-round bursts, already stronger than any other submachine gun, fully effective to about 50 feet. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, 40 percent for every 50 health eaten. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100, and then both stop. Carrying it without using it costs you nothing. Takes only its own upgrades.'},
   {id:'rivet',rng:15,name:'Rivet Storm',short:'RIVET',mag:50,dmg:5,cone:16,cd:.2,reload:2.6,shots:1,acc:.92,rivet:true,price:30000,
-   traits:'Mythical pneumatic nail gun. Fires 5 nails a second, each with a hiss and a metal thunk, and hold fire to keep it going. Every 10th nail to land in the same enemy pins it in place for a second, so it cannot move or attack, with a ringing clang. 50 nails. Unlike the other mythical weapons, it also takes the regular submachine gun attachments.'},
+   traits:'Mythical pneumatic nail gun. Fires 5 nails a second, each with a hiss and a metal thunk, and hold fire to keep it going. Every 10th nail to land in the same enemy pins it in place for a second, so it cannot move or attack, with a ringing clang. 50 nails. Unlike the other mythical weapons, it also takes most of the regular submachine gun attachments.'},
   {id:'hydra',rng:0,name:'Hydra',short:'HYDRA',mag:4,dmg:35,cone:20,cd:1.3,reload:3.5,shots:1,hydra:true,price:40000,
    traits:'Mythical three-barrel launcher. Each trigger pull splits into 3 homing rockets, each locking onto a different enemy, the ones you are facing first, then the closest anywhere. Each rocket hits for 35 and splashes enemies within 5 feet for half. If there are fewer than 3 enemies, the spare rockets pile onto the same ones. Takes only a few of its own upgrades.'}
 ];
@@ -1419,11 +1423,11 @@ const REWARD=Object.fromEntries(Object.entries(EN).map(([k,v])=>[k,v.reward]));
 /* ---------- attachments ---------- */
 const HEAVY=['barrett','svd','antitank','osv96','cheytac'],HAND=['pistol','deagle','beretta','glock'];
 const SHOTS=['spas','aa12','bshot','ksg','coach'],MYTHNEW=['thunder','blackhole','banshee','hydra'],MYTHOK=['barrel','silencer','fastmag','extmag'];
-const HOLLOW=['rivet','pistol','deagle','beretta','skorpion','ak','an94','m249','glock','p90','m4','mg42'],SLOW=['spas','barrett','antitank','ksg','cheytac'],LMG=['m249','mg42','m2'];
+const HOLLOW=['pistol','deagle','beretta','skorpion','ak','an94','m249','glock','p90','m4','mg42'],SLOW=['spas','barrett','antitank','ksg','cheytac'],LMG=['m249','mg42','m2'];
 const SNIPERS=['barrett','svd','antitank','osv96','cheytac','jackfrost'],APGUNS=['m249','m2','barrett','svd','antitank','osv96','cheytac'];
 const PEN={barrett:[5,8],svd:[3,5],antitank:[20,30],osv96:[5,8],cheytac:[8,12]};   // [stock, with armor piercing rounds]
 const ATT=[
-  {id:'fmj',name:'FMJ rounds',price:80,ammo:true,desc:()=>'Full metal jacket ammo. Slightly more damage per round, plus 20 percent.'},
+  {id:'fmj',name:'FMJ rounds',price:80,ammo:true,not:['rivet'],desc:()=>'Full metal jacket ammo. Slightly more damage per round, plus 20 percent.'},
   {id:'hollow',name:'Hollow point rounds',price:100,ammo:true,only:HOLLOW,desc:()=>'Expanding ammo. Hits 50 percent harder within 25 feet, but fades past that, and beyond 50 feet it does 15 percent less damage than normal. Full metal jacket is better at range.'},
   {id:'inc',name:'Incendiary rounds',price:160,ammo:true,only:HEAVY,desc:()=>'Heavy sniper ammo. Greatly increases damage, plus 60 percent, and every hit bursts into flame, burning all enemies within 16 feet for half damage.'},
   {id:'ap',name:'Armor piercing rounds',price:250,only:APGUNS,desc:w=>'Hardened penetrator ammo. 50 percent more damage against armored enemies, metal enemies, mini bosses and bosses. Stacks with full metal jacket or incendiary rounds. '+(w.id==='m249'?'Each bullet also punches through up to 8 enemies in line with no damage lost to distance, but it only carries about 13 feet past each enemy before it runs out of speed.':PEN[w.id]?`Rounds punch through up to ${PEN[w.id][1]} enemies in line instead of ${PEN[w.id][0]}.`:'')},
@@ -1473,6 +1477,8 @@ const ATT=[
   {id:'rvmag3',name:'Extended magazine V3',price:9000,for:'rivet',req:'rvmag2',desc:()=>'Holds 200 nails. Buy V2 first.'},
   {id:'rvhot',name:'Hot nails',price:8000,for:'rivet',desc:()=>'Red-hot nails. Every enemy a nail hits catches fire, burning 3 health a second for 4 seconds, and each new nail keeps it burning. Stacks with sharper nails and any other ammo.'},
   {id:'rvsharp',name:'Sharper nails',price:6000,for:'rivet',desc:()=>'Alternate nails with hardened needle tips. Each nail punches through up to 4 enemies in a line instead of stopping in the first. Stacks with hot nails and any other ammo.'},
+  {id:'rvmgn1',name:'Magnetic nails V1',price:12000,for:'rivet',desc:()=>'Special ability. The gun gains a strong magnetic field that pulls spent nails back in. Kill an enemy within 10 feet with a nail, and every nail you fired at it flies back into your magazine, with a quick magnetic zip. Kill only up close and you never have to reload, which keeps Overdrive building.'},
+  {id:'rvmgn2',name:'Magnetic nails V2',price:20000,for:'rivet',req:'rvmgn1',desc:()=>'A stronger magnetic field. Nails come back from kills within 20 feet instead of 10. Buy V1 first.'},
   {id:'rvover',name:'Overdrive',price:15000,for:'rivet',desc:()=>'Special ability. The longer you hold fire, the faster it nails: 10 percent faster for every 10 nails in a row, adding up, so after 50 nails it fires 50 percent faster and after 100 nails twice as fast. The hiss climbs in pitch as it speeds up. Letting go of fire for a moment, switching guns or reloading starts it over.'},
   {id:'symmag1',name:'Extended magazine V1',price:3000,for:'symbiote',desc:()=>'Holds 110 rounds instead of 55.'},
   {id:'symmag2',name:'Extended magazine V2',price:6000,for:'symbiote',req:'symmag1',desc:()=>'Holds 165 rounds. Buy V1 first.'},
@@ -1535,7 +1541,7 @@ function build(w){
   // penetration: pen = most enemies one round can pass through, exit = how far it carries past each one
   b.pen=1;b.exit=Infinity;if(PEN[w.id])b.pen=PEN[w.id][has('ap')?1:0];
   if(w.id==='m249'&&has('ap')){b.pen=8;b.exit=13/3.281}
-  if(w.id==='rivet'){b.mag=has('rvmag3')?200:has('rvmag2')?150:has('rvmag1')?100:50;b.overdrive=has('rvover');b.hot=has('rvhot');if(has('rvsharp'))b.pen=4}
+  if(w.id==='rivet'){b.mag=has('rvmag3')?200:has('rvmag2')?150:has('rvmag1')?100:50;b.overdrive=has('rvover');b.magR=has('rvmgn2')?20/3.281:has('rvmgn1')?10/3.281:0;b.hot=has('rvhot');if(has('rvsharp'))b.pen=4}
   if(w.id==='jet'){const r=(has('ramjet')?1:0)+(has('ramjet2')?1:0);b.pen=r===2?Infinity:r?20:10;
     // full ramjet ammo: the round never stops and never skips anyone in its line, even from cover
     if(r===2){b.exit=Infinity;b.sure=true;if(has('ionic'))b.cone=w.cone+3}}
@@ -1906,7 +1912,9 @@ function fire(){
   else if(w.pen>1){hits=[];for(const e of tgt){if(hits.length>=w.pen)break;if(hits.length&&e.dist-hits[hits.length-1].dist>w.exit)break;hits.push(e)}}
   const burned=[],frags=[],lanterns=[];
   let callE=null,callHead=false,anyHit=false,missAt=null;
+  let magBack=0;   // Rivet Storm magnetic nails: nails pulled back from close kills
   hits.forEach(e=>{
+    if(w.magR&&e===hits[0])e.rvShot=(e.rvShot||0)+shots;
     const rel=norm(e.angle-G.heading),fly=.03+e.dist*.006;
     let head=!w.spread&&!w.lantern&&!w.sonic&&Math.abs(rel)<=(w.hz||HEADZONE);
     if(!head&&w.grip&&Math.random()<w.grip)head=true;
@@ -1933,7 +1941,7 @@ function fire(){
     if(w.infect){[e,...G.enemies.filter(o=>o!==e&&o.hp>0&&(()=>{const[a1,b1]=xy(e.angle,e.dist),[a2,b2]=xy(o.angle,o.dist);return Math.hypot(a1-a2,b1-b2)<=3/3.281})())]
       .forEach(o=>{if(o.inf||o.hp<=0)return;o.inf=true;o.infCue=3;fx.infect(norm(o.angle-G.heading),o.dist,tEnd+.05)})}
     if(w.ice){chill(e);fx.frost(rel,e.dist,tEnd+.05);if(w.frag)frags.push([e,dmg])}
-    if(e.hp<=0){e.hk=head;fx.kill(rel,e.dist,tEnd+.08,e.type)}
+    if(e.hp<=0){e.hk=head;fx.kill(rel,e.dist,tEnd+.08,e.type);if(w.magR&&e.rvShot&&e.dist<=w.magR){magBack+=e.rvShot;e.rvShot=0}}
     else{const big=EN[e.type].boss||EN[e.type].mini;if(w.lantern){if(!callE){callE=e;callHead=false}return}if(!(e.hb>0))e.dist=Math.min(e.dist+(w.rivet?(big?0:.5):big?(w.knock?2:0):(w.knock||1.5)),50);if(!callE){callE=e;callHead=head}}
   });
   // shotgun area damage: the blast also catches anyone within 10 feet of the first enemy hit
@@ -1988,6 +1996,7 @@ function fire(){
   if(!killed&&blastN>1)say(w.sonic?`Scream hit ${blastN} enemies.`:`Blast hit ${blastN} enemies.`);
   else if(!killed&&callE&&S.hpcall&&callE.hp>0){const now=performance.now();
     if(now-G.hpT>700){G.hpT=now;say(`${callHead?'Headshot. ':''}${callE.mega?'Mega ':''}${EN[callE.type].name}, ${Math.max(1,Math.round(callE.hp/callE.maxhp*100))} percent.`)}}
+  if(magBack){A[side]=Math.min(w.mag,A[side]+magBack);fx.magnet()}
   const th=Math.max(2,Math.ceil(w.mag*.2));if(A[side]>0&&A[side]<=th)fx.lowammo(gap*shots+.05);
   if(w.akimbo){
     if(A[side]===0){startReload(wi,side);const o=1-side,h=side?'Right':'Left';
@@ -2514,6 +2523,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-03-magnet',date:'November 3, 2026',title:'Rivet Storm magnetic nails',items:[
+    'New Rivet Storm special ability, Magnetic nails. With V1, 12,000 silver, killing an enemy within 10 feet pulls every nail you fired at it back into your magazine, with a magnetic zip. V2, 20,000 silver, reaches 20 feet. Kill only up close and you never have to reload, so Overdrive keeps building.',
+    'The Rivet Storm no longer takes FMJ rounds or hollow point rounds.'
+  ]},
   {id:'2026-11-03-gifts',date:'November 3, 2026',title:'Gift delivery',items:[
     'Gifts from the developer now arrive when you open or reload the game, instead of every time you go back to the main menu. To get a gift right away, tap Check for gifts on the Player ID screen.'
   ]},
@@ -2775,7 +2788,7 @@ const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
 const catW=()=>curCat==='mythic'?MCAT[curMyth].map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
 let curCat='pistol',curArm='regular',curMyth='rifle';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
-const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes the regular submachine gun attachments.'+WNOTE,
+const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
   grenades:'Grenades go off around you, so there is no aiming: everything inside the blast radius is hit. They are used up when thrown. In battle, Grenade uses one, and Grenade type cycles frag, cryo, jack-in-the-box, event horizon and Fat Man.',
   perks:'Permanent upgrades to your soldier, up to level 50. Every level up to 20 gives the full boost, after that each level gives a smaller one. Past level 5, every level costs 10 percent more than the one before.'};
@@ -3012,6 +3025,7 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
   if(k==='hall-mile'){fx.mile();return}
   if(k==='perk-open'){fx.perkOpen();return}
   if(k==='rivetpin'){fx.pinned(0,6);return}
+  if(k==='rivetmag'){fx.magnet();return}
   if(k==='fence'){fx.fenceZap(-30,6);setTimeout(()=>fx.burn(-30,6),150);setTimeout(()=>fx.fenceIdle(),2200);return}
   if(k==='revive'){fx.revive();return}
   if(k==='ventfx'){fx.ventBlast(25);return}
