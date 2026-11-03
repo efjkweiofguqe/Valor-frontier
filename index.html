@@ -663,11 +663,19 @@ function rebuildAudio(){
 ['pointerdown','touchend','keydown','click'].forEach(t=>document.addEventListener(t,wakeAudio,true));
 if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener)navigator.mediaDevices.addEventListener('devicechange',()=>setTimeout(wakeAudio,300));
 let gunBus,verbSend,enBus,uiBus;
-function out(rel=0,dist=0,vol=1,bus){
-  bus=bus||sfx;const g=ctx.createGain();g.gain.value=vol*Math.max(.3,1-dist/70);
+/* z: zombie distance falloff. 0 = the normal enemy curve, 1 = zombies, 2 = giant zombies, 3 = the Ancient One.
+   Zombies fall away much more steeply with distance (in feet: full volume within 5 feet, about half at 15,
+   a fifth at 50, a tenth at 100), get more muffled the further off they are, and pick up more echo, so a zombie
+   100 feet away sounds distant and faint and grows louder and clearer as it closes in. Giants and the Ancient One
+   are huge, so they carry further. */
+const ZFALL=[0,12,20,35],zKind=ty=>ty==='zancient'?3:ty==='zgiant'?2:EN[ty]&&EN[ty].z?1:0;
+function zGain(dist,z){const ft=dist*3.281;return Math.max(.05,1/(1+Math.max(0,ft-5)/ZFALL[z]))}
+function out(rel=0,dist=0,vol=1,bus,z=0){
+  bus=bus||sfx;const g=ctx.createGain();g.gain.value=vol*(z?zGain(dist,z):Math.max(.3,1-dist/70));
   const f=ctx.createBiquadFilter();f.type='lowpass';
   const a=Math.abs(rel);let fc=a>90?1800+(180-a)/90*2400:16000;
-  fc=Math.min(fc,16000*Math.pow(.965,dist));   // far sounds lose their top end
+  fc=Math.min(fc,16000*Math.pow(z?(z>1?.955:.94):.965,dist));   // far sounds lose their top end, zombies more so
+  if(z&&verbSend){const ft=dist*3.281,w=ctx.createGain();w.gain.value=vol*S.evol*Math.min(1,Math.max(0,ft-10)/110)*.9;g.connect(w);w.connect(verbSend)}   // distant zombies echo
   if(G&&G.cover&&bus===enBus)fc=Math.min(fc,2600);   // behind cover the fight sounds muffled
   f.frequency.value=fc;g.connect(f);
   if(ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=Math.max(-1,Math.min(1,Math.sin(rel*Math.PI/180)));f.connect(p);p.connect(bus)}
@@ -2145,7 +2153,7 @@ function spawn(type,mega){
     e.angle=(Math.atan2(x,y)*180/Math.PI+360)%360;e.dist=Math.hypot(x,y)}
   else if(zq){const wi=Math.floor(Math.random()*G.win.length);e.win=wi;e.angle=(G.win[wi].a+Math.random()*12-6+360)%360;e.dist=ZWIN+2+Math.random()*7}
   G.enemies.push(e);
-  if(type==='zancient'){e.cue=4.5;ancientRoar(out(norm(e.angle-G.heading),e.dist,2,enBus),0,1);vib(800);
+  if(type==='zancient'){e.cue=4.5;ancientRoar(out(norm(e.angle-G.heading),e.dist,2,enBus,3),0,1);vib(800);
     (g=>setTimeout(()=>{if(G===g&&!G.over)say(`The Ancient One has awakened! ${clock(norm(e.angle-G.heading))}, ${ft(e.dist)} feet. It has 10,000 health.`)},1200))(G);return}
   if(zq&&(!boss||(G.zg&&!mega)))return;   // giants only: too many to announce each one
   const where=clock(norm(e.angle-G.heading));
@@ -2710,7 +2718,7 @@ function stepEnemy(e,dt){
   if(e.frozeT>0)e.frozeT-=dt;
   const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1);
   if(e.slowT>0)e.slowT-=dt;
-  if(e.hz){e.engaged=false;e.wind=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,1,enBus));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}
+  if(e.hz){e.engaged=false;e.wind=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}
   if(e.hb>0){e.hb-=dt*(slow>0?1:0);e.bt-=dt;const pg=1-e.hb/e.hb0;
     if(e.bt<=0){e.bt=.45;e.kind==='bar'?fx.boardBang(rel,pg,e.dist):fx.glassBang(rel,pg,e.dist);
       if(!G.told.bar){G.told.bar=1;say(`Zombies are breaking out of the walls ahead. Listen for the banging.`)}}
@@ -2730,14 +2738,14 @@ function stepEnemy(e,dt){
   if(e.type==='revenant'){e.rocketT-=dt*slow;if(e.rocketT<=0){e.rocketT=6+Math.random()*2;G.rockets.push({t:1.5,angle:e.angle});fx.whistle(rel,e.dist);
     if(!G.told.rocket){G.told.rocket=1;say('Incoming rockets! Take cover!')}}}
   e.cue-=dt;if(e.cue<=0&&!cryOk(t))e.cue=.2+Math.random()*.4;   // too many cries at once: wait a moment
-  if(e.cue<=0){CRY[e.type](out(rel,e.dist,1,enBus));if(e.slowT>0||e.frozeT>0)fx.frost(rel,e.dist,.1);if(e.shockT>0&&!shockVoices.has(e))fx.shock(rel,e.dist,.1);e.cue=(t.cueGap||(t.boss?1.4:t.z?1.4+Math.random()*1.6:.6))+e.dist*.025}
+  if(e.cue<=0){CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));if(e.slowT>0||e.frozeT>0)fx.frost(rel,e.dist,.1);if(e.shockT>0&&!shockVoices.has(e))fx.shock(rel,e.dist,.1);e.cue=(t.cueGap||(t.boss?1.4:t.z?1.4+Math.random()*1.6:.6))+e.dist*.025}
   if(e.dist<=MELEE){
     if(!e.engaged){e.engaged=true;say(`${t.name} attacking, ${clock(rel)}!`)}
-    if(e.wind>0){e.wind-=dt*slow;if(e.wind<=0){ATTACK[e.type](out(rel,e.dist,1,enBus));hurtPlayer(t.dmg*(e.dm||1),e)}return}
+    if(e.wind>0){e.wind-=dt*slow;if(e.wind<=0){ATTACK[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));hurtPlayer(t.dmg*(e.dm||1),e)}return}
     e.atkT-=dt*slow;
     if(e.atkT<=0){e.atkT=t.atk*(e.am||1);
       if(t.boss){e.wind=.9;fx.windup(rel,e.dist,1);if(!G.told.wind){G.told.wind=1;say(`${t.name} winds up. Take cover!`)}}
-      else{ATTACK[e.type](out(rel,e.dist,1,enBus));const g=G;setTimeout(()=>{if(G===g&&!G.over&&!G.paused&&e.hp>0)hurtPlayer(t.dmg*(e.dm||1),e)},250)}}   // only this game, and only if the attacker is still alive
+      else{ATTACK[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));const g=G;setTimeout(()=>{if(G===g&&!G.over&&!G.paused&&e.hp>0)hurtPlayer(t.dmg*(e.dm||1),e)},250)}}   // only this game, and only if the attacker is still alive
   }
 }
 function step(dt){
@@ -2915,6 +2923,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-03-zdist',date:'November 3, 2026',title:'Zombies sound near or far',items:[
+    'Zombie voices now follow distance. A zombie 100 feet away is faint, muffled and echoey, and it gets louder and clearer as it closes in, reaching full volume only when it is within about 5 feet of you.',
+    'Roughly: half volume at 15 feet, a third at 30 feet, a fifth at 50 feet, and a tenth at 100 feet.',
+    'Giant zombies and the Ancient One are huge, so their groans and roars carry further than regular zombies, but they still sound distant when they are far off.',
+    'Zombie attacks on you are still at full volume, since they happen right next to you.']},
   {id:'2026-11-03-smgsound',date:'November 3, 2026',title:'Real submachine gun sounds',items:[
     'The regular submachine guns, the Skorpion vz. 61 and the FN P90, now fire with a recorded submachine gun instead of a synthesized one. Every round in a burst is a real shot, varied so it never sounds like a loop.',
     'The P90 sounds a little higher and the Skorpion a little lower, so you can still tell them apart by ear. A longer barrel makes them deeper. With a silencer they keep the quiet suppressed shot.',
