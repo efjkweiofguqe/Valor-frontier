@@ -1474,7 +1474,7 @@ const ATT=[
   {id:'tdrum',name:'Conductive drum',price:5000,for:'thunder',desc:w=>`Doubles the magazine, 6 shells becomes 12. Stacks with the extended magazine.`},
   {id:'rvmag1',name:'Extended magazine V1',price:3000,for:'rivet',desc:()=>'Holds 100 nails instead of 50.'},
   {id:'rvmag2',name:'Extended magazine V2',price:6000,for:'rivet',req:'rvmag1',desc:()=>'Holds 150 nails. Buy V1 first.'},
-  {id:'rvmag3',name:'Extended magazine V3',price:9000,for:'rivet',req:'rvmag2',desc:()=>'Holds 200 nails. Buy V2 first.'},
+  {id:'rvmag3',name:'Extended magazine V3',price:9000,for:'rivet',req:'rvmag2',desc:()=>'Holds 300 nails. Buy V2 first.'},
   {id:'rvhot',name:'Hot nails',price:8000,for:'rivet',desc:()=>'Red-hot nails. Every enemy a nail hits catches fire, burning 3 health a second for 4 seconds, and each new nail keeps it burning. Stacks with sharper nails and any other ammo.'},
   {id:'rvsharp',name:'Sharper nails',price:6000,for:'rivet',desc:()=>'Alternate nails with hardened needle tips. Each nail punches through up to 4 enemies in a line instead of stopping in the first. Stacks with hot nails and any other ammo.'},
   {id:'rvmgn1',name:'Magnetic nails V1',price:12000,for:'rivet',desc:()=>'Special ability. The gun gains a strong magnetic field that pulls spent nails back in. Kill an enemy within 10 feet with a nail, and every nail you fired at it flies back into your magazine, with a quick magnetic zip. Kill only up close and you never have to reload, which keeps Overdrive building.'},
@@ -1541,7 +1541,7 @@ function build(w){
   // penetration: pen = most enemies one round can pass through, exit = how far it carries past each one
   b.pen=1;b.exit=Infinity;if(PEN[w.id])b.pen=PEN[w.id][has('ap')?1:0];
   if(w.id==='m249'&&has('ap')){b.pen=8;b.exit=13/3.281}
-  if(w.id==='rivet'){b.mag=has('rvmag3')?200:has('rvmag2')?150:has('rvmag1')?100:50;b.overdrive=has('rvover');b.magR=has('rvmgn2')?20/3.281:has('rvmgn1')?10/3.281:0;b.hot=has('rvhot');if(has('rvsharp'))b.pen=4}
+  if(w.id==='rivet'){b.mag=has('rvmag3')?300:has('rvmag2')?150:has('rvmag1')?100:50;b.overdrive=has('rvover');b.magR=has('rvmgn2')?20/3.281:has('rvmgn1')?10/3.281:0;b.hot=has('rvhot');if(has('rvsharp'))b.pen=4}
   if(w.id==='jet'){const r=(has('ramjet')?1:0)+(has('ramjet2')?1:0);b.pen=r===2?Infinity:r?20:10;
     // full ramjet ammo: the round never stops and never skips anyone in its line, even from cover
     if(r===2){b.exit=Infinity;b.sure=true;if(has('ionic'))b.cone=w.cone+3}}
@@ -2525,7 +2525,8 @@ function hud(){
 const UPDATES=[
   {id:'2026-11-03-magnet',date:'November 3, 2026',title:'Rivet Storm magnetic nails',items:[
     'New Rivet Storm special ability, Magnetic nails. With V1, 12,000 silver, killing an enemy within 10 feet pulls every nail you fired at it back into your magazine, with a magnetic zip. V2, 20,000 silver, reaches 20 feet. Kill only up close and you never have to reload, so Overdrive keeps building.',
-    'The Rivet Storm no longer takes FMJ rounds or hollow point rounds.'
+    'The Rivet Storm no longer takes FMJ rounds or hollow point rounds.',
+    'The Rivet Storm\'s Extended magazine V3 now holds 300 nails instead of 200.'
   ]},
   {id:'2026-11-03-gifts',date:'November 3, 2026',title:'Gift delivery',items:[
     'Gifts from the developer now arrive when you open or reload the game, instead of every time you go back to the main menu. To get a gift right away, tap Check for gifts on the Player ID screen.'
