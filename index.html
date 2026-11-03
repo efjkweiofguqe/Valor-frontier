@@ -1300,6 +1300,8 @@ const healBonus=l=>l<=20?8*l:160+4*(l-20);
 const aimBonus=l=>l<=20?l:20+.5*(l-20);    // Deadeye: percent more gun damage
 const scavBonus=l=>l<=20?2*l:40+(l-20);    // Scavenger: percent more silver per kill
 const PERKEFF={hp:l=>`Max health ${100+hpBonus(l)}`,heal:l=>`Heals ${25+healBonus(l)} between waves`,aim:l=>`${aimBonus(l)} percent more damage`,scav:l=>`${scavBonus(l)} percent more silver per kill`};
+/* Thunderclap damage bands: the closer the enemy, the bigger the multiplier */
+const TBM=[3,2.5,2,1.5,1],tMult=(w,d)=>{const b=w.tband;for(let i=0;i<b.length;i++)if(d<b[i])return TBM[i];return 1};
 const gunMult=()=>(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1);
 const MLV=[0,10,25,45,70,100,135,175,220,270];
 function mlevel(id){const k=P.mast[id]||0;let L=1;MLV.forEach((t,i)=>{if(k>=t)L=i+1});return L}
@@ -1350,8 +1352,8 @@ const WPN=[
    traits:'Pump shotgun with twin magazine tubes, 14 shells. You hear it flip tubes halfway through the load. Hits harder per blast than the SPAS-12 but pumps slower.'},
   {id:'coach',rng:0,name:'Double-barrel coach gun',short:'COACH GUN',mag:2,dmg:6.5,cone:30,cd:.5,reload:2.0,shots:2,spread:true,rm:.7,price:200,
    traits:'Old double-barrel shotgun. Both barrels fire at once for a huge close-range blast, then you break it open and load 2 more shells. Very short range.'},
-  {id:'thunder',rng:0,name:'Thunderclap',short:'THUNDER',mag:6,dmg:30,cone:24,cd:.9,reload:3.0,shots:1,spread:true,chain:true,price:35000,
-   traits:'Mythical shotgun charged with a storm. Every blast is a real thunder clap, and lightning leaps from the first enemy hit to up to 4 more enemies within 15 feet of it for 60 percent damage. Has its own storm upgrades in the Armory, including the ball lightning slug and the lightning rod.'},
+  {id:'thunder',rng:0,name:'Thunderclap',short:'THUNDER',mag:6,dmg:75,cone:24,cd:.9,reload:3.0,shots:1,spread:true,chain:true,price:35000,
+   traits:'Mythical shotgun charged with a storm. Every blast is a real thunder clap that hits every enemy in front of you for at least 75 at any distance, and harder the closer they are: one and a half times within 46 feet, double within 23, two and a half times within 15, and triple, 225, within 8. Anyone near the first enemy hit takes splash, and lightning leaps from it to up to 4 more enemies within 15 feet, starting at 60 percent of that blast and weakening with each jump. The closer the first enemy, the harder the splash and lightning hit. Has its own storm upgrades in the Armory, including the ball lightning slug and the lightning rod.'},
   {id:'blackhole',rng:0,name:'Black Hole Cannon',short:'BLACK HOLE',mag:2,dmg:70,cone:12,cd:1.6,reload:3.4,shots:1,hole:true,price:45000,
    traits:'Mythical cannon that fires a slow humming orb. It lands on the nearest enemy you are facing, or about 40 feet ahead. For 4 seconds it drags every enemy within 25 feet into it, crushing everything caught in its pull for 9 damage a second, then collapses, hitting everything within 12 feet for 70 and everything else it pulled for half that. Perfect to follow with a shotgun or a grenade. Takes only a few of its own upgrades, including the Dark matter core.'},
   {id:'banshee',rng:0,name:'Banshee',short:'BANSHEE',mag:15,dmg:20,cone:40,cd:.25,reload:3.0,shots:1,sonic:true,acc:1,full:12.2,reach:48.8,price:30000,
@@ -1404,11 +1406,14 @@ const ATT=[
   {id:'jfmag1',name:'Extended magazine V1',price:500,for:'jackfrost',desc:()=>'Holds 15 icicles instead of 10.'},
   {id:'jfmag2',name:'Extended magazine V2',price:1000,for:'jackfrost',req:'jfmag1',desc:()=>'Holds 20 icicles. Buy V1 first.'},
   {id:'jfmag3',name:'Extended magazine V3',price:2500,for:'jackfrost',req:'jfmag2',desc:()=>'Holds 30 icicles. Buy V2 first.'},
-  {id:'tcap',name:'Storm capacitor',price:8000,for:'thunder',desc:()=>'Lightning jumps to up to 6 more enemies instead of 4, and reaches 25 feet from the first enemy hit instead of 15.'},
-  {id:'tover',name:'Overcharge rounds',price:10000,for:'thunder',desc:()=>'Every lightning jump hits for 90 percent of the blast instead of 60.'},
+  {id:'tcap',name:'Storm capacitor',price:5000,for:'thunder',desc:()=>'Lightning jumps to up to 8 more enemies instead of 4, and reaches 25 feet from the first enemy hit instead of 15.'},
+  {id:'tcap2',name:'Storm capacitor V2',price:10000,for:'thunder',req:'tcap',desc:()=>'Doubles the lightning again: it jumps to up to 16 enemies. Buy the first storm capacitor first.'},
+  {id:'tcap3',name:'Storm capacitor V3',price:20000,for:'thunder',req:'tcap2',desc:()=>'No limit. After its first jump, the lightning keeps leaping from enemy to enemy as long as there is another one within 10 feet of an enemy it already struck. A cluster of 30 enemies gets hit all 30 times. Each jump is still a little weaker than the last, down to a quarter of the first. Buy V2 first.'},
+  {id:'ttrig',name:'Hair trigger',price:6000,for:'thunder',desc:()=>'Fires 30 percent faster, about 1 and a half blasts a second instead of just over 1.'},
+  {id:'tover',name:'Overcharge rounds',price:10000,for:'thunder',desc:()=>'The lightning starts at 90 percent of the blast instead of 60, so every jump hits harder.'},
   {id:'tstatic',name:'Static field',price:7000,for:'thunder',desc:()=>'Every enemy the lightning touches is shocked and moves at half speed for 4 seconds. Each shocked enemy crackles with electricity, right where it stands, until the shock wears off, so you can hear who is affected.'},
-  {id:'tball',name:'Ball lightning slug',price:15000,for:'thunder',ammo:true,req:'tchoke',desc:()=>'Fires one crackling orb straight ahead instead of a spread. It never misses, never loses power with distance, and hits 50 percent harder than a close-range blast. It passes through up to 7 enemies in a line, hurts any enemy within 2 feet of each one it passes through, then bursts into chain lightning. Buy the Thunder choke first.'},
-  {id:'tchoke',name:'Thunder choke',price:6000,for:'thunder',desc:()=>'Tightens the spread. Full power reaches 60 percent farther, but the blast covers a narrower area, so it hits fewer enemies at once. Has no effect with the ball lightning slug.'},
+  {id:'tball',name:'Ball lightning slug',price:15000,for:'thunder',ammo:true,req:'tchoke',desc:()=>'Fires one crackling orb straight ahead instead of a spread. It never misses, never loses power with distance, and hits for 112, one and a half times the blast\'s base damage, at any range. It passes through up to 7 enemies in a line, hurts any enemy within 2 feet of each one it passes through, then bursts into chain lightning. Buy the Thunder choke first.'},
+  {id:'tchoke',name:'Thunder choke',price:6000,for:'thunder',desc:()=>'Tightens the spread. The close-range damage bands reach 60 percent farther, but the blast covers a narrower area, so it hits fewer enemies at once. Has no effect with the ball lightning slug.'},
   {id:'trod',name:'Lightning rod',price:15000,for:'thunder',desc:()=>'Every kill builds charge. After 5 kills you hear a rising hum and a voice tells you it is ready. While it stays charged, electricity crackles around you whenever the Thunderclap is in your hands. Your next shot is a supercharged thunderclap with double damage and a huge rumble.'},
   {id:'tdrum',name:'Conductive drum',price:5000,for:'thunder',desc:w=>`Doubles the magazine, 6 shells becomes 12. Stacks with the extended magazine.`},
   {id:'symmag1',name:'Extended magazine V1',price:3000,for:'symbiote',desc:()=>'Holds 110 rounds instead of 55.'},
@@ -1484,10 +1489,12 @@ function build(w){
   if(w.id==='symbiote'&&has('symfrenzy')){b.cd=b.cd/4;b.frenzy=true}
   if(w.id==='banshee'){if(has('bntrig'))b.cd*=.7;if(has('bntrig2')){b.shots=3;b.burst=true;b.cd=.5;b.dmg*=1.25}if(has('bnbarrel2'))b.dmg*=1.15;if(has('bnamp')){b.dmg*=2;b.full=w.full+20/3.281;b.reach=w.reach+20/3.281}}
   if(w.id==='thunder'){
-    b.chainN=has('tcap')?6:4;b.chainR=(has('tcap')?25:15)/3.281;b.chainM=has('tover')?.9:.6;b.shock=has('tstatic');b.rod=has('trod');
+    b.chainN=has('tcap3')?Infinity:has('tcap2')?16:has('tcap')?8:4;b.chainR=(has('tcap')?25:15)/3.281;b.chainLink=has('tcap3')?10/3.281:0;b.chainM=has('tover')?.9:.6;b.shock=has('tstatic');b.rod=has('trod');
+    if(has('ttrig'))b.cd*=.7;
+    {const sc=(b.barrel?1.5:1)*(has('tchoke')?1.6:1);b.tband=[8,15,23,46].map(f=>f*sc/3.281)}   // damage bands, in metres: triple, 2.5x, double, 1.5x, then 1x
     if(has('tdrum'))b.mag=b.mag*2;
     if(has('tchoke')){const rm=1.6;b.range=b.barrel?[11*rm,20*rm,.45]:[7*rm,14*rm,.25];b.cone=14}
-    if(has('tball')){b.spread=false;b.ballslug=true;b.cone=12;b.acc=1;b.dmg*=1.5;b.pen=7;b.exit=Infinity;b.sure=true}}
+    if(has('tball')){b.spread=false;b.ballslug=true;b.cone=12;b.acc=1;b.dmg*=1.5;b.pen=7;b.exit=Infinity;b.sure=true;b.tband=null}}
   if(b.akimbo){b.name='Akimbo '+w.name+'s';b.short=w.short+' x2'}
   return b;
 }
@@ -1794,7 +1801,7 @@ function fire(){
     // hollow points: big boost up close, fades with distance, weaker than normal far away
     const hk=w.hollow,dft=e.dist*3.281,hpm=!hk?1:dft<=25?1+.5*hk:dft<=50?1+.5*hk-(.5*hk+.15)*(dft-25)/25:.85;
     let dmg=0,sfo=1;const rounds=[];
-    if(w.spread){const r=w.range;dmg=w.dmg*shots*(e.dist<r[0]?1:e.dist<r[1]?.55:r[2])*(G.cover?.65:1)*hm;for(let i=0;i<shots;i++)rounds.push(i)}
+    if(w.spread){const r=w.range;dmg=w.dmg*shots*(w.tband?tMult(w,e.dist):e.dist<r[0]?1:e.dist<r[1]?.55:r[2])*(G.cover?.65:1)*hm;for(let i=0;i<shots;i++)rounds.push(i)}
     else if(w.sonic){sfo=e.dist<=w.full?1:Math.max(.4,1-.6*(e.dist-w.full)/(w.reach-w.full));dmg=w.dmg*hm*sfo*(G.cover?.65:1)*shots;for(let i=0;i<shots;i++)rounds.push(i)}
     else for(let i=0;i<shots;i++){if(w.sure||Math.random()<acc*am2){dmg+=head&&w.jetHead?Math.max(10000,w.dmg*hm):w.dmg*hm*fm*hpm*(w.sym?G.symMult||1:1);rounds.push(i)}else if(!missAt)missAt=[rel,e.dist,i*gap+fly]}
     if(!dmg)return;
@@ -1814,9 +1821,11 @@ function fire(){
   });
   // shotgun area damage: the blast also catches anyone within 10 feet of the first enemy hit
   let blastN=0;
+  // Thunderclap: the first enemy's banded blast (before cover) sets how hard the splash and lightning hit
+  const tBase=w.tband&&hits.length?w.dmg*shots*tMult(w,hits[0].dist)*gunMult():0;
   if(w.spread&&anyHit){const pos=e=>{const r=e.angle*Math.PI/180;return[Math.sin(r)*e.dist,Math.cos(r)*e.dist]},[cx,cy]=pos(hits[0]),r=w.range;
     G.enemies.forEach(e=>{if(hits.includes(e)||e.hp<=0)return;const[x,y]=pos(e);if(Math.hypot(x-cx,y-cy)>10/3.281)return;
-      e.hp-=w.dmg*shots*.6*(e.dist<r[0]?1:e.dist<r[1]?.55:r[2]);blastN++;const rel=norm(e.angle-G.heading),t=.05+e.dist*.006;if(w.dragon)ignite(e,w.id,t);
+      const sd=Math.hypot(x-cx,y-cy)*3.281;e.hp-=w.tband?tBase*.6*(sd<=3?1:1-.5*(sd-3)/7):w.dmg*shots*.6*(e.dist<r[0]?1:e.dist<r[1]?.55:r[2]);blastN++;const rel=norm(e.angle-G.heading),t=.05+e.dist*.006;if(w.dragon)ignite(e,w.id,t);
       fx.impact(rel,e.dist,e.type,t);if(e.hp<=0)fx.kill(rel,e.dist,t+.08,e.type)})}
   // ball lightning: the orb also scorches anyone within 2 feet of each enemy it passes through
   const scorched=[];
@@ -1826,8 +1835,17 @@ function fire(){
       if(e.hp<=0)fx.kill(rel,e.dist,t+.08,e.type);else if(w.shock){e.shockT=4;fx.shock(rel,e.dist,t+.1)}})});blastN+=scorched.length}
   // Thunderclap: lightning leaps from the first enemy hit to up to 4 others within 15 feet
   if(w.chain&&anyHit){const[cx,cy]=xy(hits[0].angle,hits[0].dist);let n=0;
-    G.enemies.filter(e=>e.hp>0&&!hits.includes(e)&&!scorched.includes(e)).map(e=>{const[x,y]=xy(e.angle,e.dist);return[e,Math.hypot(x-cx,y-cy)]}).filter(a=>a[1]<=(w.chainR||15/3.281)).sort((a,b)=>a[1]-b[1]).slice(0,w.chainN||4)
-      .forEach(([e])=>{n++;e.hp-=w.dmg*(w.chainM||.6);const rel=norm(e.angle-G.heading),t=.12+n*.07;fx.zap(rel,e.dist,t);if(e.hp<=0)fx.kill(rel,e.dist,t+.1,e.type);else if(w.shock){e.shockT=4;fx.shock(rel,e.dist,t+.12)}});
+    const pool=G.enemies.filter(e=>e.hp>0&&!hits.includes(e)&&!scorched.includes(e)),R=w.chainR||15/3.281,dd=(a,b)=>{const[x1,y1]=xy(a.angle,a.dist),[x2,y2]=xy(b.angle,b.dist);return Math.hypot(x1-x2,y1-y2)};
+    let struck;
+    if(w.chainLink){   // Storm capacitor V3: the lightning keeps jumping to anyone within 10 feet of an enemy it already struck, with no limit
+      struck=[];const left=new Set(pool),q=[hits[0]];
+      for(let qi=0;qi<q.length;qi++){const src=q[qi],reach=qi===0?R:w.chainLink;
+        [...left].map(e=>[e,dd(src,e)]).filter(a=>a[1]<=reach).sort((a,b)=>a[1]-b[1]).forEach(([e])=>{left.delete(e);struck.push(e);q.push(e)})}}
+    else struck=pool.map(e=>[e,dd(hits[0],e)]).filter(a=>a[1]<=R).sort((a,b)=>a[1]-b[1]).slice(0,w.chainN||4).map(a=>a[0]);
+    // each jump starts at the chain's share of the blast and weakens 10 percent per jump, never below a quarter
+    const cBase=(w.tband?tBase:w.dmg*(w.ballslug?gunMult():1))*(w.chainM||.6);
+    struck.forEach(e=>{n++;e.hp-=cBase*Math.max(.25,1-.1*(n-1));const rel=norm(e.angle-G.heading),t=.12+Math.min(n,12)*.07+Math.max(0,Math.min(n,60)-12)*.02,loud=n<=16;
+      if(loud)fx.zap(rel,e.dist,t);if(e.hp<=0)fx.kill(rel,e.dist,t+.1,e.type);else if(w.shock){e.shockT=4;if(loud)fx.shock(rel,e.dist,t+.12)}});
     if(w.shock&&hits[0].hp>0){hits[0].shockT=4;fx.shock(norm(hits[0].angle-G.heading),hits[0].dist,.1)}
     if(n)blastN+=n}
   if(w.spread)blastN+=hits.length;
@@ -2379,6 +2397,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-thunderbuff',date:'November 2, 2026',title:'Thunderclap buff',items:[
+    'The Thunderclap now hits for at least 75 at any distance, up from 30, and it never gets weaker than that far away.',
+    'The closer an enemy is, the harder it hits: one and a half times within 46 feet, double within 23, two and a half times within 15, and triple, 225, within 8 feet. The extended barrel and the Thunder choke stretch these bands farther out.',
+    'The splash and chain lightning now grow with the blast too. They are set by how close the first enemy hit is. Enemies right next to it take the full splash, falling to half at 10 feet. The first lightning jump hits hardest, and each jump after is 10 percent weaker, never below a quarter.',
+    'New Thunderclap hair trigger: fires 30 percent faster.',
+    'Storm capacitor now doubles the lightning jumps from 4 to 8, and costs 5,000 instead of 8,000. New Storm capacitor V2 doubles that to 16. New Storm capacitor V3 removes the limit: the lightning keeps jumping to anyone within 10 feet of an enemy it already struck, so a packed crowd gets hit by every single bolt.',
+    'The ball lightning slug now hits for 112, one and a half times the new base damage.']},
   {id:'2026-11-02-atrec',date:'November 2, 2026',title:'Real gunfire for the anti-tank rifle',items:[
     'The Boys anti-tank rifle now fires with a recording of a real heavy rifle shot in an open field, with its echo rolling away across the hills.',
     'A deep boom is layered underneath every shot so it hits hard even on phone speakers and earbuds. With the extended barrel, the boom is deeper and lasts longer. With a silencer, it keeps its muffled suppressed shot.',
@@ -2612,6 +2637,7 @@ const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine gu
 const n1=x=>Math.round(x*10)/10;
 function dmgLine(w){if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
   if(w.hydra)return `Damage: 3 rockets of ${w.dmg} each per trigger pull. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.hole){const b=build(w);return `Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${w.dmg} on collapse to everything within 12 feet, half that to the rest it pulled in. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(false)return ` For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.sonic)return `Damage: ${w.dmg} to every enemy in the cone within ${ft(w.full)} feet, plus a stun, fading to 40 percent at ${ft(w.reach)} feet. ${n1(1/w.cd)} screams per second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
+  if(w.id==='thunder')return `Damage: ${w.dmg} to every enemy in the blast at any distance, rising up to triple, ${w.dmg*3}, within 8 feet. ${n1(1/w.cd)} trigger pulls per second at stock. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   let t=w.spread?`Damage: ${n1(w.dmg)} to every enemy in the blast${w.shots>1?`, ${w.shots} blasts per trigger pull`:''}.`:`Damage: ${n1(w.dmg)} per bullet${w.shots>1?`, ${w.shots} bullets per trigger pull`:''}.`;
   t+=` ${n1(pulls)} trigger pulls per second, about ${Math.round(w.spread?w.dmg*w.shots*pulls:dps)} damage per second.`;
   if(P.owned.includes(w.id)){const b=build(w);if(Math.abs(b.dmg-w.dmg)>.01||Math.abs(b.cd-w.cd)>.001)t+=` With your attachments: ${n1(b.dmg)} per ${w.spread?'enemy':'bullet'}, ${n1(1/b.cd)} pulls per second.`}
@@ -2736,6 +2762,8 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   else if(b.hydra)out.push(`Damage: 3 rockets of ${D(b.dmg)} each per trigger pull.`,`${n1(pulls)} trigger pulls per second.`);
   else if(b.hole)out.push(`Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${D(b.dmg)} on collapse to everything within 12 feet, half that to the rest it pulled in.`,`${n1(pulls)} shots per second.`);
   else if(b.sonic)out.push(`Damage: ${D(b.dmg)} to every enemy in the cone within ${ft(b.full)} feet, plus a stun, fading to 40 percent at ${ft(b.reach)} feet.`,b.burst?`Bursts of ${b.shots} shrieks, ${n1(pulls)} bursts per second.`:`${n1(pulls)} screams per second.`);
+  else if(b.tband){const B=b.tband.map(ft);out.push(`Damage: at least ${D(b.dmg)} to every enemy in the blast at any distance. 1.5 times, ${D(b.dmg*1.5)}, within ${B[3]} feet. Double, ${D(b.dmg*2)}, within ${B[2]} feet. 2.5 times, ${D(b.dmg*2.5)}, within ${B[1]} feet. Triple, ${D(b.dmg*3)}, within ${B[0]} feet.`,
+    `Splash: anyone within 10 feet of the first enemy hit takes 60 percent of that blast, full within 3 feet, down to half of that at 10 feet.`,`${n1(pulls)} trigger pulls per second, about ${Math.round(b.dmg*aim*pulls)} to ${Math.round(b.dmg*3*aim*pulls)} damage per second to each enemy.`)}
   else{out.push(b.spread?`Damage: ${D(b.dmg)} to every enemy in the blast${b.shots>1?`, ${b.shots} blasts per trigger pull`:''}.`:`Damage: ${D(b.dmg)} per ${b.slug?'slug':'bullet'}${b.shots>1?`, ${b.shots} bullets per trigger pull`:''}.`);
     out.push(`${n1(pulls)} trigger pulls per second, about ${Math.round(b.dmg*aim*b.shots*pulls*(b.spread?1:acc))} damage per second${b.akimbo?' from each gun':''}.`)}
   out.push(`Magazine: ${b.mag}${b.akimbo?' in each of your two guns':''}. Reload: ${r1(b.reload)} seconds.`);
@@ -2747,7 +2775,7 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   if(b.hollow)out.push(`Hollow points: up to ${Math.round(50*b.hollow)} percent more damage within 25 feet, fading with distance, 15 percent less past 50 feet.`);
   if(b.inc)out.push(`Incendiary: each hit splashes ${Math.round(b.splash*100)} percent of its damage onto enemies within 16 feet.`);
   if(b.dragon)out.push("Dragon's breath: sets enemies in the blast on fire.");
-  if(b.chainN)out.push(`Chain lightning: leaps to up to ${b.chainN} more enemies within ${ft(b.chainR)} feet for ${Math.round(b.chainM*100)} percent damage each.${b.shock?' Shocked enemies move at half speed.':''}`);
+  if(b.chainN)out.push(`Chain lightning: ${b.chainLink?`leaps from the first enemy hit to anyone within ${ft(b.chainR)} feet, then keeps jumping to anyone within ${ft(b.chainLink)} feet of an enemy it already struck, with no limit`:`leaps to up to ${b.chainN} more enemies within ${ft(b.chainR)} feet`}. The first jump hits for ${Math.round(b.chainM*100)} percent of the blast on the first enemy, and each jump after is 10 percent weaker, down to a quarter.${b.shock?' Shocked enemies move at half speed.':''}`);
   if(b.vamp)out.push('Vampiric rounds: every kill gives you back 2 health.');
   if(b.infect)out.push('Infects enemies, spreading to anyone within 3 feet.');
   if(b.frenzy)out.push('Feeding frenzy: fires four times as fast.');
@@ -2755,7 +2783,7 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   if(b.blizz)out.push('Blizzard blast on reload: freezes every enemy within 40 feet solid for 15 seconds.');
   if(b.vent)out.push('Heat vent: blasts nearby enemies when you reload, bigger the more rounds you fired.');
   if(b.pen>1)out.push(`Punches through ${b.pen===Infinity?'every enemy in its line':'up to '+b.pen+' enemies'}${b.exit<Infinity?`, carrying ${ft(b.exit)} feet past each`:''}.`);
-  out.push(b.rng&&!(b.pen>1)?`Full damage out to ${ft(b.rng)} feet, weaker beyond.`:b.spread?`Full damage out to ${ft(b.range[0])} feet.`:'No damage falloff at any range.');
+  out.push(b.tband?'Never drops below its base damage, at any range.':b.rng&&!(b.pen>1)?`Full damage out to ${ft(b.rng)} feet, weaker beyond.`:b.spread?`Full damage out to ${ft(b.range[0])} feet.`:'No damage falloff at any range.');
   out.push(`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}: attachments ${(L-1)*5} percent stronger.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:''));
   return out}
 function renderStats(w){const box=$('mods-stats');box.textContent='';
