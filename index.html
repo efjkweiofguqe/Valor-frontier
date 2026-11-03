@@ -588,8 +588,17 @@ function applyVol(){if(!ctx)return;if(menuBus)setTimeout(menuAmbSync,0);gunBus.g
 
 /* ---------- announcements ---------- */
 const sr=$('sr');let flip=false;
+/* Speech guard: a fast weapon used to fire a new announcement every frame, which floods VoiceOver and can crash the
+   browser. Now anything said within 350 ms of the last announcement waits and is merged with the others (newest 3 kept). */
+let sayLast=0,sayQ=[],sayTm=null;
 function say(text){
-  $('feed').textContent=text;
+  $('feed').textContent=text;const now=performance.now(),gap=now-sayLast;
+  if(gap<350){sayQ=sayQ.filter(x=>x!==text);sayQ.push(text);if(sayQ.length>3)sayQ.shift();
+    if(!sayTm)sayTm=setTimeout(()=>{sayTm=null;const t=sayQ.join(' ');sayQ=[];if(t)speak(t)},350-gap);return}
+  speak(text);
+}
+function speak(text){
+  sayLast=performance.now();
   if(S.voice==='tts'&&window.speechSynthesis){
     try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=S.rate;u.volume=Math.min(1,S.tvol);speechSynthesis.speak(u)}catch(e){}
   }else{
@@ -1753,9 +1762,15 @@ try{loadP(JSON.parse(localStorage.getItem('vf-progress')||'{}'))}catch(e){}
 const bootTs=P.ts;   // 0 means this device had no saved progress when the game opened
 const plain=()=>JSON.parse(JSON.stringify(P));
 let cloud=null,cloudBusy=false,cloudDirty=false,cloudTm=0,cloudState='checking';
+/* During a battle the device copy is written at most every 1.5 seconds (it used to be rewritten on every single kill).
+   It is written straight away when the battle ends, on pause, and when the app goes to the background. */
+let saveLT=0,saveTm=null;
+function saveLocal(){clearTimeout(saveTm);saveTm=null;saveLT=performance.now();try{localStorage.setItem('vf-progress',JSON.stringify(P))}catch(e){}}
+function flushSave(){if(saveTm)saveLocal()}
 function saveP(){
-  P.ts=Date.now();
-  try{localStorage.setItem('vf-progress',JSON.stringify(P))}catch(e){}
+  P.ts=Date.now();const now=performance.now();let g=null;try{g=G}catch(e){}
+  if(g&&!g.over&&!g.paused&&now-saveLT<1500){if(!saveTm)saveTm=setTimeout(saveLocal,1500-(now-saveLT))}
+  else saveLocal();
   if(cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1200)}
 }
 async function pushCloud(){
@@ -1947,6 +1962,14 @@ const maxHP=()=>100+hpBonus(P.perk.hp);
 const HEADZONE=7.6;   // half a 15 degree turn, so any enemy can be lined up dead centre
 function vib(ms){if(S.haptic&&navigator.vibrate)try{navigator.vibrate(ms)}catch(e){}}
 const bossOf=()=>MAPS[G.map].boss,miniOf=()=>MAPS[G.map].mini;
+/* Sound limiter. At full Rivet Storm overdrive, around 30 nails a second can land in a crowd, each making a hit,
+   headshot and kill sound, which piles up thousands of audio nodes a second and can crash a phone. Each of these sounds
+   may only start a few times in a short window; extra copies in that window are skipped, which you cannot hear anyway
+   because they land on top of each other. Weapons, damage and physics are unchanged. */
+(()=>{const LIM={impact:[6,.06],headshot:[3,.06],kill:[4,.08],burn:[4,.1],frost:[4,.1],zap:[6,.08],shock:[4,.1],stun:[4,.1],infect:[4,.1],pinned:[2,.1],crackle:[4,.1],
+  coin:[1,.25],levelup:[1,1],bloodDrink:[1,.3],symHeal:[1,.3],lowammo:[1,.15],qShred:[3,.08]};
+  Object.entries(LIM).forEach(([k,[max,win]])=>{const f=fx[k];if(typeof f!=='function')return;let t0=-1,n=0;
+    fx[k]=function(...a){const now=ctx?ctx.currentTime:0;if(now-t0>win){t0=now;n=0}if(++n>max)return;return f.apply(this,a)}})})();
 function newGame(map,mode){
   sortCarry();const lo=P.carry.map(i=>build(WBY[i])),mh=maxHP();
   G={map,mode,lo,earned:0,heading:0,hp:mh,maxhp:mh,w:0,ammo:lo.map(w=>[w.mag,w.akimbo?w.mag:0]),side:lo.map(()=>0),jobs:[],hold:false,cd:0,
@@ -2123,6 +2146,7 @@ function fire(){
     if(w.infect){[e,...G.enemies.filter(o=>o!==e&&o.hp>0&&(()=>{const[a1,b1]=xy(e.angle,e.dist),[a2,b2]=xy(o.angle,o.dist);return Math.hypot(a1-a2,b1-b2)<=3/3.281})())]
       .forEach(o=>{if(o.inf||o.hp<=0)return;o.inf=true;o.infCue=3;fx.infect(norm(o.angle-G.heading),o.dist,tEnd+.05)})}
     if(w.ice){chill(e);fx.frost(rel,e.dist,tEnd+.05);if(w.frag)frags.push([e,dmg])}
+    if(head&&e.hp>0)G.hsN=(G.hsN||0)+rounds.length;
     if(e.hp<=0){e.hk=head;fx.kill(rel,e.dist,tEnd+.08,e.type);if(w.magR&&e.rvShot&&e.dist<=w.magR){magBack+=e.rvShot;e.rvShot=0}}
     else{const big=EN[e.type].boss||EN[e.type].mini;if(w.lantern){if(!callE){callE=e;callHead=false}return}if(!(e.hb>0))e.dist=Math.min(e.dist+(w.rivet?(big?0:.5):big?(w.knock?2:0):(w.knock||1.5)),50);if(!callE){callE=e;callHead=head}}
   });
@@ -2175,9 +2199,9 @@ function fire(){
   const killed=processDead(w.id);
   if(G.over)return;
   if(w.rod&&killed&&(G.rod||0)<5){G.rod=Math.min(5,(G.rod||0)+killed);if(G.rod>=5){fx.rodReady();(g=>setTimeout(()=>{if(G===g&&!G.over)say('Lightning rod charged. Next shot is supercharged.')},1300))(G)}}
-  if(!killed&&blastN>1)say(w.sonic?`Scream hit ${blastN} enemies.`:`Blast hit ${blastN} enemies.`);
+  if(!killed&&blastN>1&&!killQuiet())say(w.sonic?`Scream hit ${blastN} enemies.`:`Blast hit ${blastN} enemies.`);
   else if(!killed&&callE&&S.hpcall&&callE.hp>0){const now=performance.now();
-    if(now-G.hpT>700){G.hpT=now;say(`${callHead?'Headshot. ':''}${callE.mega?'Mega ':''}${EN[callE.type].name}, ${Math.max(1,Math.round(callE.hp/callE.maxhp*100))} percent.`)}}
+    if(now-G.hpT>1500&&!killQuiet()){G.hpT=now;const hn=G.hsN||0;G.hsN=0;say(`${hn>1?hn+' headshots. ':hn||callHead?'Headshot. ':''}${callE.mega?'Mega ':''}${EN[callE.type].name}, ${Math.max(1,Math.round(callE.hp/callE.maxhp*100))} percent.`)}}
   if(magBack){A[side]=Math.min(w.mag,A[side]+magBack);const now=performance.now();if(!(G.magFxT>now)){fx.magnet();G.magFxT=now+1200}}   // zip at most about once a second during a long burst
   const th=Math.max(2,Math.ceil(w.mag*.2));if(A[side]>0&&A[side]<=th)fx.lowammo(gap*shots+.05);
   if(w.akimbo){
@@ -2275,13 +2299,30 @@ function chill(e){e.ice=Math.min(5,(e.ice||0)+1);e.iceT=10}
 function bigWords(bigs,n){const g={};bigs.forEach(e=>{if(G.zg&&!e.mega)return;   // giants only: every kill is a giant, so only the mega is worth naming
   const k=(e.mega?'Mega ':'')+EN[e.type].name;g[k]=(g[k]||0)+1});
   return Object.entries(g).map(([k,c])=>c===1?` ${k} is down!`:c===n?'':` ${c} ${k.toLowerCase()}s down!`).join('')}
+/* Kill announcer. The first kill after a quiet spell is announced right away, exactly as before. Every kill in the
+   next 1.5 seconds is added up and announced as one summary when the 1.5 seconds are up, for example
+   "14 kills, 9 headshots. Plus 140 silver." Only the speech is delayed: the kills, silver and sounds happen instantly. */
+const KWIN=1500;let KA=null;
+function announceKills(o){
+  const now=performance.now();if(!KA||KA.g!==G){if(KA)clearTimeout(KA.tm);KA={g:G,last:-1e9,b:null,tm:null}}
+  if(!KA.b&&now-KA.last>=KWIN){KA.last=now;say(o.text);return}
+  const b=KA.b||(KA.b={n:0,hs:0,pay:0,heal:0,lv:[],big:{},ev:0,text:''});
+  b.n+=o.n;b.hs+=o.hs;b.pay+=o.pay;b.heal+=o.heal;b.ev++;b.text=o.text;o.lv.forEach(x=>{if(x&&!b.lv.includes(x))b.lv.push(x)});o.bigs.forEach(x=>b.big[x]=(b.big[x]||0)+1);
+  if(!KA.tm)KA.tm=setTimeout(flushKills,Math.max(50,KA.last+KWIN-now));
+}
+function flushKills(){const a=KA;if(!a)return;a.tm=null;const b=a.b;a.b=null;if(!b||!G||G!==a.g||G.over)return;a.last=performance.now();
+  if(b.ev===1){say(b.text);return}
+  const big=Object.entries(b.big).map(([k,c])=>c>1?` ${c} ${k} kills.`:` ${k} down.`).join('');
+  say(`${b.n} kills${b.hs?(b.hs===b.n?', all headshots':`, ${b.hs} headshot${b.hs>1?'s':''}`):''}.${big} Plus ${b.pay} silver.${b.heal?` Plus ${b.heal} health.`:''}${b.lv.slice(-3).join('')}`);
+}
+const killQuiet=()=>!!(KA&&KA.g===G&&(KA.b||performance.now()-KA.last<1200));
 function processDead(src){
   const dead=G.enemies.filter(e=>e.hp<=0);if(!dead.length)return 0;
   G.enemies=G.enemies.filter(e=>e.hp>0);
   if(G.mode==='practice'){G.kills+=dead.length;G.spawnT=1.5;say((dead.some(e=>e.hk)?'Headshot! ':'')+`Target down. ${G.kills} so far.`);return dead.length}
-  let pay=0,lv='',heal='';
+  let pay=0,lv='',heal='',healN=0;
   if(src==='symbiote'){lv+=symGrow(dead.length);const sw=G.lo.find(x=>x.id==='symbiote');
-    if(sw&&sw.vamp){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal=` Plus ${got} health.`;fx.symHeal();hud()}}}
+    if(sw&&sw.vamp){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal=` Plus ${got} health.`;healN+=got;fx.symHeal();hud()}}}
   const msg=dead.map(e=>{G.kills++;const t=EN[e.type];pay+=e.mega?(G.mode==='zombies'?Math.round(5*t.reward*paySc()*zDf().pay):Math.round(250*paySc()/(1+.08*6))):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDf().pay:1));P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++;
     if(src&&WBY[src]){const b=mlevel(src);P.mast[src]=(P.mast[src]||0)+1;const a=mlevel(src);
       if(a>b){lv=` ${WBY[src].name} mastery level ${a}. Attachments stronger.`;const i=G.lo.findIndex(x=>x.id===src);if(i>=0)G.lo[i]=build(WBY[src])}}
@@ -2292,11 +2333,12 @@ function processDead(src){
   if(P.armor.on==='berserk')MARMUP.forEach(u=>{if(u.kind!=='trait'||u.arm!=='berserk'||!P.marm[u.id])return;const b=tlv(u.id);P.marm[u.id].kills+=dead.length;const a=tlv(u.id);if(a>b)lv+=` ${u.name} is now level ${a}.`});
   pay=Math.round(pay*(1+scavBonus(P.perk.scav||0)/100)*(G.pk&&G.pk.gold?2:1));
   if(G.pk&&G.pk.blood&&G.hp>0){const h0=G.hp,amt=dead.reduce((a,e)=>a+(EN[e.type].boss||EN[e.type].mini?10:3),0);G.hp=Math.min(G.maxhp,G.hp+amt);const got=Math.round(G.hp-h0);
-    if(got>0){heal+=` Plus ${got} health.`;setTimeout(()=>{if(ctx)fx.bloodDrink()},200)}}
+    if(got>0){heal+=` Plus ${got} health.`;healN+=got;setTimeout(()=>{if(ctx)fx.bloodDrink()},200)}}
   G.earned+=pay;P.coins+=pay;P.stats.earned+=pay;saveP();
   setTimeout(()=>{if(ctx)fx.coin(pay>=20?3:1)},420);
   if(lv)setTimeout(()=>{if(ctx)fx.levelup()},800);
-  say(msg.join(' ')+` Plus ${pay} silver.`+heal+lv);
+  announceKills({text:msg.join(' ')+` Plus ${pay} silver.`+heal+lv,n:dead.length,hs:dead.filter(e=>e.hk).length,pay,heal:healN,lv:[lv],
+    bigs:dead.filter(e=>EN[e.type].boss||EN[e.type].mini).map(e=>(e.mega?'Mega ':'')+EN[e.type].name)});
   if(G.mode==='campaign'&&dead.some(e=>EN[e.type].boss)){G.enemies=[];endGame(true)}
   hud();return dead.length;
 }
@@ -2756,6 +2798,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-03-calmer-callouts',date:'November 3, 2026',title:'Crash fix for very fast weapons',items:[
+    'Fixed a crash when a very fast weapon, like the Rivet Storm at full overdrive, tore through a big crowd. It was announcing every single kill and playing every hit sound at once.',
+    'Kill announcements now group up. The first kill is announced right away, then every kill in the next 1.5 seconds is added up into one summary, like 14 kills, 9 headshots, plus 140 silver. Kills, silver and damage still happen instantly. Only the speech waits.',
+    'Health callouts on a wounded enemy come at most every 1.5 seconds and count the headshots in between, like 6 headshots, The Ancient One, 72 percent. They wait while kills are being announced.',
+    'When dozens of hits land at once, overlapping copies of the same hit sound are skipped so your phone keeps up. Every weapon hits exactly as hard as before.'
+  ]},
   {id:'2026-11-03-quasar',date:'November 3, 2026',title:'Dark Quasar Turbine',items:[
     'New mythical weapon, the Dark Quasar Turbine, 60,000 silver, in a new Heavy weapons type. A jet engine you hold fire to run.',
     'Its intake sucks in every enemy behind you and kills it instantly, except bosses, which are too heavy. Its exhaust blows every enemy in front of you away without hurting them.',
@@ -3001,7 +3049,7 @@ function endGame(won){
   $('over-h').textContent=won?'Victory':'Killed in action';$('over-sum').textContent=msg;$('over').hidden=false;
   const g=G;setTimeout(()=>{if(G!==g||$('over').hidden)return;$('over-h').focus();say(($('over-h').textContent)+'. '+msg)},400);
 }
-function pause(){if(!G||G.over||G.paused)return;G.paused=true;G.hold=false;if(ambBus)ambBus.gain.value=0;$('pause').hidden=false;setTimeout(()=>$('pause-h').focus(),50);say('Paused.')}
+function pause(){if(!G||G.over||G.paused)return;G.paused=true;flushSave();G.hold=false;if(ambBus)ambBus.gain.value=0;$('pause').hidden=false;setTimeout(()=>$('pause-h').focus(),50);say('Paused.')}
 function resume(){if(!G)return;wakeAudio();G.paused=false;if(ambBus&&S.amb)ambBus.gain.value=S.avol;$('pause').hidden=true;setTimeout(()=>$('b-fire').focus(),50);say('Resumed.')}
 function quit(){if(G){G.over=true}stopAmb();G=null;flushCloud();show('menu')}
 $('b-left').onclick=()=>turn(-15);$('b-right').onclick=()=>turn(15);$('b-about').onclick=()=>turn(180);
@@ -3027,7 +3075,7 @@ document.addEventListener('keydown',e=>{
   if(map[k]&&!e.repeat){e.preventDefault();map[k]()}
 });
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if((k===' '||k==='f')&&G)G.hold=false});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();flushCloud()}else wakeAudio()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();flushSave();flushCloud()}else wakeAudio()});
 addEventListener('pagehide',flushCloud);
 
 function refreshAfterLoad(){
