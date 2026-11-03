@@ -2492,7 +2492,7 @@ function step(dt){
     const gain=Math.min(base,G.maxhp-G.hp);G.hp+=gain;fx.heal();
     G.ammo=G.lo.map(x=>[x.mag,x.akimbo?x.mag:0]);G.jobs=[];G.heat={};if(G.win)G.win.forEach(W=>{W.broken=false;W.bang=0});
     let bonus='';if(G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'){const b=(G.mode==='bossrush'?6:2)*G.wave*(G.pk&&G.pk.gold?2:1);P.coins+=b;G.earned+=b;P.stats.earned+=b;saveP();bonus=` Survival bonus, plus ${b} silver.`}
-    const perkNow=G.mode==='zombies'&&G.wave%5===0;
+    const perkNow=G.mode==='zombies'&&G.wave%5===0&&perksHere().some(p=>!G.pk[p.id]);   // no point opening the machine once every perk is owned
     say(`Wave ${G.wave} clear. ${gain>0?'Health plus '+Math.round(gain)+'. ':''}All weapons reloaded.${bonus}${perkNow?' The perk machine is opening.':''}`);G.breakT=G.mode==='zombies'&&G.zm==='hall'&&!perkNow?2.5:5;hud();
     if(perkNow){const g=G;setTimeout(()=>{if(G===g&&!G.over)openPerks()},2600)}
   }
@@ -2591,6 +2591,8 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-03-perksdone',date:'November 3, 2026',title:'Perk machine stays shut when you own every perk',items:[
+    'In zombie modes, once you own every perk available in that mode, the perk machine no longer opens every fifth wave. The game just carries on to the next wave.']},
   {id:'2026-11-03-magnetfix',date:'November 3, 2026',title:'Magnetic nails fix',items:[
     'Rivet Storm magnetic nails now pull back every nail that lands in an enemy within range, right away, instead of only when that enemy dies. Before, bosses with huge health, like the Ancient One, drained your magazine because they took too long to kill.',
     'Killing an enemy within range still brings back the nails that missed it, too. The magnetic zip plays about once a second during long bursts instead of on every nail.']},
