@@ -951,8 +951,8 @@ function gunSound(w,n=1,side=-1){
   if(w.id==='jackfrost'){const d=gunDest(0);if(w.sil)d.gain.value=.55;glassShot(d);return}
   const s=SND[w.id],pan=side<0?0:(side?.45:-.45),d=gunDest(pan),m=gunDest(pan);
   if(w.sil)d.gain.value=.55;
-  let t=0;for(let i=0;i<n;i++){if(w.id==='antitank'&&!w.sil)antiTankShot(d,t,w.barrel);else shot(PR[w.id],t,d,{sil:w.sil,barrel:w.barrel});t+=s.gap*(1+(Math.random()-.5)*.08)}
-  const end=Math.max(0,t-s.gap);
+  let t=0;for(let i=0;i<n;i++){if(w.id==='antitank'&&!w.sil)antiTankShot(d,t,w.barrel);else shot(PR[w.id],t,d,{sil:w.sil,barrel:w.barrel});t+=(w.gap||s.gap)*(1+(Math.random()-.5)*.08)}
+  const end=Math.max(0,t-(w.gap||s.gap));
   if(s.mech)MECH[s.mech]({slide:.06,pump:.42,bolt:.75}[s.mech]+end,m);
   if(s.cas)MECH.casing(end+.35,Math.max(1,Math.round(n*s.cas)),m);
 }
@@ -1340,8 +1340,8 @@ const WPN=[
    traits:'Compact submachine gun with a 50-round top magazine. Fast 5-round bursts and a light, snappy report. Stronger and more accurate than the Skorpion per bullet, with a smaller magazine.'},
   {id:'m4',rng:30,name:'M4A1 carbine',short:'M4A1',mag:30,dmg:1.3,cone:15,cd:.27,reload:1.8,shots:3,acc:.95,price:350,
    traits:'Accurate, quick-firing carbine. 3-round bursts that land almost every time. Sits between the AK-47 and the AN-94.'},
-  {id:'m2',rng:30,name:'M2 Browning',short:'M2 .50',mag:100,dmg:6,cone:15,cd:1.0,reload:6.0,shots:3,acc:.88,price:1500,
-   traits:'Belt-fed machine gun chambered in .50 caliber. Fires slow, heavy 3-round bursts, but every round hits about 7 times harder than the MG42, so it out-damages every other machine gun. Full damage reaches about 100 feet. 100-round belt and a very long reload.'},
+  {id:'m2',rng:30,name:'M2 Browning',short:'M2 .50',mag:300,dmg:6,cone:15,cd:1.0,reload:6.0,shots:3,acc:.88,price:1500,
+   traits:'Belt-fed machine gun chambered in .50 caliber. Fires slow, heavy 3-round bursts, but every round hits about 7 times harder than the MG42, so it out-damages every other machine gun. Full damage reaches about 100 feet. 300-round belt and a very long reload.'},
   {id:'mg42',rng:26,name:'MG42',short:'MG42',mag:250,dmg:.9,cone:15,cd:.5,reload:5.0,shots:8,acc:.85,price:700,
    traits:'Belt-fed machine gun with a terrifying fire rate and its famous ripping sound. 250-round belt and 8-round bursts. Even more firepower than the M249, but a very long reload.'},
   {id:'aa12',rng:0,name:'AA-12 automatic shotgun',short:'AA-12',mag:20,dmg:3,cone:24,cd:.33,reload:3.4,shots:1,spread:true,rm:.75,price:900,
@@ -1370,7 +1370,7 @@ const REWARD=Object.fromEntries(Object.entries(EN).map(([k,v])=>[k,v.reward]));
 /* ---------- attachments ---------- */
 const HEAVY=['barrett','svd','antitank'],HAND=['pistol','deagle','beretta','glock'];
 const SHOTS=['spas','aa12','bshot','ksg','coach'],MYTHNEW=['thunder','blackhole','banshee','hydra'],MYTHOK=['barrel','silencer','fastmag','extmag'];
-const HOLLOW=['pistol','deagle','beretta','skorpion','ak','an94','m249','glock','p90','m4','mg42'],SLOW=['spas','barrett','antitank','ksg'];
+const HOLLOW=['pistol','deagle','beretta','skorpion','ak','an94','m249','glock','p90','m4','mg42'],SLOW=['spas','barrett','antitank','ksg'],LMG=['m249','mg42','m2'];
 const SNIPERS=['barrett','svd','antitank','jackfrost'],APGUNS=['m249','m2','barrett','svd','antitank'];
 const PEN={barrett:[5,8],svd:[3,5],antitank:[20,30]};   // [stock, with armor piercing rounds]
 const ATT=[
@@ -1394,12 +1394,14 @@ const ATT=[
   {id:'pscope',name:'Precision scope',price:1000,only:SNIPERS,myth:true,desc:()=>'A high-power tactical scope. Headshots hit much harder: 60 percent extra on top of your usual headshot bonus, 30 on bosses. Almost every shot lands, and enemies count as in your sights a little further off centre. Stacks with the sniper scope.'},
   {id:'grip',name:'Grip',price:1300,not:['jackfrost','salvo'],desc:w=>w.spread?'A steadying foregrip. Gives the shotgun a 1 in 5 chance per blast to land headshots, which it normally cannot.':'A steadying foregrip. The dead-centre headshot zone gets 50 percent wider, so the double chirp comes sooner, and 1 in 5 hits that are not dead centre still land as headshots.'},
   {id:'trigger',name:'Hair trigger',price:90,desc:()=>'Fires 30 percent faster.'},
-  {id:'trigger2',name:'Hair trigger V2',price:1500,only:SLOW,desc:()=>'A competition trigger for slow-firing guns. Fires 40 percent faster, and it stacks with the first hair trigger: with both on, this gun fires about 2 and a half times as fast as stock.'},
+  {id:'trigger2',name:'Hair trigger V2',price:1500,only:[...SLOW,'svd'],desc:()=>'A competition trigger for slow-firing guns. Fires 40 percent faster, and it stacks with the first hair trigger: with both on, this gun fires about 2 and a half times as fast as stock.'},
+  {id:'bump',name:'Bump stock',price:1200,only:['m249'],desc:()=>'A sliding stock that lets the gun bounce off your shoulder. Fires 30 percent faster: each 6-round burst rips out quicker and shorter, and the pause between bursts is a little shorter too. Stacks with the hair trigger.'},
   {id:'svtrig1',name:'Hair trigger V1',price:2000,for:'salvo',desc:()=>'Fires about 1 and a half times as fast.'},
   {id:'svtrig2',name:'Hair trigger V2',price:3000,for:'salvo',req:'svtrig1',desc:()=>'Fires about 2 and a half times as fast as stock. Buy V1 first.'},
   {id:'svtrig3',name:'Hair trigger V3',price:5000,for:'salvo',req:'svtrig2',desc:()=>'Fires 5 times as fast as stock. A hellstorm of rapid blaze. Buy V2 first.'},
   {id:'extmag',name:'Extended magazine',price:75,desc:w=>`50 percent more rounds. ${w.mag} becomes ${Math.round(w.mag*1.5)}.`},
   {id:'extmag2',name:'Extended magazine V2',price:400,not:SNIPERS,desc:w=>`Another 50 percent more rounds, stacking with the first extended magazine. With both on, ${w.mag} becomes ${w.mag*2}.`},
+  {id:'extbelt',name:'Extended belt',price:1200,only:LMG,desc:w=>w.id==='m2'?`A longer ammo belt. Doubles the belt, ${w.mag} rounds becomes ${w.mag*2}.`:`A longer ammo belt. 50 percent more rounds, ${w.mag} becomes ${Math.round(w.mag*1.5)}.`},
   {id:'jetmag1',name:'Extended magazine',price:1500,for:'jet',desc:()=>'Holds 2 rounds instead of 1.'},
   {id:'jetmag2',name:'Extended magazine V2',price:3000,for:'jet',req:'jetmag1',desc:()=>'Holds 3 rounds. Buy the first extended magazine first.'},
   {id:'svmag1',name:'Extended magazine V1',price:3000,for:'salvo',desc:()=>'Holds 6 lanterns instead of 4.'},
@@ -1460,6 +1462,8 @@ function build(w){
   b.ap=has('ap')?1+.5*k:1;
   if(has('fastmag'))b.reload=w.reload*(1-.4*k);
   b.cd=w.cd;if(has('trigger'))b.cd*=1-.3*k;if(has('trigger2'))b.cd*=1-.4*k;
+  if(has('extbelt')&&LMG.includes(w.id))b.mag=Math.round((b.mag||w.mag)*(w.id==='m2'?2:1.5));
+  if(has('bump')&&w.id==='m249'){b.cd/=1.3;b.gap=SND[w.id].gap/1.3}
   b.hollow=has('hollow')?k:0;
   if(w.id==='salvo'){const ld=has('svloaded');b.mag=has('svmag1')?6:4;b.reload=w.reload*(has('svfast3')?.35:has('svfast2')?.55:has('svfast1')?.75:1);
     b.cd=w.cd*(has('svtrig3')?.2:has('svtrig2')?.4:has('svtrig1')?.65:1)*(ld?1.15:1);b.dmg=w.dmg*(ld?1.25:1);b.fireR=(ld?20:12)/3.281;b.fireDps=ld?8:5;b.loaded=ld}
@@ -1778,7 +1782,7 @@ function fire(){
   if(w.rod&&(G.rod||0)>=5){w={...w,dmg:w.dmg*2,sup:true};G.rod=0}
   const shots=Math.min(w.shots,A[side]);A[side]-=shots;if(w.vent){G.heat=G.heat||{};G.heat[wi]=(G.heat[wi]||0)+shots}G.cd=w.cd;gunSound(w,shots,w.akimbo?side:-1);
   const pr=G.mode==='practice';if(pr)G.pShots++;
-  const gap=SND[w.id].gap,acc=w.sure?1:(w.acc||.92)*(G.cover?.65:1);
+  const gap=w.gap||SND[w.id].gap,acc=w.sure?1:(w.acc||.92)*(G.cover?.65:1);
   const tgt=G.enemies.filter(e=>Math.abs(norm(e.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist);
   let hits=tgt.slice(0,1);
   const special=w.hydra||w.hole;
@@ -2397,6 +2401,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-02-belts',date:'November 2, 2026',title:'Machine gun belts and new triggers',items:[
+    'The Dragunov SVD can now take the Hair trigger V2. It fires 40 percent faster and stacks with the first hair trigger.',
+    'New Extended belt for every machine gun. The M249 and MG42 carry 50 percent more rounds. On the M2 Browning it doubles the belt.',
+    'The M2 Browning now comes with a 300-round belt instead of 100, so with the Extended belt it holds 600.',
+    'New Bump stock for the M249 SAW. It fires 30 percent faster, so each 6-round burst is quicker and shorter, with a slightly shorter pause between bursts.'
+  ]},
   {id:'2026-11-02-thunderbuff',date:'November 2, 2026',title:'Thunderclap buff',items:[
     'The Thunderclap now hits for at least 75 at any distance, up from 30, and it never gets weaker than that far away.',
     'The closer an enemy is, the harder it hits: one and a half times within 46 feet, double within 23, two and a half times within 15, and triple, 225, within 8 feet. The extended barrel and the Thunder choke stretch these bands farther out.',
@@ -2805,8 +2815,8 @@ const ATTGRP=[{id:'ammo',name:'Ammo'},{id:'barrel',name:'Barrel and muzzle'},{id
 const ATTCAT={ap:'ammo',ramjet2:'ammo',ionic:'ammo',jffrag:'ammo',svloaded:'ammo',tover:'ammo',
   barrel:'barrel',jetbarrel2:'barrel',gauss:'barrel',symbarrel1:'barrel',symbarrel2:'barrel',bnbarrel2:'barrel',bnamp:'barrel',silencer:'barrel',symbrake:'barrel',tchoke:'barrel',
   reflex:'optic',scope:'optic',pscope:'optic',grip:'optic',
-  trigger:'trigger',trigger2:'trigger',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
-  extmag:'mag',extmag2:'mag',jetmag1:'mag',jetmag2:'mag',svmag1:'mag',jfmag1:'mag',jfmag2:'mag',jfmag3:'mag',symmag1:'mag',symmag2:'mag',symmag3:'mag',bnmag1:'mag',bnmag2:'mag',bnmag3:'mag',tdrum:'mag',
+  trigger:'trigger',trigger2:'trigger',bump:'trigger',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
+  extmag:'mag',extmag2:'mag',extbelt:'mag',jetmag1:'mag',jetmag2:'mag',svmag1:'mag',jfmag1:'mag',jfmag2:'mag',jfmag3:'mag',symmag1:'mag',symmag2:'mag',symmag3:'mag',bnmag1:'mag',bnmag2:'mag',bnmag3:'mag',tdrum:'mag',
   fastmag:'reload',jetfast1:'reload',jetfast2:'reload',jetfast3:'reload',svfast1:'reload',svfast2:'reload',svfast3:'reload',jffast1:'reload',jffast2:'reload'};
 const attGrp=a=>a.ammo?'ammo':ATTCAT[a.id]||'special';
 function buildMods(){
