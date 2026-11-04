@@ -44,6 +44,18 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // feedback/{id} -> { uid, name, topic, text, created }. Players write; only the developer reads.
+    match /feedback/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'topic', 'text', 'created'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.name == get(/databases/$(database)/documents/players/$(request.auth.uid)).data.name
+        && request.resource.data.topic is string && request.resource.data.topic.size() <= 60
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+        && request.resource.data.created == request.time;
+    }
+
     // gifts/{id} -> { uid, name, items, note, claimed, created }. Only the developer sends them.
     match /gifts/{id} {
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());

@@ -51,6 +51,12 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <div id="reqs" style="display:flex;flex-direction:column;gap:10px"></div>
     <button id="req-refresh" type="button">Refresh requests</button>
   </section>
+  <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="fb-h">
+    <h2 id="fb-h">Player feedback</h2>
+    <p id="fb-n" class="muted"></p>
+    <div id="fbs" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button id="fb-refresh" type="button">Refresh feedback</button>
+  </section>
   <form id="gift-f" style="display:flex;flex-direction:column;gap:14px">
     <h2 id="gift-h" tabindex="-1">Send a gift</h2>
     <div id="ans" class="ans" hidden><p id="ans-t"></p><button type="button" id="ans-x">Stop answering this request<small style="display:block;font-weight:400;font-size:15px">The request stays waiting</small></button></div>
@@ -95,7 +101,7 @@ const app=initializeApp(FB_CONFIG,'admin'),auth=A.getAuth(app),db=F.getFirestore
 A.onAuthStateChanged(auth,u=>{
   const admin=u&&!u.isAnonymous;
   $('login').hidden=!!admin;$('app').hidden=!admin;
-  if(admin){status(`Signed in as ${u.email}.`);loadPlayers();loadReqs();loadSent()}else status('Sign in with your developer account.');
+  if(admin){status(`Signed in as ${u.email}.`);loadPlayers();loadReqs();loadFb();loadSent()}else status('Sign in with your developer account.');
 });
 $('login-f').onsubmit=async e=>{e.preventDefault();status('Signing in…');
   try{await A.signInWithEmailAndPassword(auth,$('em').value.trim(),$('pw').value)}catch(err){const c=String(err&&err.code||'unknown').replace('auth/','');
@@ -174,6 +180,20 @@ async function reqAct(id,act){const r=REQ[id];if(!r)return;
 function stopAnswer(){answering=null;$('ans').hidden=true}
 $('ans-x').onclick=()=>{stopAnswer();status('Stopped answering. The request is still waiting.')};
 $('req-refresh').onclick=()=>{loadReqs();status('Requests refreshed.')};
+/* ---------- player feedback ---------- */
+async function loadFb(){
+  try{const s=await F.getDocs(F.query(F.collection(db,'feedback'),F.orderBy('created','desc'),F.limit(50)));
+    $('fb-n').textContent=s.size?`${s.size} feedback message${s.size===1?'':'s'}, newest first.`:'No feedback yet.';
+    const box=$('fbs');box.innerHTML='';
+    s.docs.forEach(d=>{const f=d.data(),el=document.createElement('article');el.className='req';
+      el.innerHTML=`<h3>${esc(f.name)} on ${esc(f.topic||'General')}</h3><p style="white-space:pre-wrap">${esc(f.text||'')}</p><p class="muted">Sent ${esc(when(f.created))}</p>
+        <div class="acts"><button data-act="gift">Send ${esc(f.name)} a gift</button><button data-act="del">Delete this feedback</button></div>`;
+      el.querySelector('[data-act=gift]').onclick=()=>{stopAnswer();$('gift-f').reset();if(!PL[f.uid])PL[f.uid]=f.name;setWho(f.uid);$('gift-h').focus();status(`Gift form ready for ${f.name}.`)};
+      el.querySelector('[data-act=del]').onclick=async()=>{try{await F.deleteDoc(F.doc(db,'feedback',d.id));status(`Deleted ${f.name}'s feedback.`)}catch(e){status(`Could not delete it. ${why(e)}`)}loadFb()};
+      box.appendChild(el)});
+  }catch(e){console.error('loadFb',e);$('fb-n').textContent=`Could not load feedback. ${why(e)} If this says Firebase refused, the new feedback rules have not been published yet.`}
+}
+$('fb-refresh').onclick=()=>{loadFb();status('Feedback refreshed.')};
 const summary=it=>{const p=[];if(it.silver)p.push(`${it.silver} silver`);(it.weapons||[]).forEach(i=>p.push(NAME[i]||i));(it.armor||[]).forEach(i=>p.push(NAME[i]||i));
   for(const k in it.grenades||{})p.push(`${it.grenades[k]} ${NAME[k]||k}`);return p.join(', ')||'nothing'};
 async function loadSent(){
@@ -181,7 +201,7 @@ async function loadSent(){
     $('sent').innerHTML=s.size?s.docs.map(d=>{const g=d.data();return `<li><b>${esc(g.name)}</b>: ${esc(summary(g.items||{}))}. ${g.claimed?'Received.':'Waiting for them to open the game.'}</li>`}).join(''):'<li>No gifts sent yet.</li>';
   }catch(e){console.error('loadSent',e);$('sent').innerHTML=`<li>Could not load gifts. ${esc(why(e))}</li>`}
 }
-$('refresh').onclick=()=>{loadPlayers();loadReqs();loadSent()};
+$('refresh').onclick=()=>{loadPlayers();loadReqs();loadFb();loadSent()};
 
 $('gift-f').onsubmit=async e=>{e.preventDefault();
   const uid=WHO||byName($('who').value)||'',name=PL[uid];

@@ -138,7 +138,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-go="tutorial">Training and sound check<small>Learn the controls and every enemy sound</small></button>
     <button class="btn" data-go="settings">Settings<small>Voice, volume, difficulty</small></button>
     <button class="btn" id="b-record">Service record<small>Hear your lifetime stats</small></button>
-    <button class="btn" data-go="req" id="menu-req" hidden>Request items<small>Ask the developer for weapons, silver and more to test</small></button>
+    <button class="btn" data-go="req" id="menu-req" hidden>Request items and feedback<small>Ask the developer for things to test, or tell them how they played</small></button>
     <button class="btn" data-go="pid" id="menu-pid">Player ID<small id="menu-pid-s">Create a username so the developer can send you testing items</small></button>
   </div>
   <p class="note" id="save-state" role="status">Checking your saved progress…</p>
@@ -190,6 +190,12 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <h2 id="req-mine-h">Your requests</h2>
   <button class="btn" id="req-refresh">Check your requests<small>Hear whether the developer has answered them</small></button>
   <ul id="req-list"></ul>
+  <h2 id="fb-h">Send feedback</h2>
+  <p class="note">Tell the developer what you think of a weapon, enemy, map or anything else you have tested. What works, what feels too strong or too weak, sounds that are hard to hear, bugs you found. Only the developer reads it.</p>
+  <label for="fb-topic">What is it about<select id="fb-topic"></select></label>
+  <label for="fb-text">Your feedback<textarea id="fb-text" class="inp" maxlength="2000" rows="6"></textarea></label>
+  <button class="btn primary" id="fb-send">Send feedback<small>Up to 2,000 characters</small></button>
+  <p id="fb-status" role="status" aria-live="polite"></p>
 </section>
 
 <!-- MAPS -->
@@ -2238,6 +2244,38 @@ async function sendReq(){
   }catch(e){reqMsg('Could not send your request. Check your internet connection and try again.')}
   reqBusy=false;btn.disabled=false;
 }
+/* ---------- player feedback to the developer ----------
+   Players with a username write feedback on anything they tested; the developer reads it on admin.html. */
+let fbBusy=false,fbAt=0;
+function fillFb(){
+  const sel=$('fb-topic'),keep=sel.value;sel.textContent='';
+  const opt=(v,t,par)=>{const o=document.createElement('option');o.value=v;o.textContent=t;(par||sel).appendChild(o)};
+  opt('General','General feedback');
+  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',mythic:'Legendary weapons'};
+  Object.keys(WCAT).forEach(c=>{const g=document.createElement('optgroup');g.label=CN[c]||c;WCAT[c].forEach(i=>opt('Weapon: '+WBY[i].name,WBY[i].name,g));sel.appendChild(g)});
+  const g=document.createElement('optgroup');g.label='Other';
+  [['Armor','Armor'],['Grenades','Grenades'],['Enemies and bosses','Enemies and bosses'],['Maps and modes','Maps and modes'],['Sounds','Sounds and audio cues'],['Menus and controls','Menus, controls and VoiceOver'],['Bug','Something is broken (a bug)']].forEach(([v,t])=>opt(v,t,g));
+  sel.appendChild(g);if(keep)sel.value=keep;
+}
+function fbMsg(t){$('fb-status').textContent=t;say(t)}
+async function sendFb(){
+  if(fbBusy)return;
+  if(!P.player)return fbMsg('Create a username first, from Player ID on the main menu.');
+  if(!FB_CONFIG.apiKey)return fbMsg('Feedback is not switched on yet.');
+  const text=$('fb-text').value.trim().slice(0,2000),topic=$('fb-topic').value||'General';
+  if(text.length<3)return fbMsg('Write your feedback in the box first.');
+  if(Date.now()-fbAt<20000)return fbMsg('Feedback sent a moment ago. Wait a few seconds before sending more.');
+  fbBusy=true;const btn=$('fb-send');btn.disabled=true;fbMsg('Sending your feedback…');
+  try{
+    const {db,uid,fs}=await fbInit();
+    const me=await fs.getDoc(fs.doc(db,'players',uid));
+    if(!me.exists())fbMsg(`The username ${P.player} was created on a different device or browser, so feedback has to be sent from there.`);
+    else{await fs.addDoc(fs.collection(db,'feedback'),{uid,name:me.data().name,topic:topic.slice(0,60),text,created:fs.serverTimestamp()});
+      fbAt=Date.now();fx.buy();$('fb-text').value='';fbMsg(`Thanks! Your feedback about ${topic==='General'?'the game':topic.replace('Weapon: ','the ')} was sent to the developer.`)}
+  }catch(e){fbMsg('Could not send your feedback. Check your internet connection and try again.')}
+  fbBusy=false;btn.disabled=false;
+}
+$('fb-send').onclick=()=>{initAudio();sendFb()};
 $('req-send').onclick=()=>{initAudio();sendReq()};
 $('req-refresh').onclick=()=>{initAudio();loadReqs(false)};
 $('pid-make').onclick=()=>{initAudio();createName()};
@@ -3290,6 +3328,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-03-feedback',date:'November 3, 2026',title:'Send feedback to the developer',items:[
+    'The Request items screen is now called Request items and feedback. At the bottom there is a new Send feedback box.',
+    'Choose what your feedback is about, such as a specific weapon, enemies, maps, sounds or a bug, then write as much as you like, up to 2,000 characters. Only the developer reads it.'
+  ]},
   {id:'2026-11-03-salvo-laugh',date:'November 3, 2026',title:'Pumpkin Salvo: whoosh and wicked laugh',items:[
     'The Pumpkin Salvo no longer makes a plunk when it fires. Every trigger pull now gives a fast whoosh of the lantern rushing out of the launcher.',
     'Each jack-o-lantern now flies dead straight out like a rocket, cackling with a wicked laugh the whole way. You hear the laugh leave the barrel, head toward the enemy and grow fainter the further it goes, then cut off when the lantern bursts. Fire a fast salvo and you hear a whole crowd of laughing pumpkins in the air.',
@@ -3577,7 +3619,7 @@ function show(id){
   if(id==='shop')buildShop();
   if(id==='mods')buildMods();
   if(id==='pid')updatePid();
-  if(id==='req')fillReq();
+  if(id==='req'){fillReq();fillFb()}
   if(id==='log')buildLog();
   if(id==='menu')updateLogBtn();
   if(id==='menu')updatePidMenu();
