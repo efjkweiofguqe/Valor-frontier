@@ -401,10 +401,14 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-cat="lmg">Light machine guns</button>
     <button data-cat="sniper">Sniper rifles</button>
     <button data-cat="shotgun">Shotguns</button>
-    <button data-cat="mythic">Mythical</button>
+    <button data-cat="mythic">Legendary<small>Sets of legendary weapons</small></button>
     <button data-cat="armor">Body armor</button>
     <button data-cat="grenades">Grenades</button>
     <button data-cat="perks">Perks</button>
+  </div>
+  <div class="seg" id="leg-sub" role="group" aria-label="Legendary set" hidden>
+    <button data-set="mythic">Mythical<small>Rifles, sniper rifles, submachine guns, shotguns, launchers and heavy weapons</small></button>
+    <button data-set="scav">Scavenger pack<small>Coming soon</small></button>
   </div>
   <div class="seg" id="myth-sub" role="group" aria-label="Mythical weapon type" hidden>
     <button data-myth="rifle">Rifles<small>Jet rifle, Banshee</small></button>
@@ -3140,6 +3144,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-03-legendary',date:'November 3, 2026',title:'Legendary weapon sets',items:[
+    'The Mythical section of the Armory shop is now called Legendary. It holds sets of legendary weapons.',
+    'Mythical is the first set. Everything that was in it is still there, under the same weapon types: rifles, sniper rifles, submachine guns, shotguns, launchers and heavy weapons.',
+    'A second set, the Scavenger pack, is coming soon. It has nothing in it yet.']},
   {id:'2026-11-03-shotgun',date:'November 3, 2026',title:'Real shotgun sounds',items:[
     'Reloading the Hades Pump Action is now clearly audible: you hear a recorded shell pushed into the tube for every shell, then the pump racking when it is full. The pump after every Hades shot is the recorded pump too.',
     'The regular shotguns, the SPAS-12, KSG, Tri-burst, AA-12 and coach gun, now fire with a recorded shotgun blast, and the SPAS-12 and KSG rack a recorded pump after every shot. Each gun has its own pitch so you can tell them apart: the KSG deeper, the coach gun deepest, the AA-12 and Tri-burst higher. A longer barrel makes them deeper. With a silencer they keep the quiet suppressed shot.',
@@ -3507,8 +3515,12 @@ const MCAT={rifle:['jet','banshee'],sniper:['jackfrost','tetra'],smg:['symbiote'
 const MCATN={rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
-const catW=()=>curCat==='mythic'?MCAT[curMyth].map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
-let curCat='pistol',curArm='regular',curMyth='rifle';
+const catW=()=>curCat==='mythic'?(curSet==='mythic'?MCAT[curMyth]:LSET[curSet].list).map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
+/* Legendary sets. The Legendary shop section holds sets of weapons: Mythical (split into weapon types, MCAT) and the
+   Scavenger pack, empty for now. To add a weapon to the Scavenger pack, put its id in LSET.scav.list. */
+const LSET={mythic:{name:'Mythical'},scav:{name:'Scavenger pack',list:[],note:'The Scavenger pack. A new set of legendary weapons, coming soon. There is nothing here yet.'}};
+const setOf=id=>Object.keys(LSET).find(k=>LSET[k].list&&LSET[k].list.includes(id))||'mythic';
+let curCat='pistol',curArm='regular',curMyth='rifle',curSet='mythic';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
 const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
@@ -3537,17 +3549,20 @@ function setItem(id,meta,act,aria,primary,on){const it=$(id);if(!it)return;it.cl
   const b=it.querySelector('.act');b.textContent=act;b.setAttribute('aria-label',aria);b.classList.toggle('primary',!!primary)}
 $('b-unequip').onclick=()=>{initAudio();if(!P.carry.length)return;P.carry=[];fx.reload(.3);saveP();updateShop();say(`All guns put in storage. Choose Carry into battle on up to ${MAXCARRY} guns before you deploy.`)};
 document.querySelectorAll('#shop-cats button').forEach(b=>b.onclick=()=>{initAudio();curCat=b.dataset.cat;buildShop(true)});
+document.querySelectorAll('#leg-sub button').forEach(b=>b.onclick=()=>{initAudio();curSet=b.dataset.set;buildShop(true);say(curSet==='mythic'?'Mythical set. Choose a weapon type.':LSET[curSet].note)});
 document.querySelectorAll('#myth-sub button').forEach(b=>b.onclick=()=>{initAudio();curMyth=b.dataset.myth;buildShop(true);say(MCATN[curMyth])});
 document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(curArm==='mythic'?'Mythical armor.':'Regular armor.')});
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
 const armList=()=>ARMOR.filter(a=>curArm==='mythic'?a.myth:!a.myth);
 function buildShop(keepFocus){
   document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('arm-sub').hidden=curCat!=='armor';$('myth-sub').hidden=curCat!=='mythic';
+  $('arm-sub').hidden=curCat!=='armor';$('leg-sub').hidden=curCat!=='mythic';$('myth-sub').hidden=curCat!=='mythic'||curSet!=='mythic';
+  document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:LSET[curSet].note):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
+  if(curCat==='mythic'&&!catW().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
   catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)} Magazine ${w.mag}. ${w.shell?`Loads one shell at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
   if(curCat==='armor')armList().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
@@ -3747,7 +3762,7 @@ function modAct(a){
   saveP();updateMods();
 }
 $('mods-hear').onclick=()=>hearGun(WBY[curMod]);
-$('mods-back').onclick=()=>{initAudio();curCat=catOf(curMod);if(curCat==='mythic')curMyth=mcatOf(curMod);show('shop');setTimeout(()=>{const b=document.querySelector(`#it-${curMod} .att`);if(b)b.focus()},140)};
+$('mods-back').onclick=()=>{initAudio();curCat=catOf(curMod);if(curCat==='mythic'){curSet=setOf(curMod);if(curSet==='mythic')curMyth=mcatOf(curMod)}show('shop');setTimeout(()=>{const b=document.querySelector(`#it-${curMod} .att`);if(b)b.focus()},140)};
 
 /* sound check */
 document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
