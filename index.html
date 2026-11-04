@@ -3364,7 +3364,7 @@ const RDSZ={zombie:{h:1,w:1,m:1,col:'#86a36f'},zrunner:{h:.97,w:.85,m:.85,col:'#
 const rdSz=t=>RDSZ[t]||RDSZ.zombie;
 // how hard each weapon throws what it kills, in metres a second (heavier zombies move less)
 const RDPOW={qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
-  jet:11,jackfrost:3,tetra:3,boomer:5,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
+  jet:24,jackfrost:3,tetra:3,boomer:5,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
   last:12,berserk:2,incend:2,fence:1,barbed:1.5};
 const RD={bodies:[],decals:[],flash:[],voices:[],acc:0,muzzle:0,sb:0,kd:0,kdT:0,lsT:0,winT:0,tmp:new Float32Array(33),c:new Float32Array(3)};
 const rdOn=()=>!!(G&&G.mode==='zombies'&&G.zm==='ragdoll');
@@ -3759,6 +3759,7 @@ const UPDATES=[
     'Zombies you kill go limp and fly the way they were hit. Light guns drop them, shotguns and sniper rifles throw them, and explosions launch them spinning across the room. Bodies tumble, slide, slam into the round wall, smash through windows or fly over the wall, and pile up on the floor.',
     'A flying body that hits a standing zombie knocks it over. Blasts that do not kill a zombie throw it off its feet, and it gets back up where it lands, so explosions really push the horde back. Big explosions tear limbs and heads off.',
     'All of it is audible: a whoosh follows each of the fastest flying bodies around you, then thumps and slaps as they land, a heavy knock when one hits the wall, breaking glass through a window, a crack and tear when a limb comes off, and scuffling and a groan when a zombie gets back up. Try them all in Training, Sound check. Status also tells you how many bodies are down.',
+    'The Jet rifle throws what it kills harder than any other gun, far harder than the anti-tank rifle. A zombie it kills up close flies across the room and slams into the wall.',
     'Sighted players get a simple first-person view inside the Fire button: stick-figure zombies, the wall and windows, blood, explosions and a muzzle flash, with the radar in the corner. Ragdoll sandbox keeps its own best records.']},
   {id:'2026-11-03-slicesound',date:'November 3, 2026',title:'Razor blade boomerang slice sound',items:[
     'The Razor blade boomerang now makes a real recorded knife slice every time it cuts through an enemy, on the way out and on the way back, in place of the old synthesized shing.',
