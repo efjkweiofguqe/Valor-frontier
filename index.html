@@ -1920,13 +1920,14 @@ const ATT=[
   {id:'tpmag2',name:'Extended magazine V2',price:6000,for:'tetra',req:'tpmag1',desc:()=>'Holds 30 crystals. Buy V1 first.'},
   {id:'tptrig',name:'Hair trigger',price:8000,for:'tetra',desc:()=>'Fires faster: about 2.5 shots a second instead of 1.7.'},
   {id:'tpburst',name:'Shattered glass',price:25000,for:'tetra',grp:'special',desc:()=>'Special ability. Every trigger pull fires a burst of 3 crystals, using 3 from the magazine. Each crystal rolls its own headshot chance, so a burst at one enemy crystallizes it far more often.'},
-  {id:'fmj',name:'FMJ rounds',price:80,ammo:true,not:['rivet'],desc:()=>'Full metal jacket ammo. Slightly more damage per round, plus 20 percent.'},
+  {id:'fmj',name:'FMJ rounds',price:80,ammo:true,not:['rivet',...SHOTS],desc:()=>'Full metal jacket ammo. Slightly more damage per round, plus 20 percent.'},
   {id:'hollow',name:'Hollow point rounds',price:100,ammo:true,only:HOLLOW,desc:()=>'Expanding ammo. Hits 50 percent harder within 25 feet, but fades past that, and beyond 50 feet it does 15 percent less damage than normal. Full metal jacket is better at range.'},
   {id:'inc',name:'Incendiary rounds',price:160,ammo:true,only:HEAVY,desc:()=>'Heavy sniper ammo. Greatly increases damage, plus 60 percent, and every hit bursts into flame, burning all enemies within 16 feet for half damage.'},
   {id:'ap',name:'Armor piercing rounds',price:250,only:APGUNS,desc:w=>'Hardened penetrator ammo. 50 percent more damage against armored enemies, metal enemies, mini bosses and bosses. Stacks with full metal jacket or incendiary rounds. '+(w.id==='m249'?'Each bullet also punches through up to 8 enemies in line with no damage lost to distance, but it only carries about 13 feet past each enemy before it runs out of speed.':PEN[w.id]?`Rounds punch through up to ${PEN[w.id][1]} enemies in line instead of ${PEN[w.id][0]}.`:'')},
   {id:'ramjet',name:'Ramjet rounds V1',price:3500,ammo:true,for:'jet',desc:()=>'Ramjet-boosted ammo. Plus 300 damage per round, 500 in total, the charge-up drops from 0.7 to 0.5 seconds, and the round punches through 20 enemies instead of 10.'},
   {id:'ramjet2',name:'Ramjet rounds V2',price:7000,for:'jet',req:'ramjet',desc:()=>'Twin-stage ramjet ammo. Another 500 damage per round, stacking with V1 for 1000 in total, and the charge-up drops to 0.35 seconds. With both on, the round punches through every enemy in its line of fire, no limit, and every headshot hits for 10,000 damage. Buy V1 first.'},
   {id:'ionic',name:'Ionic plasma jet rounds',price:9000,for:'jet',req:'ramjet2',desc:()=>'Ionized plasma ammo, the third ramjet stage. Another 900 damage per round, stacking with Ramjet V1 and V2 for 1900 damage in total. Buy Ramjet rounds V2 first.'},
+  {id:'buck',name:'Buckshot',price:200,ammo:true,only:SHOTS,desc:()=>'Heavier lead pellets. Every blast hits 30 percent harder, and the pellets hold their power much better with distance: about 80 percent of full damage in the middle of the range instead of 55, and 60 percent at the far end instead of 25, or 70 with an extended barrel. It does not reach any farther. Slugs still hit harder and carry farther, but buckshot keeps the wide blast that hits every enemy in front of you.'},
   {id:'slug',name:'Slugs',price:300,ammo:true,only:SHOTS,desc:w=>'One heavy solid round instead of a spread of pellets. Each blast becomes a single shot at one enemy that hits 2 and a half times as hard, keeps full damage out to about 70 feet instead of 23, and can land headshots. You lose the area blast, and the aim narrows like a rifle.'},
   {id:'dbreath',name:"Dragon's breath rounds",price:450,ammo:true,only:SHOTS,desc:()=>'Shells packed with burning magnesium. Each blast spits a roaring jet of fire that sets every enemy it hits, and everyone caught in the blast, on fire, burning 3 health a second for 4 seconds. Direct damage is 15 percent lower.'},
   {id:'gauss',name:'Kinetic Gauss barrel',price:12000,for:'jet',req:'jetbarrel2',desc:()=>'Magnetic accelerator rails fitted over the Extended barrel V2. Plus 1000 damage per round, and the charge-up drops to just 0.25 seconds. Buy Extended barrel V2 first.'},
@@ -2068,6 +2069,7 @@ function build(w){
   if(has('pscope')){b.acc=.99;b.cone=w.cone+4;b.hs+=.6*k;b.hsBoss+=.3*k}
   b.hz=HEADZONE*(has('grip')?1.5:1);b.grip=has('grip')?Math.min(.4,.2*k):0;
   if(w.spread){const rm=w.rm||1;b.range=b.barrel?[11*rm,20*rm,.45]:[7*rm,14*rm,.25]}
+  if(w.spread&&has('buck')){b.dmg*=1+.3*k;b.buck=true;b.range=[b.range[0],b.range[1],b.barrel?.7:.6];b.mid=.8}
   if(w.spread&&has('slug')){b.spread=false;b.slug=true;b.dmg*=2.5;b.cone=12;b.rng=(b.barrel?85:70)/3.281;b.acc=.9}
   if(w.spread&&has('dbreath')){b.dmg*=.85;b.dragon=true}
   if(w.id==='symbiote'&&has('symfrenzy')){b.cd=b.cd/4;b.frenzy=true}
@@ -2102,9 +2104,12 @@ function loadP(s){
   if(!s||typeof s!=='object')return;
   P.coins=Math.max(0,Math.floor(num(s.coins,P.coins)));P.ts=num(s.ts,0);
   if(Array.isArray(s.owned))P.owned=[...new Set(['pistol','ak','barrett',...s.owned.filter(i=>WBY[i])])];
+  let fmjBack=0;
   P.att={};if(s.att&&typeof s.att==='object')for(const k in s.att){if(!WBY[k]||!P.owned.includes(k))continue;const o=s.att[k]||{};
     let own0=Array.isArray(o.own)?o.own:[],eq0=Array.isArray(o.eq)?o.eq:[];if(k==='banshee'&&own0.includes('extmag')){own0=[...new Set(own0.map(i=>i==='extmag'?'bnmag1':i))];eq0=eq0.map(i=>i==='extmag'?'bnmag1':i)}
+    if(!s.fmjSG&&SHOTS.includes(k)&&own0.includes('fmj'))fmjBack+=ATTBY.fmj.price;   // FMJ was taken off shotguns: give the silver back once
     const own=own0.filter(i=>ATTBY[i]&&attOK(ATTBY[i],WBY[k]));P.att[k]={own,eq:eq0.filter(i=>own.includes(i))}}
+  P.coins+=fmjBack;P.fmjSG=true;
   if(s.gren)NTYPES.forEach(k=>{P.gren[k]=Math.max(0,num(s.gren[k],P.gren[k])|0)});
   P.mast={};if(s.mast&&typeof s.mast==='object')for(const k in s.mast)if(WBY[k])P.mast[k]=Math.max(0,num(s.mast[k])|0);
   if(s.perk)['hp','heal','aim','scav'].forEach(k=>{P.perk[k]=Math.max(0,Math.min(50,num(s.perk[k])|0))});
@@ -2537,7 +2542,7 @@ function fire(){
     // hollow points: big boost up close, fades with distance, weaker than normal far away
     const hk=w.hollow,dft=e.dist*3.281,hpm=!hk?1:dft<=25?1+.5*hk:dft<=50?1+.5*hk-(.5*hk+.15)*(dft-25)/25:.85;
     let dmg=0,sfo=1;const rounds=[];
-    if(w.spread){const r=w.range;dmg=w.dmg*shots*(w.hades?hMult(w,e.dist):w.tband?tMult(w,e.dist):e.dist<r[0]?1:e.dist<r[1]?.55:r[2])*(G.cover?.65:1)*hm;for(let i=0;i<shots;i++)rounds.push(i)}
+    if(w.spread){const r=w.range;dmg=w.dmg*shots*(w.hades?hMult(w,e.dist):w.tband?tMult(w,e.dist):e.dist<r[0]?1:e.dist<r[1]?(w.mid||.55):r[2])*(G.cover?.65:1)*hm;for(let i=0;i<shots;i++)rounds.push(i)}
     else if(w.sonic){sfo=e.dist<=w.full?1:Math.max(.4,1-.6*(e.dist-w.full)/(w.reach-w.full));dmg=w.dmg*hm*sfo*(G.cover?.65:1)*shots;for(let i=0;i<shots;i++)rounds.push(i)}
     else for(let i=0;i<shots;i++){if(w.sure||Math.random()<acc*am2){dmg+=head&&w.jetHead?Math.max(10000,w.dmg*hm):w.dmg*hm*fm*hpm*(w.sym?G.symMult||1:1)*(w.hades?hMult(w,e.dist):1);rounds.push(i)}else if(!missAt)missAt=[rel,e.dist,i*gap+fly]}
     if(w.rivet&&w.magR&&e===hits[0])e.rvShot=(e.rvShot||0)+shots-rounds.length;   // rvShot: nails that missed it, returned on a close kill
@@ -2569,7 +2574,7 @@ function fire(){
   const tBase=w.tband&&hits.length?w.dmg*shots*tMult(w,hits[0].dist)*gunMult():0;
   if(w.spread&&anyHit&&!w.hades){const pos=e=>{const r=e.angle*Math.PI/180;return[Math.sin(r)*e.dist,Math.cos(r)*e.dist]},[cx,cy]=pos(hits[0]),r=w.range;
     G.enemies.forEach(e=>{if(hits.includes(e)||e.hp<=0)return;const[x,y]=pos(e);if(Math.hypot(x-cx,y-cy)>10/3.281)return;
-      const sd=Math.hypot(x-cx,y-cy)*3.281;e.hp-=w.tband?tBase*.6*(sd<=3?1:1-.5*(sd-3)/7):w.dmg*shots*.6*(e.dist<r[0]?1:e.dist<r[1]?.55:r[2]);blastN++;rdShot(e,w,false);const rel=norm(e.angle-G.heading),t=.05+e.dist*.006;if(w.dragon)ignite(e,w.id,t);
+      const sd=Math.hypot(x-cx,y-cy)*3.281;e.hp-=w.tband?tBase*.6*(sd<=3?1:1-.5*(sd-3)/7):w.dmg*shots*.6*(e.dist<r[0]?1:e.dist<r[1]?(w.mid||.55):r[2]);blastN++;rdShot(e,w,false);const rel=norm(e.angle-G.heading),t=.05+e.dist*.006;if(w.dragon)ignite(e,w.id,t);
       fx.impact(rel,e.dist,e.type,t);if(e.hp<=0)fx.kill(rel,e.dist,t+.08,e.type)})}
   // ball lightning: the orb also scorches anyone within 2 feet of each enemy it passes through
   const scorched=[];
@@ -3867,6 +3872,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-buckshot',date:'November 4, 2026',title:'Buckshot for shotguns',items:[
+    'FMJ rounds have been taken off every shotgun, since a full metal jacket does not make sense for shotgun shells. If you owned FMJ rounds on a shotgun, your 80 silver has been given back.',
+    'New shotgun ammo, Buckshot, 200 silver, for the SPAS-12, AA-12, Tri-burst, KSG and Double-barrel coach gun. Every blast hits 30 percent harder and holds its damage much better with distance: about 80 percent of full damage in the middle of the range instead of 55, and 60 percent at the far end instead of 25, or 70 with an extended barrel. It does not make the shotgun reach any farther.',
+    'Slugs are still the step above: 2 and a half times the damage and full power out to 70 feet, but only one enemy per shot. Buckshot keeps the wide blast. One ammo type at a time.'
+  ]},
   {id:'2026-11-04-samurai',date:'November 4, 2026',title:'New legendary set: Samurai pack',items:[
     'A new legendary set in the Armory shop, under Legendary: the Samurai pack, with two sections, Swords and Armor.',
     'New armor: Samurai armor, 30,000 silver. It cuts all damage you take by 75 percent, the best protection in the game.',
@@ -4471,7 +4481,7 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   if(b.blizz)out.push('Blizzard blast on reload: freezes every enemy within 40 feet solid for 15 seconds.');
   if(b.vent)out.push('Heat vent: blasts nearby enemies when you reload, bigger the more rounds you fired.');
   if(b.pen>1)out.push(`Punches through ${b.pen===Infinity?'every enemy in its line':'up to '+b.pen+' enemies'}${b.exit<Infinity?`, carrying ${ft(b.exit)} feet past each`:''}.`);
-  if(!b.hades)out.push(b.tband?'Never drops below its base damage, at any range.':b.rng&&!(b.pen>1)?`Full damage out to ${ft(b.rng)} feet, weaker beyond.`:b.spread?`Full damage out to ${ft(b.range[0])} feet.`:'No damage falloff at any range.');
+  if(!b.hades)out.push(b.tband?'Never drops below its base damage, at any range.':b.rng&&!(b.pen>1)?`Full damage out to ${ft(b.rng)} feet, weaker beyond.`:b.spread?`Full damage out to ${ft(b.range[0])} feet${b.buck?`, then ${Math.round(b.mid*100)} percent out to ${ft(b.range[1])} feet and ${Math.round(b.range[2]*100)} percent beyond, thanks to buckshot`:''}.`:'No damage falloff at any range.');
   out.push(`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}: attachments ${(L-1)*5} percent stronger.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:''));
   return out}
 function renderStats(w){const box=$('mods-stats');box.textContent='';
