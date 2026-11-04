@@ -273,7 +273,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <div class="stack">
     <p><b>Where enemies are.</b> Each enemy makes its own sound, panned left or right. Sounds behind you are muffled and dull. Louder means closer.</p>
     <p><b>Aiming.</b> Turn left and turn right rotate you 15 degrees. About face spins you all the way around. When an enemy is in your sights you hear a fast high ping. Closer enemies ping higher. The ping sounds the same on every map, and the background ambience dips while something is in your sights so the ping stays clear. You can raise it with the Lock-on ping volume slider in Settings. Facing north plays a bright two-note chime.</p>
-    <p><b>Range.</b> Battlefields are big. Enemies appear close, at mid-range, or far off, up to about 160 feet away, and every enemy is announced with its distance in feet. Far-off enemies sound quieter and duller. Pistols and submachine guns are only fully effective to about 40 feet, and rifles to about 85 to 100 feet; past that they lose damage and accuracy. Shotguns lose power past about 23 feet, and their blast also hurts enemies standing within 10 feet of the one you hit. Hollow point rounds hit much harder within 25 feet but weaker far away. Sniper rifles never lose damage, so they are the tool for long shots. Any round that punches through enemies, like the anti-tank rifle, the Jet rifle, or the M249 with armor piercing rounds, never loses damage to distance either. Attacking enemies are about 4 feet from you.</p>
+    <p><b>Range.</b> Battlefields are big. Enemies appear close, at mid-range, or far off, up to about 160 feet away, and every enemy is announced with its distance in feet. Far-off enemies sound quieter and duller. Pistols and submachine guns are only fully effective to about 40 feet, except the Gyrojet rocket pistol, which works the other way: weak up close, full power from 40 feet out to its 70-foot limit, and rifles to about 85 to 100 feet; past that they lose damage and accuracy. Shotguns lose power past about 23 feet, and their blast also hurts enemies standing within 10 feet of the one you hit. Hollow point rounds hit much harder within 25 feet but weaker far away. Sniper rifles never lose damage, so they are the tool for long shots. Any round that punches through enemies, like the anti-tank rifle, the Jet rifle, or the M249 with armor piercing rounds, never loses damage to distance either. Attacking enemies are about 4 feet from you.</p>
     <p><b>Headshots.</b> When the lock-on ping turns into a double chirp, the enemy is dead centre. Shots then land as headshots for 60 percent more damage, 30 percent on bosses, with a crisp crack on impact. A reflex sight makes headshots hit much harder. A sniper scope turns most long-range hits into headshots. With both Ramjet ammo upgrades on, a Jet rifle headshot hits for 10,000. A precision scope makes sniper headshots hit far harder and almost every sniper shot land. A grip widens the dead-centre zone and turns some off-centre hits into headshots. Shotguns cannot headshot unless they have a grip.</p>
     <p><b>Enemy locations</b> reads out every enemy by clock position, distance in feet and health percent. 12 o'clock is straight ahead, 3 o'clock is to your right, 6 o'clock is behind you. After you wound an enemy you also hear its health percent.</p>
     <p><b>Hits and misses.</b> Every bullet that lands makes a short thud from where the enemy is: a soft thud on people and wolves, a metallic tink on drones and mechs, a deep heavy thud on armored brutes, raiders and bosses. A bullet zipping past the enemy means you missed it. A distant ricochet or dirt puff means nothing was there.</p>
@@ -364,6 +364,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="crystallize">Enemy crystallized</button>
     <button class="btn" data-test="crysboss">Boss locked in crystal, then breaking out</button>
     <button class="btn" data-test="crumble">Crystal statues crumbling at the next wave</button>
+    <button class="btn" data-test="gyrojet">Gyrojet rocket pistol</button>
     <button class="btn" data-test="jet">Jet rifle</button>
     <button class="btn" data-test="salvo">Pumpkin Salvo</button>
     <button class="btn" data-test="thunder">Thunderclap</button>
@@ -974,7 +975,7 @@ const PR={
 const SND={hades:{gap:0},pistol:{gap:0,mech:'slide',cas:1},deagle:{gap:0,mech:'slide',cas:1},ak:{gap:.1,cas:1},an94:{gap:.033,cas:1},
   skorpion:{gap:.062,cas:.4},m249:{gap:.075,cas:.5},spas:{gap:0,mech:'pump'},barrett:{gap:0,cas:1},antitank:{gap:0,mech:'bolt'},
   beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},tetra:{gap:.09},salvo:{gap:0},jet:{gap:0},rivet:{gap:0},
-  glock:{gap:.035,mech:'slide',cas:.5},p90:{gap:.04,cas:.4},m4:{gap:.075,cas:1},mg42:{gap:.042,cas:.4},m2:{gap:.13,cas:1},aa12:{gap:0,cas:1},bshot:{gap:.11,cas:1},ksg:{gap:0,mech:'pump'},coach:{gap:.018},
+  glock:{gap:.035,mech:'slide',cas:.5},gyrojet:{gap:0},p90:{gap:.04,cas:.4},m4:{gap:.075,cas:1},mg42:{gap:.042,cas:.4},m2:{gap:.13,cas:1},aa12:{gap:0,cas:1},bshot:{gap:.11,cas:1},ksg:{gap:0,mech:'pump'},coach:{gap:.018},
   thunder:{gap:0},blackhole:{gap:0},banshee:{gap:.09},hydra:{gap:0},symbiote:{gap:.045},quasar:{gap:0}};
 function gunDest(pan,bus){const g=ctx.createGain();bus=bus||gunBus;
   if(pan&&ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(bus)}else g.connect(bus);return g}
@@ -1059,6 +1060,19 @@ function jetSpool(len,d){d=d||gunDest(0);
   tone(d,{type:'sawtooth',f:180,f2:1400,dur:len+.05,vol:.22,attack:len*.8});
   tone(d,{type:'sine',f:900,f2:5200,dur:len+.05,vol:.12,attack:len*.8});
   noise(d,{dur:len+.1,vol:.55,type:'bandpass',f:400,f2:3000,q:1.2,attack:len*.85})}
+/* Gyrojet rocket pistol: a light click as the hammer drives the round onto the firing pin, a soft hiss as the rocket
+   lights in the barrel, then a whoosh that climbs in pitch and loudness as the rocket speeds up, with a faint
+   warbling whistle from its spin, fading out as it flies off into the distance. No bang and no casing. */
+function gyroShot(d,at=0){
+  noise(d,{dur:.015,vol:.6,type:'highpass',f:4000,at,attack:.001});
+  noise(d,{dur:.18,vol:.25,type:'bandpass',f:1200,f2:2000,q:1,at:at+.01,attack:.02});
+  noise(d,{dur:.75,vol:.7,type:'bandpass',f:900,f2:5200,q:1.4,at:at+.06,attack:.45});
+  const t=ctx.currentTime+at+.08,o=ctx.createOscillator(),l=ctx.createOscillator(),lg=ctx.createGain(),g=ctx.createGain();
+  o.type='sine';o.frequency.setValueAtTime(700,t);o.frequency.exponentialRampToValueAtTime(2600,t+.6);
+  l.frequency.setValueAtTime(14,t);l.frequency.linearRampToValueAtTime(40,t+.6);lg.gain.value=60;l.connect(lg);lg.connect(o.frequency);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.09,t+.4);g.gain.linearRampToValueAtTime(0,t+.75);
+  o.connect(g);g.connect(d);o.start(t);l.start(t);o.stop(t+.8);l.stop(t+.8);
+  noise(d,{dur:.9,vol:.3,type:'lowpass',f:3000,f2:300,at:at+.7,attack:.02})}
 function jetShot(d,at=0){
   noise(d,{dur:.02,vol:1,type:'highpass',f:3000,at,attack:.001});
   tone(d,{f:60,f2:22,dur:.8,vol:1,at,attack:.002});noise(d,{dur:.6,vol:.95,type:'lowpass',f:1800,f2:150,at,attack:.002});
@@ -1267,6 +1281,7 @@ function gunSound(w,n=1,side=-1){
   if(w.id==='rivet'){if(w.buzz){rivetBuzz(w.buzz,w.sil);return}const d=gunDest(0);if(w.sil)d.gain.value=.55;for(let i=0;i<n;i++)rivetShot(d,w.odLvl||0);return}
   if(w.dragon){const d=gunDest(0);noise(d,{dur:.6,vol:.55,type:'bandpass',f:700,f2:2200,q:.8,at:.02,attack:.03});for(let i=0;i<8;i++)noise(d,{dur:.012,vol:.25,type:'highpass',f:3000,at:.1+Math.random()*.5,attack:.001})}
   if(w.id==='jet'){const d=gunDest(0);if(w.sil)d.gain.value=.6;jetShot(d);return}
+  if(w.id==='gyrojet'){gyroShot(gunDest(side<0?0:(side?.45:-.45)));return}
   if(w.id==='salvo'){const d=gunDest(0);lanternShot(d);return}
   if(w.id==='jackfrost'){const d=gunDest(0);if(w.sil)d.gain.value=.55;glassShot(d);return}
   if(w.id==='tetra'){const d=gunDest(0);for(let i=0;i<n;i++)crystalShot(d,i*(w.gap||SND.tetra.gap),w.barrel);return}
@@ -1754,6 +1769,8 @@ const WPN=[
    traits:'Bolt-action anti-tank rifle, 4-round magazine. The hardest-hitting of the regular guns, enough to tear through mini bosses. Punches through up to 20 enemies in line, 30 with armor piercing rounds, and knocks survivors back 23 feet. Very slow to fire and reload.'},
   {id:'glock',rng:12,name:'Glock 18',short:'GLOCK 18',mag:33,dmg:1.1,cone:14,cd:.3,reload:1.4,shots:4,acc:.85,price:350,
    traits:'Fully automatic machine pistol. Each trigger pull rips 4 rounds, so it empties its 33-round magazine fast. A sidearm that hits like a submachine gun up close.'},
+  {id:'gyrojet',rng:0,name:'MBA Gyrojet',short:'GYROJET',mag:6,dmg:6,cone:12,cd:.55,reload:2.4,shots:1,acc:.85,gyro:true,maxR:70/3.281,price:500,
+   traits:'A real 1960s rocket pistol. Each round is a tiny spinning rocket that leaves the barrel slow and speeds up as it flies, so it is weak up close and hits hardest far away: about 30 percent damage at point blank, building to full power at 40 feet, the hardest-hitting regular pistol from there. Rockets burn out at 70 feet, its maximum range. 6 rounds, nearly no recoil, and a hiss instead of a bang.'},
   {id:'p90',rng:14,name:'FN P90',short:'P90',mag:50,dmg:.8,cone:16,cd:.3,reload:2.2,shots:5,acc:.9,price:400,
    traits:'Compact submachine gun with a 50-round top magazine. Fast 5-round bursts and a light, snappy report. Stronger and more accurate than the Skorpion per bullet, with a smaller magazine.'},
   {id:'m4',rng:30,name:'M4A1 carbine',short:'M4A1',mag:30,dmg:1.3,cone:15,cd:.27,reload:1.8,shots:3,acc:.95,price:350,
@@ -1898,7 +1915,7 @@ const ELBOOST={bleed:14,barbs:6,burn:23,crackle:22,shock:21.5,zap:16.5,fenceZap:
 Object.entries(ELBOOST).forEach(([k,db])=>{const f=fx[k];if(!f||!db)return;const m=Math.pow(10,db/20);
   fx[k]=function(...a){const prev=elMul;elMul=m;try{return f.apply(this,a)}finally{elMul=prev}}});
 /* ---------- attachments ---------- */
-const HEAVY=['barrett','svd','antitank','osv96','cheytac'],HAND=['pistol','deagle','beretta','glock'];
+const HEAVY=['barrett','svd','antitank','osv96','cheytac'],HAND=['pistol','deagle','beretta','glock','gyrojet'];
 const HACID=12,HPOOL=12,SHOTS=['spas','aa12','bshot','ksg','coach'],MYTHNEW=['thunder','blackhole','banshee','hydra'],MYTHOK=['barrel','silencer','fastmag','extmag'];
 const HOLLOW=['pistol','deagle','beretta','skorpion','ak','an94','m249','glock','p90','m4','mg42'],SLOW=['spas','barrett','antitank','ksg','cheytac'],LMG=['m249','mg42','m2'];
 const SNIPERS=['barrett','svd','antitank','osv96','cheytac','jackfrost'],APGUNS=['m249','m2','barrett','svd','antitank','osv96','cheytac'];
@@ -1920,7 +1937,7 @@ const ATT=[
   {id:'tpmag2',name:'Extended magazine V2',price:6000,for:'tetra',req:'tpmag1',desc:()=>'Holds 30 crystals. Buy V1 first.'},
   {id:'tptrig',name:'Hair trigger',price:8000,for:'tetra',desc:()=>'Fires faster: about 2.5 shots a second instead of 1.7.'},
   {id:'tpburst',name:'Shattered glass',price:25000,for:'tetra',grp:'special',desc:()=>'Special ability. Every trigger pull fires a burst of 3 crystals, using 3 from the magazine. Each crystal rolls its own headshot chance, so a burst at one enemy crystallizes it far more often.'},
-  {id:'fmj',name:'FMJ rounds',price:80,ammo:true,not:['rivet',...SHOTS],desc:()=>'Full metal jacket ammo. Slightly more damage per round, plus 20 percent.'},
+  {id:'fmj',name:'FMJ rounds',price:80,ammo:true,not:['rivet','gyrojet',...SHOTS],desc:()=>'Full metal jacket ammo. Slightly more damage per round, plus 20 percent.'},
   {id:'hollow',name:'Hollow point rounds',price:100,ammo:true,only:HOLLOW,desc:()=>'Expanding ammo. Hits 50 percent harder within 25 feet, but fades past that, and beyond 50 feet it does 15 percent less damage than normal. Full metal jacket is better at range.'},
   {id:'inc',name:'Incendiary rounds',price:160,ammo:true,only:HEAVY,desc:()=>'Heavy sniper ammo. Greatly increases damage, plus 60 percent, and every hit bursts into flame, burning all enemies within 16 feet for half damage.'},
   {id:'ap',name:'Armor piercing rounds',price:250,only:APGUNS,desc:w=>'Hardened penetrator ammo. 50 percent more damage against armored enemies, metal enemies, mini bosses and bosses. Stacks with full metal jacket or incendiary rounds. '+(w.id==='m249'?'Each bullet also punches through up to 8 enemies in line with no damage lost to distance, but it only carries about 13 feet past each enemy before it runs out of speed.':PEN[w.id]?`Rounds punch through up to ${PEN[w.id][1]} enemies in line instead of ${PEN[w.id][0]}.`:'')},
@@ -1935,7 +1952,7 @@ const ATT=[
   {id:'jffrag',name:'Fragmenting icicles',price:5000,for:'jackfrost',desc:()=>'Icicles shatter on impact. The fragments hit every other enemy within 10 feet of the one you hit for half damage, and chill them too.'},
   {id:'barrel',name:'Extended barrel',price:70,desc:w=>w.spread?'Slightly more damage, plus 15 percent, and the shotgun keeps its power at much longer range. Gives the gunshot a deeper, fuller boom.':'Slightly more damage, plus 15 percent'+(w.rng?', and full damage reaches 25 percent farther':'')+'. Gives the gunshot a deeper, fuller boom.'},
   {id:'jetbarrel2',name:'Extended barrel V2',price:2000,for:'jet',req:'barrel',desc:()=>'A longer jet barrel. Another 15 percent more damage, stacking with the first extended barrel. Buy the first extended barrel first.'},
-  {id:'silencer',name:'Silencer',price:50,desc:()=>'Muffles the gunshot down to a soft thump. Changes the sound only.'},
+  {id:'silencer',name:'Silencer',price:50,not:['gyrojet'],desc:()=>'Muffles the gunshot down to a soft thump. Changes the sound only.'},
   {id:'reflex',name:'Reflex sight',price:85,noSpread:true,desc:()=>'A red-dot sight. Headshots hit much harder: 110 percent extra damage instead of 60, and 55 percent instead of 30 on bosses.'},
   {id:'scope',name:'Sniper scope',price:120,only:HEAVY,desc:()=>'A long-range optic. Beyond 50 feet, 7 in 10 hits that are not already dead centre still land as headshots.'},
   {id:'pscope',name:'Precision scope',price:1000,only:SNIPERS,myth:true,desc:()=>'A high-power tactical scope. Headshots hit much harder: 60 percent extra on top of your usual headshot bonus, 30 on bosses. Almost every shot lands, and enemies count as in your sights a little further off centre. Stacks with the sniper scope.'},
@@ -2473,6 +2490,8 @@ function turn(deg){
 /* Hades Pump Action: the jet aims at the nearest enemy you are facing within reach and burns everyone in its path,
    as wide as the flame is at that distance. Volcanic slugs hit only that one enemy. */
 function hMult(w,d){for(const[r,m] of w.hB)if(d<r)return m;return w.hBase}
+/* Gyrojet: about 30 percent damage at the muzzle, climbing evenly to full damage at 40 feet, full from there to 70 */
+const gyroM=dist=>{const f=dist*3.281;return f>=40?1:.3+.7*f/40};
 function hadesHits(w,tgt){const inR=tgt.filter(e=>e.dist<=w.hR);if(!inR.length)return[];const c=inR[0];if(w.slug)return[c];
   return G.enemies.filter(e=>{if(e.hp<=0||e.dist>w.hR)return false;if(e===c)return true;const a=norm(e.angle-c.angle)*Math.PI/180,fwd=e.dist*Math.cos(a);
     if(fwd<=0)return false;return Math.abs(e.dist*Math.sin(a))*3.281<=w.hW(fwd*3.281)/2}).sort((a,b)=>a.dist-b.dist)}
@@ -2525,13 +2544,14 @@ function fire(){
   if(special)hits=[];
   else if(w.hades)hits=hadesHits(w,tgt);
   else if(w.sonic)hits=tgt.filter(e=>e.dist<=w.reach);
+  else if(w.gyro)hits=tgt.slice(0,1).filter(e=>e.dist<=w.maxR);
   else if(w.spread)hits=tgt;
   else if(w.pen>1){hits=[];for(const e of tgt){if(hits.length>=w.pen)break;if(hits.length&&e.dist-hits[hits.length-1].dist>w.exit)break;hits.push(e)}}
   const burned=[],frags=[],lanterns=[],erupts=[];
   let callE=null,callHead=false,anyHit=false,missAt=null;
   let magBack=0;   // Rivet Storm magnetic nails: every nail that lands within range flies straight back; a close kill also returns the ones that missed it
   hits.forEach(e=>{
-    const rel=norm(e.angle-G.heading),fly=.03+e.dist*.006;
+    const rel=norm(e.angle-G.heading),fly=w.gyro?.12+e.dist*.012:.03+e.dist*.006;
     let head=!w.spread&&!w.lantern&&!w.sonic&&!w.crystal&&Math.abs(rel)<=(w.hz||HEADZONE);
     if(w.crystal)head=Math.random()<1-Math.pow(1-w.crysCh,shots);   // every crystal rolls its own headshot chance
     if(!head&&w.grip&&Math.random()<w.grip)head=true;
@@ -2544,7 +2564,7 @@ function fire(){
     let dmg=0,sfo=1;const rounds=[];
     if(w.spread){const r=w.range;dmg=w.dmg*shots*(w.hades?hMult(w,e.dist):w.tband?tMult(w,e.dist):e.dist<r[0]?1:e.dist<r[1]?(w.mid||.55):r[2])*(G.cover?.65:1)*hm;for(let i=0;i<shots;i++)rounds.push(i)}
     else if(w.sonic){sfo=e.dist<=w.full?1:Math.max(.4,1-.6*(e.dist-w.full)/(w.reach-w.full));dmg=w.dmg*hm*sfo*(G.cover?.65:1)*shots;for(let i=0;i<shots;i++)rounds.push(i)}
-    else for(let i=0;i<shots;i++){if(w.sure||Math.random()<acc*am2){dmg+=head&&w.jetHead?Math.max(10000,w.dmg*hm):w.dmg*hm*fm*hpm*(w.sym?G.symMult||1:1)*(w.hades?hMult(w,e.dist):1);rounds.push(i)}else if(!missAt)missAt=[rel,e.dist,i*gap+fly]}
+    else for(let i=0;i<shots;i++){if(w.sure||Math.random()<acc*am2){dmg+=head&&w.jetHead?Math.max(10000,w.dmg*hm):w.dmg*hm*fm*hpm*(w.sym?G.symMult||1:1)*(w.hades?hMult(w,e.dist):1)*(w.gyro?gyroM(e.dist):1);rounds.push(i)}else if(!missAt)missAt=[rel,e.dist,i*gap+fly]}
     if(w.rivet&&w.magR&&e===hits[0])e.rvShot=(e.rvShot||0)+shots-rounds.length;   // rvShot: nails that missed it, returned on a close kill
     if(!dmg)return;
     dmg*=gunMult();
@@ -2599,7 +2619,7 @@ function fire(){
     if(n)blastN+=n}
   if(w.spread)blastN+=hits.length;
   if(w.sonic&&hits.length>1)blastN=hits.length;
-  if(special){}else if(!hits.length){fx.missAhead(gap*(shots-1)*.5);if(w.hades&&tgt.length&&tgt[0].dist>w.hR)say(`Out of range. ${EN[tgt[0].type].name} is ${ft(tgt[0].dist)} feet away. ${w.slug?'The slugs reach':'The flame reaches'} ${ft(w.hR)} feet.`);if(w.sonic&&tgt.length&&tgt[0].dist>w.reach)say(`Out of range. ${EN[tgt[0].type].name} is ${ft(tgt[0].dist)} feet away. The scream reaches ${ft(w.reach)} feet.`)}else if(missAt)fx.whizz(...missAt);
+  if(special){}else if(!hits.length){fx.missAhead(gap*(shots-1)*.5);if(w.hades&&tgt.length&&tgt[0].dist>w.hR)say(`Out of range. ${EN[tgt[0].type].name} is ${ft(tgt[0].dist)} feet away. ${w.slug?'The slugs reach':'The flame reaches'} ${ft(w.hR)} feet.`);if(w.gyro&&tgt.length&&tgt[0].dist>w.maxR)say(`Out of range. ${EN[tgt[0].type].name} is ${ft(tgt[0].dist)} feet away. The rockets burn out at 70 feet.`);if(w.sonic&&tgt.length&&tgt[0].dist>w.reach)say(`Out of range. ${EN[tgt[0].type].name} is ${ft(tgt[0].dist)} feet away. The scream reaches ${ft(w.reach)} feet.`)}else if(missAt)fx.whizz(...missAt);
   if(anyHit&&pr)G.pHits++;
   // incendiary rounds: fire spreads to anyone near each hit
   if(burned.length){const pos=e=>{const r=e.angle*Math.PI/180;return[Math.sin(r)*e.dist,Math.cos(r)*e.dist]};
@@ -3872,6 +3892,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-gyrojet',date:'November 4, 2026',title:'New pistol: MBA Gyrojet',items:[
+    'New regular pistol in the Armory, the MBA Gyrojet, 500 silver. Based on the real 1960s rocket pistol, it fires tiny spinning rockets instead of bullets.',
+    'It works the opposite way to every other gun: each rocket leaves the barrel slow and speeds up as it flies, so it does only about 30 percent damage at point blank, building to full power at 40 feet, where it hits harder than any other regular pistol. The rockets burn out at 70 feet, its maximum range, and anything farther away is out of range.',
+    'Listen for a soft click and hiss, then a whoosh that climbs in pitch with a faint spinning whistle as the rocket speeds away. No bang, no recoil, no casing. Hits land a moment later than a bullet would, since the rocket takes time to get there.',
+    'Holds 6 rockets. Takes akimbo, extended barrel, extended magazine, fast mag, hair trigger, reflex sight and grip. It cannot take FMJ rounds or a silencer, since it fires rockets and is already quiet. It is in the Sound check too.'
+  ]},
   {id:'2026-11-04-buckshot',date:'November 4, 2026',title:'Buckshot for shotguns',items:[
     'FMJ rounds have been taken off every shotgun, since a full metal jacket does not make sense for shotgun shells. If you owned FMJ rounds on a shotgun, your 80 silver has been given back.',
     'New shotgun ammo, Buckshot, 200 silver, for the SPAS-12, AA-12, Tri-burst, KSG and Double-barrel coach gun. Every blast hits 30 percent harder and holds its damage much better with distance: about 80 percent of full damage in the middle of the range instead of 55, and 60 percent at the far end instead of 25, or 70 with an extended barrel. It does not make the shotgun reach any farther.',
@@ -4284,7 +4310,7 @@ function record(){
 $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
-const WCAT={pistol:['pistol','deagle','beretta','glock'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','tetra','boomer','katana','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','salvo','quasar']};
+const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','tetra','boomer','katana','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','salvo','quasar']};
 const MCAT={rifle:['jet','banshee'],sniper:['jackfrost','tetra'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['blackhole','hydra','salvo'],heavy:['quasar']};
 const MCATN={rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
@@ -4481,7 +4507,8 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   if(b.blizz)out.push('Blizzard blast on reload: freezes every enemy within 40 feet solid for 15 seconds.');
   if(b.vent)out.push('Heat vent: blasts nearby enemies when you reload, bigger the more rounds you fired.');
   if(b.pen>1)out.push(`Punches through ${b.pen===Infinity?'every enemy in its line':'up to '+b.pen+' enemies'}${b.exit<Infinity?`, carrying ${ft(b.exit)} feet past each`:''}.`);
-  if(!b.hades)out.push(b.tband?'Never drops below its base damage, at any range.':b.rng&&!(b.pen>1)?`Full damage out to ${ft(b.rng)} feet, weaker beyond.`:b.spread?`Full damage out to ${ft(b.range[0])} feet${b.buck?`, then ${Math.round(b.mid*100)} percent out to ${ft(b.range[1])} feet and ${Math.round(b.range[2]*100)} percent beyond, thanks to buckshot`:''}.`:'No damage falloff at any range.');
+  if(b.gyro)out.push(`Rocket rounds: ${D(b.dmg*.3)} damage at point blank, building to ${D(b.dmg)} at 40 feet and holding there out to 70 feet, its maximum range.`);
+  else if(!b.hades)out.push(b.tband?'Never drops below its base damage, at any range.':b.rng&&!(b.pen>1)?`Full damage out to ${ft(b.rng)} feet, weaker beyond.`:b.spread?`Full damage out to ${ft(b.range[0])} feet${b.buck?`, then ${Math.round(b.mid*100)} percent out to ${ft(b.range[1])} feet and ${Math.round(b.range[2]*100)} percent beyond, thanks to buckshot`:''}.`:'No damage falloff at any range.');
   out.push(`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}: attachments ${(L-1)*5} percent stronger.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:''));
   return out}
 function renderStats(w){const box=$('mods-stats');box.textContent='';
