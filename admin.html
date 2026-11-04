@@ -64,8 +64,6 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
       <input id="who" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="who-n">
     </label>
     <p id="who-n" class="muted" role="status">Loading players…</p>
-    <div id="who-list" role="group" aria-label="Players" style="display:flex;flex-direction:column;gap:8px"></div>
-    <button type="button" id="who-retry" hidden>Try loading players again</button>
     <label>Silver<input id="silver" type="number" min="0" max="10000000" step="1" inputmode="numeric" value="0"></label>
     <fieldset><legend>Weapons</legend><div class="grid" id="weps"></div></fieldset>
     <fieldset><legend>Armor</legend><div class="grid" id="arms"></div></fieldset>
@@ -79,6 +77,12 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <ul id="sent"></ul>
   </section>
   <button id="out" type="button">Sign out</button>
+  <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="who-h">
+    <h2 id="who-h">Players</h2>
+    <p class="muted">Tap a name to choose that player. You jump back up to the Player username box. Typing in the Player username box at the top narrows this list.</p>
+    <div id="who-list" role="group" aria-label="Players" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button type="button" id="who-retry" hidden>Try loading players again</button>
+  </section>
 </section>
 </main>
 <script type="module">
@@ -114,14 +118,14 @@ $('reset').onclick=async()=>{const em=$('em').value.trim();if(!em){status('Type 
 $('out').onclick=()=>A.signOut(auth);
 
 let PL={},WHO='';   // uid -> username; WHO is the chosen player's uid
-/* The player picker: type a username, or tap a name in the list under the box. Typing narrows the list and a full
+/* The player picker: type a username, or tap a name in the Players list at the bottom of the page. Typing narrows the list and a full
    username picks that player. It uses plain buttons, not a pop-up menu, so it works the same with VoiceOver on any phone. */
 const byName=n=>Object.keys(PL).find(u=>PL[u].toLowerCase()===String(n).trim().toLowerCase());
 function setWho(uid,speak){WHO=PL[uid]?uid:'';if(WHO&&$('who').value.trim().toLowerCase()!==PL[WHO].toLowerCase())$('who').value=PL[WHO];drawWho();if(speak&&WHO)status(`${PL[WHO]} chosen.`)}
 function drawWho(){const q=$('who').value.trim().toLowerCase(),ids=Object.keys(PL).sort((a,b)=>PL[a].toLowerCase().localeCompare(PL[b].toLowerCase()));
   const show=WHO&&q===PL[WHO].toLowerCase()?ids:ids.filter(u=>!q||PL[u].toLowerCase().includes(q)),box=$('who-list');box.innerHTML='';
-  show.slice(0,60).forEach(u=>{const b=document.createElement('button');b.type='button';b.className='pick';b.textContent=PL[u]+(u===WHO?', chosen':'');b.setAttribute('aria-pressed',u===WHO);b.onclick=()=>setWho(u,true);box.appendChild(b)});
-  const n=ids.length;$('who-n').textContent=!n?'No players have created a username yet.':WHO?`Sending to ${PL[WHO]}. ${n} player${n===1?'':'s'} in all.`:q&&!show.length?`No player matches ${$('who').value.trim()}.`:`${n} player${n===1?' has':'s have'} created a username. Type one, or tap a name below.`+(show.length>60?' Showing the first 60, type to narrow it down.':'')}
+  show.slice(0,60).forEach(u=>{const b=document.createElement('button');b.type='button';b.className='pick';b.textContent=PL[u]+(u===WHO?', chosen':'');b.setAttribute('aria-pressed',u===WHO);b.onclick=()=>{setWho(u,true);$('who').focus()};box.appendChild(b)});
+  const n=ids.length;$('who-n').textContent=!n?'No players have created a username yet.':WHO?`Sending to ${PL[WHO]}. ${n} player${n===1?'':'s'} in all.`:q&&!show.length?`No player matches ${$('who').value.trim()}.`:`${n} player${n===1?' has':'s have'} created a username. Type one, or tap a name in the Players list at the bottom of the page.`+(show.length>60?' Showing the first 60, type to narrow it down.':'')}
 $('who').addEventListener('input',()=>{const u=byName($('who').value);WHO=u||'';drawWho()});
 /* why a Firebase read failed, in plain words, with the code so it can be looked up */
 const WHY={'permission-denied':'Firebase refused: this account is not allowed to read players. The Firestore rules may have changed or expired, or this is not the admin account.',
@@ -205,7 +209,7 @@ $('refresh').onclick=()=>{loadPlayers();loadReqs();loadFb();loadSent()};
 
 $('gift-f').onsubmit=async e=>{e.preventDefault();
   const uid=WHO||byName($('who').value)||'',name=PL[uid];
-  if(!uid||!name){status($('who').value.trim()?`No player has the username ${$('who').value.trim()}. Check the spelling, or tap a name in the list.`:'Choose a player first: type their username or tap their name.');$('who').focus();return}
+  if(!uid||!name){status($('who').value.trim()?`No player has the username ${$('who').value.trim()}. Check the spelling, or tap a name in the Players list at the bottom of the page.`:'Choose a player first: type their username or tap their name.');$('who').focus();return}
   const items={silver:Math.max(0,Math.min(10000000,parseInt($('silver').value)||0)),
     weapons:[...document.querySelectorAll('input[name=w]:checked')].map(x=>x.value),
     armor:[...document.querySelectorAll('input[name=a]:checked')].map(x=>x.value),grenades:{}};
