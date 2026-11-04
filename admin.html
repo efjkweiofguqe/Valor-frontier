@@ -56,7 +56,8 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <label>Player
       <select id="who" required aria-describedby="who-n"><option value="">Loading players…</option></select>
     </label>
-    <p id="who-n" class="muted"></p>
+    <p id="who-n" class="muted" role="status"></p>
+    <button type="button" id="who-retry" hidden>Try loading players again</button>
     <label>Silver<input id="silver" type="number" min="0" max="10000000" step="1" inputmode="numeric" value="0"></label>
     <fieldset><legend>Weapons</legend><div class="grid" id="weps"></div></fieldset>
     <fieldset><legend>Armor</legend><div class="grid" id="arms"></div></fieldset>
@@ -105,15 +106,25 @@ $('reset').onclick=async()=>{const em=$('em').value.trim();if(!em){status('Type 
 $('out').onclick=()=>A.signOut(auth);
 
 let PL={};   // uid -> username
+/* why a Firebase read failed, in plain words, with the code so it can be looked up */
+const WHY={'permission-denied':'Firebase refused: this account is not allowed to read players. The Firestore rules may have changed or expired, or this is not the admin account.',
+  'unavailable':'Firebase could not be reached. Check your internet connection.','unauthenticated':'You are signed out. Sign in again.','timeout':'Firebase took too long to answer. Check your connection and try again.',
+  'resource-exhausted':'Firebase usage limit reached for today. It resets tomorrow.','failed-precondition':'Firebase needs a setting changed before this can load.'};
+const why=e=>{const c=String(e&&e.code||e&&e.message||'unknown').replace('firestore/','');return `${WHY[c]||'Something went wrong.'} Error code: ${c}.`};
+const timeout=(p,ms=15000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r({code:'timeout'}),ms))]);
 async function loadPlayers(){
-  try{const s=await F.getDocs(F.collection(db,'players'));PL={};
+  $('who-retry').hidden=true;if(!Object.keys(PL).length){$('who').innerHTML='<option value="">Loading players…</option>';$('who-n').textContent='Loading players…'}
+  try{const s=await timeout(F.getDocs(F.collection(db,'players')));PL={};
     s.docs.forEach(d=>{const n=d.data().name;if(typeof n==='string')PL[d.id]=n});
     const keep=$('who').value,ids=Object.keys(PL).sort((a,b)=>PL[a].toLowerCase().localeCompare(PL[b].toLowerCase()));
     $('who').innerHTML=`<option value="">Choose a player</option>`+ids.map(u=>`<option value="${esc(u)}">${esc(PL[u])}</option>`).join('');
     if(PL[keep])$('who').value=keep;
     $('who-n').textContent=`${ids.length} player${ids.length===1?' has':'s have'} created a username.`;
-  }catch(e){status('Could not load players. Is this account set as the admin in the Firestore rules?')}
+    if(!ids.length)$('who-n').textContent='No players have created a username yet.';
+  }catch(e){const m=`Could not load players. ${why(e)}`;console.error('loadPlayers',e);
+    $('who').innerHTML=`<option value="">Players did not load</option>`;$('who-n').textContent=m;$('who-retry').hidden=false;status(m)}
 }
+$('who-retry').onclick=()=>loadPlayers();
 /* ---------- player requests ---------- */
 const WIDS=new Set(ITEMS.w.map(x=>x[0])),AIDS=new Set(ITEMS.a.map(x=>x[0])),NIDS=new Set(NADES.map(x=>x[0]));
 const clean=it=>{it=it||{};const g={};for(const k in it.grenades||{}){const n=Math.max(0,Math.min(1000,parseInt(it.grenades[k])||0));if(NIDS.has(k)&&n)g[k]=n}
@@ -135,7 +146,7 @@ async function loadReqs(){
       el.querySelectorAll('button').forEach(b=>b.onclick=()=>reqAct(id,b.dataset.act));box.appendChild(el)});
     if(done.length){const h=document.createElement('h3');h.textContent='Answered recently';h.style.cssText='font-size:19px;margin:6px 0 0';box.appendChild(h);
       const ul=document.createElement('ul');ul.innerHTML=done.slice(0,15).map(id=>{const r=REQ[id],it=clean(r.items);return `<li><b>${esc(r.name)}</b>: ${esc(empty(it)?'a message':summary(it))}. ${RST[r.status]||r.status}.</li>`}).join('');box.appendChild(ul)}
-  }catch(e){$('req-n').textContent='Could not load requests. If this keeps happening, the new Firestore rules may not be published yet.'}
+  }catch(e){console.error('loadReqs',e);$('req-n').textContent=`Could not load requests. ${why(e)}`}
 }
 async function reqAct(id,act){const r=REQ[id];if(!r)return;
   if(act==='other'){answering={id,uid:r.uid,name:r.name};
@@ -161,7 +172,7 @@ const summary=it=>{const p=[];if(it.silver)p.push(`${it.silver} silver`);(it.wea
 async function loadSent(){
   try{const s=await F.getDocs(F.query(F.collection(db,'gifts'),F.orderBy('created','desc'),F.limit(25)));
     $('sent').innerHTML=s.size?s.docs.map(d=>{const g=d.data();return `<li><b>${esc(g.name)}</b>: ${esc(summary(g.items||{}))}. ${g.claimed?'Received.':'Waiting for them to open the game.'}</li>`}).join(''):'<li>No gifts sent yet.</li>';
-  }catch(e){$('sent').innerHTML='<li>Could not load gifts.</li>'}
+  }catch(e){console.error('loadSent',e);$('sent').innerHTML=`<li>Could not load gifts. ${esc(why(e))}</li>`}
 }
 $('refresh').onclick=()=>{loadPlayers();loadReqs();loadSent()};
 
