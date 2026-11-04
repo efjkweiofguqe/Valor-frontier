@@ -289,6 +289,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Silver and the Armory.</b> Every kill pays silver: 10 for light enemies, 16 for heavy ones, 50 for mini bosses, 83 for bosses and 250 for mega bosses. In endless survival, boss rush and zombie siege, every kill pays 8 percent more silver for each wave you have survived, so wave 11 pays almost double. Every regular wave has one mini boss: it announces itself with a rising two-note siren before its cry, and it is far tougher than a normal enemy. Spend it in the Armory shop on weapons, attachments, body armor, grenades and perks. Perks go up to level 50: Toughness for more health, Field medic for more healing between waves, Deadeye for more gun damage and Scavenger for more silver per kill. Kills also raise each gun's mastery, up to level 10, making its attachments stronger.</p>
     <p><b>Scavenger pack.</b> The Razor blade boomerang is thrown with Fire. You hear Boomerang out, then its blades whirring as it leaves on your left, loops out across the front of you and curves back in on your right. A bright shing is an enemy being sliced, once on the way out and again on the way back. Pressing Fire while it is out just tells you it is still out, and you hear Boomerang returned when you catch it. Its Narrow arc and Full circle abilities change the path it flies. The Razorwire Carapace armor tears into anything that hits you: a ripping sound is the barbs, and wet dripping means the enemy is bleeding.</p>
     <p><b>Ragdoll sandbox.</b> A zombie mode that plays like Zombie siege, with four windows 50 feet out, but with real physics. Every zombie has a body with a head, arms and legs. When one dies it goes limp and flies the way it was hit: a pistol drops it, a shotgun or sniper rifle throws it, and explosions launch it, spinning, out across the room. Bodies tumble and slide along the floor, slam into the round wall, smash through windows or sail right over the wall, and pile up on top of each other. A body flying into a standing zombie knocks it flat. Blasts that do not kill a zombie throw it off its feet instead: it lies there for a second or two, then gets back up where it landed, so a well-placed grenade really does buy you room. Big explosions tear arms, legs and heads off. Everything makes a sound from where it happens: a rushing whoosh follows each of the fastest flying bodies, rising in pitch the faster it goes, then a low scrape if it slides along the floor. A heavy thump is a body hitting the floor, lighter slaps are arms and legs, and a big thump with a hollow knock is a body hitting the wall. Breaking glass is a body going through a window, which leaves it open for a few seconds. A crack and a wet tear is a limb coming off. An impact and a grunt is a body bowling over another zombie, and scuffling followed by a groan is a knocked-down zombie getting back up. Hydra acid pools eat through legs: a zombie that stands in one hears its shins froth away and drops to its knees, then loses its legs completely and slaps down onto its belly as a crawler. Crawlers drag themselves toward you at about a third of their speed, and each pull makes a slap and a wet scrape you can follow. While its legs are dissolving, a zombie takes very little damage from the pool, so you will hear it happen before it dies, and a crawler takes half damage from it. Enemy locations tells you which zombies are on their knees or crawling. Status tells you how many bodies are on the floor and how many zombies are knocked down. Sighted players see a simple first-person view inside the Fire button, with stick-figure zombies, the wall and windows around you, and the radar in the corner.</p>
+    <p><b>Samurai pack.</b> The Samurai sword is swung with Fire, one heavy swing a second: a ring of steel and a deep whoosh sweeping left to right. Anything within 5 feet straight in front of you is cut down instantly, with a slicing cleave, except bosses and mini bosses, which take 100. Every swing also sends a purple energy wave straight ahead. You hear it hum away from you, climbing in pitch as it grows stronger, and every enemy it passes through gives off a ghostly shimmer, brighter the harder it was hit. The wave starts 5 feet wide and spreads to 35 feet wide at its full reach of 35 feet, and the farther it travels the harder it hits: 100 at the blade, 1,000 at 35 feet. So enemies a little way off take the most. You must own the Samurai armor, which cuts the damage you take by 75 percent, before you can buy the sword.</p>
     <p><b>Switching freezes time.</b> Switching weapon or grenade type stops the whole battle for 2 and a half seconds after your last press, so you can cycle through without being swarmed. A falling whoosh means time has stopped and the battle sounds go quiet. Firing, turning, reloading, throwing a grenade or taking cover starts time again straight away, with a rising whoosh. You can also switch weapon and grenade type from the pause menu, with its buttons or with Q and X.</p>
     <p><b>Keyboard.</b> Left and right arrows turn. Down arrow is about face. Hold Space to fire. R reloads. Q switches weapon. C takes cover. G throws a grenade. X switches grenade type. E reads enemy locations. T is status. Escape pauses.</p>
   </div>
@@ -402,6 +403,9 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="boomcircle">Razor blade boomerang, full circle</button>
     <button class="btn" data-test="slice">Boomerang slicing an enemy</button>
     <button class="btn" data-test="barbs">Razorwire Carapace barbs, then bleeding</button>
+    <button class="btn" data-test="katswing">Samurai sword swing and energy wave</button>
+    <button class="btn" data-test="katblade">Samurai sword blade cutting an enemy</button>
+    <button class="btn" data-test="katghost">Energy wave passing through enemies, weak up close then strong far away</button>
     <button class="btn" data-test="rdfly">Ragdoll sandbox: a body flying past, then landing</button>
     <button class="btn" data-test="rdland">Ragdoll sandbox: bodies hitting the floor, hard then soft</button>
     <button class="btn" data-test="rdwall">Ragdoll sandbox: a body slamming into the wall</button>
@@ -436,6 +440,11 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <div class="seg" id="leg-sub" role="group" aria-label="Legendary set" hidden>
     <button data-set="mythic">Mythical<small>Rifles, sniper rifles, submachine guns, shotguns, launchers and heavy weapons</small></button>
     <button data-set="scav">Scavenger pack<small>Throwing weapons and armor</small></button>
+    <button data-set="samurai">Samurai pack<small>Swords and armor</small></button>
+  </div>
+  <div class="seg" id="sam-sub" role="group" aria-label="Samurai pack section" hidden>
+    <button data-sam="blade">Swords<small>Samurai sword</small></button>
+    <button data-sam="armor">Armor<small>Samurai armor</small></button>
   </div>
   <div class="seg" id="scav-sub" role="group" aria-label="Scavenger pack section" hidden>
     <button data-scav="throw">Throwing weapons<small>Razor blade boomerang</small></button>
@@ -1247,6 +1256,7 @@ function hadesShot(d,am,cd=1){
   {const pt=Math.min(am==='hell'?1.1:.8,cd*.55);if(!sgPlay(d,'pump',{at:pt,rate:SG_PITCH.hades}))MECH.pump(pt,d)}}
 function gunSound(w,n=1,side=-1){
   if(w.boomer){fx.boomDemo(w.bmPath||'wide');return}
+  if(w.katana){fx.katSwing();setTimeout(()=>{if(ctx)fx.katWave(KAT_R/KAT_SP)},120);return}
   if(w.id==='hades'){const d=gunDest(0);hadesShot(d,w.hades||'fire',w.cd);return}
   if(w.id==='thunder'){const d=gunDest(0);if(w.sil)d.gain.value=.6;if(w.ballslug)ballShot(d);else thunderBlast(d);if(w.sup)superThunder(gunDest(0));return}
   if(w.id==='blackhole'){holeShot(gunDest(0));return}
@@ -1676,6 +1686,7 @@ const ARMOR=[
   {id:'plate',name:'Ceramic plate carrier',prot:.45,price:450,desc:'Hard ceramic plates. Cuts all damage you take by 45 percent.'},
   {id:'jugg',name:'Juggernaut suit',prot:.6,price:800,desc:'Full bomb-disposal style armor. Cuts all damage you take by 60 percent.'},
   {id:'barbed',name:'Razorwire Carapace',prot:.5,price:15000,scav:true,desc:'Scavenger pack armor. Plates wrapped in coils of razor wire and barbs. Cuts all damage you take by 50 percent, and any enemy that hits you is torn by the barbs: it takes 40 damage straight away and keeps bleeding for 10 health a second for 5 seconds. Another hit on you starts the bleeding over. You hear the barbs rip and the enemy dripping while it bleeds.'},
+  {id:'samurai',name:'Samurai armor',prot:.75,price:30000,sam:true,desc:'Samurai pack armor. Lacquered steel plates laced with silk cords, with a horned helmet and a war mask. Cuts all damage you take by 75 percent, the best protection in the game. You must own it before you can buy the Samurai sword.'},
   {id:'berserk',name:'Viking berserker armor',prot:.6,price:50000,myth:true,desc:'Mythical armor of iron, fur and runes. Cuts all damage you take by 60 percent. Has its own special ability, Berserker rage, and special traits you buy below. Traits level up only from kills you make while wearing it.'}
 ];
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
@@ -1767,6 +1778,8 @@ const WPN=[
    traits:'Mythical sniper rifle that fires razor crystals with a bright ringing chime. 30 damage per crystal, about 1.7 shots a second, 10 crystals per magazine. Every crystal that hits has a 15 percent chance to land a headshot, wherever you aim, and a crystal headshot crystallizes the enemy: it is frozen solid in crystal and dead on the spot, whatever its health. Crystal statues stay where they fell until the next wave starts, then crumble away. Bosses and mini bosses are too strong to crystallize for good: they are locked in crystal for 3 seconds, unable to move or attack, and take 50 extra damage. Works on every enemy in every mode. Takes only its own upgrades.'},
   {id:'boomer',rng:0,name:'Razor blade boomerang',short:'BOOMERANG',mag:1,dmg:400,cone:75,cd:.3,reload:0,shots:1,boomer:true,price:20000,
    traits:'Scavenger pack throwing weapon. A heavy boomerang ringed with razor blades. Press Fire to throw it: it leaves on your left, swings out in a wide loop across the front of you, and curves back in on your right to your hand. You hear its blades whirring as it travels. It slices every enemy it passes for 400, on the way out and again on the way back, cutting through up to 30 enemies per throw. It flies 30 feet out at stock. While it is out, Fire just tells you it is still out. You hear Boomerang returned when you catch it. It never needs reloading. Takes only its own upgrades.'},
+  {id:'katana',rng:0,name:'Samurai sword',short:'KATANA',mag:1,dmg:100,cone:27,cd:1,reload:0,shots:1,katana:true,needArm:'samurai',price:40000,
+   traits:'Samurai pack melee weapon. A huge katana. Press Fire to swing it, one swing a second, and hold Fire to keep swinging. The blade reaches 5 feet in front of you across a 5 foot wide cut: anything it hits dies instantly, except bosses and mini bosses, which take 100. Every swing also sends out a wave of purple energy that passes through enemies like a ghost, hitting every one in its path. The wave starts 5 feet wide and spreads to 35 feet wide at its full reach of 35 feet, and unlike a shotgun it hits harder the farther it travels: 100 as it leaves the blade, rising steadily to 1,000 at 35 feet. You hear the heavy swing, then the wave humming away from you and rising in pitch as it grows stronger, and a ghostly shimmer from every enemy it passes through, brighter the harder it hits. Never needs reloading. You must own the Samurai armor before you can buy it.'},
   {id:'blackhole',rng:0,name:'Black Hole Cannon',short:'BLACK HOLE',mag:2,dmg:70,cone:12,cd:1.6,reload:3.4,shots:1,hole:true,price:45000,
    traits:'Mythical cannon that fires a slow humming orb. It lands on the nearest enemy you are facing, or about 40 feet ahead. For 4 seconds it drags every enemy within 25 feet into it, crushing everything caught in its pull for 9 damage a second, then collapses, hitting everything within 12 feet for 70 and everything else it pulled for half that. Perfect to follow with a shotgun or a grenade. Takes only a few of its own upgrades, including the Dark matter core.'},
   {id:'banshee',rng:0,name:'Banshee',short:'BANSHEE',mag:15,dmg:20,cone:40,cd:.25,reload:3.0,shots:1,sonic:true,acc:1,full:12.2,reach:48.8,price:30000,
@@ -2007,7 +2020,7 @@ const ATT=[
   {id:'akimbo',name:'Akimbo',only:HAND,desc:()=>'A second pistol in your other hand, each with its own magazine. Empty one and it reloads while the other keeps firing. The left gun sounds on your left, the right gun on your right.'}
 ];
 const ATTBY=Object.fromEntries(ATT.map(a=>[a.id,a]));
-const OWNUP=['boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
+const OWNUP=['katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
 const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||((w.id==='symbiote'||w.id==='hades')&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
@@ -2465,6 +2478,7 @@ function fire(){
   if(!G||G.paused||G.over||G.cd>0)return;
   if(G.lo[G.w].turbine){quasarTrigger(G.lo[G.w]);return}
   if(G.lo[G.w].boomer){boomThrow(G.lo[G.w]);return}
+  if(G.lo[G.w].katana){katanaSwing(G.lo[G.w]);return}
   const wi=G.w,A=G.ammo[wi];let w=G.lo[wi];const busy=s=>G.jobs.some(j=>j.wi===wi&&j.side===s);
   let side=0;
   if(w.akimbo){
@@ -2831,13 +2845,14 @@ function blizzard(){const r=40/3.281;G.blizzT=10;fx.blizzard();vib(250);let c=0;
 function heatVent(n){const f=n>=3?25:n===2?15:7,r=f/3.281;fx.ventBlast(f);vib(60);let c=0;rdBlast(0,0,r,4,{c:'255,120,40'});
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;e.fireT=5;e.fireDps=Math.max(e.fireDps||0,20);e.fireSrc='jet';c++;fx.burn(norm(e.angle-G.heading),e.dist,.15)});
   const msg=`Heat vent, ${f} feet. ${c?c+(c>1?' enemies':' enemy')+' burning.':'Nothing in range.'}`;(g=>setTimeout(()=>{if(G===g&&!G.over)say(msg)},400))(G)}
-function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
+function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.katana)return 'blade ready';if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
 function reload(){
   if(G&&!G.paused&&!G.over)timeGo();
   if(!G||G.paused||G.over)return;
   const wi=G.w,w=G.lo[wi],A=G.ammo[wi];
   if(w.turbine){say(`No magazine, it runs on heat. ${ammoWords()}.`);return}
   if(w.boomer){say(G.boom?'The boomerang is still out.':'The boomerang never needs reloading. It is in your hand.');return}
+  if(w.katana){say('The sword never needs reloading.');return}
   const need=(w.akimbo?[0,1]:[0]).filter(s=>A[s]<w.mag&&!G.jobs.some(j=>j.wi===wi&&j.side===s));
   if(!need.length){say(G.jobs.some(j=>j.wi===wi)?'Already reloading.':'Magazine full.');return}
   need.forEach(s=>startReload(wi,s));
@@ -2967,6 +2982,30 @@ function boomThrow(w){
   if(G.boom){G.cd=.4;say('Boomerang out.');return}
   G.cd=w.cd;G.boom={h0:G.heading,R:w.bmR,T:w.bmT,path:w.bmPath,cap:w.bmCap,dmg:w.dmg,t:0,cut:0,hit:new Map(),prev:[0,0],wi:G.w};
   fx.boomThrow();vib(40);say('Boomerang out.');hud()}
+/* Samurai sword. The blade cuts a 5 by 5 foot box straight in front of you: anything in it dies, except bosses and
+   mini bosses, which take 100. Each swing also sends a purple energy wave straight out the way you faced. It travels at
+   50 feet a second, passes through every enemy in its path once, and spreads from 5 feet wide at the blade to 35 feet
+   wide at its full 35 foot reach. It hits harder the farther it has travelled: 100 at the blade, rising evenly to 1,000. */
+const KAT_R=35/3.281,KAT_SP=50/3.281,KAT_BLADE=5/3.281;
+function katanaSwing(w){
+  G.cd=w.cd;fx.katSwing();vib(40);if(rdOn())RD.slash=.3;
+  const h0=G.heading,pos=e=>{const a=norm(e.angle-h0)*Math.PI/180;return[e.dist*Math.cos(a),e.dist*Math.sin(a)]},gm=gunMult();
+  G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0)return;const[f,l]=pos(e);if(f<0||f>KAT_BLADE||Math.abs(l)>KAT_BLADE/2)return;
+    const T=EN[e.type],rel=norm(e.angle-G.heading);if(T.boss||T.mini)e.hp-=100*gm;else e.hp=0;rdShot(e,{id:'katana'},false);fx.katBlade(rel,e.dist);if(e.hp<=0)fx.kill(rel,e.dist,.12,e.type)});
+  processDead('katana');if(G.over)return;
+  const hit=new Set(),wave={h0,r:0};(G.kw=G.kw||[]).push(wave);fx.katWave(KAT_R/KAT_SP);
+  later(dt=>{if(G.over)return true;const r0=wave.r;wave.r=Math.min(KAT_R,r0+KAT_SP*dt);let died=false;
+    G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0||hit.has(e))return;const[f,l]=pos(e);if(f<0||f<r0-.3||f>wave.r)return;
+      const fft=Math.min(35,f*3.281);if(Math.abs(l)*3.281>(5+30*fft/35)/2)return;
+      hit.add(e);const k=fft/35,rel=norm(e.angle-G.heading);e.hp-=(100+900*k)*gm;rdShot(e,{id:'katwave'},false);fx.katGhost(rel,e.dist,k);
+      if(e.hp<=0){fx.kill(rel,e.dist,.06,e.type);died=true}});
+    if(died)processDead('katana');if(G.over)return true;
+    if(wave.r<KAT_R)return false;
+    G.kw=G.kw.filter(x=>x!==wave);
+    const big=[...hit].find(e=>e.hp>0&&(EN[e.type].boss||EN[e.type].mini)&&G.enemies.includes(e));
+    if(big&&S.hpcall){const now=performance.now();if(now-G.hpT>1500&&!killQuiet()){G.hpT=now;say(`${big.mega?'Mega ':''}${EN[big.type].name}, ${Math.max(1,Math.round(big.hp/big.maxhp*100))} percent.`)}}
+    return true});
+}
 function stepBoom(dt){const B=G.boom;if(!B)return;B.t+=dt;const u=Math.min(1,B.t/B.T),p=bmPos(B,u),cur=xy(p.ang,p.d),[ax,ay]=B.prev;
   const sx=cur[0]-ax,sy=cur[1]-ay,L2=sx*sx+sy*sy;let died=false;
   if(B.cut<B.cap)for(const e of G.enemies){if(e.hp<=0||e.hb>0)continue;if(B.hit.has(e)&&B.t-B.hit.get(e)<.35*B.T)continue;   // one slice per pass: it has to come round again for a second
@@ -3365,10 +3404,10 @@ const RDSZ={zombie:{h:1,w:1,m:1,col:'#86a36f'},zrunner:{h:.97,w:.85,m:.85,col:'#
   zgiant:{h:2,w:1.5,m:6,col:'#6f9160'},zancient:{h:3.2,w:1.8,m:30,col:'#7d6a96'}};
 const rdSz=t=>RDSZ[t]||RDSZ.zombie;
 // how hard each weapon throws what it kills, in metres a second (heavier zombies move less)
-const RDPOW={qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
+const RDPOW={katana:5,katwave:6,qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
   jet:24,jackfrost:3,tetra:3,boomer:5,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
   last:12,berserk:2,incend:2,fence:1,barbed:1.5};
-const RD={cr:0,crT:0,bodies:[],decals:[],flash:[],voices:[],acc:0,muzzle:0,sb:0,kd:0,kdT:0,lsT:0,winT:0,tmp:new Float32Array(33),c:new Float32Array(3)};
+const RD={slash:0,cr:0,crT:0,bodies:[],decals:[],flash:[],voices:[],acc:0,muzzle:0,sb:0,kd:0,kdT:0,lsT:0,winT:0,tmp:new Float32Array(33),c:new Float32Array(3)};
 const rdOn=()=>!!(G&&G.mode==='zombies'&&G.zm==='ragdoll');
 function rdReset(){RD.voices.forEach(rdVoiceStop);RD.bodies=[];RD.decals=[];RD.flash=[];RD.voices=[];RD.acc=0;RD.kd=0;RD.kdT=0;RD.muzzle=0;
   const on=rdOn();$('game').classList.toggle('rd',on);$('view').hidden=!on}
@@ -3481,7 +3520,8 @@ function rdCorpse(e,src){
   if(e.rdB){const B=e.rdB;e.rdB=null;rdBlastBody(b,B.cx,B.cy,B.cz,B.R*1.15,B.pow,B.lift,B.dis);rdDecal(x,z,.4*b.s.h)}
   else if(now-(e.rdHitT||-1e9)<450){   // shot: thrown away from you, from where the bullet landed
     const wid=e.rdW||src,pw=rdSrcPow(wid)*(WCAT.shotgun.includes(wid)||wid==='thunder'?(e.dist<3?1:e.dist<7?.6:.35):1)/b.s.m,head=e.rdHead||e.hk;
-    let dx=ox,dz=oz;if(wid==='boomer'){const sg=Math.random()<.5?-1:1;dx=oz*sg;dz=-ox*sg}
+    let dx=ox,dz=oz;if(wid==='boomer'||wid==='katana'){const sg=Math.random()<.5?-1:1;dx=oz*sg;dz=-ox*sg}
+    if(wid==='katana'&&b.on[1])rdBreak(b,1);   // the katana cuts it clean in two
     for(let i=0;i<11;i++){const k=i===0&&head?1.6:i===1||i===2?1:.45;rdPush(b,i,dx*pw*k,pw*.25*k,dz*pw*k)}
     if(head&&pw>9&&b.on[0])rdBreak(b,0);
     if(pw>7){b.launch=[b.p[6],b.p[8]];b.lv=pw}}
@@ -3604,7 +3644,7 @@ function rdStep(dt){
   for(const b of RD.bodies){if(dead<=RD_MAX)break;if(b.dead&&!b.crys&&!b.awake&&!(b.fade>0)){b.fade=2;dead--}}
   for(const b of RD.bodies){if(b.fade>0){b.fade-=dt;if(b.fade<=0)b.gone=1}else if(b.dead&&Math.hypot(b.p[6],b.p[8])>45)b.gone=1}   // thrown right out of the battlefield
   if(RD.bodies.some(b=>b.gone))RD.bodies=RD.bodies.filter(b=>!b.gone);
-  for(const f of RD.flash)f.t+=dt;RD.flash=RD.flash.filter(f=>f.t<f.T);if(RD.muzzle>0)RD.muzzle-=dt;
+  for(const f of RD.flash)f.t+=dt;RD.flash=RD.flash.filter(f=>f.t<f.T);if(RD.muzzle>0)RD.muzzle-=dt;if(RD.slash>0)RD.slash-=dt;
   // crawlers drag themselves along with a wet scrape you can follow
   for(const e of G.enemies){if(!e.crawl||e.rdb||e.hp<=0)continue;e.rdDrag=(e.rdDrag??Math.random())-dt;if(e.rdDrag>0)continue;e.rdDrag=1+Math.random()*.4;
     if(e.dist>MELEE+.1&&!(e.stunT>0)&&!(e.frozeT>0)&&RD.sb<5){RD.sb++;fx.rdDrag(norm(e.angle-G.heading),e.dist,0,EN[e.type].boss)}}
@@ -3632,6 +3672,26 @@ function rdVoices(){if(!ctx)return;const on=rdOn()&&!G.paused&&!G.over&&!(G.tsto
     v.lp.frequency.setTargetAtTime(Math.min(a>90?1800+(180-a)/90*2400:14000,14000*Math.pow(.95,d)),t,.04);
     if(v.pn)v.pn.pan.setTargetAtTime(Math.max(-1,Math.min(1,Math.sin(rel*Math.PI/180))),t,.04)}}
 Object.assign(fx,{
+  /* Samurai sword swing: a sharp steel ring as it leaves the scabbard edge, then a deep heavy whoosh sweeping left to right */
+  katSwing(){const t=ctx.currentTime,d=gunDest(0);tone(d,{type:'triangle',f:3300,f2:2900,dur:.35,vol:.12,attack:.002});tone(d,{type:'triangle',f:4950,dur:.25,vol:.05,attack:.002});
+    const n=ctx.createBufferSource(),bp=ctx.createBiquadFilter(),g=ctx.createGain(),p=ctx.createStereoPanner?ctx.createStereoPanner():null;
+    n.buffer=noiseBuf;bp.type='bandpass';bp.Q.value=1.3;bp.frequency.setValueAtTime(350,t);bp.frequency.exponentialRampToValueAtTime(2400,t+.16);bp.frequency.exponentialRampToValueAtTime(500,t+.38);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.9,t+.12);g.gain.exponentialRampToValueAtTime(.0001,t+.4);n.connect(bp);bp.connect(g);
+    if(p){p.pan.setValueAtTime(-.8,t);p.pan.linearRampToValueAtTime(.8,t+.35);g.connect(p);p.connect(d)}else g.connect(d);n.start(t,Math.random());n.stop(t+.45);
+    tone(d,{f:130,f2:55,dur:.3,vol:.35,at:.05,attack:.02})},
+  /* the purple wave leaving you: a ghostly humming chord that drifts away ahead and climbs in pitch as it gains power */
+  katWave(T=.7){const t=ctx.currentTime,d=gunDest(0),g=ctx.createGain(),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.setValueAtTime(6000,t);lp.frequency.exponentialRampToValueAtTime(1500,t+T+.3);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.32,t+.06);g.gain.exponentialRampToValueAtTime(.12,t+T);g.gain.exponentialRampToValueAtTime(.0001,t+T+.35);g.connect(lp);lp.connect(d);
+    [[220,0],[221.7,0],[330,.5],[440,.25]].forEach(([f,k])=>{const o=ctx.createOscillator(),og=ctx.createGain();o.type=k?'triangle':'sawtooth';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*2.2,t+T);
+      og.gain.value=k?.35:.25;o.connect(og);og.connect(g);o.start(t);o.stop(t+T+.4)});
+    const v=ctx.createOscillator(),vg=ctx.createGain();v.frequency.value=9;vg.gain.value=.08;v.connect(vg);vg.connect(g.gain);v.start(t);v.stop(t+T+.4);
+    noise(d,{dur:T+.2,vol:.18,type:'bandpass',f:900,f2:2600,q:2,attack:.05})},
+  /* the wave passing through an enemy like a ghost: a shimmering bell chord, brighter and louder the harder it hits */
+  katGhost(rel,dist,k=0){const d=out(rel,dist,.6+.6*k,enBus,1),f=700+900*k;
+    [1,1.5,2.01].forEach((m,i)=>tone(d,{type:'triangle',f:f*m,f2:f*m*1.06,dur:.45,vol:.16/(i+1),at:i*.015,attack:.004}));noise(d,{dur:.25,vol:.18+.2*k,type:'bandpass',f:2400+1500*k,q:3,attack:.01})},
+  /* the blade itself landing: the recorded knife slice and a heavy cleave */
+  katBlade(rel,dist){const d=out(rel,dist,1.1,enBus);if(!sliceRec(d))noise(d,{dur:.09,vol:.6,type:'highpass',f:4500,f2:2500,attack:.002});
+    noise(d,{dur:.16,vol:.75,type:'lowpass',f:700,f2:160,at:.02,attack:.002});tone(d,{f:110,f2:55,dur:.12,vol:.5,at:.02})},
   /* a body hitting the floor: a heavy thump, louder the harder it lands; deeper for giants */
   rdThud(rel,dist,s=5,big){const d=out(rel,dist,Math.min(1.1,.3+s*.08),enBus,big?2:1),k=big?.55:1;
     tone(d,{f:110*k,f2:46*k,dur:.13+.1*(1-k),vol:.75,attack:.002});noise(d,{dur:.15,vol:.7,type:'lowpass',f:700*k,f2:140,attack:.002});noise(d,{dur:.04,vol:.22,type:'bandpass',f:1400,q:1.2,attack:.001})},
@@ -3707,6 +3767,13 @@ function rdDraw(){
   // explosions
   for(const f of RD.flash){if(!P(f.x,f.y,f.z,a))continue;const k=f.t/f.T,rr=f.r*(.5+k)*F/a[2];const g2=c.createRadialGradient(a[0],a[1],0,a[0],a[1],Math.max(1,rr));
     g2.addColorStop(0,`rgba(255,250,220,${.9*(1-k)})`);g2.addColorStop(.4,`rgba(${f.c},${.7*(1-k)})`);g2.addColorStop(1,`rgba(${f.c},0)`);c.fillStyle=g2;c.beginPath();c.arc(a[0],a[1],Math.max(1,rr),0,Math.PI*2);c.fill()}
+  // samurai sword: purple waves rolling out, and the slash of the blade across the bottom of the view
+  for(const wv of(G.kw||[])){if(wv.r<.3)continue;const t=wv.h0*Math.PI/180,fx0=Math.sin(t),fz0=Math.cos(t),hw=(5+30*Math.min(35,wv.r*3.281)/35)/2/3.281,cxw=fx0*wv.r,czw=fz0*wv.r;
+    const pts=[[-hw,.05],[hw,.05],[hw,2.1],[-hw,2.1]].map(([u,y])=>{const o=[0,0,0];return P(cxw+fz0*u,y,czw-fx0*u,o)?o:null});
+    if(pts.some(v=>!v))continue;const al=.45*(1-.5*wv.r/KAT_R);c.fillStyle=`rgba(160,70,255,${al})`;c.strokeStyle=`rgba(225,170,255,${al+.3})`;c.lineWidth=Math.max(1.5,W/150);
+    c.beginPath();pts.forEach((v,i)=>i?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]));c.closePath();c.fill();c.stroke()}
+  if(RD.slash>0){const k=RD.slash/.3;c.strokeStyle=`rgba(235,200,255,${.9*k})`;c.lineWidth=Math.max(4,W/30)*k;c.lineCap='round';c.beginPath();
+    c.moveTo(W*.05,H*.95);c.quadraticCurveTo(W*.5,H*(.45+.25*(1-k)),W*.95,H*.7);c.stroke();c.strokeStyle=`rgba(160,70,255,${.6*k})`;c.lineWidth=Math.max(10,W/12)*k;c.stroke()}
   // sights and muzzle flash
   const lock=!!G.lockE;c.strokeStyle=lock?'#ff5a4a':'rgba(255,255,255,.7)';c.lineWidth=Math.max(1.5,W/220);const cs=Math.max(6,W/40);
   c.beginPath();c.moveTo(X0-cs,Y0);c.lineTo(X0-cs*.35,Y0);c.moveTo(X0+cs*.35,Y0);c.lineTo(X0+cs,Y0);c.moveTo(X0,Y0-cs);c.lineTo(X0,Y0-cs*.35);c.moveTo(X0,Y0+cs*.35);c.lineTo(X0,Y0+cs);c.stroke();
@@ -3792,7 +3859,7 @@ function draw(){
 function hud(){
   if(!G)return;const w=G.lo[G.w];
   $('v-hp').textContent=Math.max(0,Math.ceil(G.hp));$('hud-hp').classList.toggle('hp-low',G.hp<G.maxhp*.3);
-  $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.boomer?(G.boom?'OUT':'READY'):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
+  $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.katana?'BLADE':w.boomer?(G.boom?'OUT':'READY'):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
   $('v-wave').textContent=G.mode==='practice'?'—':G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'?`${G.wave}`:`${G.wave}/${MAXW}`;$('v-coins').textContent=P.coins;
   const hall=G.mode==='zombies'&&G.zm==='hall';$('v-wave').previousElementSibling.textContent=hall?'Score':'Wave';if(hall)$('v-wave').textContent=hallScore();
 }
@@ -3800,6 +3867,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-samurai',date:'November 4, 2026',title:'New legendary set: Samurai pack',items:[
+    'A new legendary set in the Armory shop, under Legendary: the Samurai pack, with two sections, Swords and Armor.',
+    'New armor: Samurai armor, 30,000 silver. It cuts all damage you take by 75 percent, the best protection in the game.',
+    'New weapon: the Samurai sword, 40,000 silver, a huge katana. You must own the Samurai armor before you can buy it. One swing a second, and you can hold Fire to keep swinging.',
+    'The blade cuts 5 feet in front of you, 5 feet wide. Anything it hits dies instantly, except bosses and mini bosses, which take 100.',
+    'Every swing also sends out a purple energy wave that passes through enemies like a ghost. It starts 5 feet wide and spreads to 35 feet wide at its full reach of 35 feet. The opposite of a shotgun, it hits harder the farther it travels: 100 at the blade, rising to 1,000 at 35 feet.',
+    'Listen for the heavy swing, the wave humming away and rising in pitch as it gains power, and a ghostly shimmer from each enemy it passes through, brighter the harder it hits. Try them in Training, Sound check. In Ragdoll sandbox the blade cuts zombies in two, and sighted players see the slash and the purple waves.']},
   {id:'2026-11-03-acidlegs',date:'November 3, 2026',title:'Ragdoll sandbox: acid crawlers',items:[
     'In Ragdoll sandbox, Hydra acid pools from Corrosive shells V2 now dissolve zombies\' legs. Partway through, the shins froth away and the zombie shuffles slowly on its knees, which usually keeps it in the acid until its legs are gone. Fast runners and huge giants can sometimes get through on their knees. When its legs are gone it slaps down flat and becomes a crawler with only its top half, dragging itself toward you on its arms at about a third of its speed.',
     'Regular zombies lose their legs in about 1 second of acid, runners a little faster, bloated zombies in about 1 and a half, giant zombies in 3 and a half and the Ancient One in 7. While its legs are dissolving, the acid spends itself on them, so the zombie takes only 15 percent of the pool\'s damage. A crawler has only its top half in the acid, so it takes half damage.',
@@ -4200,18 +4274,20 @@ function record(){
 $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
-const WCAT={pistol:['pistol','deagle','beretta','glock'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','tetra','boomer','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','salvo','quasar']};
+const WCAT={pistol:['pistol','deagle','beretta','glock'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','tetra','boomer','katana','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','salvo','quasar']};
 const MCAT={rifle:['jet','banshee'],sniper:['jackfrost','tetra'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['blackhole','hydra','salvo'],heavy:['quasar']};
 const MCATN={rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
-const catW=()=>curCat==='mythic'?(curSet==='mythic'?MCAT[curMyth]:curScav==='throw'?LSET[curSet].list:[]).map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
+const catW=()=>curCat==='mythic'?(curSet==='mythic'?MCAT[curMyth]:curSet==='samurai'?(curSam==='blade'?LSET.samurai.list:[]):curScav==='throw'?LSET[curSet].list:[]).map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
 /* Legendary sets. The Legendary shop section holds sets of weapons: Mythical (split into weapon types, MCAT) and the
    Scavenger pack, empty for now. To add a weapon to the Scavenger pack, put its id in LSET.scav.list. */
-const LSET={mythic:{name:'Mythical'},scav:{name:'Scavenger pack',list:['boomer'],note:'The Scavenger pack. Legendary gear scavenged and rebuilt from scrap: throwing weapons and armor.'}};
+const LSET={mythic:{name:'Mythical'},scav:{name:'Scavenger pack',list:['boomer'],note:'The Scavenger pack. Legendary gear scavenged and rebuilt from scrap: throwing weapons and armor.'},
+  samurai:{name:'Samurai pack',list:['katana'],note:'The Samurai pack. Legendary blades and armor of the samurai: swords and armor.'}};
+const SAMN={blade:'Samurai pack swords. Swing with the Fire button. You must own the Samurai armor before you can buy the Samurai sword.',armor:'Samurai pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep.'};
 const SCAVN={throw:'Scavenger pack throwing weapons. Throw them with the Fire button and they come back to you.',armor:'Scavenger pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep.'};
 const setOf=id=>Object.keys(LSET).find(k=>LSET[k].list&&LSET[k].list.includes(id))||'mythic';
-let curCat='pistol',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw';
+let curCat='pistol',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
 const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
@@ -4220,6 +4296,7 @@ const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine gu
 const n1=x=>Math.round(x*10)/10;
 function dmgLine(w){if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
   if(w.hydra)return `Damage: 3 rockets of ${w.dmg} each per trigger pull, each splashing enemies within 5 feet for half. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.hole){const b=build(w);return `Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${w.dmg} on collapse to everything within 12 feet, half that to the rest it pulled in. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(false)return ` For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.sonic)return `Damage: ${w.dmg} to every enemy in the cone within ${ft(w.full)} feet, plus a stun, fading to 40 percent at ${ft(w.reach)} feet. ${n1(1/w.cd)} screams per second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
+  if(w.katana)return `Blade: kills any enemy within 5 feet in front of you instantly, except bosses and mini bosses, which take 100. Wave: 100 as it leaves the blade, rising evenly to 1,000 at 35 feet, through every enemy in its path. One swing a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.boomer)return `Damage: ${w.dmg} to every enemy it slices, on the way out and again on the way back. Flies 30 feet out at stock, up to 30 enemies per throw. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.id==='tetra')return `Damage: ${w.dmg} per crystal. ${n1(1/w.cd)} shots per second. 15 percent of crystals that hit land a crystallizing headshot, killing the enemy outright, or locking a boss in crystal for 3 seconds for 50 extra damage. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.id==='hades')return `Damage: ${w.dmg} to every enemy in the flame at its far end, rising to triple, ${w.dmg*3}, point blank. Burning lasts until death. Reaches 50 feet. ${n1(1/w.cd)} shot per second at stock. For scale, light enemies have 2 to 3 health and bosses about 80.`;
@@ -4243,22 +4320,24 @@ $('b-unequip').onclick=()=>{initAudio();if(!P.carry.length)return;P.carry=[];fx.
 document.querySelectorAll('#shop-cats button').forEach(b=>b.onclick=()=>{initAudio();curCat=b.dataset.cat;buildShop(true)});
 document.querySelectorAll('#leg-sub button').forEach(b=>b.onclick=()=>{initAudio();curSet=b.dataset.set;buildShop(true);say(curSet==='mythic'?'Mythical set. Choose a weapon type.':LSET[curSet].note+' Choose a section.')});
 document.querySelectorAll('#scav-sub button').forEach(b=>b.onclick=()=>{initAudio();curScav=b.dataset.scav;buildShop(true);say(SCAVN[curScav])});
+document.querySelectorAll('#sam-sub button').forEach(b=>b.onclick=()=>{initAudio();curSam=b.dataset.sam;buildShop(true);say(SAMN[curSam])});
 document.querySelectorAll('#myth-sub button').forEach(b=>b.onclick=()=>{initAudio();curMyth=b.dataset.myth;buildShop(true);say(MCATN[curMyth])});
 document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(curArm==='mythic'?'Mythical armor.':'Regular armor.')});
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
-const armList=()=>ARMOR.filter(a=>!a.scav&&(curArm==='mythic'?a.myth:!a.myth));
-const shopArmors=()=>curCat==='armor'?armList():curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):[];
+const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&(curArm==='mythic'?a.myth:!a.myth));
+const shopArmors=()=>curCat==='armor'?armList():curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):[];
 function buildShop(keepFocus){
   document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('arm-sub').hidden=curCat!=='armor';$('leg-sub').hidden=curCat!=='mythic';$('myth-sub').hidden=curCat!=='mythic'||curSet!=='mythic';$('scav-sub').hidden=curCat!=='mythic'||curSet!=='scav';
+  $('arm-sub').hidden=curCat!=='armor';$('leg-sub').hidden=curCat!=='mythic';$('myth-sub').hidden=curCat!=='mythic'||curSet!=='mythic';$('scav-sub').hidden=curCat!=='mythic'||curSet!=='scav';$('sam-sub').hidden=curCat!=='mythic'||curSet!=='samurai';
   document.querySelectorAll('#scav-sub button').forEach(b=>{const on=b.dataset.scav===curScav;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+  document.querySelectorAll('#sam-sub button').forEach(b=>{const on=b.dataset.sam===curSam;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
-  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.boomer?'':` Magazine ${w.mag}. ${w.shell?`Loads one shell at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
+  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.boomer||w.katana?'':` Magazine ${w.mag}. ${w.shell?`Loads one shell at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
   shopArmors().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
     const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
@@ -4272,8 +4351,8 @@ function updateShop(){
   {const u=$('b-unequip'),n=P.carry.length;u.disabled=!n;$('unequip-sub').textContent=n?`Carrying ${n} of ${MAXCARRY}. Put every gun in storage, then choose a fresh loadout`:'No guns carried. Choose Carry into battle on up to 4 guns';}
   $('shop-coins').textContent=P.coins;$('shop-coins-l').textContent=P.coins===1?'silver coin':'silver coins';
   catW().forEach(w=>{const it=$('it-'+w.id);if(!it)return;const L=shopLabel(w),owned=P.owned.includes(w.id);
-    setItem('it-'+w.id,L.meta,L.act,L.aria,!owned&&P.coins>=w.price,owned);
-    const at=it.querySelector('.att');at.hidden=!owned;const n=attOf(w.id).eq.length;
+    setItem('it-'+w.id,L.meta,L.act,L.aria,!owned&&!L.locked&&P.coins>=w.price,owned);
+    const at=it.querySelector('.att');at.hidden=!owned||!!w.katana;const n=attOf(w.id).eq.length;
     at.innerHTML=`Attachments<small>${n?n+' on':'Ammo, barrels, mags and more'}</small>`;at.setAttribute('aria-label',`${w.name} attachments. ${n?n+' on.':'None on.'}`)});
   if(curCat==='armor')MARMUP.forEach(u=>{if(!$('mu-'+u.id))return;const a=ARMBY[u.arm],own=!!P.marm[u.id];
     if(!own&&!P.armor.own.includes(a.id))setItem('mu-'+u.id,`Price ${u.price} silver · Needs ${a.name} first`,'Locked',`${u.name}, ${u.price} silver. Locked: buy ${a.name} first`,false,false);
@@ -4294,6 +4373,7 @@ function updateShop(){
 }
 function shopLabel(w){
   const owned=P.owned.includes(w.id),carried=P.carry.includes(w.id);
+  if(!owned&&w.needArm&&!P.armor.own.includes(w.needArm)){const a=ARMBY[w.needArm];return{meta:`Price ${w.price} silver · Needs the ${a.name} first`,act:'Locked',aria:`${w.name}, ${w.price} silver. Locked: buy the ${a.name} first`,locked:true}}
   if(!owned)return{meta:`Price ${w.price} silver`,act:`Buy for ${w.price}`,aria:`Buy ${w.name} for ${w.price} silver`};
   const n=attOf(w.id).eq.length,extra=` · Mastery ${mlevel(w.id)}`+(n?` · ${n} attachment${n>1?'s':''}`:'');
   if(carried)return{meta:(w.price?'Owned':'Starter')+' · Carrying'+extra,act:'Leave in storage',aria:`${w.name} is carried. Leave it in storage`};
@@ -4304,6 +4384,7 @@ function shopAct(w){
   initAudio();
   const owned=P.owned.includes(w.id),carried=P.carry.includes(w.id);
   if(!owned){
+    if(w.needArm&&!P.armor.own.includes(w.needArm)){fx.click();say(`The ${w.name} comes with the ${ARMBY[w.needArm].name}. Buy the ${ARMBY[w.needArm].name} first, for ${ARMBY[w.needArm].price} silver.`);return}
     if(P.coins<w.price)return broke(w.price,'The '+w.name);
     P.coins-=w.price;P.owned.push(w.id);let m=`Bought the ${w.name}. ${P.coins} silver left.`;
     if(P.carry.length<MAXCARRY){P.carry.push(w.id);m+=' It is now carried into battle.'}
@@ -4351,6 +4432,7 @@ const r1=x=>Math.round(x*10)/10;
 /* attachments screen: the gun's true current power, with every attachment, its mastery and the Deadeye perk counted in */
 const has2=(b,k)=>((P.att[b.id]||{eq:[]}).eq).includes(k);
 function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(P.perk.aim||0)/100,D=x=>n1(x*aim),out=[];
+  if(b.katana)return[`Blade: anything within 5 feet in front of you dies instantly, except bosses and mini bosses, which take ${D(100)}.`,`Wave: ${D(100)} at the blade, rising evenly to ${D(1000)} at 35 feet, passing through every enemy in its path. 5 feet wide at the blade, 35 feet wide at 35 feet.`,'One swing a second. Never needs reloading.',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')];
   if(b.boomer){out.push(`Damage: ${D(b.dmg)} to every enemy it slices, once on the way out and once on the way back.`,`Flight: ${b.bmPath==='circle'?'a full circle all the way around you':b.bmPath==='narrow'?'a narrow arc just either side of where you face':'a wide loop across the front of you, out on the left and back on the right'}, ${b.bmFt} feet out, about ${n1(b.bmT)} seconds there and back.`,`Slices through ${b.bmCap===Infinity?'every enemy in its path, no limit':'up to '+b.bmCap+' enemies'} per throw.`,'Never needs reloading.',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:''));return out}
   const pulls=1/b.cd,acc=b.acc||w.acc||.92;
   if(b.turbine){out.push('Intake: everything behind you except bosses is sucked in and killed instantly. Exhaust: everything in front of you is blown away, unharmed. Bosses in front are pushed back slowly.',`Runs ${b.qDur} seconds before it overheats, then cools down for ${b.qCool} seconds. Letting go early cools it as you rest.`,`Quasar propulsion: every 30 enemies sucked in, a laser hits everything in a ${QBEAM*2} degree beam straight ahead for ${D(QLASER)}, bosses included.`);if(b.qBeam)out.push(`Devourer beam: every enemy sucked in fires a laser straight ahead for ${D(QBDMG)}, through up to ${QBPEN} enemies in line, at any range, never missing.`);return out}
@@ -4396,7 +4478,7 @@ function renderStats(w){const box=$('mods-stats');box.textContent='';
   const h=document.createElement('h3');h.textContent=`${w.name}: current stats`;box.appendChild(h);
   const n=document.createElement('p');n.className='note';n.textContent='With every attachment you have turned on. Changes as you turn attachments on or off.';box.appendChild(n);
   const ul=document.createElement('ul');fullStats(w).forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li)});box.appendChild(ul)}
-function statLine(w){const b=build(w);if(b.boomer){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per slice, ${b.bmFt} feet out, ${b.bmCap===Infinity?'no limit on':'up to '+b.bmCap} enemies per throw.`}
+function statLine(w){const b=build(w);if(b.katana){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Blade kills instantly within 5 feet. Wave 100 rising to 1,000 at 35 feet.`}if(b.boomer){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per slice, ${b.bmFt} feet out, ${b.bmCap===Infinity?'no limit on':'up to '+b.bmCap} enemies per throw.`}
   const L=b.mlv,k=P.mast[w.id]||0;
   return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Attachments ${(L-1)*5} percent stronger. Right now: ${r1(b.dmg)} damage per round${b.shots>1?`, ${b.shots}-round bursts`:''}. Magazine ${b.mag}${b.akimbo?' in each gun':''}. Reload ${r1(b.reload)} seconds. ${b.charge?`${r1(b.charge)} second charge-up per shot.`:`${r1(1/b.cd)} trigger pulls per second.`} ${b.pen>1?`Punches through ${b.pen===Infinity?'every enemy in line':'up to '+b.pen+' enemies'}${b.exit<Infinity?`, carrying ${ft(b.exit)} feet past each`:''}. `:''}${b.hades?`Reaches ${ft(b.hR)} feet.`:b.rng&&!(b.pen>1)?`Full damage to ${ft(b.rng)} feet.`:b.spread?`Full damage to ${ft(b.range[0])} feet.`:'No falloff.'}`}
 function modLabel(a,w){const st=attOf(w.id),p=priceOf(a,w);
@@ -4458,7 +4540,7 @@ function modAct(a){
   saveP();updateMods();
 }
 $('mods-hear').onclick=()=>hearGun(WBY[curMod]);
-$('mods-back').onclick=()=>{initAudio();curCat=catOf(curMod);if(curCat==='mythic'){curSet=setOf(curMod);if(curSet==='mythic')curMyth=mcatOf(curMod);else curScav='throw'}show('shop');setTimeout(()=>{const b=document.querySelector(`#it-${curMod} .att`);if(b)b.focus()},140)};
+$('mods-back').onclick=()=>{initAudio();curCat=catOf(curMod);if(curCat==='mythic'){curSet=setOf(curMod);if(curSet==='mythic')curMyth=mcatOf(curMod);else{curScav='throw';curSam='blade'}}show('shop');setTimeout(()=>{const b=document.querySelector(`#it-${curMod} .att`);if(b)b.focus()},140)};
 
 /* sound check */
 document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
@@ -4505,6 +4587,7 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
     zapfx:()=>{[0,.07,.14].forEach((t,i)=>fx.zap(i*40-40,8,t))},dbreathfx:()=>{const b=build(WBY.spas);b.dragon=true;gunSound(b,1);fx.burn(0,6,.15)},fatman:()=>{fx.pin();fx.fall();fx.nuke(2)},hadesfire:()=>hadesShot(gunDest(0),'fire'),boomwide:()=>fx.boomDemo('wide'),boomnarrow:()=>fx.boomDemo('narrow'),boomcircle:()=>fx.boomDemo('circle'),slice:()=>fx.slice(-30,10),barbs:()=>{fx.barbs(0,2);[1,2,3].forEach(t=>setTimeout(()=>fx.bleed(0,2),t*1000))},hydrasever:()=>hydraShot(gunDest(0),0,6),hydrahe:()=>fx.heBoom(0,12),hydraacid:()=>{fx.boom(0,12);fx.acidHit(0,12,.05)},acidsizzle:()=>[0,1.1,2.2].forEach(t=>setTimeout(()=>fx.acidSizzle(0,10),t*1000)),acidpool:()=>{fx.poolSplash(0,10);[.4,1.8,3.2].forEach(t=>setTimeout(()=>fx.poolBubble(0,10),t*1000))},tetra:()=>crystalShot(gunDest(0)),tetraburst:()=>[0,.09,.18].forEach(t=>crystalShot(gunDest(0),t)),crystallize:()=>{crystalShot(gunDest(0));fx.crystallize(0,12,.1)},crysboss:()=>{crystalShot(gunDest(0));fx.crysBoss(0,12,.1);setTimeout(()=>fx.crysFree(0,12),3100)},crumble:()=>fx.crumble(5),hadeshell:()=>hadesShot(gunDest(0),'hell'),
     hadesslug:()=>{hadesShot(gunDest(0),'slug');fx.erupt(0,12,.25)},hadeserupt:()=>{fx.erupt(0,10);setTimeout(()=>fx.crackle(-30,10),900);setTimeout(()=>fx.crackle(30,10),1500)},
     hadesload:()=>{loadSgRec();for(let i=0;i<5;i++)setTimeout(()=>{if(!sgShell(rdest(0),SG_PITCH.hades))shellIn(rdest(0))},i*700);setTimeout(()=>{if(!sgPlay(rdest(0),'pump',{rate:SG_PITCH.hades}))MECH.pump(0,rdest(0))},3600)},armor:()=>{fx.hurt();fx.armorHit()},
+    katswing:()=>{fx.katSwing();setTimeout(()=>fx.katWave(KAT_R/KAT_SP),120)},katblade:()=>{loadSliceRec();fx.katBlade(0,1.2)},katghost:()=>{[[2,0],[5,.4],[9,.85]].forEach(([d,k],i)=>setTimeout(()=>fx.katGhost(0,d,k),i*450))},
     rdfly:()=>fx.rdFlyDemo(),rdland:()=>{fx.rdThud(-40,5,10);setTimeout(()=>fx.rdSlap(-40,5,6),80);setTimeout(()=>fx.rdThud(30,8,4),700);setTimeout(()=>fx.rdSlap(30,8,3),760);setTimeout(()=>fx.rdThud(0,20,9,true),1400)},
     rdwall:()=>{fx.rdSlam(0,10,12);setTimeout(()=>fx.rdThud(0,9.5,5),350)},rdbowl:()=>{fx.rdBowl(20,6,8);setTimeout(()=>fx.rdKnock(25,6.5),40);setTimeout(()=>fx.rdThud(30,7,6),600)},
     rdsnap:()=>{loadBarbRec();fx.rdSnap(0,5)},rdup:()=>{loadZRec();fx.rdUp(-30,4)},rdmelt:()=>{loadBarbRec();loadZRec();fx.acidSizzle(20,5);setTimeout(()=>fx.rdMelt1(20,5),400);setTimeout(()=>fx.rdMelt2(20,5),1900)},
