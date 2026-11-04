@@ -199,6 +199,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <p class="note">Tell the developer what you think of a weapon, enemy, map or anything else you have tested. What works, what feels too strong or too weak, sounds that are hard to hear, bugs you found. Only the developer reads it.</p>
   <label for="fb-topic">What is it about<select id="fb-topic"></select></label>
   <label for="fb-text">Your feedback<textarea id="fb-text" class="inp" maxlength="2000" rows="6"></textarea></label>
+  <div id="fb-err-w" hidden><label class="check" for="fb-err"><input type="checkbox" id="fb-err" checked><span>Include problem report<small id="fb-err-n"></small></span></label></div>
   <button class="btn primary" id="fb-send">Send feedback<small>Up to 2,000 characters</small></button>
   <p id="fb-status" role="status" aria-live="polite"></p>
 </section>
@@ -1380,7 +1381,7 @@ const RSEQ={
   break:[[.05,d=>{RK.clack(d,0,1300,.55);RK.scrape(d,.04,900,600,.1,.1)}],[.25,d=>{RK.click(d,0,4200,.15);RK.click(d,.05,4600,.15)}],[.5,shellIn],[.68,shellIn],[.88,d=>RK.clack(d,0,1100,.65)]],
   bolt:[[.05,d=>{RK.clack(d,0,1500,.45);RK.scrape(d,.06,2500,1600,.12,.12)}],[.22,d=>RK.thud(d,0,.25)],[.55,d=>RK.clack(d,0,1100,.6)],[.8,d=>RK.scrape(d,0,1600,2600,.12,.14)],[.9,d=>RK.clack(d,0,1800,.55)]]
 };
-const RKIND={pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
+const RKIND={gyrojet:'hand',pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
   glock:'hand',p90:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',hades:'shells',blackhole:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle',rivet:'rifle',quasar:'heavy'};
 function rdest(pan){const g=gunDest(pan,sfx);g.gain.value=.9;return g}
 const fx={
@@ -2368,8 +2369,9 @@ async function sendFb(){
   if(fbBusy)return;
   if(!P.player)return fbMsg('Create a username first, from Player ID on the main menu.');
   if(!FB_CONFIG.apiKey)return fbMsg('Feedback is not switched on yet.');
-  const text=$('fb-text').value.trim().slice(0,2000),topic=$('fb-topic').value||'General';
-  if(text.length<3)return fbMsg('Write your feedback in the box first.');
+  const typed=$('fb-text').value.trim(),withErr=!!($('fb-err')&&$('fb-err').checked&&errLog().length),topic=$('fb-topic').value||'General';
+  const text=(typed+(withErr?'\n\nProblem report: '+errReport():'')).slice(0,2000);
+  if(typed.length<3&&!withErr)return fbMsg('Write your feedback in the box first.');
   if(Date.now()-fbAt<20000)return fbMsg('Feedback sent a moment ago. Wait a few seconds before sending more.');
   fbBusy=true;const btn=$('fb-send');btn.disabled=true;fbMsg('Sending your feedback…');
   try{
@@ -2377,7 +2379,7 @@ async function sendFb(){
     const me=await fs.getDoc(fs.doc(db,'players',uid));
     if(!me.exists())fbMsg(`The username ${P.player} was created on a different device or browser, so feedback has to be sent from there.`);
     else{await fs.addDoc(fs.collection(db,'feedback'),{uid,name:me.data().name,topic:topic.slice(0,60),text,created:fs.serverTimestamp()});
-      fbAt=Date.now();fx.buy();$('fb-text').value='';fbMsg(`Thanks! Your feedback about ${topic==='General'?'the game':topic.replace('Weapon: ','the ')} was sent to the developer.`)}
+      fbAt=Date.now();fx.buy();$('fb-text').value='';if(withErr){try{localStorage.removeItem(ERRKEY)}catch(e){}fillErrBox()}fbMsg(`Thanks! Your feedback about ${topic==='General'?'the game':topic.replace('Weapon: ','the ')} was sent to the developer.`)}
   }catch(e){fbMsg('Could not send your feedback. Check your internet connection and try again.')}
   fbBusy=false;btn.disabled=false;
 }
@@ -2914,7 +2916,7 @@ function darkSamurai(){const g=G;G.oniT=ONI_T;fx.oniSummon();vib(300);
 }
 function startReload(wi,side){const w=G.lo[wi];
   if(w.shell){const per=Math.max(.2,w.shell*(G.pk&&G.pk.quick?.5:1));G.jobs.push({wi,side,shell:true,per,left:per,total:per,i:0,ev:[],pan:0});return}if(w.vent&&G.heat&&G.heat[wi]){heatVent(G.heat[wi]);G.heat[wi]=0}
-  if(w.blizz&&!(G.blizzT>0))blizzard();const rt=w.reload*(G.pk&&G.pk.quick?.5:1);if(SMG_PITCH[w.id])loadSmgRec();if(SG_PITCH[w.id])loadSgRec();const rk=RKIND[w.id];G.jobs.push({wi,side,total:rt,left:rt,i:0,ev:SMG_PITCH[w.id]&&smgBuf?smgReloadEv(rt):SG_PITCH[w.id]&&sgBuf&&['shells','twin','break'].includes(rk)?sgReloadEv(w.id,rk):RSEQ[rk],pan:w.akimbo?(side?.45:-.45):0})}
+  if(w.blizz&&!(G.blizzT>0))blizzard();const rt=w.reload*(G.pk&&G.pk.quick?.5:1);if(SMG_PITCH[w.id])loadSmgRec();if(SG_PITCH[w.id])loadSgRec();const rk=RKIND[w.id];G.jobs.push({wi,side,total:rt,left:rt,i:0,ev:SMG_PITCH[w.id]&&smgBuf?smgReloadEv(rt):SG_PITCH[w.id]&&sgBuf&&['shells','twin','break'].includes(rk)?sgReloadEv(w.id,rk):(RSEQ[rk]||RSEQ.hand),pan:w.akimbo?(side?.45:-.45):0})}
 /* Jack Frost Blizzard blast: on reload, freeze every enemy within 40 feet solid for 15 seconds. Recharges in 10 seconds */
 function blizzard(){const r=40/3.281;G.blizzT=10;fx.blizzard();vib(250);let c=0;
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;e.frozeT=15;e.wind=0;c++;fx.frost(norm(e.angle-G.heading),e.dist,1.5+Math.random()*.8)});if(c)G.thawT=15;
@@ -3272,9 +3274,9 @@ function step(dt){
   if(G.mode==='zombies'&&G.zm==='hall')stepHall(dt);
   if(G.breakT>0){G.breakT-=dt;if(G.breakT<=0){G.wave++;G.lastUsed=false;startWave()}return}
   if(G.jobs.length){const done=[];
-    G.jobs.forEach(j=>{if(j.shell){j.left-=dt;if(j.left<=0){const A=G.ammo[j.wi],sw=G.lo[j.wi];A[j.side]=Math.min(sw.mag,A[j.side]+1);if(!sgShell(rdest(j.pan),SG_PITCH[sw.id]||1))shellIn(rdest(j.pan));
+    G.jobs.forEach(j=>{try{if(j.shell){j.left-=dt;if(j.left<=0){const A=G.ammo[j.wi],sw=G.lo[j.wi];A[j.side]=Math.min(sw.mag,A[j.side]+1);if(!sgShell(rdest(j.pan),SG_PITCH[sw.id]||1))shellIn(rdest(j.pan));
         if(A[j.side]>=sw.mag)done.push(j);else j.left+=j.per;hud()}return}
-      j.left-=dt;const fr=1-j.left/j.total;while(j.i<j.ev.length&&j.ev[j.i][0]<=fr){j.ev[j.i][1](rdest(j.pan));j.i++}if(j.left<=0)done.push(j)});
+      j.left-=dt;const fr=1-j.left/j.total;while(j.i<j.ev.length&&j.ev[j.i][0]<=fr){j.ev[j.i][1](rdest(j.pan));j.i++}if(j.left<=0)done.push(j)}catch(e){logErr(e,'reload');j.ev=[];j.shell=false;j.left=0;done.push(j)}});   // a broken reload sound never jams the gun: it just finishes
     if(done.length){G.jobs=G.jobs.filter(j=>!done.includes(j));
       done.forEach(j=>{const w=G.lo[j.wi];G.ammo[j.wi][j.side]=w.mag;if(j.shell&&!sgPlay(rdest(0),'pump',{at:.12,rate:SG_PITCH[w.id]||1}))MECH.pump(.12,rdest(0));say(w.akimbo?`${j.side?'Right':'Left'} gun ready.`:`${w.short} ready.`)});hud()}}
   if(G.hold&&G.cd<=0)fire();
@@ -3450,14 +3452,35 @@ function shockLoops(){
     v.f.frequency.setTargetAtTime(fc,t,.05);
     if(v.p)v.p.pan.setTargetAtTime(Math.max(-1,Math.min(1,Math.sin(rel*Math.PI/180))),t,.05)});
 }
+/* Error reports for beta testing. If any part of the game throws an error, it is written to a small log on this device
+   (the last 10 different errors, with the map, mode and guns in use) instead of being lost. The game loop keeps
+   running, and each part of a frame is guarded on its own so one broken sound or effect cannot stop the rest.
+   The log is offered with the next feedback sent from Request items, so the developer sees exactly what broke. */
+const ERRKEY='vf-errors';let errSaid=null;
+function errLog(){try{const a=JSON.parse(localStorage.getItem(ERRKEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}}
+function logErr(e,where){
+  try{const m=String(e&&e.message||e).slice(0,160),st=String(e&&e.stack||'').split('\n').slice(1,3).map(x=>x.trim().replace(/^at /,'').replace(/\(?[a-z]+:\/\/[^)]*?([^/:)]+:\d+:\d+)\)?/i,'$1')).join(' < ').slice(0,160);
+    let g=null;try{g=G}catch(_){}
+    const ctxt=g?`${g.mode}${g.zm?'/'+g.zm:''} ${g.map} wave ${g.wave}, ${(g.lo||[]).map(w=>w.id).join(' ')}`:'menus';
+    const a=errLog(),k=where+': '+m,old=a.find(x=>x.k===k);
+    if(old){old.n=(old.n||1)+1;if(Date.now()-old.t<2000)return;old.t=Date.now();old.c=ctxt}else{a.push({k,s:st,c:ctxt,n:1,t:Date.now()});while(a.length>10)a.shift()}
+    localStorage.setItem(ERRKEY,JSON.stringify(a));
+    if(g&&errSaid!==g&&!g.over){errSaid=g;setTimeout(()=>say('Something glitched in the game. It was noted down, and you can send it to the developer with your next feedback.'),600)}
+    fillErrBox();
+  }catch(_){}
+}
+function errReport(){return errLog().map(x=>`[${x.k}${x.n>1?' x'+x.n:''} | ${x.s} | ${x.c} | ${new Date(x.t).toISOString().slice(0,16)}]`).join(' ')}
+function fillErrBox(){const b=$('fb-err-w'),n=errLog().length;if(!b)return;b.hidden=!n;$('fb-err-n').textContent=n?`${n} problem${n>1?'s':''} noted on this device. Sending them with your feedback helps fix bugs.`:''}
+addEventListener('error',ev=>logErr(ev.error||ev.message,'page'));
+addEventListener('unhandledrejection',ev=>{const r=ev.reason,m=String(r&&r.message||r||'');if(/fetch|network|firebase|firestore|import|offline|Failed to/i.test(m))return;logErr(r,'async')});
 function frame(t){
   raf=requestAnimationFrame(frame);
   const dt=Math.min(.1,(t-last)/1000||0);last=t;
-  if(G&&!G.paused&&!G.over){if(G.tstop>0){G.tstop-=dt;if(G.tstop<=0)timeGo()}else step(dt)}
-  rodSparks(!!(G&&!G.paused&&!G.over&&(G.rod||0)>=5&&G.lo[G.w]&&G.lo[G.w].rod));
+  try{if(G&&!G.paused&&!G.over){if(G.tstop>0){G.tstop-=dt;if(G.tstop<=0)timeGo()}else step(dt)}}catch(e){logErr(e,'battle')}
+  try{rodSparks(!!(G&&!G.paused&&!G.over&&(G.rod||0)>=5&&G.lo[G.w]&&G.lo[G.w].rod));
   shockLoops();fireLoops();boomLoop();rdVoices();
-  rivetBuzzTick();quasarLoopTick();
-  draw();
+  rivetBuzzTick();quasarLoopTick()}catch(e){logErr(e,'sound loops')}
+  try{draw()}catch(e){logErr(e,'drawing')}
 }
 
 /* ---------- Ragdoll sandbox ----------
@@ -3945,6 +3968,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-fixes',date:'November 4, 2026',title:'Bug fixes and problem reports',items:[
+    'Fixed: reloading the MBA Gyrojet froze the battle. Enemies stopped moving and the reload never finished. It now reloads normally, with a pistol reload sound.',
+    'If a reload sound ever breaks again, the gun still finishes reloading instead of jamming the game.',
+    'The game now notes down any glitch it runs into on this device, with the map, mode and guns you had. If one happens during a battle you hear a short message, and the battle keeps going.',
+    'When you send feedback from Request items, a new Include problem report checkbox sends those notes to the developer along with your message, so bugs can be found and fixed faster. It is only shown when something has been noted, and it is cleared once sent.'
+  ]},
   {id:'2026-11-04-darksam',date:'November 4, 2026',title:'Dark samurai and Gyrojet changes',items:[
     'New special ability for the Samurai armor, Dark samurai, 30,000 silver, listed under the armor in the Samurai pack section. After you take 110 damage while wearing the armor, two little oni demons are summoned. They are extremely fast, snarl like wild animals, and attack the enemies closest to you first, then work their way outward, each hitting for 10 damage twice a second. They cannot be hurt, enemies never notice them, and they vanish after 25 seconds. Then the ability starts charging again.',
     'The Gyrojet now does 8 damage at point blank, climbing the farther the rocket flies, to 100 damage at its 70-foot maximum range. It also fires faster, 2 rounds a second.',
@@ -4278,7 +4307,7 @@ function show(id){
   if(id==='shop')buildShop();
   if(id==='mods')buildMods();
   if(id==='pid')updatePid();
-  if(id==='req'){fillReq();fillFb()}
+  if(id==='req'){fillReq();fillFb();fillErrBox()}
   if(id==='log')buildLog();
   if(id==='menu')updateLogBtn();
   if(id==='menu')updatePidMenu();
