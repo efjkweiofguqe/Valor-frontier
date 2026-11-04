@@ -290,6 +290,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Silver and the Armory.</b> Every kill pays silver: 10 for light enemies, 16 for heavy ones, 50 for mini bosses, 83 for bosses and 250 for mega bosses. In endless survival, boss rush and zombie siege, every kill pays 8 percent more silver for each wave you have survived, so wave 11 pays almost double. Every regular wave has one mini boss: it announces itself with a rising two-note siren before its cry, and it is far tougher than a normal enemy. Spend it in the Armory shop on weapons, attachments, body armor, grenades and perks. Perks go up to level 50: Toughness for more health, Field medic for more healing between waves, Deadeye for more gun damage and Scavenger for more silver per kill. Kills also raise each gun's mastery, up to level 10, making its attachments stronger.</p>
     <p><b>Scavenger pack.</b> The Razor blade boomerang is thrown with Fire. You hear Boomerang out, then its blades whirring as it leaves on your left, loops out across the front of you and curves back in on your right. A bright shing is an enemy being sliced, once on the way out and again on the way back. Pressing Fire while it is out just tells you it is still out, and you hear Boomerang returned when you catch it. Its Narrow arc and Full circle abilities change the path it flies. The Razorwire Carapace armor tears into anything that hits you: a ripping sound is the barbs, and wet dripping means the enemy is bleeding.</p>
     <p><b>Ragdoll sandbox.</b> A zombie mode that plays like Zombie siege, with four windows 50 feet out, but with real physics. Every zombie has a body with a head, arms and legs. When one dies it goes limp and flies the way it was hit: a pistol drops it, a shotgun or sniper rifle throws it, and explosions launch it, spinning, out across the room. Bodies tumble and slide along the floor, slam into the round wall, smash through windows or sail right over the wall, and pile up on top of each other. A body flying into a standing zombie knocks it flat. Blasts that do not kill a zombie throw it off its feet instead: it lies there for a second or two, then gets back up where it landed, so a well-placed grenade really does buy you room. Big explosions tear arms, legs and heads off. Everything makes a sound from where it happens: a rushing whoosh follows each of the fastest flying bodies, rising in pitch the faster it goes, then a low scrape if it slides along the floor. A heavy thump is a body hitting the floor, lighter slaps are arms and legs, and a big thump with a hollow knock is a body hitting the wall. Breaking glass is a body going through a window, which leaves it open for a few seconds. A crack and a wet tear is a limb coming off. An impact and a grunt is a body bowling over another zombie, and scuffling followed by a groan is a knocked-down zombie getting back up. Hydra acid pools eat through legs: a zombie that stands in one hears its shins froth away and drops to its knees, then loses its legs completely and slaps down onto its belly as a crawler. Crawlers drag themselves toward you at about a third of their speed, and each pull makes a slap and a wet scrape you can follow. While its legs are dissolving, a zombie takes very little damage from the pool, so you will hear it happen before it dies, and a crawler takes half damage from it. Enemy locations tells you which zombies are on their knees or crawling. Status tells you how many bodies are on the floor and how many zombies are knocked down. Sighted players see a simple first-person view inside the Fire button, with stick-figure zombies, the wall and windows around you, and the radar in the corner.</p>
+    <p><b>Physics and picture in every mode.</b> The ragdoll physics from Ragdoll sandbox now run in every mode: campaign, endless survival, boss rush, the practice range and every zombie mode. Every enemy has a body with a head, arms and legs, sized to the enemy, so a Mercenary goes down like a person, wolves, jaguars and the Mega Pigeon run on four legs, and bosses like Gargantuos Gargantar are huge, heavy bodies that take a big blast to move. Kills fly the way they were hit, explosions throw bodies and knock survivors off their feet, big blasts tear limbs off, flying bodies bowl over other enemies, and Hydra acid turns enemies into crawlers. You hear it all the same way as in Ragdoll sandbox: the whoosh of a flying body, thumps and slaps as it lands, and a scuffle as a knocked-down enemy gets back up. Zombies groan when they get up, other enemies grunt, and drones and mechs clank like metal when they hit the floor. Out in the open there is no wall, so bodies sail as far as they are thrown. In Horror hallway they slam into the hallway walls, and the bodies you leave behind slide away behind you as you walk. Status tells you how many bodies are on the floor and how many enemies are knocked down. Sighted players see the simple first-person view inside the Fire button in every mode, with each map's own sky and ground, colored figures for each enemy type, and the hallway walls in Horror hallway.</p>
     <p><b>Dark samurai.</b> A special ability for the Samurai armor. It charges from the damage you take while wearing it, with a low snarl and Dark samurai half charged at 55 damage. At 110 damage a dark rift opens with a deep rumble, and two oni demons snarl at your left and right, then run out to attack. Listen for their snarls moving across the battlefield and the snapping bites when they hit. They go for the enemies closest to you first. After 25 seconds a falling hiss means they have vanished.</p>
     <p><b>Samurai pack.</b> The Samurai sword is swung with Fire, one heavy swing a second: a ring of steel and a deep whoosh sweeping left to right. Anything within 5 feet straight in front of you is cut down instantly, with a slicing cleave, except bosses and mini bosses, which take 100. Every swing also sends a purple energy wave straight ahead. You hear it hum away from you, climbing in pitch as it grows stronger, and every enemy it passes through gives off a ghostly shimmer, brighter the harder it was hit. The wave starts 5 feet wide and spreads to 35 feet wide at its full reach of 35 feet, and the farther it travels the harder it hits: 100 at the blade, 1,000 at 35 feet. So enemies a little way off take the most. You must own the Samurai armor, which cuts the damage you take by 75 percent, before you can buy the sword.</p>
     <p><b>Switching freezes time.</b> Switching weapon or grenade type stops the whole battle for 2 and a half seconds after your last press, so you can cycle through without being swarmed. A falling whoosh means time has stopped and the battle sounds go quiet. Firing, turning, reloading, throwing a grenade or taking cover starts time again straight away, with a rising whoosh. You can also switch weapon and grenade type from the pause menu, with its buttons or with Q and X.</p>
@@ -3154,9 +3155,9 @@ function radar(){
 }
 function status(){
   if(!G)return;const w=G.lo[G.w];
-  if(G.mode==='practice'){say(`Practice range. ${G.kills} target${G.kills===1?'':'s'} down. Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
+  if(G.mode==='practice'){say(`Practice range. ${G.kills} target${G.kills===1?'':'s'} down.${rdWords()} Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
   const left=G.enemies.length+G.toSpawn;
-  const wv=G.mode==='zombies'?(G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}`:`${G.zm==='six'?'Watch my six':G.zm==='ragdoll'?'Ragdoll sandbox':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.${G.zm==='ragdoll'?rdWords():''}`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.name).join(', ')}${G.revUsed?', second wind used':''}${G.lastUsed?', last stand recharging':''}.`:''):G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`;
+  const wv=G.mode==='zombies'?(G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}${rdWords()}`:`${G.zm==='six'?'Watch my six':G.zm==='ragdoll'?'Ragdoll sandbox':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.${rdWords()}`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.name).join(', ')}${G.revUsed?', second wind used':''}${G.lastUsed?', last stand recharging':''}.`:''):(G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`)+rdWords();
   say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing.`:''} Facing ${facing()}. ${P.coins} silver.`);
 }
 
@@ -3181,7 +3182,7 @@ function stepHall(dt){
   const d=G.spd*dt;
   if(d>0){G.pos+=d;
     const shift=o=>{const[x,y]=xy(o.angle,o.dist),ny=y-d;o.angle=(Math.atan2(x,ny)*180/Math.PI+360)%360;o.dist=Math.max(.3,Math.hypot(x,ny))};
-    G.enemies.forEach(shift);if(G.boxes)G.boxes.forEach(shift);if(G.hz)shift(G.hz);
+    G.enemies.forEach(shift);if(G.boxes)G.boxes.forEach(shift);if(G.hz)shift(G.hz);rdScroll(d);
     if(G.pos>=G.mileAt){G.mileAt+=100/3.281;fx.mile();hud()}}
   // footsteps: closer together the faster you go
   if(G.spd>.15){G.stepT-=dt;if(G.stepT<=0){G.stepSide^=1;fx.step(G.stepSide);G.stepT=.3*HALLV/G.spd}}
@@ -3533,14 +3534,21 @@ const RDLIMB=[0,2,4,6,8];   // bones that can be torn off: neck (the head), both
 const RDRAD=[.12,.07,.08,.05,.05,.05,.05,.05,.05,.05,.05];   // collision radius of each point, times height
 const RDL={head:.2,torso:.47,up:.34,fore:.29,thigh:.46,shin:.46};
 const RDSZ={zombie:{h:1,w:1,m:1,col:'#86a36f'},zrunner:{h:.97,w:.85,m:.85,col:'#a8b878'},zbrute:{h:1.02,w:1.6,m:1.8,col:'#9a9460'},
-  zgiant:{h:2,w:1.5,m:6,col:'#6f9160'},zancient:{h:3.2,w:1.8,m:30,col:'#7d6a96'}};
+  zgiant:{h:2,w:1.5,m:6,col:'#6f9160'},zancient:{h:3.2,w:1.8,m:30,col:'#7d6a96'},
+  soldier:{h:1,w:1,m:1,col:'#7d8a52'},stalker:{h:.95,w:.85,m:.8,col:'#4fa34a'},drone:{h:.75,w:.9,m:.6,col:'#d1a92c',mech:1},brute:{h:1.25,w:1.6,m:2.2,col:'#9a5ad0'},
+  wolf:{h:.75,w:1,m:.8,col:'#dfe8ef',quad:1},raider:{h:1.05,w:1.4,m:1.8,col:'#86b0d2'},scav:{h:.98,w:.95,m:1,col:'#a8845a'},sentry:{h:1.3,w:1.5,m:3,col:'#8f959e',mech:1},
+  jaguar:{h:1,w:1.3,m:2,col:'#e0aa3c',quad:1},overseer:{h:1.4,w:1.6,m:3,col:'#b07ae0'},behemoth:{h:1.7,w:1.9,m:5,col:'#c4dcea'},warden:{h:1.5,w:1.6,m:4,col:'#757b84',mech:1},
+  goblin:{h:.7,w:.9,m:.6,col:'#84cc4f'},clown:{h:1.1,w:1.5,m:1.8,col:'#ff6a94'},pigeon:{h:1.4,w:1.6,m:3.5,col:'#9aa1ae',quad:1},
+  yardle:{h:2.2,w:1.8,m:10,col:'#e6b84e'},boss:{h:2.6,w:2,m:14,col:'#6a8a42'},queen:{h:2.3,w:1.8,m:11,col:'#8a48c4'},titan:{h:3,w:2.2,m:25,col:'#b0dcf2'},revenant:{h:2.2,w:1.7,m:12,col:'#60656d',mech:1}};
 const rdSz=t=>RDSZ[t]||RDSZ.zombie;
 // how hard each weapon throws what it kills, in metres a second (heavier zombies move less)
 const RDPOW={katana:5,katwave:6,qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
   jet:24,jackfrost:3,tetra:3,boomer:5,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
   last:12,berserk:2,incend:2,fence:1,barbed:1.5};
 const RD={slash:0,cr:0,crT:0,bodies:[],decals:[],flash:[],voices:[],acc:0,muzzle:0,sb:0,kd:0,kdT:0,lsT:0,winT:0,tmp:new Float32Array(33),c:new Float32Array(3)};
-const rdOn=()=>!!(G&&G.mode==='zombies'&&G.zm==='ragdoll');
+const rdOn=()=>!!G;   // ragdoll physics and the picture run in every mode now
+const rdHall=()=>!!(G&&G.mode==='zombies'&&G.zm==='hall');
+const rdN=n=>G&&G.mode==='zombies'?(n>1?'zombies':'zombie'):(n>1?'enemies':'enemy');
 function rdReset(){RD.voices.forEach(rdVoiceStop);RD.bodies=[];RD.decals=[];RD.flash=[];RD.voices=[];RD.acc=0;RD.kd=0;RD.kdT=0;RD.muzzle=0;
   const on=rdOn();$('game').classList.toggle('rd',on);$('view').hidden=!on}
 function rdSrcPow(src){if(!src)return 6;if(RDPOW[src]!=null)return RDPOW[src];for(const c in WCAT)if(WCAT[c].includes(src))return RDPOW[c]??4;return 3}
@@ -3558,11 +3566,12 @@ function rdPose(e,P){
   const leg=(sg,p2)=>{const t1=e.rdOn?-.2+kn*(sg<0?1:-1):A*Math.sin(p2),t2=t1-(A?(run?1.2:.7)*Math.max(0,Math.sin(p2-1.3)):0)-.05,kx=sg*.09*w,ky=-Math.cos(t1)*RDL.thigh,kz=Math.sin(t1)*RDL.thigh;
     return[kx,ky,kz,kx,ky-Math.cos(t2)*shin,kz+Math.sin(t2)*shin]};
   const L=leg(-1,ph),R=leg(1,ph+Math.PI),py=-Math.min(L[4],R[4])+.03;
-  let lean=run?.35:e.type==='zbrute'?.05:.12;if(atk||bang)lean+=.2;if(e.rdFl>0)lean-=1.6*e.rdFl;
+  let lean=run?.35:e.type==='zbrute'?.05:.12;if(atk||bang)lean+=.2;if(s.quad)lean=1.3;if(e.rdFl>0)lean-=1.6*e.rdFl;
   const nx=Math.sin(ph*.5)*.03,ny=py+Math.cos(lean)*RDL.torso,nz=Math.sin(lean)*RDL.torso;
   const hx=nx+Math.sin(ph*.5+1)*.05,hy=ny+Math.cos(lean*1.3)*RDL.head,hz=nz+Math.sin(lean*1.3)*RDL.head;
   const arm=sg=>{let ux,uy,uz,ax,ay,az;
-    if(bang||atk){const a=Math.sin(at*(bang?9:5)+(sg>0?0:.7));ux=sg*.2;uy=.2+.75*a;uz=.6;ax=sg*.05;ay=.1+.9*a;az=.7}
+    if(s.quad){const a=A?Math.sin(ph+(sg>0?Math.PI:0)):atk?.5*Math.sin(at*7+(sg>0?0:1)):0;ux=sg*.15;uy=-1;uz=.35*a;ax=0;ay=-1;az=.2+.3*a}
+    else if(bang||atk){const a=Math.sin(at*(bang?9:5)+(sg>0?0:.7));ux=sg*.2;uy=.2+.75*a;uz=.6;ax=sg*.05;ay=.1+.9*a;az=.7}
     else if(run){const a=Math.sin(ph+(sg>0?0:Math.PI));ux=sg*.22;uy=-.8;uz=.55*a;ax=0;ay=.15;az=1}
     else{const sw=still?0:.12*Math.sin(ph+(sg>0?0:2));ux=sg*.28;uy=-.15+sw;uz=.95;ax=sg*.04;ay=.05+sw;az=1}
     let m=Math.hypot(ux,uy,uz);ux/=m;uy/=m;uz/=m;m=Math.hypot(ax,ay,az);ax/=m;ay/=m;az/=m;
@@ -3594,7 +3603,7 @@ function rdCrawlPose(e,P,x,z,fx,fz,rx,rz,h,w,ph,swing,at,still){
 const RDMELT={zombie:1,zrunner:.9,zbrute:1.4,zgiant:3.5,zancient:7};
 function rdAcidLegs(e,dt){if(!rdOn()||e.rdb||e.hp<=0)return 1;if(e.crawl)return .5;const T=RDMELT[e.type]||2,rel=norm(e.angle-G.heading);e.rdMelt=(e.rdMelt||0)+dt;
   if(!e.rdOn&&e.rdMelt>=T*.4){e.rdOn=new Uint8Array(10).fill(1);e.rdOn[7]=e.rdOn[9]=0;e.sm=(e.sm||1)*.4;if(RD.sb<5){RD.sb++;fx.rdMelt1(rel,e.dist,EN[e.type].boss)}}
-  if(e.rdMelt>=T){e.rdOn.fill(1);for(const bi of[6,7,8,9])e.rdOn[bi]=0;e.crawl=true;e.sm*=.9;e.engaged=false;if(RD.sb<5){RD.sb++;fx.rdMelt2(rel,e.dist,EN[e.type].boss)}RD.cr++;RD.crT=1.6;return .5}
+  if(e.rdMelt>=T){e.rdOn.fill(1);for(const bi of[6,7,8,9])e.rdOn[bi]=0;e.crawl=true;e.sm*=.9;e.engaged=false;if(RD.sb<5){RD.sb++;RD.cz=!!EN[e.type].z;RD.cm=EN[e.type].mat;fx.rdMelt2(rel,e.dist,EN[e.type].boss)}RD.cr++;RD.crT=1.6;return .5}
   return .15}
 // bodies of zombies that lost legs to acid keep their stumps
 function rdLegless(b,e){if(!e.rdOn)return b;for(let i=0;i<10;i++)if(!e.rdOn[i]&&b.on[i]){b.on[i]=0;b.stumps.push(RDBONE[i][0])}
@@ -3631,7 +3640,7 @@ function rdBlastBody(b,cx,cy,cz,R,pow,lift,dis){
 function rdBlast(cx,cz,R,pow,o={}){if(!rdOn())return;const cy=o.cy??.35,lift=o.lift??.55,dis=o.dis||0;
   RD.flash.push({x:cx,y:cy+.7,z:cz,r:Math.min(R,8)*.7+.5,t:0,T:o.T||.45,c:o.c||'255,170,60'});
   for(const b of RD.bodies)if(!b.crys&&!b.gu)rdBlastBody(b,cx,cy,cz,R*1.15,pow,lift,dis);
-  for(const e of G.enemies){if(e.rdb)continue;const[x,z]=xy(e.angle,e.dist),d=Math.hypot(x-cx,z-cz);if(d>R)continue;
+  for(const e of G.enemies){if(e.rdb||e.hb>0)continue;const[x,z]=xy(e.angle,e.dist),d=Math.hypot(x-cx,z-cz);if(d>R)continue;
     const f=Math.max(.25,1-d/R);if(!e.rdB||e.rdB.pow*e.rdB.f<pow*f)e.rdB={cx,cy,cz,R,pow,f,lift,dis}}}
 // a steady pull or push on bodies (black holes, the Quasar turbine), metres a second squared toward (cx,cz)
 function rdPull(cx,cz,R,acc,dt){if(!rdOn())return;for(const b of RD.bodies){if(b.crys||b.gu)continue;const p=b.p,dx=cx-p[6],dz=cz-p[8],d=Math.hypot(dx,dz);
@@ -3679,9 +3688,9 @@ function rdDowned(e,dt){const b=e.rdb,p=b.p;b.down+=dt;
     else{e.inside=false;let bi=0,bd=999;G.win.forEach((W,i)=>{const a=Math.abs(norm(W.a-e.angle));if(a<bd){bd=a;bi=i}});e.win=bi}}}
 
 /* ----- the physics step ----- */
-function rdSnd(kind,x,y,z,str,b){if(!ctx||RD.sb>=5)return;RD.sb++;const big=b&&b.s.m>=6;fx[kind](rdRel(x,z),Math.max(.5,Math.hypot(x,z)),str,big)}
+function rdSnd(kind,x,y,z,str,b){if(!ctx||RD.sb>=5)return;RD.sb++;const T=b&&EN[b.type];RD.cz=!T||!!T.z;RD.cm=T?T.mat:'flesh';const big=b&&b.s.m>=6;fx[kind](rdRel(x,z),Math.max(.5,Math.hypot(x,z)),str,big)}
 function rdSim(){
-  const B=RD.bodies,g=-9.8*RDH*RDH,W2=ZWIN;let aw=0;for(const b of B)if(b.awake)aw++;const IT=aw>150?3:aw>80?4:5;   // fewer solver rounds when the floor is very busy
+  const B=RD.bodies,g=-9.8*RDH*RDH,W2=ZWIN,hallW=rdHall();let aw=0;for(const b of B)if(b.awake)aw++;const IT=aw>150?3:aw>80?4:5;   // fewer solver rounds when the floor is very busy
   for(const b of B){if(!b.awake)continue;b.age+=RDH;b.st-=RDH;b.stw-=RDH;const p=b.p,q=b.q,h=b.s.h;
     for(let i=0;i<33;i+=3){const vx=(p[i]-q[i])*.996,vy=(p[i+1]-q[i+1])*.996,vz=(p[i+2]-q[i+2])*.996;q[i]=p[i];q[i+1]=p[i+1];q[i+2]=p[i+2];p[i]+=vx;p[i+1]+=vy+g;p[i+2]+=vz}
     // floor and wall contacts, with sound
@@ -3691,7 +3700,8 @@ function rdSim(){
         p[i+1]=r;q[i+1]=r-Math.min(vy,6)*RDH*.15;   // a small bounce
         const hx=p[i]-q[i],hz=p[i+2]-q[i+2],hs=Math.hypot(hx,hz),k2=hs>1e-6?Math.max(0,hs-(k<3?7:9)*RDH*RDH)/hs:0;q[i]=p[i]-hx*k2;q[i+2]=p[i+2]-hz*k2}   // sliding friction
       const rr2=p[i]*p[i]+p[i+2]*p[i+2],rq2=q[i]*q[i]+q[i+2]*q[i+2],W22=W2*W2;
-      if((rq2<W22)!==(rr2<W22)&&p[i+1]<RDWALL){const rr=Math.sqrt(rr2),rq=Math.sqrt(rq2);const a=(Math.atan2(p[i],p[i+2])*180/Math.PI+360)%360;
+      if(hallW&&Math.abs(p[i])>HALLW&&p[i+1]<RDWALL){const sx=Math.sign(p[i]),vr=Math.abs((p[i]-q[i])/RDH);p[i]=sx*(HALLW-.03);q[i]=p[i]+sx*vr*.25*RDH;if(vr>wall){wall=vr;wi=k}}
+      else if(G.win&&(rq2<W22)!==(rr2<W22)&&p[i+1]<RDWALL){const rr=Math.sqrt(rr2),rq=Math.sqrt(rq2);const a=(Math.atan2(p[i],p[i+2])*180/Math.PI+360)%360;
         const Wn=G.win?G.win.find(W=>Math.abs(norm(a-W.a))<=RDWIN):null,gap=Wn&&p[i+1]>RDWLO&&p[i+1]<RDWHI;
         const sp=Math.hypot(p[i]-q[i],p[i+2]-q[i+2])/RDH;
         if(gap&&(Wn.broken||sp>4)){if(!Wn.broken)rdSmashWin(Wn,b)}
@@ -3780,14 +3790,19 @@ function rdStep(dt){
   // crawlers drag themselves along with a wet scrape you can follow
   for(const e of G.enemies){if(!e.crawl||e.rdb||e.hp<=0)continue;e.rdDrag=(e.rdDrag??Math.random())-dt;if(e.rdDrag>0)continue;e.rdDrag=1+Math.random()*.4;
     if(e.dist>MELEE+.1&&!(e.stunT>0)&&!(e.frozeT>0)&&RD.sb<5){RD.sb++;fx.rdDrag(norm(e.angle-G.heading),e.dist,0,EN[e.type].boss)}}
-  if(RD.crT>0){RD.crT-=dt;if(RD.crT<=0&&RD.cr){const n=RD.cr;RD.cr=0;if(!killQuiet())say(`${n>1?n+' zombies have':'A zombie has'} lost ${n>1?'their':'its'} legs to the acid. ${n>1?'They are':'It is'} crawling.`)}}
+  if(RD.crT>0){RD.crT-=dt;if(RD.crT<=0&&RD.cr){const n=RD.cr;RD.cr=0;if(!killQuiet())say(`${n>1?n+' '+rdN(n)+' have':(G.mode==='zombies'?'A zombie':'An enemy')+' has'} lost ${n>1?'their':'its'} legs to the acid. ${n>1?'They are':'It is'} crawling.`)}}
   // say how many were knocked down, once the kill callout has had its turn
-  if(RD.kdT>0){RD.kdT-=dt;if(RD.kdT<=0&&RD.kd){const n=RD.kd;RD.kd=0;if(!killQuiet())say(`${n} ${n>1?'zombies':'zombie'} knocked down.`)}}
+  if(RD.kdT>0){RD.kdT-=dt;if(RD.kdT<=0&&RD.kd){const n=RD.kd;RD.kd=0;if(!killQuiet())say(`${n} ${rdN(n)} knocked down.`)}}
 }
+// horror hallway: you walk forward, so everything on the floor slides back past you
+function rdScroll(d){for(const b of RD.bodies){const p=b.p,q=b.q;for(let i=2;i<33;i+=3){p[i]-=d;q[i]-=d}if(b.gu)for(let i=2;i<33;i+=3)b.gu.from[i]-=d}
+  for(const x of RD.decals)x.z-=d;for(const f of RD.flash)f.z-=d;if(RD.decals.length&&RD.decals[0].z<-10)RD.decals=RD.decals.filter(x=>x.z>-10)}
 const rdDownN=()=>G.enemies.filter(e=>e.rdb).length;
-const rdWords=()=>{const n=RD.bodies.filter(b=>b.dead&&!b.crys).length,k=rdDownN();return ` ${n} ${n===1?'body':'bodies'} on the floor.${k?` ${k} ${k>1?'zombies':'zombie'} knocked down.`:''}`};
+const rdWords=()=>{const n=RD.bodies.filter(b=>b.dead&&!b.crys).length,k=rdDownN();return ` ${n} ${n===1?'body':'bodies'} on the floor.${k?` ${k} ${rdN(k)} knocked down.`:''}`};
 
 /* ----- sounds: one moving voice follows each of the fastest flying bodies; everything else is a one-shot ----- */
+// metal bodies (drones, mechs) ring with a clank as well as the thump
+function rdClank(d,k=1,v=1){tone(d,{type:'triangle',f:820*k,f2:640*k,dur:.3,vol:.12*v,attack:.001});tone(d,{type:'triangle',f:1270*k,dur:.18,vol:.06*v,attack:.001})}
 function rdVoiceStop(v){try{const t=ctx.currentTime;v.g.gain.cancelScheduledValues(t);v.g.gain.setTargetAtTime(0,t,.05);v.n.stop(t+.3)}catch(x){}}
 function rdVoices(){if(!ctx)return;const on=rdOn()&&!G.paused&&!G.over&&!(G.tstop>0);
   const cand=on?RD.bodies.filter(b=>b.awake&&b.v>4.5&&!b.gu).sort((a,b)=>b.v-a.v).slice(0,3):[];
@@ -3826,12 +3841,12 @@ Object.assign(fx,{
     noise(d,{dur:.16,vol:.75,type:'lowpass',f:700,f2:160,at:.02,attack:.002});tone(d,{f:110,f2:55,dur:.12,vol:.5,at:.02})},
   /* a body hitting the floor: a heavy thump, louder the harder it lands; deeper for giants */
   rdThud(rel,dist,s=5,big){const d=out(rel,dist,Math.min(1.1,.3+s*.08),enBus,big?2:1),k=big?.55:1;
-    tone(d,{f:110*k,f2:46*k,dur:.13+.1*(1-k),vol:.75,attack:.002});noise(d,{dur:.15,vol:.7,type:'lowpass',f:700*k,f2:140,attack:.002});noise(d,{dur:.04,vol:.22,type:'bandpass',f:1400,q:1.2,attack:.001})},
+    tone(d,{f:110*k,f2:46*k,dur:.13+.1*(1-k),vol:.75,attack:.002});noise(d,{dur:.15,vol:.7,type:'lowpass',f:700*k,f2:140,attack:.002});noise(d,{dur:.04,vol:.22,type:'bandpass',f:1400,q:1.2,attack:.001});if(RD.cm==='metal')rdClank(d,k)},
   /* an arm, leg or head slapping the floor */
-  rdSlap(rel,dist,s=4){const d=out(rel,dist,Math.min(.6,.12+s*.05),enBus,1);noise(d,{dur:.035,vol:.6,type:'bandpass',f:1100,q:1.3,attack:.001});tone(d,{f:180,f2:120,dur:.04,vol:.22})},
+  rdSlap(rel,dist,s=4){const d=out(rel,dist,Math.min(.6,.12+s*.05),enBus,1);noise(d,{dur:.035,vol:.6,type:'bandpass',f:1100,q:1.3,attack:.001});tone(d,{f:180,f2:120,dur:.04,vol:.22});if(RD.cm==='metal')rdClank(d,1.6,.5)},
   /* a body slamming into the wall: a big thump with a hollow knock and a crunch */
   rdSlam(rel,dist,s=6,big){const d=out(rel,dist,Math.min(1.3,.5+s*.07),enBus,big?2:1);tone(d,{f:75,f2:36,dur:.26,vol:.9,attack:.002});
-    noise(d,{dur:.25,vol:.8,type:'lowpass',f:900,f2:110,attack:.002});noise(d,{dur:.2,vol:.45,type:'bandpass',f:320,q:5,attack:.002});noise(d,{dur:.05,vol:.3,type:'highpass',f:2500,attack:.001})},
+    noise(d,{dur:.25,vol:.8,type:'lowpass',f:900,f2:110,attack:.002});noise(d,{dur:.2,vol:.45,type:'bandpass',f:320,q:5,attack:.002});noise(d,{dur:.05,vol:.3,type:'highpass',f:2500,attack:.001});if(RD.cm==='metal')rdClank(d,big?.6:.9,1.3)},
   /* a limb torn off: a sharp crack and a wet flesh tear */
   rdSnap(rel,dist){const d=out(rel,dist,1,enBus,1);noise(d,{dur:.025,vol:.9,type:'highpass',f:2200,attack:.001});tone(d,{type:'square',f:1400,f2:500,dur:.035,vol:.16,attack:.001});
     if(!barbRec(d))noise(d,{dur:.25,vol:.5,type:'bandpass',f:700,f2:300,q:1.5,at:.02})},
@@ -3842,13 +3857,14 @@ Object.assign(fx,{
   rdKnock(rel,dist,s,big){const d=out(rel,dist,.8,enBus,big?2:1);noise(d,{dur:.22,vol:.4,type:'bandpass',f:500,f2:1600,q:1.2,attack:.01});tone(d,{type:'sawtooth',f:big?120:220,f2:big?80:140,dur:.18,vol:.16,at:.02})},
   /* a knocked-down zombie getting back up: scuffling on the floor, then a groan */
   rdUp(rel,dist,s,big){const d=out(rel,dist,.9,enBus,big?2:1);for(let i=0;i<4;i++)noise(d,{dur:.07,vol:.4,type:'lowpass',f:500+Math.random()*400,at:i*.17+Math.random()*.05,attack:.01});
-    if(!zRec(d,'moan',{at:.35,rate:big?.7:.95,vol:.8,max:1.1}))tone(d,{type:'sawtooth',f:big?90:150,f2:big?70:110,dur:.7,vol:.25,at:.35,attack:.1})},
+    if(RD.cm==='metal'){tone(d,{type:'square',f:big?160:260,f2:big?320:520,dur:.35,vol:.1,at:.35,attack:.02});noise(d,{dur:.3,vol:.2,type:'bandpass',f:2500,q:4,at:.4})}
+    else if(!RD.cz||!zRec(d,'moan',{at:.35,rate:big?.7:.95,vol:.8,max:1.1}))tone(d,{type:'sawtooth',f:big?90:150,f2:big?70:110,dur:.7,vol:RD.cz?.25:.2,at:.35,attack:.1})},
   /* acid eats through a zombie's shins: a frothing hiss, a wet collapse and a knock as it drops onto its knees */
   rdMelt1(rel,dist,big){const d=out(rel,dist,1,enBus,big?2:1);noise(d,{dur:.5,vol:.5,type:'bandpass',f:3500,f2:1800,q:1.5,attack:.02});for(let i=0;i<5;i++)tone(d,{f:600+Math.random()*700,f2:1400,dur:.04,vol:.15,at:.05+i*.08});
     noise(d,{dur:.18,vol:.6,type:'lowpass',f:500,f2:150,at:.25,attack:.005});tone(d,{f:big?70:120,f2:big?40:70,dur:.1,vol:.6,at:.32})},
   /* its legs are gone: a long sizzle, a squelch, and it slaps down flat onto its belly with a groan */
-  rdMelt2(rel,dist,big){const d=out(rel,dist,1.1,enBus,big?2:1);noise(d,{dur:.7,vol:.55,type:'bandpass',f:3000,f2:1200,q:1.2,attack:.02});barbRec(d);
-    setTimeout(()=>{if(!ctx)return;fx.rdThud(rel,dist,7,big);const g=out(rel,dist,.8,enBus,big?2:1);if(!zRec(g,'moan',{at:.15,rate:big?.65:.8,vol:.7,max:.9}))tone(g,{type:'sawtooth',f:big?80:130,f2:big?60:95,dur:.6,vol:.22,at:.15})},350)},
+  rdMelt2(rel,dist,big){const d=out(rel,dist,1.1,enBus,big?2:1);noise(d,{dur:.7,vol:.55,type:'bandpass',f:3000,f2:1200,q:1.2,attack:.02});barbRec(d);const cz=RD.cz;
+    setTimeout(()=>{if(!ctx)return;fx.rdThud(rel,dist,7,big);const g=out(rel,dist,.8,enBus,big?2:1);if(!cz||!zRec(g,'moan',{at:.15,rate:big?.65:.8,vol:.7,max:.9}))tone(g,{type:'sawtooth',f:big?80:130,f2:big?60:95,dur:.6,vol:.22,at:.15})},350)},
   /* a crawler pulling itself along: a slap of a hand on the floor and a wet drag of its body behind it */
   rdDrag(rel,dist,s,big){const d=out(rel,dist,.75,enBus,big?2:1);noise(d,{dur:.04,vol:.5,type:'bandpass',f:big?700:1000,q:1.4,attack:.002});
     noise(d,{dur:.45,vol:.35,type:'bandpass',f:big?300:450,f2:big?200:300,q:2,at:.06,attack:.08});noise(d,{dur:.3,vol:.12,type:'highpass',f:3000,at:.1,attack:.05})},
@@ -3879,8 +3895,11 @@ function rdDraw(){
   gr=c.createLinearGradient(0,Y0,0,H);gr.addColorStop(0,pal[1]);gr.addColorStop(.08,pal[2]);gr.addColorStop(1,pal[2]);c.fillStyle=gr;c.fillRect(0,Y0,W,H-Y0);
   // floor rings and spokes, for a sense of distance
   const a=[0,0,0],b=[0,0,0];c.strokeStyle='rgba(255,255,255,.08)';c.lineWidth=1;c.beginPath();
-  for(const R of[2,4,6,8,10,12,14]){let pen=false;for(let i=0;i<=64;i++){const t=i/64*Math.PI*2;if(P(Math.sin(t)*R,0,Math.cos(t)*R,a)){pen?c.lineTo(a[0],a[1]):c.moveTo(a[0],a[1]);pen=true}else pen=false}}
-  for(let s=0;s<12;s++){const t=s/12*Math.PI*2,ux=Math.sin(t),uz=Math.cos(t);let pen=false;for(let R=1;R<=ZWIN;R+=1.5){if(P(ux*R,0,uz*R,a)){pen?c.lineTo(a[0],a[1]):c.moveTo(a[0],a[1]);pen=true}else pen=false}}
+  const hall=rdHall(),open=!G.win&&!hall;
+  if(hall){for(const x of[-HALLW,-HALLW/3,HALLW/3,HALLW]){let pen=false;for(let z=-2;z<=40;z+=1.5){if(P(x,0,z,a)){pen?c.lineTo(a[0],a[1]):c.moveTo(a[0],a[1]);pen=true}else pen=false}}
+    const off=(G.pos||0)%2;for(let z=2-off;z<40;z+=2){if(P(-HALLW,0,z,a)&&P(HALLW,0,z,b)){c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1])}}}
+  else for(const R of(open?[2,4,6,9,12,16,20,26]:[2,4,6,8,10,12,14])){let pen=false;for(let i=0;i<=64;i++){const t=i/64*Math.PI*2;if(P(Math.sin(t)*R,0,Math.cos(t)*R,a)){pen?c.lineTo(a[0],a[1]):c.moveTo(a[0],a[1]);pen=true}else pen=false}}
+  if(!hall)for(let s=0;s<12;s++){const t=s/12*Math.PI*2,ux=Math.sin(t),uz=Math.cos(t);let pen=false;for(let R=1;R<=(open?26:ZWIN);R+=1.5){if(P(ux*R,0,uz*R,a)){pen?c.lineTo(a[0],a[1]):c.moveTo(a[0],a[1]);pen=true}else pen=false}}
   c.stroke();
   // blood on the floor
   c.fillStyle='rgba(110,8,8,.55)';for(const d of RD.decals){if(!P(d.x,0,d.z,a))continue;const rx=d.r*F/a[2],ry=rx*RDEYE/a[2];if(rx<.5)continue;c.beginPath();c.ellipse(a[0],a[1],rx,Math.max(.5,ry),0,0,Math.PI*2);c.fill()}
@@ -3890,11 +3909,11 @@ function rdDraw(){
     c.fillStyle='rgba(200,255,120,.6)';for(let i=0;i<3;i++){const u=(performance.now()/400+i*2.1)%6.28;c.beginPath();c.arc(a[0]+Math.cos(u*1.7)*rx*.5,a[1]+Math.sin(u)*ry*.4,Math.max(.6,rx*.06),0,Math.PI*2);c.fill()}}
   // everything with a body, sorted far to near; things outside the wall are drawn before it
   const items=[];
-  for(const e of G.enemies){if(e.rdb||e.hb>0)continue;const p=rdPose(e,new Float32Array(33)),d=cz(p[6],p[8]);if(d<NEAR-1)continue;items.push({d,out:e.dist>ZWIN+.1,p,s:rdSz(e.type),e,on:e.rdOn||null,t:e.type})}
-  for(const b of RD.bodies){const d=cz(b.p[6],b.p[8]);if(d<NEAR-2)continue;items.push({d,out:Math.hypot(b.p[6],b.p[8])>ZWIN+.1,p:b.p,s:b.s,e:b.e,b,on:b.on,t:b.type})}
+  for(const e of G.enemies){if(e.rdb||e.hb>0)continue;const p=rdPose(e,new Float32Array(33)),d=cz(p[6],p[8]);if(d<NEAR-1)continue;items.push({d,out:!!G.win&&e.dist>ZWIN+.1,p,s:rdSz(e.type),e,on:e.rdOn||null,t:e.type})}
+  for(const b of RD.bodies){const d=cz(b.p[6],b.p[8]);if(d<NEAR-2)continue;items.push({d,out:!!G.win&&Math.hypot(b.p[6],b.p[8])>ZWIN+.1,p:b.p,s:b.s,e:b.e,b,on:b.on,t:b.type})}
   items.sort((u,v)=>v.d-u.d);
   for(const it of items)if(it.out)rdFig(it,P,F,pal);
-  rdWallDraw(P,F,pal,cz,cx,W,H,X0,Y0);
+  if(G.win)rdWallDraw(P,F,pal,cz,cx,W,H,X0,Y0);else if(hall)rdHallDraw(cz,cx,F,pal,X0,Y0);
   for(const it of items)if(!it.out)rdFig(it,P,F,pal);
   // explosions
   for(const f of RD.flash){if(!P(f.x,f.y,f.z,a))continue;const k=f.t/f.T,rr=f.r*(.5+k)*F/a[2];const g2=c.createRadialGradient(a[0],a[1],0,a[0],a[1],Math.max(1,rr));
@@ -3932,14 +3951,20 @@ function rdFig(it,P,F,pal){
   c.stroke();
   // bloated zombies carry a big belly
   if(it.t==='zbrute'&&P((p[3]+p[6])/2,(p[4]+p[7])/2,(p[5]+p[8])/2,A)){c.beginPath();c.arc(A[0],A[1],Math.max(1,.17*h*F/A[2]),0,Math.PI*2);c.fill()}
-  if(P(p[0],p[1],p[2],A)){const hr=Math.max(1.5,.12*h*F/A[2]);c.beginPath();c.arc(A[0],A[1],hr,0,Math.PI*2);c.fill();
-    if(e&&e.hp>0&&!(b&&b.dead)&&hr>3){c.fillStyle='#ff3b2f';c.beginPath();c.arc(A[0]-hr*.38,A[1]-hr*.1,hr*.16,0,Math.PI*2);c.arc(A[0]+hr*.38,A[1]-hr*.1,hr*.16,0,Math.PI*2);c.fill()}}
+  if(P(p[0],p[1],p[2],A)){const hr=Math.max(1.5,.12*h*F/A[2]);c.beginPath();if(s.mech)c.rect(A[0]-hr,A[1]-hr*.8,hr*2,hr*1.6);else c.arc(A[0],A[1],hr,0,Math.PI*2);c.fill();
+    if(e&&e.hp>0&&!(b&&b.dead)&&hr>3){c.fillStyle=s.mech?'#5ff2ff':'#ff3b2f';c.beginPath();c.arc(A[0]-hr*.38,A[1]-hr*.1,hr*.16,0,Math.PI*2);c.arc(A[0]+hr*.38,A[1]-hr*.1,hr*.16,0,Math.PI*2);c.fill()}}
   // torn-off limbs bleed at the stumps
   if(e&&e.rdOn&&!b){c.fillStyle='#8fd13a';for(const k of e.crawl?[2]:[7,9]){if(P(p[k*3],p[k*3+1],p[k*3+2],A)){c.beginPath();c.arc(A[0],A[1],Math.max(1,.06*h*F/A[2]),0,Math.PI*2);c.fill()}}}   // acid-eaten stumps
   if(b&&b.stumps.length&&!b.shard){c.fillStyle='#8a0b0b';for(const k of b.stumps){if(P(p[k*3],p[k*3+1],p[k*3+2],A)){c.beginPath();c.arc(A[0],A[1],Math.max(1,.05*h*F/A[2]),0,Math.PI*2);c.fill()}}}
   c.globalAlpha=1;
 }
 const NEARD=.3;
+// horror hallway: two long walls either side of you, shaded by distance, with a seam every few feet so you can see yourself walk
+function rdHallDraw(cz,cx,F,pal,X0,Y0){const c=v2,off=(G.pos||0)%3;
+  for(const sx of[-1,1])for(let z0=-3-off;z0<45;z0+=3){const z1=z0+3,x=sx*HALLW,q=[[x,0,z0],[x,0,z1],[x,RDWALL,z1],[x,RDWALL,z0]].map(([x,y,z])=>[cx(x,z),y,cz(x,z)]);
+    const o=[];for(let i=0;i<4;i++){const p1=q[i],p2=q[(i+1)%4],in1=p1[2]>=.15,in2=p2[2]>=.15;if(in1)o.push(p1);if(in1!==in2){const t=(.15-p1[2])/(p2[2]-p1[2]);o.push([p1[0]+(p2[0]-p1[0])*t,p1[1]+(p2[1]-p1[1])*t,.15])}}
+    if(o.length<3)continue;c.beginPath();o.forEach((v,i)=>{const X=X0+v[0]/v[2]*F,Y=Y0-(v[1]-RDEYE)/v[2]*F;i?c.lineTo(X,Y):c.moveTo(X,Y)});c.closePath();
+    c.fillStyle=rdShade(pal[3],Math.max(.35,1-Math.max(0,z0)/50));c.fill();c.strokeStyle='rgba(0,0,0,.3)';c.lineWidth=1;c.stroke()}}
 function rdWallDraw(P,F,pal,cz,cx,W,H,X0,Y0){
   const c=v2,R=ZWIN,seg=[],wins=G.win||[];
   // the wall is a ring of panels; each window leaves a gap with glass, a sill below and a lintel above
@@ -3999,6 +4024,14 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-physicsall',date:'November 4, 2026',title:'Ragdoll physics and graphics in every mode',items:[
+    'The realistic ragdoll physics from Ragdoll sandbox now run in every game mode: campaign, endless survival, boss rush, the practice range, Zombie siege, Watch my six and Horror hallway.',
+    'Every enemy now has a ragdoll body sized to it. Wolves, jaguars and the Mega Pigeon move on four legs. Bosses are big and heavy, so it takes a strong blast to throw them.',
+    'Kills fly the way they were hit, explosions launch bodies and knock survivors down, big blasts tear limbs off, flying bodies bowl over other enemies, and Hydra acid makes crawlers in every mode.',
+    'All the physics sounds come along too. Zombies still groan when they get back up, other enemies grunt, and drones and mechs clank like metal when they land or hit a wall.',
+    'In Horror hallway, bodies slam into the hallway walls and slide away behind you as you walk. Out in the open maps there is no wall, so bodies fly as far as they are thrown.',
+    'Status now tells you how many bodies are on the floor and how many enemies are knocked down, in every mode.',
+    'Sighted players now see the first-person view in the Fire button in every mode, with each map\'s sky and ground, colored figures for each enemy, mechs with boxy heads, and hallway walls in Horror hallway. Ragdoll sandbox is still there with its own best records.']},
   {id:'2026-11-04-audio',date:'November 4, 2026',title:'Clearer gunfire and sound fixes',items:[
     'Your gunfire now has its own sound path. Before, a big horde or a boss roar could squash your gunshots down by as much as 16 decibels at high waves. Now enemy noise can never push your shots down, so every gun stays clear even at wave 100.',
     'Every shot also dips enemy sounds slightly and the background ambience more, for a split second, so your gunfire sits on top of the fight. Enemies stay easy to hear and place.',
