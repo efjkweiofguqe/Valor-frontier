@@ -3333,7 +3333,7 @@ function step(dt){
     if(G.enemies.some(e=>EN[e.type].boss)){G.minionT-=dt;if(G.minionT<=0&&G.enemies.length<G.maxAlive){spawn(G.map==='meme'?'clown':ty[Math.random()<.5?0:1]);G.minionT=bossOf()==='queen'?5:9}}
   }
   // enemies
-  if(G.mode==='practice')G.enemies.forEach(e=>{e.cue-=dt;if(e.cue<=0){CRY[e.type](out(norm(e.angle-G.heading),e.dist,1,enBus));e.cue=.9+e.dist*.025}});
+  if(G.mode==='practice')G.enemies.forEach(e=>{if(e.rdb){rdDowned(e,dt);return}e.cue-=dt;if(e.cue<=0){CRY[e.type](out(norm(e.angle-G.heading),e.dist,1,enBus));e.cue=.9+e.dist*.025}});
   else G.enemies.forEach(e=>stepEnemy(e,dt));
   if(G.mode==='zombies'&&G.win)stepWindows(dt);
   if(G.mode==='zombies'&&G.pk&&G.pk.fence){fenceTick(dt);if(G.over)return}
