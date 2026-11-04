@@ -657,7 +657,7 @@ $('set-rate').oninput=e=>{S.rate=+e.target.value;saveS()};
 $('set-vol').oninput=e=>{S.vol=+e.target.value;saveS();if(master)master.gain.value=S.vol;applyVol()};
 [['set-gvol','gvol'],['set-evol','evol'],['set-avol','avol'],['set-tvol','tvol'],['set-pvol','pvol']].forEach(([id,k])=>{const el=$(id);el.value=S[k];
   el.oninput=()=>{S[k]=+el.value;saveS();applyVol()};el.onchange=()=>{initAudio();if(k==='gvol')gunSound(build(WBY.ak),1);if(k==='evol')CRY.soldier(out(0,6,1,enBus));if(k==='tvol')say('Voice volume.');if(k==='pvol')[0,.32,.64].forEach(t=>setTimeout(()=>fx.lock(10),t*1000))}});
-function applyVol(){if(!ctx)return;if(menuBus)setTimeout(menuAmbSync,0);gunBus.gain.value=.42*S.gvol;enBus.gain.value=S.evol;uiBus.gain.value=S.vol*S.pvol*1.2;if(G&&!G.paused&&S.amb)ambBus.gain.value=S.avol}
+function applyVol(){if(!ctx)return;if(gunVol)gunVol.gain.value=S.vol;if(menuBus)setTimeout(menuAmbSync,0);gunBus.gain.value=.42*S.gvol;enBus.gain.value=S.evol;uiBus.gain.value=S.vol*S.pvol*1.2;if(G&&!G.paused&&S.amb)ambBus.gain.value=S.avol}
 
 
 
@@ -689,16 +689,27 @@ function initAudio(){
   if(ctx){wakeAudio();return}
   unlockIOS();
   const AC=window.AudioContext||window.webkitAudioContext;ctx=new AC();setTimeout(()=>{loadThunderRec();loadBansheeRec();loadLaughRec();loadAtRec();loadSgRec();loadFartRecs();loadClownRecs();loadZRec();loadBarbRec();loadSliceRec()},0);
-  master=ctx.createGain();master.gain.value=S.vol;const comp=ctx.createDynamicsCompressor();comp.threshold.value=-20;comp.knee.value=12;comp.ratio.value=6;comp.attack.value=.003;comp.release.value=.2;const mk=ctx.createGain();mk.gain.value=1.8;master.connect(comp);comp.connect(mk);mk.connect(ctx.destination);
+  master=ctx.createGain();master.gain.value=S.vol;const comp=ctx.createDynamicsCompressor();comp.threshold.value=-20;comp.knee.value=12;comp.ratio.value=6;comp.attack.value=.003;comp.release.value=.2;const mk=ctx.createGain();mk.gain.value=1.8;master.connect(comp);comp.connect(mk);
+  /* Output stage. Everything ends in a fast safety limiter and a soft clipper, so the loudest moments (boss roars,
+     explosions, a giant horde) are pulled down smoothly instead of hard clipping into crackle and dropouts. */
+  outLim=ctx.createDynamicsCompressor();outLim.threshold.value=-4;outLim.knee.value=2;outLim.ratio.value=20;outLim.attack.value=.001;outLim.release.value=.12;
+  outClip=ctx.createWaveShaper();outClip.curve=softClipCurve();mk.connect(outLim);outLim.connect(outClip);outClip.connect(ctx.destination);
+  /* Gunfire has its own path. It no longer shares the main compressor with enemies and ambience, so a horde of
+     zombies or a boss roar can never squash your own shots down. Guns get a gentle compressor of their own, then
+     the shared safety limiter. */
+  gunVol=ctx.createGain();gunVol.gain.value=S.vol;const gcomp=ctx.createDynamicsCompressor();gcomp.threshold.value=-16;gcomp.knee.value=8;gcomp.ratio.value=3;gcomp.attack.value=.002;gcomp.release.value=.15;
+  const gmk=ctx.createGain();gmk.gain.value=GUN_MK;gunVol.connect(gcomp);gcomp.connect(gmk);gmk.connect(outLim);
   sfx=ctx.createGain();sfx.connect(master);
-  enBus=ctx.createGain();enBus.gain.value=S.evol;enBus.connect(sfx);
+  // ducking stages: when you fire, enemies dip a little and the ambience a lot for a moment, so every shot cuts through
+  enDuck=ctx.createGain();enDuck.connect(sfx);ambDuck=ctx.createGain();ambDuck.connect(master);
+  enBus=ctx.createGain();enBus.gain.value=S.evol;enBus.connect(enDuck);
   // aiming cues bypass the compressor so gunfire, enemies and ambience can never squash them
-  uiBus=ctx.createGain();uiBus.gain.value=S.vol*S.pvol*1.2;uiBus.connect(ctx.destination);
-  ambBus=ctx.createGain();ambBus.gain.value=0;ambBus.connect(master);
+  uiBus=ctx.createGain();uiBus.gain.value=S.vol*S.pvol*1.2;uiBus.connect(outClip);uiBus.__pri=true;   // lock-on cues skip the limiter too, only the soft clipper
+  ambBus=ctx.createGain();ambBus.gain.value=0;ambBus.connect(ambDuck);
   noiseBuf=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate);
   const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
   // guns: own quieter bus plus a short outdoor reflection tail
-  gunBus=ctx.createGain();gunBus.gain.value=.42*S.gvol;gunBus.connect(sfx);
+  gunBus=ctx.createGain();gunBus.gain.value=.42*S.gvol;gunBus.connect(gunVol);gunBus.__pri=true;
   verbSend=ctx.createGain();verbSend.gain.value=.2;
   const len=Math.floor(ctx.sampleRate*1.8),ir=ctx.createBuffer(2,len,ctx.sampleRate);
   for(let c=0;c<2;c++){const ch=ir.getChannelData(c);for(let i=0;i<len;i++){const k=i/len;ch[i]=(Math.random()*2-1)*Math.pow(1-k,3.2)*(i<ctx.sampleRate*.012?0:1)}}
@@ -724,13 +735,21 @@ function wakeAudio(){
   try{const pr=ctx.resume();if(pr&&pr.then)pr.then(()=>{if(ctx&&ctx.state==='running')audioStuck=0},()=>{})}catch(e){}
 }
 function rebuildAudio(){
-  const old=ctx;ctx=null;audioStuck=0;ambNodes=[];menuBus=null;menuWant=null;menuHum=[];try{old.close()}catch(e){}
+  const old=ctx;ctx=null;audioStuck=0;ambNodes=[];vEnds=[];duckAt=0;menuBus=null;menuWant=null;menuHum=[];try{old.close()}catch(e){}
   initAudio();applyVol();setTimeout(menuAmbSync,0);
   if(G&&!G.over){startAmb(G.map);if(G.paused&&ambBus)ambBus.gain.value=0}
 }
 ['pointerdown','touchend','keydown','click'].forEach(t=>document.addEventListener(t,wakeAudio,true));
 if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener)navigator.mediaDevices.addEventListener('devicechange',()=>setTimeout(wakeAudio,300));
-let gunBus,verbSend,enBus,uiBus;
+let gunBus,verbSend,enBus,uiBus,gunVol,outLim,outClip,enDuck,ambDuck;
+const GUN_MK=1.5;   // gunfire make-up level on its own path, matched to how loud guns were on the old shared path
+/* soft clipper: straight through below 0.7, then curves smoothly into 1.0, so nothing ever hard clips */
+function softClipCurve(){const n=2048,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1,a=Math.abs(x);c[i]=Math.sign(x)*(a<.7?a:.7+.3*Math.tanh((a-.7)/.3))}return c}
+/* Gunfire priority: every shot dips enemy sounds by about 3 decibels and the ambience by about 7, recovering within a
+   quarter of a second. Enemies stay clearly audible and placed, but your gunfire always sits on top of the fight. */
+let duckAt=0;
+function duckForGun(){if(!ctx||!enDuck||!G||G.over)return;const t=ctx.currentTime;if(t-duckAt<.03)return;duckAt=t;
+  [[enDuck,.7],[ambDuck,.45]].forEach(([n,d])=>{const g=n.gain;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(d,t,.006);g.setTargetAtTime(1,t+.06,.09)})}
 /* z: zombie distance falloff. 0 = the normal enemy curve, 1 = zombies, 2 = giant zombies, 3 = the Ancient One.
    Zombies fall away much more steeply with distance (in feet: full volume within 5 feet, about half at 15,
    a fifth at 50, a tenth at 100), get more muffled the further off they are, and pick up more echo, so a zombie
@@ -752,21 +771,32 @@ function out(rel=0,dist=0,vol=1,bus,z=0){
   else f.connect(bus);
   return g;
 }
+/* Voice budget. At very high waves a phone can run out of sound voices and the whole audio engine can stall and cut
+   out for a moment. The built-in synth sounds now share a budget of 140 voices playing at once. Past it, extra
+   enemy, hit and effect sounds are skipped (you could not pick them out of the pile anyway), but gunfire and the
+   lock-on and aiming cues always play. */
+const VCAP=140;let vEnds=[];
+function voiceOk(dest,end){const now=ctx.currentTime;if(vEnds.length>=VCAP)vEnds=vEnds.filter(x=>x>now);
+  if(!(dest&&dest.__pri)&&vEnds.length>=VCAP)return false;vEnds.push(end);return true}
 function env(g,t,vol,attack,dur){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(vol,.0002),t+attack);g.gain.exponentialRampToValueAtTime(.0001,t+dur)}
 function tone(dest,o){
   const {type='sine',f=440,f2=null,dur=.2,vol=.5,at=0,attack=.005}=o;
-  const t=ctx.currentTime+at,osc=ctx.createOscillator(),g=ctx.createGain();
+  const t=ctx.currentTime+at;if(!voiceOk(dest,t+dur+.05))return ctx.createOscillator();
+  const osc=ctx.createOscillator(),g=ctx.createGain();
   osc.type=type;osc.frequency.setValueAtTime(f,t);if(f2)osc.frequency.exponentialRampToValueAtTime(f2,t+dur);
   env(g,t,vol,attack,dur);osc.connect(g);g.connect(dest);osc.start(t);osc.stop(t+dur+.05);return osc;
 }
 function noise(dest,o){
   const {dur=.2,vol=.5,at=0,type='bandpass',f=1000,q=1,f2=null,attack=.003}=o;
-  const t=ctx.currentTime+at,s=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain();
-  s.buffer=noiseBuf;fl.type=type;fl.frequency.setValueAtTime(f,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+dur);fl.Q.value=q;
+  const t=ctx.currentTime+at;if(!voiceOk(dest,t+dur+.05))return;
+  const s=ctx.createBufferSource(),fl=ctx.createBiquadFilter(),g=ctx.createGain();
+  s.buffer=noiseBuf;s.loop=true;fl.type=type;   // looped, so long rumbles (Fat Man, blizzard, boss deaths) play their full length instead of cutting off
+  fl.frequency.setValueAtTime(f,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+dur);fl.Q.value=q;
   env(g,t,vol,attack,dur);s.connect(fl);fl.connect(g);g.connect(dest);s.start(t,Math.random()*1.5);s.stop(t+dur+.05);
 }
 function buzz(dest,f,dur,vol,at=0){
-  const t=ctx.currentTime+at,o=ctx.createOscillator(),l=ctx.createOscillator(),lg=ctx.createGain(),g=ctx.createGain();
+  const t=ctx.currentTime+at;if(!voiceOk(dest,t+dur+.05))return;
+  const o=ctx.createOscillator(),l=ctx.createOscillator(),lg=ctx.createGain(),g=ctx.createGain();
   o.type='square';o.frequency.value=f;l.frequency.value=28;lg.gain.value=f*.18;l.connect(lg);lg.connect(o.frequency);
   env(g,t,vol,.03,dur);o.connect(g);g.connect(dest);o.start(t);l.start(t);o.stop(t+dur+.05);l.stop(t+dur+.05);
 }
@@ -984,7 +1014,7 @@ const SND={hades:{gap:0},pistol:{gap:0,mech:'slide',cas:1},deagle:{gap:0,mech:'s
   beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},tetra:{gap:.09},salvo:{gap:0},jet:{gap:0},rivet:{gap:0},
   glock:{gap:.035,mech:'slide',cas:.5},gyrojet:{gap:0},p90:{gap:.04,cas:.4},m4:{gap:.075,cas:1},mg42:{gap:.042,cas:.4},m2:{gap:.13,cas:1},aa12:{gap:0,cas:1},bshot:{gap:.11,cas:1},ksg:{gap:0,mech:'pump'},coach:{gap:.018},
   thunder:{gap:0},blackhole:{gap:0},banshee:{gap:.09},hydra:{gap:0},symbiote:{gap:.045},quasar:{gap:0}};
-function gunDest(pan,bus){const g=ctx.createGain();bus=bus||gunBus;
+function gunDest(pan,bus){const g=ctx.createGain();g.__pri=true;bus=bus||gunBus;
   if(pan&&ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(bus)}else g.connect(bus);return g}
 function shot(p,at,d,o={}){
   d=d||gunBus;const v=1+(Math.random()-.5)*.1,lv=.9+Math.random()*.15;
@@ -1286,6 +1316,7 @@ function hadesShot(d,am,cd=1){
     for(let i=0;i<(hell?16:10);i++)noise(d,{dur:.012,vol:.2,type:'highpass',f:3000,at:.1+Math.random()*L,attack:.001})}
   {const pt=Math.min(am==='hell'?1.1:.8,cd*.55);if(!sgPlay(d,'pump',{at:pt,rate:SG_PITCH.hades}))MECH.pump(pt,d)}}
 function gunSound(w,n=1,side=-1){
+  duckForGun();
   if(w.boomer){fx.boomDemo(w.bmPath||'wide');return}
   if(w.katana){fx.katSwing();setTimeout(()=>{if(ctx)fx.katWave(KAT_R/KAT_SP)},120);return}
   if(w.id==='hades'){const d=gunDest(0);hadesShot(d,w.hades||'fire',w.cd);return}
@@ -3968,6 +3999,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-audio',date:'November 4, 2026',title:'Clearer gunfire and sound fixes',items:[
+    'Your gunfire now has its own sound path. Before, a big horde or a boss roar could squash your gunshots down by as much as 16 decibels at high waves. Now enemy noise can never push your shots down, so every gun stays clear even at wave 100.',
+    'Every shot also dips enemy sounds slightly and the background ambience more, for a split second, so your gunfire sits on top of the fight. Enemies stay easy to hear and place.',
+    'Fixed crackling and distortion on loud moments. Boss roars, explosions, the Ancient One and big hordes were overloading the sound output. A new safety limiter now smooths them out.',
+    'Fixed long sounds cutting off early: the Fat Man rumble, the Jack Frost blizzard, boss deaths, the Thunderclap supercharge blast and the Jet rifle tail now play their full length.',
+    'If a phone gets overloaded by a giant horde, extra enemy and effect sounds are skipped first. Gunfire, the lock-on ping and other aiming cues always play.'
+  ]},
   {id:'2026-11-04-fixes',date:'November 4, 2026',title:'Bug fixes and problem reports',items:[
     'Fixed: reloading the MBA Gyrojet froze the battle. Enemies stopped moving and the reload never finished. It now reloads normally, with a pistol reload sound.',
     'If a reload sound ever breaks again, the gun still finishes reloading instead of jamming the game.',
