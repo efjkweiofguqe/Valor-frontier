@@ -84,5 +84,24 @@ service cloud.firestore {
         && request.resource.data.claimed == true
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimed', 'claimedAt']));
     }
+
+    // rooms/{5 digit code} -> { host, hostName, offer, created, answer, guest, guestName }. Co-op: swaps connection details once.
+    // The host creates it, one guest answers it once, and the host deletes it when they connect. Anyone may clear a room older than an hour.
+    match /rooms/{code} {
+      allow get: if signedIn();
+      allow create: if signedIn() && code.matches('^[0-9]{5}$')
+        && request.resource.data.keys().hasOnly(['host', 'hostName', 'offer', 'created'])
+        && request.resource.data.host == request.auth.uid
+        && request.resource.data.hostName is string && request.resource.data.hostName.size() <= 20
+        && request.resource.data.offer is string && request.resource.data.offer.size() <= 20000
+        && request.resource.data.created == request.time;
+      allow update: if signedIn() && !('answer' in resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answer', 'guest', 'guestName'])
+        && request.resource.data.guest == request.auth.uid
+        && request.resource.data.answer is string && request.resource.data.answer.size() <= 20000
+        && request.resource.data.guestName is string && request.resource.data.guestName.size() <= 20;
+      allow delete: if signedIn() && (resource.data.host == request.auth.uid || isAdmin()
+        || request.time > resource.data.created + duration.value(1, 'h'));
+    }
   }
 }
