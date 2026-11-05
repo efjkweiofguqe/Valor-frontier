@@ -83,6 +83,12 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <div id="who-list" role="group" aria-label="Players" style="display:flex;flex-direction:column;gap:8px"></div>
     <button type="button" id="who-retry" hidden>Try loading players again</button>
   </section>
+  <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="free-h">
+    <h2 id="free-h">Free up a username</h2>
+    <p class="muted">For a player who lost their username, for example because their browser data was cleared before they set a password, or who forgot their password. This removes the username, its login and its backed-up save, so they can create it again as a new account. Then send them their silver and items again as a gift.</p>
+    <label>Username to free up<input id="free-n" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></label>
+    <button type="button" id="free-go">Free up this username</button>
+  </section>
 </section>
 </main>
 <script type="module">
@@ -142,6 +148,27 @@ async function loadPlayers(){
     $('who-list').innerHTML='';$('who-n').textContent=m;$('who-retry').hidden=false;status(m)}
 }
 $('who-retry').onclick=()=>loadPlayers();
+/* ---------- free up a username: deletes usernames/{name}, players/{uid} and saves/{uid} ---------- */
+let freePend='';
+$('free-n').addEventListener('input',()=>{freePend=''});
+$('free-go').onclick=async()=>{
+  const key=$('free-n').value.trim().toLowerCase();
+  if(!/^[a-z0-9_]{3,16}$/.test(key)){status('Type the username to free up: 3 to 16 letters, numbers or underscores.');return}
+  $('free-go').disabled=true;
+  try{
+    const ur=F.doc(db,'usernames',key),un=await timeout(F.getDoc(ur));
+    if(!un.exists()){status(`No player has the username ${key}.`);$('free-go').disabled=false;return}
+    const {uid,name}=un.data(),sv=await timeout(F.getDoc(F.doc(db,'saves',uid))).catch(()=>null);
+    const coins=sv&&sv.exists()&&sv.data().progress?sv.data().progress.coins:null;
+    if(freePend!==key){freePend=key;$('free-go').disabled=false;
+      status(`${name}${un.data().mail?' has a password':' has no password'}${coins!=null?` and a backed-up save with ${coins} silver`:''}. Freeing it deletes all of that and cannot be undone. Tap Free up this username again to continue.`);return}
+    freePend='';
+    await timeout(Promise.all([F.deleteDoc(ur),F.deleteDoc(F.doc(db,'players',uid)),F.deleteDoc(F.doc(db,'saves',uid))]));
+    status(`${name} is free. The player can now create an account called ${name} again from Account in the game. Then send them their silver and items as a gift.`);
+    $('free-n').value='';loadPlayers();
+  }catch(e){status(`Could not free up the username. ${why(e)}`)}
+  $('free-go').disabled=false;
+};
 /* ---------- player requests ---------- */
 const WIDS=new Set(ITEMS.w.map(x=>x[0])),AIDS=new Set(ITEMS.a.map(x=>x[0])),NIDS=new Set(NADES.map(x=>x[0]));
 const clean=it=>{it=it||{};const g={};for(const k in it.grenades||{}){const n=Math.max(0,Math.min(1000,parseInt(it.grenades[k])||0));if(NIDS.has(k)&&n)g[k]=n}

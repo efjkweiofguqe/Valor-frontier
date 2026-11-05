@@ -5,13 +5,20 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function isAdmin() { return signedIn() && request.auth.uid == 'RDRWH8Vm6qMgjWJgQm89G5NoIVZ2'; }
 
-    // usernames/{lowercase name} -> { uid, name }. Claimed once, never changed by players.
+    // usernames/{lowercase name} -> { uid, name, mail }. Claimed once. mail is the hidden login
+    // address used for password logins; the owner may add it later to a username made before accounts.
     match /usernames/{key} {
       allow get: if signedIn();
       allow list, delete: if isAdmin();
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && !('mail' in resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['mail'])
+        && request.resource.data.mail is string && request.resource.data.mail.size() <= 120;
       allow create: if signedIn()
         && key.matches('^[a-z0-9_]{3,16}$')
-        && request.resource.data.keys().hasOnly(['uid', 'name'])
+        && request.resource.data.keys().hasOnly(['uid', 'name', 'mail'])
+        && (!('mail' in request.resource.data) || (request.resource.data.mail is string && request.resource.data.mail.size() <= 120))
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.name is string
         && request.resource.data.name.lower() == key
@@ -54,6 +61,17 @@ service cloud.firestore {
         && request.resource.data.topic is string && request.resource.data.topic.size() <= 60
         && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
         && request.resource.data.created == request.time;
+    }
+
+    // saves/{uid} -> { progress, settings, ts }. Each player's backed-up save; only they can read or write it.
+    match /saves/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow delete: if isAdmin();
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['progress', 'settings', 'ts'])
+        && request.resource.data.progress is map
+        && request.resource.data.settings is map
+        && request.resource.data.ts is number;
     }
 
     // gifts/{id} -> { uid, name, items, note, claimed, created }. Only the developer sends them.

@@ -64,6 +64,7 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .screen select{width:100%;box-sizing:border-box;font-size:19px;padding:14px 16px;border-radius:10px}
 #req-list{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .logent{border-top:2px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px}
+#pid h3.acct-h{font-family:var(--display);font-weight:400;font-size:24px;margin:8px 0 0;line-height:1.1}
 .logent h3{font-family:var(--display);font-weight:400;font-size:22px;margin:0;line-height:1.15}
 .logent ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .note{border-left:4px solid var(--accent);padding:4px 0 4px 12px;color:var(--muted)}
@@ -152,7 +153,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-go="settings">Settings<small>Voice, volume, difficulty</small></button>
     <button class="btn" id="b-record">Service record<small>Hear your lifetime stats</small></button>
     <button class="btn" data-go="req" id="menu-req" hidden>Request items and feedback<small>Ask the developer for things to test, or tell them how they played</small></button>
-    <button class="btn" data-go="pid" id="menu-pid">Player ID<small id="menu-pid-s">Create a username so the developer can send you testing items</small></button>
+    <button class="btn" data-go="pid" id="menu-pid">Account<small id="menu-pid-s">Log in, or create an account to back up your progress</small></button>
   </div>
   <p class="note" id="save-state" role="status">Checking your saved progress…</p>
   <button class="btn quiet" data-go="log" id="menu-log">Update log</button>
@@ -167,28 +168,56 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <div class="stack" id="log-list"></div>
 </section>
 
-<!-- PLAYER ID -->
+<!-- ACCOUNT (player ID, login and cloud save) -->
 <section id="pid" class="screen" hidden>
-  <p class="tag">Player ID</p>
-  <h2 id="pid-h" tabindex="-1">Player ID</h2>
+  <p class="tag">Account</p>
+  <h2 id="pid-h" tabindex="-1">Account</h2>
   <button class="btn back" data-go="menu">Back</button>
-  <p class="note">Creating a username gives the developer the option to give you anything you request for testing, like silver, weapons, armor or grenades. Your username is linked to this save file, and gifts are added automatically when you open the game. Do not use your real name or any personal information.</p>
-  <div id="pid-new" class="field">
-    <label class="flabel" for="pid-name">Choose a username</label>
-    <input id="pid-name" class="inp" type="text" maxlength="16" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="pid-hint">
-    <p id="pid-hint" class="note">3 to 16 letters, numbers or underscores. It cannot be changed later.</p>
-    <button class="btn primary" id="pid-make">Create username<small>Link it to this save file</small></button>
-  </div>
-  <div id="pid-have" class="stack" hidden>
-    <p id="pid-cur"></p>
-    <button class="btn primary" id="pid-check">Check for gifts<small>Gifts also arrive on their own when you open or reload the game</small></button>
-  </div>
   <p id="pid-status" role="status" aria-live="polite"></p>
+  <div id="acct-in" class="stack" hidden>
+    <p id="acct-in-t"></p>
+    <button class="btn primary" id="pid-check">Check for gifts<small>Gifts also arrive on their own when you open or reload the game</small></button>
+    <button class="btn" id="acct-save">Back up now<small>Progress also backs up on its own while you play</small></button>
+    <button class="btn" id="acct-logout">Log out<small>Your progress stays safe in your account. This device starts fresh until you log in again</small></button>
+  </div>
+  <div id="acct-leg" class="stack" hidden>
+    <p id="acct-leg-t"></p>
+    <div class="field">
+      <label class="flabel" for="leg-pw">New password</label>
+      <input id="leg-pw" class="inp" type="password" autocomplete="new-password" aria-describedby="leg-hint">
+      <p id="leg-hint" class="note">At least 6 characters. Your phone may offer to remember it for you.</p>
+      <button class="btn primary" id="leg-go">Set password<small>Back up your progress and log in on any device</small></button>
+    </div>
+  </div>
+  <div id="acct-new" class="stack" hidden>
+    <h3 class="acct-h">Create an account</h3>
+    <p class="note">An account backs up your silver, weapons, armor and records online. Log in on any phone or browser to pick up where you left off, and the developer can send testing items to your username. Do not use your real name or any personal information.</p>
+    <div class="field">
+      <label class="flabel" for="pid-name">Choose a username</label>
+      <input id="pid-name" class="inp" type="text" maxlength="16" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" aria-describedby="pid-hint">
+      <p id="pid-hint" class="note">3 to 16 letters, numbers or underscores. It cannot be changed later.</p>
+      <label class="flabel" for="pid-pw">Choose a password</label>
+      <input id="pid-pw" class="inp" type="password" autocomplete="new-password" aria-describedby="pid-pw-hint">
+      <p id="pid-pw-hint" class="note">At least 6 characters. There is no password reset, so keep it somewhere safe.</p>
+      <button class="btn primary" id="pid-make">Create account<small>Your progress on this device moves into it</small></button>
+    </div>
+  </div>
+  <div id="acct-login" class="stack" hidden>
+    <h3 class="acct-h" id="acct-login-h">Log in</h3>
+    <p class="note" id="acct-login-n">Already have an account? Log in to load your progress onto this device.</p>
+    <div class="field">
+      <label class="flabel" for="li-name">Username</label>
+      <input id="li-name" class="inp" type="text" maxlength="16" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+      <label class="flabel" for="li-pw">Password</label>
+      <input id="li-pw" class="inp" type="password" autocomplete="current-password">
+      <button class="btn" id="li-go">Log in<small>Loads your account's progress onto this device</small></button>
+    </div>
+  </div>
 </section>
 
 <!-- REQUESTS -->
 <section id="req" class="screen" hidden>
-  <p class="tag">Player ID</p>
+  <p class="tag">Account</p>
   <h2 id="req-h" tabindex="-1">Request items</h2>
   <button class="btn back" data-go="menu">Back</button>
   <p class="note">Ask the developer for things you want to test. They can approve your request, send you something different, or decline it. Approved items arrive on their own the next time you open or reload the game, or right away if you tap Check for gifts on the Player ID screen. You can have up to 3 requests waiting at once.</p>
@@ -674,7 +703,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 /* ---------- settings ---------- */
 const S={voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1,zgiants:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('vf-settings')||'{}'))}catch(e){}
-function saveS(){try{localStorage.setItem('vf-settings',JSON.stringify(S))}catch(e){}if(typeof cloud!=='undefined'&&cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1500)}}
+function saveS(){try{localStorage.setItem('vf-settings',JSON.stringify(S))}catch(e){}acctMark();if(typeof cloud!=='undefined'&&cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1500)}}
 const $=id=>document.getElementById(id);
 $('set-rate').value=S.rate;$('set-vol').value=S.vol;
 const segSyncs=[];
@@ -2281,6 +2310,8 @@ function build(w){
    Whichever copy was saved most recently wins when the game opens. */
 const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,fatman:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},
   stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',ts:0};
+const P0=JSON.stringify(P);   // a brand new save, used when logging in or out
+function resetP(){Object.keys(P).forEach(k=>delete P[k]);Object.assign(P,JSON.parse(P0))}
 const num=(v,d=0)=>typeof v==='number'&&isFinite(v)?v:d;
 function loadP(s){
   if(!s||typeof s!=='object')return;
@@ -2319,6 +2350,7 @@ function saveP(){
   if(g&&!g.over&&!g.paused&&now-saveLT<1500){if(!saveTm)saveTm=setTimeout(saveLocal,1500-(now-saveLT))}
   else saveLocal();
   if(cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1200)}
+  acctMark();
 }
 async function pushCloud(){
   if(!cloud||cloudBusy||!cloudDirty)return;
@@ -2327,8 +2359,9 @@ async function pushCloud(){
   catch(e){cloudDirty=true;setCloud('error')}
   cloudBusy=false;if(cloudDirty){clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,3000)}
 }
-function flushCloud(){if(cloud&&cloudDirty){clearTimeout(cloudTm);pushCloud()}}
-function setCloud(st){cloudState=st;const el=$('save-state');if(!el)return;
+function flushCloud(){if(cloud&&cloudDirty){clearTimeout(cloudTm);pushCloud()}acctFlush()}
+function setCloud(st){if(st)cloudState=st;st=cloudState;const el=$('save-state');if(!el)return;
+  if(acctIn()){el.textContent={saved:`Logged in as ${P.player}. Progress backed up to your account.`,saving:`Logged in as ${P.player}. Backing up your progress…`,error:`Logged in as ${P.player}. Could not reach your account just now. Progress is kept on this device and will back up when it can.`}[acctSt]||`Logged in as ${P.player}.`;return}
   el.textContent={checking:'Checking your saved progress…',saved:'Progress saved to your Claude account.',local:'Progress saved on this device only.',
     error:'Could not reach your account just now. Progress is kept on this device and will sync when it can.'}[st]||''}
 async function initCloud(){
@@ -2357,8 +2390,9 @@ async function initCloud(){
    picks them up automatically when it opens or returns to the main menu. */
 const FB_CONFIG={apiKey:'AIzaSyDXXzj2-7d3ECofdWktK5zDHJl_7HKJs8A',authDomain:'valor-frontier.firebaseapp.com',projectId:'valor-frontier',appId:'1:260608116849:web:00d38a0a8b0a8535c4b3d0'};
 const FBV='10.12.2';
-let fbP=null,giftBusy=false,giftAt=0;
-function fbInit(){
+var fbP=null,fbUser=null,giftBusy=false,giftAt=0;
+/* loads Firebase and waits until it knows whether this device is logged in. Does not sign in. */
+function fbBoot(){
   if(fbP)return fbP;
   if(!FB_CONFIG.apiKey)return Promise.reject(new Error('nocfg'));
   const base=`https://www.gstatic.com/firebasejs/${FBV}/`;
@@ -2366,44 +2400,188 @@ function fbInit(){
     const [app,auth,fs]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
     const a=app.initializeApp(FB_CONFIG),au=auth.getAuth(a);
     await new Promise(r=>{const off=auth.onAuthStateChanged(au,()=>{off();r()})});
-    if(!au.currentUser)await auth.signInAnonymously(au);
-    return {db:fs.getFirestore(a),uid:au.currentUser.uid,fs};
+    auth.onAuthStateChanged(au,u=>{fbUser=u});fbUser=au.currentUser;
+    return {db:fs.getFirestore(a),fs,auth,au};
   })();
   fbP.catch(()=>{fbP=null});
   return fbP;
 }
+/* the same, plus a hidden guest sign-in when nobody is logged in (needed for any server call) */
+async function fbInit(){
+  const f=await fbBoot();
+  if(!f.au.currentUser)await f.auth.signInAnonymously(f.au);
+  fbUser=f.au.currentUser;
+  return {...f,uid:f.au.currentUser.uid};
+}
+/* ---------- accounts: username and password, with the save backed up online ----------
+   A username is linked to a Firebase login with a made-up email address (players never see it),
+   stored as mail on usernames/{name}. The save is kept in saves/{uid}. Whichever copy, this device
+   or the account, was saved most recently wins. Logging in replaces this device's progress with the
+   account's; logging out backs up first, then starts the device fresh. */
+var acctSt='',acctDirty=false,acctBusy=false,acctTm=0,acctReady=false,liPend='';
+function acctIn(){return !!(fbUser&&!fbUser.isAnonymous&&P.player)}
+const fakeMail=key=>`vf.${key}.${Array.from(crypto.getRandomValues(new Uint8Array(4)),b=>b.toString(16).padStart(2,'0')).join('')}@players.valorfrontier.app`;
+function acctMark(){
+  if(!acctIn()||!acctReady)return;acctDirty=true;clearTimeout(acctTm);
+  let g=null;try{g=G}catch(e){}
+  acctTm=setTimeout(acctPush,g&&!g.over&&!g.paused?20000:2500);   // at most every 20 seconds during a battle
+}
+function acctFlush(){if(acctDirty){clearTimeout(acctTm);acctPush()}}
+async function acctPush(){
+  if(!acctIn()||acctBusy||!acctDirty)return;
+  acctBusy=true;acctDirty=false;acctSt='saving';setCloud();
+  let newer=null;
+  try{const {db,fs}=await fbBoot();const u=fbUser;if(!u||u.isAnonymous)throw new Error('out');
+    const ref=fs.doc(db,'saves',u.uid),data={progress:plain(),settings:JSON.parse(JSON.stringify(S)),ts:P.ts};
+    /* never overwrite a newer copy saved from another device; take that one instead */
+    await fs.runTransaction(db,async t=>{const cur=await t.get(ref);newer=null;
+      if(cur.exists()&&num(cur.data().ts)>P.ts){newer=cur.data();return}
+      t.set(ref,data)});
+    acctSt='saved';
+    let g=null;try{g=G}catch(e){}
+    if(newer&&newer.progress&&!g){acctLoad(newer,P.player);say(`Newer progress from another device was loaded. ${P.coins} silver.`)}
+  }
+  catch(e){acctDirty=true;acctSt='error'}
+  acctBusy=false;setCloud();if(curScr==='pid')updatePid();
+  if(acctDirty){clearTimeout(acctTm);acctTm=setTimeout(acctPush,15000)}
+}
+/* puts an account's save onto this device */
+function acctLoad(r,name){
+  resetP();if(r&&r.progress)loadP(r.progress);P.player=name;
+  if(r&&r.settings&&typeof r.settings==='object'){Object.assign(S,r.settings);try{localStorage.setItem('vf-settings',JSON.stringify(S))}catch(e){};syncSettingsUI()}
+  try{localStorage.setItem('vf-progress',JSON.stringify(P))}catch(e){}
+  if(cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1200)}
+  refreshAfterLoad();updatePidMenu();
+}
+/* when the game opens: if this device is logged in, sync it with the account */
+async function acctStart(){
+  if(!FB_CONFIG.apiKey)return;
+  try{
+    const {db,fs}=await fbBoot();const u=fbUser;
+    if(!u||u.isAnonymous){acctReady=true;updatePidMenu();setCloud();return}
+    const [me,sv]=await Promise.all([fs.getDoc(fs.doc(db,'players',u.uid)),fs.getDoc(fs.doc(db,'saves',u.uid))]);
+    const name=me.exists()?me.data().name:'';
+    if(!name){acctReady=true;return}
+    const r=sv.exists()?sv.data():null,mine=P.player&&P.player.toLowerCase()===name.toLowerCase();
+    acctReady=true;
+    if(r&&r.progress&&(!mine||num(r.ts)>P.ts)){acctLoad(r,name);acctSt='saved';if(!G)say(`Logged in as ${name}. Progress loaded from your account. ${P.coins} silver.`)}
+    else{if(!mine){P.player=name;saveP()}acctDirty=true;await acctPush()}
+  }catch(e){acctReady=true;acctSt='error'}
+  updatePidMenu();setCloud();
+}
 function pidMsg(t,speak=true){$('pid-status').textContent=t;if(speak)say(t)}
-function updatePidMenu(){const rb=$('menu-req');if(rb)rb.hidden=!P.player;const el=$('menu-pid-s');if(el)el.textContent=P.player?`Your username is ${P.player}. Check for gifts from the developer`:'Create a username so the developer can send you testing items'}
+function updatePidMenu(){const rb=$('menu-req');if(rb)rb.hidden=!P.player;const el=$('menu-pid-s');if(el)el.textContent=acctIn()?`Logged in as ${P.player}. Progress backed up online. Check for gifts from the developer`:P.player?`Username ${P.player}, no password yet. Set one to back up your progress`:'Log in, or create an account to back up your progress';setCloud()}
 function updatePid(){
-  const has=!!P.player;$('pid-new').hidden=has;$('pid-have').hidden=!has;
-  if(has)$('pid-cur').textContent=`Your username is ${P.player}. It is linked to this save file. To ask the developer for things to test, use Request items on the main menu.`;
-  $('pid-status').textContent=FB_CONFIG.apiKey?'':'Player IDs are not switched on yet. Check back after the next update.';
+  const inn=acctIn(),leg=!inn&&!!P.player;
+  $('acct-in').hidden=!inn;$('acct-leg').hidden=!leg;$('acct-new').hidden=!!P.player;$('acct-login').hidden=inn;
+  if(inn)$('acct-in-t').textContent=`Logged in as ${P.player}. Your progress is backed up to your account${acctSt==='error'?', but the last backup could not reach the server. It will try again on its own':''}. Log in with this username and password on any phone or browser to play with the same progress.`;
+  if(leg)$('acct-leg-t').textContent=`Your username is ${P.player}, but it has no password yet, so your progress is only kept on this device. If this browser's data is cleared, it is gone. Set a password to back it up and log in anywhere.`;
+  $('acct-login-n').textContent=P.player?'Have a different account? Logging in to it replaces the progress on this device with that account\'s progress.':'Already have an account? Log in to load your progress onto this device.';
+  if(!FB_CONFIG.apiKey)$('pid-status').textContent='Accounts are not switched on yet. Check back after the next update.';
+}
+const authWhy=e=>{const c=String(e&&e.code||e&&e.message||'');
+  if(/wrong-password|invalid-credential|user-not-found|invalid-login/.test(c))return 'Wrong username or password.';
+  if(/too-many-requests/.test(c))return 'Too many tries. Wait a few minutes and try again.';
+  if(/weak-password/.test(c))return 'That password is too short. Use at least 6 characters.';
+  if(/operation-not-allowed|admin-restricted/.test(c))return 'Password logins are not switched on yet. Ask the developer.';
+  if(/network|unavailable/.test(c))return 'Could not reach the server. Check your internet connection and try again.';
+  return `Something went wrong. Check your internet connection and try again. (${c.replace('auth/','')||'unknown'})`};
+/* links the guest login this device already has to a password, keeping the same player and gifts */
+async function acctLink(f,mail,pw){
+  const u=f.au.currentUser;
+  await f.auth.linkWithCredential(u,f.auth.EmailAuthProvider.credential(mail,pw));
+  await u.reload().catch(()=>{});fbUser=f.au.currentUser;acctReady=true;
 }
 async function createName(){
-  const name=$('pid-name').value.trim();
-  if(!FB_CONFIG.apiKey)return pidMsg('Player IDs are not switched on yet. Check back after the next update.');
+  const name=$('pid-name').value.trim(),pw=$('pid-pw').value;
+  if(!FB_CONFIG.apiKey)return pidMsg('Accounts are not switched on yet. Check back after the next update.');
   if(!/^[A-Za-z0-9_]{3,16}$/.test(name))return pidMsg('Usernames need 3 to 16 letters, numbers or underscores, with no spaces.');
-  const btn=$('pid-make');btn.disabled=true;pidMsg('Creating your username…');
+  if(pw.length<6)return pidMsg('Your password needs at least 6 characters.');
+  const btn=$('pid-make');btn.disabled=true;pidMsg('Creating your account…');
   try{
-    const {db,uid,fs}=await fbInit(),key=name.toLowerCase();
+    const f=await fbInit(),{db,fs}=f,uid=f.au.currentUser.uid,key=name.toLowerCase(),mail=fakeMail(key);
+    if(!f.au.currentUser.isAnonymous){btn.disabled=false;return pidMsg('This device is already logged in. Log out first.')}
+    let have='';
     await fs.runTransaction(db,async t=>{
       const r=fs.doc(db,'usernames',key),me=fs.doc(db,'players',uid);
       const [a,b]=[await t.get(r),await t.get(me)];
-      if(b.exists())throw new Error('have:'+b.data().name);
+      if(b.exists()){have=b.data().name;return}
       if(a.exists())throw new Error('taken');
-      t.set(r,{uid,name});
+      t.set(r,{uid,name,mail});
       t.set(me,{name,created:fs.serverTimestamp(),seen:fs.serverTimestamp()});
     });
-    P.player=name;saveP();fx.buy();updatePid();updatePidMenu();
-    pidMsg(`Username ${name} created and linked to this save file. Tell the developer your username and what you want to test.`);
+    if(have){P.player=have;saveP();updatePid();updatePidMenu();btn.disabled=false;
+      return pidMsg(`This device already has the username ${have}, so it is now linked to this save file. Set a password for it below.`)}
+    P.player=name;saveP();
+    try{await acctLink(f,mail,pw)}catch(e){updatePid();updatePidMenu();btn.disabled=false;
+      return pidMsg(`Username ${name} created, but the password could not be set. ${authWhy(e)} You can set it from this screen.`)}
+    acctDirty=true;await acctPush();fx.buy();$('pid-pw').value='';updatePid();updatePidMenu();
+    pidMsg(`Account ${name} created. Your progress is backed up, and you can log in with this username and password on any device.`);
     setTimeout(()=>$('pid-h').focus(),50);
   }catch(e){
     const m=String(e&&e.message||'');
     if(m==='taken'){fx.click();pidMsg(`${name} is already taken. Try a different username.`)}
-    else if(m.startsWith('have:')){P.player=m.slice(5);saveP();updatePid();updatePidMenu();pidMsg(`This device already has the username ${P.player}. It is now linked to this save file.`)}
     else pidMsg('Could not reach the server. Check your internet connection and try again.');
   }
   btn.disabled=false;
+}
+/* gives an existing username (from before accounts) a password */
+async function setPw(){
+  const pw=$('leg-pw').value;
+  if(pw.length<6)return pidMsg('Your password needs at least 6 characters.');
+  const btn=$('leg-go');btn.disabled=true;pidMsg('Setting your password…');
+  try{
+    const f=await fbInit(),{db,fs}=f,uid=f.au.currentUser.uid,key=P.player.toLowerCase();
+    const me=await fs.getDoc(fs.doc(db,'players',uid));
+    if(!me.exists()||me.data().name.toLowerCase()!==key){btn.disabled=false;
+      return pidMsg(`The username ${P.player} was created in a different browser or on a different device, so its password has to be set there. If that is not possible, ask the developer to free up the username, then create a new account here.`)}
+    const ur=fs.doc(db,'usernames',key),un=await fs.getDoc(ur);
+    let mail=un.exists()&&typeof un.data().mail==='string'?un.data().mail:'';
+    if(!mail){mail=fakeMail(key);await fs.updateDoc(ur,{mail})}
+    await acctLink(f,mail,pw);
+    acctDirty=true;await acctPush();fx.buy();$('leg-pw').value='';updatePid();updatePidMenu();
+    pidMsg(`Password set. You are logged in as ${P.player}, and your progress is backed up to your account.`);
+    setTimeout(()=>$('pid-h').focus(),50);
+  }catch(e){pidMsg(String(e&&e.code||'').startsWith('auth/')?authWhy(e):'Could not reach the server. Check your internet connection and try again.')}
+  btn.disabled=false;
+}
+async function logIn(){
+  const name=$('li-name').value.trim(),pw=$('li-pw').value,key=name.toLowerCase();
+  if(!FB_CONFIG.apiKey)return pidMsg('Accounts are not switched on yet. Check back after the next update.');
+  if(!/^[A-Za-z0-9_]{3,16}$/.test(name))return pidMsg('Type your username. It has 3 to 16 letters, numbers or underscores.');
+  if(!pw)return pidMsg('Type your password.');
+  if(acctIn()&&P.player.toLowerCase()===key)return pidMsg(`You are already logged in as ${P.player}.`);
+  /* progress on this device that is not backed up to that account gets replaced, so ask first */
+  if(P.ts>0&&liPend!==key&&(P.player||P.coins>0||P.owned.length>3||P.stats.games>0)){
+    liPend=key;
+    return pidMsg(`This device has other progress${P.player?' for '+P.player:''}, with ${P.coins} silver and ${P.owned.length} weapons. Logging in to ${name} replaces it with that account's progress${acctIn()?'. Your current account stays backed up':', and it cannot be brought back'}. Tap Log in again to continue.`)}
+  liPend='';
+  const btn=$('li-go');btn.disabled=true;pidMsg('Logging in…');
+  try{
+    const f=await fbInit(),{db,fs}=f;
+    const un=await fs.getDoc(fs.doc(db,'usernames',key));
+    const mail=un.exists()?un.data().mail:'';
+    if(!mail){btn.disabled=false;return pidMsg(un.exists()?`${un.data().name} does not have a password yet. It has to be set on the device where that username was made.`:`No account is called ${name}. Check the spelling, or create a new account.`)}
+    acctFlush();
+    await f.auth.signInWithEmailAndPassword(f.au,mail,pw);fbUser=f.au.currentUser;acctReady=true;
+    const uid=fbUser.uid,sv=await fs.getDoc(fs.doc(db,'saves',uid)),real=un.data().name;
+    acctLoad(sv.exists()?sv.data():null,real);acctSt='saved';acctDirty=false;
+    $('li-pw').value='';$('li-name').value='';fx.buy();updatePid();updatePidMenu();
+    pidMsg(`Logged in as ${real}. Your progress is loaded: ${P.coins} silver and ${P.owned.length} weapons.`);
+    setTimeout(()=>$('pid-h').focus(),50);giftAt=0;checkGifts(true);
+  }catch(e){pidMsg(String(e&&e.code||'').startsWith('auth/')?authWhy(e):'Could not reach the server. Check your internet connection and try again.')}
+  btn.disabled=false;
+}
+async function logOut(){
+  if(!acctIn())return;
+  const btn=$('acct-logout');btn.disabled=true;pidMsg('Backing up your progress before logging out…');
+  acctDirty=true;clearTimeout(acctTm);await acctPush();
+  if(acctDirty){btn.disabled=false;return pidMsg('Could not back up your latest progress, so you are still logged in. Check your internet connection and try again.')}
+  try{const f=await fbBoot();await f.auth.signOut(f.au);fbUser=null}
+  catch(e){btn.disabled=false;return pidMsg('Could not log out. Check your internet connection and try again.')}
+  const was=P.player;resetP();saveP();refreshAfterLoad();acctSt='';updatePid();updatePidMenu();
+  pidMsg(`Logged out of ${was}. Your progress is safe in your account. This device has started fresh. Log in any time to get your progress back.`);
+  btn.disabled=false;setTimeout(()=>$('pid-h').focus(),50);
 }
 /* adds one gift to the save and returns a spoken summary of it */
 function applyGift(g){
@@ -2423,7 +2601,7 @@ async function checkGifts(quiet){
   try{
     const {db,uid,fs}=await fbInit();
     const me=await fs.getDoc(fs.doc(db,'players',uid));
-    if(!me.exists()){if(!quiet)pidMsg(`The username ${P.player} was created on a different device or browser, so gifts for it go there. Ask the developer to help move it.`);giftBusy=false;return}
+    if(!me.exists()){if(!quiet)pidMsg(`The username ${P.player} was created on a different device or browser, so gifts for it go there. Log in to your account on this screen to get them here.`);giftBusy=false;return}
     // record when the player was last online, at most once a day, to save Firebase writes
     {const sn=me.data().seen;if(!(sn&&sn.toMillis)||Date.now()-sn.toMillis()>864e5)fs.updateDoc(me.ref,{seen:fs.serverTimestamp()}).catch(()=>{})}
     const snap=await fs.getDocs(fs.query(fs.collection(db,'gifts'),fs.where('uid','==',uid),fs.where('claimed','==',false)));
@@ -2467,7 +2645,7 @@ async function loadReqs(quiet){
 }
 async function sendReq(){
   if(reqBusy)return;
-  if(!P.player)return reqMsg('Create a username first, from Player ID on the main menu.');
+  if(!P.player)return reqMsg('Create an account first, from Account on the main menu.');
   if(!FB_CONFIG.apiKey)return reqMsg('Requests are not switched on yet.');
   const n=(id,max)=>Math.max(0,Math.min(max,parseInt($(id).value)||0));
   const w=$('req-w').value,a=$('req-a').value,g=$('req-g').value,gn=n('req-gn',1000),note=$('req-note').value.trim().slice(0,300);
@@ -2503,7 +2681,7 @@ function fillFb(){
 function fbMsg(t){$('fb-status').textContent=t;say(t)}
 async function sendFb(){
   if(fbBusy)return;
-  if(!P.player)return fbMsg('Create a username first, from Player ID on the main menu.');
+  if(!P.player)return fbMsg('Create an account first, from Account on the main menu.');
   if(!FB_CONFIG.apiKey)return fbMsg('Feedback is not switched on yet.');
   const typed=$('fb-text').value.trim(),withErr=!!($('fb-err')&&$('fb-err').checked&&errLog().length),topic=$('fb-topic').value||'General';
   const text=(typed+(withErr?'\n\nProblem report: '+errReport():'')).slice(0,2000);
@@ -2525,6 +2703,14 @@ $('req-refresh').onclick=()=>{initAudio();loadReqs(false)};
 $('pid-make').onclick=()=>{initAudio();createName()};
 $('pid-name').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();initAudio();createName()}});
 $('pid-check').onclick=()=>{initAudio();checkGifts(false)};
+$('pid-pw').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();initAudio();createName()}});
+$('leg-go').onclick=()=>{initAudio();setPw()};
+$('leg-pw').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();initAudio();setPw()}});
+$('li-go').onclick=()=>{initAudio();logIn()};
+$('li-name').addEventListener('input',()=>{liPend=''});
+$('li-pw').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();initAudio();logIn()}});
+$('acct-logout').onclick=()=>{initAudio();logOut()};
+$('acct-save').onclick=async()=>{initAudio();if(!acctIn())return;pidMsg('Backing up…');acctDirty=true;clearTimeout(acctTm);await acctPush();pidMsg(acctDirty?'Could not reach the server. Your progress is kept on this device and will back up when it can.':'Progress backed up to your account.')};
 const sortCarry=()=>P.carry.sort((a,b)=>WPN.indexOf(WBY[a])-WPN.indexOf(WBY[b]));
 
 /* ---------- state ---------- */
@@ -4241,6 +4427,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-accounts',date:'November 4, 2026',title:'Accounts: log in and back up your progress',items:[
+    'Player ID is now called Account, on the main menu. You can now protect your progress with a password. Your silver, weapons, armor, grenades, perks and records are backed up online, so clearing your browser, switching browsers or getting a new phone no longer wipes them.',
+    'Already have a username? Open Account and set a password. Your progress and gifts stay exactly as they are.',
+    'New players: create an account with a username and password. Whatever progress is on your device moves into it.',
+    'On another phone or browser, open Account and log in with your username and password to load your progress. Progress backs up on its own while you play, and whichever device saved most recently wins.',
+    'Log out from the Account screen when you are done on a shared device. Your progress is backed up first, and the device starts fresh. There is no password reset, so keep your password somewhere safe. If you lose it, ask the developer.']},
   {id:'2026-11-04-vlfast',date:'November 4, 2026',title:'Abnormal agility for Vlad the Impaler',items:[
     'New attachment for Vlad the Impaler: Abnormal agility, 20,000 silver. It cuts the reload time in half, from 5 seconds to 2 and a half, and works with every other Vlad the Impaler attachment.']},
   {id:'2026-11-04-nightwalker',date:'November 4, 2026',title:'New legendary set: Nightwalker pack',items:[
@@ -5303,7 +5495,7 @@ document.querySelectorAll('[data-test]').forEach(b=>{const t=EN[b.dataset.test];
   b.appendChild(sm);b.classList.add('enemy')});
 raf=requestAnimationFrame(frame);
 show('menu');
-checkGifts(true);   // gifts are checked once when the game loads, plus whenever the player taps Check for gifts
+acctStart().finally(()=>checkGifts(true));   // sync the account first, then check gifts once, plus whenever the player taps Check for gifts
 if(window.claude&&claude.use)initCloud();else setCloud('local');
 })();
 </script>
