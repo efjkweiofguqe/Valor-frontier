@@ -105,7 +105,15 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 .aim button:active,.pad button:active{transform:scale(.97)}
 .overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px max(16px,env(safe-area-inset-left,0px));z-index:5}
 .overlay .stack{width:100%;max-width:420px}
-#perks{align-items:flex-start;overflow-y:auto}
+#perks,#tpick{align-items:flex-start;overflow-y:auto}
+#tpick .stack{padding-block:12px}
+.tutbox{background:var(--panel);border:2px solid var(--accent);border-radius:12px;padding:6px 10px;display:flex;flex-direction:column;gap:5px;flex:none}
+.tutbox .tag{color:var(--accent)}
+.tutbox #tut-t{font-size:14px;line-height:1.3;max-width:none;max-height:13vh;overflow-y:auto}
+.tutbtns{display:flex;gap:8px}
+.tutbtns button{flex:1;background:var(--bg);border:2px solid var(--line);border-radius:10px;padding:8px 6px;font-weight:700;font-size:15px;min-height:44px}
+.tutbtns #tut-next{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tutbtns button:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
 #perks .stack{padding-block:12px}
 .btn.got{border-color:var(--ok)}
 .btn.got small{color:var(--ok)}
@@ -116,7 +124,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 .item{background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 .item.owned{border-color:var(--ok)}
 .item h3,.item h4{font-family:var(--display);font-weight:400;font-size:24px;margin:0;line-height:1.1}
-#mods-list h3.grp,#shop-list h3.grp{font-family:var(--display);font-weight:400;font-size:20px;color:var(--accent);margin:14px 0 0;padding-bottom:4px;border-bottom:2px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
+#mods-list h3.grp,#shop-list h3.grp,#tpick-list h3.grp{font-family:var(--display);font-weight:400;font-size:20px;color:var(--accent);margin:14px 0 0;padding-bottom:4px;border-bottom:2px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
 #mods-list h3.grp:first-child{margin-top:0}
 #arm-sub button small{display:block}
 .item .meta{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent)}
@@ -216,7 +224,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
       <button role="radio" data-val="endless" data-name="Endless survival">Endless survival<small>How long can you last?</small></button>
       <button role="radio" data-val="zombies" data-name="Zombie siege">Zombie siege<small>Endless undead smashing through the windows</small></button>
       <button role="radio" data-val="bossrush" data-name="Boss rush">Boss rush<small>Only bosses, brutal later</small></button>
-      <button role="radio" data-val="practice" data-name="Practice range">Practice range<small>Still targets, no danger</small></button>
+      <button role="radio" data-val="practice" data-name="Tutorial/practice">Tutorial/practice<small>Learn the game step by step, then practice</small></button>
     </div>
   </div>
   <div class="field" id="zmode-field" hidden>
@@ -255,6 +263,16 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
       </div>
     </div>
   </div>
+  <div class="field" id="tut-field" hidden>
+    <label for="tutlvl">Tutorial level
+      <select id="tutlvl">
+        <option value="basic">Basic info: for completely new warriors, learn the basics</option>
+        <option value="inter">Intermediate learner: meet every enemy, its stats and how to beat it</option>
+        <option value="scholar">Battle scholar: master the stats of every weapon and grenade</option>
+      </select>
+    </label>
+    <p class="note" id="tutlvl-d"></p>
+  </div>
   <p class="note" id="maps-note"></p>
   <div class="stack">
     <button class="btn primary" data-map="rainforest" data-desc="Rainforest. Heavy rain and birdsong. Mercenaries and vine stalkers.">Verdant Hollow<small></small></button>
@@ -282,7 +300,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Holding fire.</b> Tap Fire for one trigger pull. To keep firing, press and hold the Fire button. With VoiceOver, double-tap and hold. On a keyboard, hold Space. A faint tick on each shot means your magazine is running low.</p>
     <p><b>Cover.</b> Take cover halves the damage you take, but your aim gets shakier and the battle sounds muffled. Leave cover to aim steady again. Bosses roar as they wind up a big attack: that is your cue to take cover. The Iron Revenant fires rockets from range, so listen for the whistle.</p>
     <p><b>Grenades</b> go off around you, so there is no aiming. Frag grenades blast every enemy within 5 feet, perfect when enemies are attacking you. Cryo grenades freeze every enemy within 8 feet to about a third of their speed for 8 seconds. Incendiary grenades are the opposite: a whoomp of flame hits every enemy within 15 feet for 30 and sets them on fire until they die, and a ring of fire roars all around you for 15 seconds, setting alight anything that comes within 15 feet. Any burning enemy roars and crackles with fire from where it stands for as long as it burns. The Fat Man destroys everything within 50 feet instantly, bosses included, after a falling whistle. A jack-in-the-box is a proximity bomb: it sits 10 feet in front of you playing a little music-box tune, and when an enemy comes within 7 feet of it, the lid pops with a boing and it explodes, hitting everything within 15 feet of the box. An event horizon is a gravity trap: it sits 10 feet in front of you giving off a slow, deep double pulse. When any enemy comes within 13 feet of you, from any side, it switches on with a warbling energy charge that wobbles faster and faster, then snaps into a deep roar, then for one minute it drags every enemy that comes within 13 feet of you into a tight cluster around itself and holds them there, with a throbbing hum. Held enemies cannot move or attack, and it does no damage, so line them up and open fire. Three quick beeps mean it fades in 10 seconds. None of them hurt you. Grenade type cycles between all six.</p>
-    <p><b>Modes.</b> Campaign is five waves ending in the battlefield's boss. Endless survival never stops, brings a boss every fifth wave and a mega boss with twice a boss's health every seventh wave, and pays a bonus for every wave you clear. Boss rush is only bosses: it starts with one weakened boss and gets brutal far faster than endless, with a mega boss every seventh wave. Practice range has still targets that cannot hurt you, for learning a gun. Zombie siege is endless waves of the undead. Four glass windows surround you about 50 feet out, at north, east, south and west. A zombie has to smash through a window to reach you, which takes a few seconds: you hear banging and cracking glass from that direction, then a crash when it shatters. Broken windows seal themselves again about 6 seconds later. Every fifth wave brings a giant zombie boss, and every tenth wave also brings a mega giant zombie boss with five times a giant's health, paying five times a giant's silver, so waves 10, 20, 30 and so on have both. Every 50th wave, in every zombie mode, the Ancient One awakens: the ultimate zombie boss with 10,000 health, the same on every difficulty. It wakes with a deafening roar that shakes the ground, and keeps roaring every few seconds. In Giants only, there is just the mega giant every tenth wave. The horde grows every wave, to about 200 zombies by wave 50, and there is no limit on how many can be after you at once, so the whole wave can be alive together. After every 50 zombies come in there is a short breather before the next ones: 6 seconds on Normal spawning, 4 and a half on Fast, 3 on Faster and 1 and a half on Hyperspeed. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Status reads the state of every window. That is the Standard zombie mode. In Advanced options, the Giants only checkbox makes every zombie a giant zombie boss, in the same numbers as a normal wave, so by wave 50 you face about 200 giants, plus a mega giant every tenth wave. Giants only keeps its own best records.</p>
+    <p><b>Modes.</b> Campaign is five waves ending in the battlefield's boss. Endless survival never stops, brings a boss every fifth wave and a mega boss with twice a boss's health every seventh wave, and pays a bonus for every wave you clear. Boss rush is only bosses: it starts with one weakened boss and gets brutal far faster than endless, with a mega boss every seventh wave. Tutorial/practice is a guided tutorial with three levels, chosen from the Tutorial level dropdown under Mode: Basic info teaches every button, Intermediate learner introduces every enemy, and Battle scholar teaches any 4 weapons you pick plus every grenade. Each instruction is spoken and waits for you to do it. Afterwards targets keep coming so you can practice. Targets stand still and cannot hurt you. Zombie siege is endless waves of the undead. Four glass windows surround you about 50 feet out, at north, east, south and west. A zombie has to smash through a window to reach you, which takes a few seconds: you hear banging and cracking glass from that direction, then a crash when it shatters. Broken windows seal themselves again about 6 seconds later. Every fifth wave brings a giant zombie boss, and every tenth wave also brings a mega giant zombie boss with five times a giant's health, paying five times a giant's silver, so waves 10, 20, 30 and so on have both. Every 50th wave, in every zombie mode, the Ancient One awakens: the ultimate zombie boss with 10,000 health, the same on every difficulty. It wakes with a deafening roar that shakes the ground, and keeps roaring every few seconds. In Giants only, there is just the mega giant every tenth wave. The horde grows every wave, to about 200 zombies by wave 50, and there is no limit on how many can be after you at once, so the whole wave can be alive together. After every 50 zombies come in there is a short breather before the next ones: 6 seconds on Normal spawning, 4 and a half on Fast, 3 on Faster and 1 and a half on Hyperspeed. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Status reads the state of every window. That is the Standard zombie mode. In Advanced options, the Giants only checkbox makes every zombie a giant zombie boss, in the same numbers as a normal wave, so by wave 50 you face about 200 giants, plus a mega giant every tenth wave. Giants only keeps its own best records.</p>
     <p><b>Watch my six.</b> A zombie mode with only two windows: one straight ahead of you at 12 o'clock and one right behind you at 6 o'clock. Nothing comes from the left or right, so About face is your best friend.</p>
     <p><b>Horror hallway.</b> A zombie mode where you walk down a long hallway on your own, with no walk button. Your footsteps tell you your pace: quick, close together steps when the hallway ahead is clear, slowing down the more zombies are ahead, until you stop completely. You also stop while a zombie is right in front of you or grabbing you. Zombies come straight out of the walls with no barriers, appearing 10 to 20 feet away, so react fast. They start a little slower than in other modes and get faster every wave, up to double speed around wave 25. Waves come one after another with only a short pause, so expect a steady flow. If you walk past one, it chases you from behind, fast, but never faster than double speed. A soft double tick plays every 100 feet. Your score is every foot you walk plus 10 points for every kill. Status reads your distance, kills and score.</p>
     <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: an electrified band from 20 feet in to 14 feet around you. A zombie touching it makes a loud electric crack, then sharp zaps while it struggles through at 60 percent speed, taking damage every second. Weaker zombies usually fry, but tougher zombies in later waves get through hurt, and runners can dash across. Giant zombies take more damage but are not slowed. A soft hum every few seconds tells you the fence is on. The electric fence is not offered in Horror hallway, since you keep walking forward. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health. Bloodthirst: every kill heals you 3 health, or 10 for a mini boss or boss. Gold rush: double silver for the rest of the run. Frost skin: any zombie that hits you is frozen for 2 seconds, bosses for 1. Last stand: when your health drops below a quarter, a shockwave hits every zombie within 15 feet for 150 damage and throws survivors back, once per wave.</p>
@@ -290,7 +308,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Silver and the Armory.</b> Every kill pays silver: 10 for light enemies, 16 for heavy ones, 50 for mini bosses, 83 for bosses and 250 for mega bosses. In endless survival, boss rush and zombie siege, every kill pays 8 percent more silver for each wave you have survived, so wave 11 pays almost double. Every regular wave has one mini boss: it announces itself with a rising two-note siren before its cry, and it is far tougher than a normal enemy. Spend it in the Armory shop on weapons, attachments, body armor, grenades and perks. Perks go up to level 50: Toughness for more health, Field medic for more healing between waves, Deadeye for more gun damage and Scavenger for more silver per kill. Kills also raise each gun's mastery, up to level 10, making its attachments stronger.</p>
     <p><b>Scavenger pack.</b> The Razor blade boomerang is thrown with Fire. You hear Boomerang out, then its blades whirring as it leaves on your left, loops out across the front of you and curves back in on your right. A bright shing is an enemy being sliced, once on the way out and again on the way back. Pressing Fire while it is out just tells you it is still out, and you hear Boomerang returned when you catch it. Its Narrow arc and Full circle abilities change the path it flies. The Razorwire Carapace armor tears into anything that hits you: a ripping sound is the barbs, and wet dripping means the enemy is bleeding.</p>
     <p><b>Ragdoll sandbox.</b> A zombie mode that plays like Zombie siege, with four windows 50 feet out, but with real physics. Every zombie has a body with a head, arms and legs. When one dies it goes limp and flies the way it was hit: a pistol drops it, a shotgun or sniper rifle throws it, and explosions launch it, spinning, out across the room. Bodies tumble and slide along the floor, slam into the round wall, smash through windows or sail right over the wall, and pile up on top of each other. A body flying into a standing zombie knocks it flat. Blasts that do not kill a zombie throw it off its feet instead: it lies there for a second or two, then gets back up where it landed, so a well-placed grenade really does buy you room. Big explosions tear arms, legs and heads off. Everything makes a sound from where it happens: a rushing whoosh follows each of the fastest flying bodies, rising in pitch the faster it goes, then a low scrape if it slides along the floor. A heavy thump is a body hitting the floor, lighter slaps are arms and legs, and a big thump with a hollow knock is a body hitting the wall. Breaking glass is a body going through a window, which leaves it open for a few seconds. A crack and a wet tear is a limb coming off. An impact and a grunt is a body bowling over another zombie, and scuffling followed by a groan is a knocked-down zombie getting back up. Hydra acid pools eat through legs: a zombie that stands in one hears its shins froth away and drops to its knees, then loses its legs completely and slaps down onto its belly as a crawler. Crawlers drag themselves toward you at about a third of their speed, and each pull makes a slap and a wet scrape you can follow. While its legs are dissolving, a zombie takes very little damage from the pool, so you will hear it happen before it dies, and a crawler takes half damage from it. Enemy locations tells you which zombies are on their knees or crawling. Status tells you how many bodies are on the floor and how many zombies are knocked down. Sighted players see a simple first-person view inside the Fire button, with stick-figure zombies, the wall and windows around you, and the radar in the corner.</p>
-    <p><b>Physics and picture in every mode.</b> The ragdoll physics from Ragdoll sandbox now run in every mode: campaign, endless survival, boss rush, the practice range and every zombie mode. Every enemy has a body with a head, arms and legs, sized to the enemy, so a Mercenary goes down like a person, wolves, jaguars and the Mega Pigeon run on four legs, and bosses like Gargantuos Gargantar are huge, heavy bodies that take a big blast to move. Kills fly the way they were hit, explosions throw bodies and knock survivors off their feet, big blasts tear limbs off, flying bodies bowl over other enemies, and Hydra acid turns enemies into crawlers. You hear it all the same way as in Ragdoll sandbox: the whoosh of a flying body, thumps and slaps as it lands, and a scuffle as a knocked-down enemy gets back up. Zombies groan when they get up, other enemies grunt, and drones and mechs clank like metal when they hit the floor. Out in the open there is no wall, so bodies sail as far as they are thrown. In Horror hallway they slam into the hallway walls, and the bodies you leave behind slide away behind you as you walk. Status tells you how many bodies are on the floor and how many enemies are knocked down. Sighted players see the simple first-person view inside the Fire button in every mode, with each map's own sky and ground, colored figures for each enemy type, and the hallway walls in Horror hallway.</p>
+    <p><b>Physics and picture in every mode.</b> The ragdoll physics from Ragdoll sandbox now run in every mode: campaign, endless survival, boss rush, Tutorial/practice and every zombie mode. Every enemy has a body with a head, arms and legs, sized to the enemy, so a Mercenary goes down like a person, wolves, jaguars and the Mega Pigeon run on four legs, and bosses like Gargantuos Gargantar are huge, heavy bodies that take a big blast to move. Kills fly the way they were hit, explosions throw bodies and knock survivors off their feet, big blasts tear limbs off, flying bodies bowl over other enemies, and Hydra acid turns enemies into crawlers. You hear it all the same way as in Ragdoll sandbox: the whoosh of a flying body, thumps and slaps as it lands, and a scuffle as a knocked-down enemy gets back up. Zombies groan when they get up, other enemies grunt, and drones and mechs clank like metal when they hit the floor. Out in the open there is no wall, so bodies sail as far as they are thrown. In Horror hallway they slam into the hallway walls, and the bodies you leave behind slide away behind you as you walk. Status tells you how many bodies are on the floor and how many enemies are knocked down. Sighted players see the simple first-person view inside the Fire button in every mode, with each map's own sky and ground, colored figures for each enemy type, and the hallway walls in Horror hallway.</p>
     <p><b>Dark samurai.</b> A special ability for the Samurai armor. It charges from the damage you take while wearing it, with a low snarl and Dark samurai half charged at 55 damage. At 110 damage a dark rift opens with a deep rumble, and two oni demons snarl at your left and right, then run out to attack. Listen for their snarls moving across the battlefield and the snapping bites when they hit. They go for the enemies closest to you first. After 25 seconds a falling hiss means they have vanished.</p>
     <p><b>Samurai pack.</b> The Samurai sword is swung with Fire, one heavy swing a second: a ring of steel and a deep whoosh sweeping left to right. Anything within 5 feet straight in front of you is cut down instantly, with a slicing cleave, except bosses and mini bosses, which take 100. Every swing also sends a purple energy wave straight ahead. You hear it hum away from you, climbing in pitch as it grows stronger, and every enemy it passes through gives off a ghostly shimmer, brighter the harder it was hit. The wave starts 5 feet wide and spreads to 35 feet wide at its full reach of 35 feet, and the farther it travels the harder it hits: 100 at the blade, 1,000 at 35 feet. So enemies a little way off take the most. You must own the Samurai armor, which cuts the damage you take by 75 percent, before you can buy the sword.</p>
     <p><b>Switching freezes time.</b> Switching weapon or grenade type stops the whole battle for 2 and a half seconds after your last press, so you can cycle through without being swarmed. A falling whoosh means time has stopped and the battle sounds go quiet. Firing, turning, reloading, throwing a grenade or taking cover starts time again straight away, with a rising whoosh. You can also switch weapon and grenade type from the pause menu, with its buttons or with Q and X.</p>
@@ -557,6 +575,11 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 <!-- GAME -->
 <section id="game" hidden>
   <h2 class="sr" id="game-h" tabindex="-1">Battle</h2>
+  <div id="tut" class="tutbox" hidden>
+    <p class="tag" id="tut-tag">Tutorial</p>
+    <p id="tut-t"></p>
+    <div class="tutbtns"><button id="tut-rep">Repeat</button><button id="tut-next" hidden>Next</button><button id="tut-skip">Skip step</button></div>
+  </div>
   <div class="hud" aria-hidden="true">
     <div id="hud-hp"><span>Health</span><b id="v-hp">100</b></div>
     <div><span>Weapon</span><b id="v-wpn">1911</b></div>
@@ -589,7 +612,21 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn primary" id="b-resume">Resume</button>
     <button class="btn" id="b-pswitch">Switch weapon<small id="ps-w"></small></button>
     <button class="btn" id="b-pntype">Switch grenade type<small id="ps-g"></small></button>
+    <button class="btn" id="b-ptw" hidden>Change practice weapons<small>Pick up to 4 new weapons to study and practice with</small></button>
     <button class="btn" id="b-quit">Quit to main menu</button>
+  </div>
+</div>
+
+<div id="tpick" class="overlay" hidden>
+  <div class="stack">
+    <p class="tag">Battle scholar</p>
+    <h2 id="tpick-h" tabindex="-1">Pick your practice weapons</h2>
+    <p class="note">Pick up to 4 weapons from every weapon in the game, including ones you do not own yet. The tutorial will put each one in your hands, read its stats and best uses, and have you try it on a target.</p>
+    <p id="tpick-n" role="status"></p>
+    <button class="btn primary tpick-go">Start training<small class="tpick-s"></small></button>
+    <div class="stack" id="tpick-list"></div>
+    <button class="btn primary tpick-go">Start training<small class="tpick-s"></small></button>
+    <button class="btn" id="tpick-back">Back</button>
   </div>
 </div>
 
@@ -2447,7 +2484,7 @@ const bossOf=()=>MAPS[G.map].boss,miniOf=()=>MAPS[G.map].mini;
   Object.entries(LIM).forEach(([k,[max,win]])=>{const f=fx[k];if(typeof f!=='function')return;let t0=-1,n=0;
     fx[k]=function(...a){const now=ctx?ctx.currentTime:0;if(now-t0>win){t0=now;n=0}if(++n>max)return;return f.apply(this,a)}})})();
 function newGame(map,mode){
-  sortCarry();const lo=P.carry.map(i=>build(WBY[i])),mh=maxHP();
+  sortCarry();const lo=(mode==='practice'&&TUTIDS&&TUTIDS.length?TUTIDS:P.carry).map(i=>build(WBY[i])),mh=maxHP();
   G={map,mode,lo,earned:0,heading:0,hp:mh,maxhp:mh,w:0,ammo:lo.map(w=>[w.mag,w.akimbo?w.mag:0]),side:lo.map(()=>0),jobs:[],hold:false,cd:0,
      wave:1,toSpawn:0,spawnT:2,enemies:[],kills:0,lockT:0,lockE:null,beatT:0,ambT:3,breakT:0,paused:false,over:false,
      bossWave:false,bossSpawned:false,minionT:6,cover:false,gt:'frag',nades:[],rockets:[],ncd:0,hpT:0,told:{},
@@ -2516,7 +2553,7 @@ function spawnDist(){const r=Math.random();return r<.45?8+Math.random()*6:r<.8?1
 function spawn(type,mega){
   const t=EN[type],pr=G.mode==='practice',br=G.mode==='bossrush',boss=!!t.boss;
   const spread=pr||br?180:G.wave===1?75:G.wave===2?120:180;
-  const rel=boss&&!br?(Math.random()*120-60):(Math.random()*2-1)*spread;
+  const rel=G.tutR!=null?G.tutR:boss&&!br?(Math.random()*120-60):(Math.random()*2-1)*spread;
   let hp=t.hp*(S.diff>1.5?1.5:1),dm=1,sm=1,am=1;
   if(G.mode==='endless')hp*=1+.08*(G.wave-1);
   if(G.mode==='zombies'){hp*=1+zDf().hp*(G.wave-1);dm*=1+zDf().dmg*(G.wave-1)}
@@ -2525,7 +2562,7 @@ function spawn(type,mega){
   if(br){const w=G.wave-1;hp*=.35*Math.pow(1.25,w);dm=.5*Math.pow(1.12,w);sm=Math.min(1.8,.75*Math.pow(1.04,w));am=Math.max(.45,1.15*Math.pow(.96,w))}
   if(t.fixedHp)hp=t.hp;   // the Ancient One: always exactly its listed health
   hp=Math.max(1,Math.ceil(hp));
-  const dist=pr?5+Math.random()*43:boss?32+Math.random()*12:t.mini?24+Math.random()*10:spawnDist();
+  const dist=G.tutD!=null?G.tutD:pr?5+Math.random()*43:boss?32+Math.random()*12:t.mini?24+Math.random()*10:spawnDist();
   const e={type,angle:(G.heading+rel+360)%360,dist,hp,maxhp:hp,cue:.2,atkT:t.atk*am,dm,sm,am,
     engaged:false,moveT:7,rocketT:5,slowT:0,wind:0,charge:0,mega:!!mega};
   const zq=G.mode==='zombies';
@@ -2535,8 +2572,9 @@ function spawn(type,mega){
   else if(zq){const wi=Math.floor(Math.random()*G.win.length);e.win=wi;e.angle=(G.win[wi].a+Math.random()*12-6+360)%360;e.dist=ZWIN+2+Math.random()*7}
   G.enemies.push(e);
   if(type==='zancient'){e.cue=4.5;ancientRoar(out(norm(e.angle-G.heading),e.dist,2,enBus,3),0,1);vib(800);
-    (g=>setTimeout(()=>{if(G===g&&!G.over)say(`The Ancient One has awakened! ${clock(norm(e.angle-G.heading))}, ${ft(e.dist)} feet. It has 10,000 health.`)},1200))(G);return}
+    (g=>setTimeout(()=>{if(G===g&&!G.over&&!e.tutT)say(`The Ancient One has awakened! ${clock(norm(e.angle-G.heading))}, ${ft(e.dist)} feet. It has 10,000 health.`)},1200))(G);return}
   if(zq&&(!boss||(G.zg&&!mega)))return;   // giants only: too many to announce each one
+  if(G.tutQ)return;   // the tutorial announces its own targets
   const where=clock(norm(e.angle-G.heading));
   say(`${pr?'Target: ':mega?'Mega boss! Mega ':t.mini?'Mini boss! ':t.z?'Boss! ':''}${t.name}, ${where}, ${ft(dist)} feet.`);
 }
@@ -2866,7 +2904,7 @@ const killQuiet=()=>!!(KA&&KA.g===G&&(KA.b||performance.now()-KA.last<1200));
 function processDead(src){
   const dead=G.enemies.filter(e=>e.hp<=0);if(!dead.length)return 0;
   G.enemies=G.enemies.filter(e=>e.hp>0);
-  if(G.mode==='practice'){G.kills+=dead.length;G.spawnT=1.5;say((dead.some(e=>e.hk)?'Headshot! ':'')+`Target down. ${G.kills} so far.`);return dead.length}
+  if(G.mode==='practice'){G.kills+=dead.length;G.spawnT=1.5;say((dead.some(e=>e.hk)?'Headshot! ':'')+`Target down. ${G.kills} so far.`);tutEv('kill',dead);return dead.length}
   let pay=0,lv='',heal='',healN=0;
   if(src==='symbiote'){lv+=symGrow(dead.length);const sw=G.lo.find(x=>x.id==='symbiote');
     if(sw&&sw.vamp){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal=` Plus ${got} health.`;healN+=got;fx.symHeal();hud()}}}
@@ -3155,7 +3193,7 @@ function radar(){
 }
 function status(){
   if(!G)return;const w=G.lo[G.w];
-  if(G.mode==='practice'){say(`Practice range. ${G.kills} target${G.kills===1?'':'s'} down.${rdWords()} Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
+  if(G.mode==='practice'){say(`Tutorial/practice. ${G.kills} target${G.kills===1?'':'s'} down.${rdWords()} Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
   const left=G.enemies.length+G.toSpawn;
   const wv=G.mode==='zombies'?(G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}${rdWords()}`:`${G.zm==='six'?'Watch my six':G.zm==='ragdoll'?'Ragdoll sandbox':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.${rdWords()}`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.name).join(', ')}${G.revUsed?', second wind used':''}${G.lastUsed?', last stand recharging':''}.`:''):(G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`)+rdWords();
   say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing.`:''} Facing ${facing()}. ${P.coins} silver.`);
@@ -3315,7 +3353,7 @@ function step(dt){
   if(G.over)return;
   // spawning
   G.spawnT-=dt;const ty=MAPS[G.map].types;
-  if(G.mode==='practice'){if(!G.enemies.length&&G.spawnT<=0)spawn(ty[Math.random()<.3?1:0])}
+  if(G.mode==='practice'){if(G.tut)tutTick();if((!G.tut||G.tut.free)&&!G.enemies.length&&G.spawnT<=0)spawn(ty[Math.random()<.3?1:0])}
   else if(G.mode==='bossrush'){
     if(G.toSpawn>0&&G.spawnT<=0){spawn(G.wave===1&&G.toSpawn===brCount(1)?bossOf():BOSSES[Math.floor(Math.random()*BOSSES.length)],G.mega&&G.toSpawn===brCount(G.wave));G.toSpawn--;G.spawnT=6}
   }else if(G.mode==='zombies'){
@@ -4024,6 +4062,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-tutorial',date:'November 4, 2026',title:'Tutorial/practice: a guided tutorial with three levels',items:[
+    'The Practice range is now called Tutorial/practice, and it is a full guided tutorial. Pick it under Deploy, Mode, then choose a level from the new Tutorial level dropdown.',
+    'Every instruction is spoken by your screen reader and shown in a tutorial box at the top of the game screen. Each one asks you to do something, and the next one starts as soon as you have done it. Repeat reads the current instruction again, Skip step moves on, and Next continues past information-only steps. On a keyboard, H repeats and N presses Next. Instructions wait for the game\'s own speech, like Status, to finish first.',
+    'Basic info, for completely new warriors: learn the basics. It walks you through the screen layout and every button, and has you try each one: turning left and right, about face, finding north, Status, Enemy locations, turning to the lock-on ping, firing, headshots, holding fire, reloading, switching weapons, taking and leaving cover, grenade types, throwing a grenade, and the pause menu, plus the keyboard keys.',
+    'Intermediate learner: meet all 25 enemies one at a time. You hear each one\'s health, speed, damage, attack speed, armor, silver and the best way to handle it, then find and take down a practice copy of it.',
+    'Battle scholar: pick any 4 weapons in the game, even ones you do not own yet. The tutorial puts each one in your hands, reads its stats and best uses, has you take down targets with it and hear it reload, then teaches all six grenades. Switching is locked until it has covered every weapon. Afterwards, Pause has Change practice weapons, so you can pick new weapons to study without going back to the main menu.',
+    'When a lesson ends, targets keep coming so you can keep practicing.']},
   {id:'2026-11-04-physicsall',date:'November 4, 2026',title:'Ragdoll physics and graphics in every mode',items:[
     'The realistic ragdoll physics from Ragdoll sandbox now run in every game mode: campaign, endless survival, boss rush, the practice range, Zombie siege, Watch my six and Horror hallway.',
     'Every enemy now has a ragdoll body sized to it. Wolves, jaguars and the Mega Pigeon move on four legs. Bosses are big and heavy, so it takes a strong blast to throw them.',
@@ -4388,7 +4433,7 @@ const MODENOTE={campaign:'Four waves, each with a mini boss, then the battlefiel
   endless:'Waves never stop and keep getting harder. A boss every fifth wave, and a mega boss with double a normal boss health every seventh wave, worth about 250 silver. Kills pay 8 percent more silver every wave. Each wave you clear pays a survival bonus of twice the wave number in silver.',
   bossrush:'Only bosses, from every battlefield. Wave 1 is a single weakened boss. Every few waves another joins, and they get tougher, faster and harder-hitting each wave, much faster than endless mode. Every seventh wave one boss is a mega boss with double health, worth about 250 silver. Kills pay 8 percent more silver every wave. Each wave cleared pays six times the wave number in silver.',
   zombies:'Endless waves of the undead, on any battlefield, in three zombie modes. Windows stand about 50 feet out. Zombies take a few seconds to smash through a window, and a broken window seals itself again about 6 seconds later. A giant zombie boss every fifth wave, plus a mega giant with five times the health every tenth wave, and every 50th wave the Ancient One, with 10,000 health. The horde grows every wave, to about 200 zombies by wave 50. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Each wave you clear pays twice the wave number in silver.',
-  practice:'Targets stand still and cannot hurt you. Grenades are free. Nothing here earns silver or mastery. Status reads your accuracy.'};
+  practice:'A guided tutorial, then free practice. Choose a tutorial level below. Targets stand still and cannot hurt you. Grenades are free. Nothing here earns silver or mastery. Status reads your accuracy.'};
 const ZNOTE={standard:' Standard: four glass windows surround you at north, east, south and west.',
   six:' Watch my six: only two windows, straight ahead of you and right behind you. Nothing comes from the left or right.',
   ragdoll:' Ragdoll sandbox: Zombie siege with real physics. Zombies you kill become ragdolls that fly, tumble, slam into the wall, smash through windows and knock other zombies over. Blasts throw survivors off their feet, and they get back up where they land. Big explosions tear limbs off. Every body that lands, slides or hits something makes a sound from where it happens. Sighted players see a simple first-person view in the Fire button. Separate best records.',
@@ -4396,7 +4441,7 @@ const ZNOTE={standard:' Standard: four glass windows surround you at north, east
 const PERKNOTE=' After every fifth wave the perk machine opens: spend silver on perks that last the rest of the run.';
 const bestOf=(m,zm=S.zmode)=>m==='endless'?P.best:m==='bossrush'?P.bestBoss:m==='zombies'?(zm==='six'?P.bestZ6:zm==='hall'?P.bestZH:zm==='ragdoll'?P.bestZR:P.bestZ):null;
 function updateMaps(){setTimeout(menuAmbSync,0);
-  const m=S.mode||'campaign';$('maps-note').textContent=MODENOTE[m]+(m==='zombies'?(ZNOTE[S.zmode]||ZNOTE.standard)+PERKNOTE:'');$('zmode-field').hidden=m!=='zombies';
+  const m=S.mode||'campaign';$('maps-note').textContent=MODENOTE[m]+(m==='zombies'?(ZNOTE[S.zmode]||ZNOTE.standard)+PERKNOTE:'');$('zmode-field').hidden=m!=='zombies';$('tut-field').hidden=m!=='practice';
   document.querySelectorAll('[data-map]').forEach(b=>{const k=b.dataset.map,M=MAPS[k],sm=b.querySelector('small');
     const B=bestOf(m),bk=m==='zombies'?zKey(k,S.zdiff,S.zgiants):k;sm.textContent=b.dataset.desc+` Boss: ${m==='zombies'?(S.zgiants?'Every zombie is a giant zombie, plus a mega giant every tenth wave':'Giant zombie every fifth wave, plus a mega giant every tenth wave')+', and the Ancient One every 50th wave':EN[M.boss].name}.`+(B?` Best${m==='zombies'?' on '+zDf().n+(S.zgiants?', giants only':''):''}: ${B[bk]?(m==='zombies'&&S.zmode==='hall'?'score ':'wave ')+B[bk]:'none yet'}.`:'')});
 }
@@ -4407,7 +4452,7 @@ function begin(map){
   if(!P.carry.length){fx.click();say('You are not carrying any guns. Open the Armory shop and choose Carry into battle on up to 4 guns.');return}lastMap=map;const mode=S.mode||'campaign';show('game');newGame(map,mode);if(mode!=='practice'){P.stats.games++;saveP()}hud();startAmb(map);
   const bc=$('b-cover');bc.textContent='Take cover';bc.setAttribute('aria-pressed','false');
   const lead=MAPS[map].intro+' '+G.lo[0].name+' drawn. ';
-  say(lead+(mode==='practice'?'Practice range. Targets stand still and cannot hurt you. Grenades are free.':mode==='zombies'?(G.zm==='hall'?`Horror hallway. You walk on your own. Quick footsteps mean the way is clear. You slow down as zombies gather ahead, and stop when it is packed. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()} ahead${zBossWords()}.`:G.zm==='six'?`Watch my six. Two windows, 50 feet out, straight ahead and right behind you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='ragdoll'?`Ragdoll sandbox. Four windows surround you, 50 feet out, at north, east, south and west. Blasts throw zombies around, and you can hear every body land. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:`Zombie siege. Four windows surround you, 50 feet out, at north, east, south and west. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`):mode==='endless'?`Endless survival. Wave 1. ${G.toSpawn} hostiles and a mini boss.`:mode==='bossrush'?'Boss rush. One boss incoming.':`Wave 1. ${G.toSpawn} hostiles and a mini boss.`));
+  say(lead+(mode==='practice'?'Tutorial/practice. Targets stand still and cannot hurt you. Grenades are free.':mode==='zombies'?(G.zm==='hall'?`Horror hallway. You walk on your own. Quick footsteps mean the way is clear. You slow down as zombies gather ahead, and stop when it is packed. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()} ahead${zBossWords()}.`:G.zm==='six'?`Watch my six. Two windows, 50 feet out, straight ahead and right behind you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='ragdoll'?`Ragdoll sandbox. Four windows surround you, 50 feet out, at north, east, south and west. Blasts throw zombies around, and you can hear every body land. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:`Zombie siege. Four windows surround you, 50 feet out, at north, east, south and west. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`):mode==='endless'?`Endless survival. Wave 1. ${G.toSpawn} hostiles and a mini boss.`:mode==='bossrush'?'Boss rush. One boss incoming.':`Wave 1. ${G.toSpawn} hostiles and a mini boss.`));
   setTimeout(()=>$('b-fire').focus(),60);
 }
 document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>begin(b.dataset.map));
@@ -4426,6 +4471,245 @@ function endGame(won){
 function pause(){if(!G||G.over||G.paused)return;timeGo();G.paused=true;pauseLabels();flushSave();G.hold=false;if(ambBus)ambBus.gain.value=0;$('pause').hidden=false;setTimeout(()=>$('pause-h').focus(),50);say('Paused.')}
 function resume(){if(!G)return;wakeAudio();G.paused=false;if(ambBus&&S.amb)ambBus.gain.value=S.avol;$('pause').hidden=true;setTimeout(()=>$('b-fire').focus(),50);say('Resumed.')}
 function quit(){if(G){G.over=true}stopAmb();G=null;flushCloud();show('menu')}
+/* ---------- Tutorial/practice ----------
+   The practice range is now a guided tutorial with three levels, picked from a dropdown under Mode:
+   basic (every button, one at a time), inter (every enemy, its stats and how to handle it) and scholar (any 4 weapons
+   the player picks, then every grenade). Each step is spoken through say(), shown in the tutorial box at the top of the
+   game screen, and waits for the player to do what it asks. Prompts wait for the game's own speech (status, enemy
+   locations and so on) to finish first, so they never talk over it. When the lesson ends, targets keep coming as free
+   practice. In Battle scholar the tutorial chooses the weapon in your hands until every weapon has been covered, and
+   afterwards Pause has Change practice weapons, which teaches any new picks without going back to the menu. */
+let TUTIDS=null,TUTS=false;
+const TUTB={end:0,own:false};
+// how long the speech just started will take, so the next prompt waits for it instead of cutting it off
+{const s0=speak;speak=function(t){TUTB.end=performance.now()+(String(t).split(/\s+/).length*(S.voice==='tts'?.36/(S.rate||1):.3)+.3)*1000;TUTB.own=TUTS;return s0(t)}}
+const TLVLD={basic:'For completely new warriors, learn the basics. Every button is explained one at a time and you try each one: turning, about face, finding enemies, firing, headshots, holding fire, reloading, switching weapons, cover, grenades and the pause menu.',
+  inter:'Meet every enemy in the game one at a time: its health, speed, damage, armor and silver, and the best way to handle it. Then find and take down a practice copy of each one.',
+  scholar:'Pick any 4 weapons in the game, even ones you do not own yet. The tutorial puts each one in your hands, reads its stats and best uses, and has you try it on a target. Then it covers all six grenades. Afterwards, Pause lets you pick new weapons to study.'};
+const tutLvl=()=>TLVLD[S.tlvl]?S.tlvl:'basic';
+$('tutlvl').value=tutLvl();$('tutlvl-d').textContent=TLVLD[tutLvl()];
+$('tutlvl').onchange=e=>{S.tlvl=e.target.value;saveS();$('tutlvl-d').textContent=TLVLD[tutLvl()]};
+segSyncs.push(()=>{$('tutlvl').value=tutLvl();$('tutlvl-d').textContent=TLVLD[tutLvl()]});
+
+/* ----- the engine ----- */
+// a target placed by the tutorial: rel degrees from where you face, distance in feet, health capped so it goes down quickly
+function tutSpawn(type,rel,feet,cap){G.tutR=rel;G.tutD=feet/3.281;G.tutQ=1;try{spawn(type)}finally{G.tutR=G.tutD=null;G.tutQ=0}
+  const e=G.enemies[G.enemies.length-1];e.tutT=1;if(cap){e.hp=e.maxhp=Math.min(e.hp,cap)}e.cue=.3;return e}
+function tutClear(){G.enemies=G.enemies.filter(e=>{if(!e.tutT)return true;if(e.rdb){e.rdb.dead=true;e.rdb.e=null}return false});G.lockE=null}
+const tutWhere=e=>`${clock(norm(e.angle-G.heading))}, ${ft(e.dist)} feet`;
+const tutKill=()=>(ev,d)=>ev==='kill'&&d.some(e=>G.tut.set.includes(e));
+function tutSay(txt,tries=0){const T=G&&G.tut;if(!T)return;clearTimeout(T.tm);const wait=TUTB.end-performance.now(),g=G;
+  if(wait>120&&tries<15){T.tm=setTimeout(()=>{if(G===g&&G.tut===T&&T.txt===txt)tutSay(txt,tries+1)},Math.min(wait,4000)+150);return}
+  TUTS=true;say(txt);TUTS=false;T.spoke=true}
+function tutEv(ev,d){const T=G&&G.tut;if(!T)return;
+  if(ev!=='kill'&&TUTB.own)TUTB.end=performance.now();   // acting cuts a prompt short, so the next one need not wait for it
+  if(!T.act||!T.spoke||T.free)return;const s=T.steps[T.i];if(!s||!s.w)return;
+  if(typeof s.w==='string'?s.w===ev:s.w(ev,d)){T.act=false;const g=G;setTimeout(()=>{if(G===g&&G.tut===T)tutNext()},350)}}
+function tutTick(){const T=G.tut;if(!T.act||!T.spoke||T.free)return;const s=T.steps[T.i];if(s&&s.chk&&s.chk()){T.act=false;tutNext()}}
+function tutDone(T){T.free=true;T.lockW=T.lockN=false;T.i=T.steps.length;$('tut-tag').textContent='Tutorial complete. Free practice';$('tut-next').hidden=true;$('tut-skip').hidden=true;
+  $('b-ptw').hidden=T.lvl!=='scholar';G.spawnT=4}
+function tutNext(){const T=G&&G.tut;if(!T)return;T.act=false;T.spoke=false;clearTimeout(T.tm);T.i++;
+  if(T.i>=T.steps.length){tutDone(T);return}
+  const s=T.steps[T.i];T.set=[];if(s.go)s.go();T.txt=typeof s.t==='function'?s.t():s.t;
+  $('tut-tag').textContent=`Tutorial, step ${T.i+1} of ${T.steps.length}`;$('tut-t').textContent=T.txt;
+  const info=!s.w&&!s.chk;$('tut-next').hidden=!info||!!s.end;$('tut-skip').hidden=info;
+  const a=document.activeElement;if(a&&a.closest&&a.closest('#tut')&&a.hidden)$('b-fire').focus();
+  if(s.end){tutSay(T.txt);T.i=T.steps.length-1;tutDone(T);$('tut-t').textContent=T.txt;return}
+  T.act=true;tutSay(T.txt)}
+function tutRepeat(){const T=G&&G.tut;if(!T||!T.txt)return;TUTS=true;say(T.txt);TUTS=false;T.spoke=true}
+function tutSkip(){const T=G&&G.tut;if(!T||T.free||!T.act)return;const s=T.steps[T.i];tutClear();
+  if(s.w==='pause'&&T.steps[T.i+1]&&T.steps[T.i+1].w==='resume')T.i++;
+  if(G.paused&&s.w==='resume')resume();say('Step skipped.');tutNext()}
+$('tut-rep').onclick=tutRepeat;$('tut-skip').onclick=tutSkip;
+$('tut-next').onclick=()=>{const T=G&&G.tut;if(!T||T.free)return;const s=T.steps[T.i];if(s&&!s.w&&!s.chk)tutNext()};
+
+/* ----- hooks: every action the player takes is reported to the tutorial ----- */
+{const t0=turn;turn=function(d){const ok=G&&!G.paused&&!G.over;t0(d);if(ok)tutEv(Math.abs(d)===180?'about':d<0?'left':'right')}}
+{const f0=fire;fire=function(...a){const r=f0.apply(this,a);tutEv('fire');return r}}
+{const f0=reload;reload=function(){const ok=G&&!G.paused&&!G.over;f0();if(ok)tutEv('reload')}}
+{const f0=cover;cover=function(){const ok=G&&!G.paused&&!G.over;f0();if(ok)tutEv('cover',G.cover)}}
+{const f0=radar;radar=function(){f0();tutEv('radar')}}
+{const f0=status;status=function(){f0();tutEv('status')}}
+{const f0=throwNade;throwNade=function(){if(!G)return f0();const t=G.gt,n=G.gren[t];f0();if(G&&G.gren[t]<n)tutEv('nade',t)}}
+{const f0=switchW;switchW=function(){if(G&&G.tut&&G.tut.lockW&&!G.over){fx.click();say('The tutorial is choosing your weapon right now. You can switch freely once it has covered all of your weapons.');return}f0();tutEv('switch')}}
+{const f0=nadeType;nadeType=function(){if(G&&G.tut&&G.tut.lockN&&!G.over){fx.click();say('The tutorial is choosing your grenade right now. You can switch freely once it has covered all six.');return}f0();tutEv('ntype',G&&G.gt)}}
+{const f0=pause;pause=function(){const ok=G&&!G.over&&!G.paused;f0();if(ok)tutEv('pause')}}
+{const f0=resume;resume=function(){const ok=G&&G.paused;f0();if(ok)tutEv('resume')}}
+{const f0=begin;begin=function(map){
+  $('tut').hidden=true;$('b-ptw').hidden=true;
+  if((S.mode||'campaign')!=='practice'){TUTIDS=null;return f0(map)}
+  if(tutLvl()==='scholar'){initAudio();tpickOpen(ids=>{TUTIDS=ids;S.tpick=ids;saveS();f0(map);if(G&&G.mode==='practice')tutInit(ids)},'maps');return}
+  TUTIDS=null;f0(map);if(G&&G.mode==='practice')tutInit()}}
+function tutInit(ids){const lvl=tutLvl();
+  G.tut={lvl,i:-1,steps:[],act:false,spoke:false,free:false,lockW:false,lockN:false,taught:new Set(),txt:'',set:[],tm:0};
+  G.tut.steps=lvl==='scholar'?scholarSteps(ids,true):lvl==='inter'?interSteps():basicSteps();
+  $('tut').hidden=false;$('tut-skip').hidden=false;tutNext()}
+
+/* ----- level 1: Basic info ----- */
+function basicSteps(){const ty=MAPS[G.map].types,T=()=>G.tut,gun=()=>G.lo[G.w].name;
+  return[
+  {t:()=>`Welcome to basic training, warrior. I will walk you through every button and action in the game, one at a time. After each instruction, do what it asks. As soon as you have done it, the next instruction starts on its own. If you miss an instruction, press Repeat in the tutorial box at the top of the screen, or the H key on a keyboard. To skip a step, press Skip step. Nothing here can hurt you, and grenades are free. First, the layout, with your phone held upright. At the very top is this tutorial box, with its Repeat, Next and Skip step buttons. Below it, the biggest button, filling the middle of the screen, is Fire. Under Fire are Turn left on the left and Turn right on the right. Below those is a grid of 9 buttons in 3 rows of 3. The first row is About face, Reload and Switch weapon. The second row is Enemy locations, Status and Take cover. The third row is Grenade, Grenade type and Pause. With VoiceOver, swipe right from Fire to move through them in that order. You are holding the ${gun()}. Press Next when you are ready to start.`},
+  {w:'right',t:'Turning. You always stand in the same spot, and enemies come at you from every direction, so turning is how you aim. Turn right rotates you 15 degrees to your right. Each turn makes a soft tick, and the tick is a little stronger every quarter turn, at north, east, south and west. 24 presses take you all the way around. On a keyboard, the right arrow or the D key also turns right. Press Turn right now.'},
+  {w:'left',t:'Good. Turn left does the same thing to your left, 15 degrees at a time. On a keyboard, use the left arrow or the A key. Press Turn left now.'},
+  {w:'about',t:'About face spins you all the way around, 180 degrees, in a single press, with a whoosh. It is the quickest way to deal with an enemy right behind you. After the spin it tells you how many enemies are now in front of you. On a keyboard, press the down arrow. Press About face now.'},
+  {chk:()=>G.heading===0,t:'You are now facing south. When you face north you hear a bright two-note chime instead of a tick, so you always know where north is. Status, which comes next, also tells you which way you are facing. Turn back until you hear the north chime. Pressing About face again is the fastest way, or press Turn left or Turn right 12 times.'},
+  {w:'status',t:'Facing north. Now, Status. It reads everything about you: your health, whether you are in cover, the gun in your hands and how much ammo it has, how many of each grenade you have, which way you are facing and your silver. In a battle it also tells you the wave and how many enemies are left. Here it tells you how many targets you have taken down and your accuracy. On a keyboard, press T. Press Status now.'},
+  {w:'radar',go(){tutClear();T().set=[tutSpawn(ty[0],75,35,4)]},t:()=>`A practice target has just appeared. Every enemy makes its own sound, and the sound comes from where the enemy is: panned left or right, louder when it is closer, and muffled and dull when it is behind you. Listen for it now. Enemy locations reads out every enemy by its clock position, its distance in feet and its health. 12 o'clock is straight ahead, 3 o'clock is to your right, 6 o'clock is right behind you and 9 o'clock is to your left. On a keyboard, press E. Press Enemy locations now to find the target.`},
+  {chk:()=>!!G.lockE,go(){T().set=G.enemies.filter(e=>e.tutT)},t:()=>`Now turn to face it. It is at ${tutWhere(T().set[0])}, so turn right. Press Turn right until the target is in front of you. When it is in your sights you hear the lock-on ping, a fast, high beeping. Closer enemies ping higher. While you hear the ping, the background sound dips so the ping stays clear. Turn until you hear the lock-on ping.`},
+  {w:tutKill(),go(){T().set=G.enemies.filter(e=>e.tutT)},t:'Locked on. Now press Fire to shoot. A tap is one trigger pull, and the shot goes at the enemy in your sights. Every bullet that lands makes a thud from where the enemy is, and after you wound it you hear its health percent. A bullet zipping past it means you missed. A distant ricochet means nothing was in your sights. On a keyboard, press Space. Fire until the target goes down.'},
+  {w:tutKill(),go(){tutClear();T().set=[tutSpawn(ty[0],30,45,6)]},t:'Target down. Headshots next. When the lock-on ping changes into a quick double chirp, the enemy is dead centre in your sights. Shots fired then are headshots, for 60 percent more damage, or 30 percent more on bosses, with a crisp crack when they land. A new target is a little to your right, at 1 o\'clock. Turn right one press at a time. You will hear the ping first, and then the double chirp when you are lined up dead centre. Fire while you hear the double chirp and take it down.'},
+  {w:tutKill(),go(){tutClear();T().set=[tutSpawn(ty[1],0,30,16)]},t:()=>`Holding fire. To keep shooting without tapping over and over, press and hold Fire. With VoiceOver, double-tap and keep your finger down on the second tap: the gun keeps firing until you lift your finger. On a keyboard, hold Space. A faint tick on each shot means your magazine is running low, and when it runs dry the gun reloads by itself. A tougher target, a ${EN[ty[1]].name}, is straight ahead at 30 feet. Hold Fire until it goes down.`},
+  {w:'reload',t:'Reloading. Your gun reloads on its own when the magazine runs dry, and when you switch to an empty gun. You can also press Reload any time to top up early, so you are never caught reloading in the middle of a fight. You hear the magazine come out and go in, then the gun\'s name and ready. On a keyboard, press R. Press Reload now.'},
+  {w:'switch',t:()=>`Switching weapons. You carry up to 4 guns into battle. You choose them in the Armory shop, with the Carry into battle button on each gun you own. Switch weapon moves to your next gun and says its name and its ammo. While you switch, time freezes for 2 and a half seconds after your last press, with a falling whoosh, so you can cycle through without being attacked. Firing, turning, reloading, throwing a grenade or taking cover starts time again, with a rising whoosh. You can also switch from the pause menu. On a keyboard, press Q.${G.lo.length<2?' You are only carrying one gun right now, so it will just tell you that. Carry more guns from the Armory shop later.':''} Press Switch weapon now.`},
+  {w:(ev,c)=>ev==='cover'&&c,t:'Taking cover. Take cover halves the damage you take. While you are in cover, your aim gets shakier so more shots miss, and the battle sounds muffled. Bosses roar as they wind up a big attack: that is your cue to take cover. The Iron Revenant fires rockets from far away, so take cover when you hear a rocket whistle. While you are in cover, the button changes to Leave cover. On a keyboard, press C. Press Take cover now.'},
+  {w:(ev,c)=>ev==='cover'&&!c,t:'You are in cover. Now press the same button, which is now called Leave cover, to step out and aim steady again.'},
+  {w:'ntype',t:'Grenades. You have six types of grenade, and Grenade type cycles through them, saying each name and how many you have left. Frag grenades blast enemies right next to you. Cryo grenades freeze enemies close to you so they move at a third of their speed. Incendiary grenades set everything within 15 feet on fire and leave a ring of flame around you. A jack-in-the-box is a bomb set 10 feet in front of you that goes off when an enemy walks up to it. An event horizon is a gravity trap that pulls enemies into one cluster and holds them. The Fat Man is a mini nuke that destroys everything within 50 feet, bosses included. Like switching weapons, choosing a grenade freezes time. On a keyboard, press X. Press Grenade type now.'},
+  {w:(ev,t)=>ev==='nade'&&t==='frag',go(){tutClear();G.gt='frag';pauseLabels();T().set=[tutSpawn(ty[0],100,4,4)]},t:'Grenades go off all around you, so there is no aiming, and none of them can hurt you. The tutorial has set your grenade type back to Frag grenade. A frag blasts every enemy within 5 feet of you, a second after you drop it. A target is standing right next to you, at 3 o\'clock, 4 feet away. Press Grenade to throw the frag. On a keyboard, press G.'},
+  {w:'pause',t:'Pausing. Pause stops everything, and it opens the pause menu. The pause menu has Resume, Switch weapon, Switch grenade type and Quit to main menu, so you can change weapons and grenades there with no rush. Your progress is saved when you pause. On a keyboard, press Escape or P. Press Pause now.'},
+  {w:'resume',t:'This is the pause menu. Swipe through its buttons to hear them, then press Resume to go back to the practice range. On a keyboard, Escape or P also resumes.'},
+  {t:'Last, the keyboard, for when you play on a computer or with a keyboard connected. The left and right arrows, or A and D, turn. The down arrow is about face. Hold Space or F to fire. R reloads. Q switches weapon. C takes cover or leaves it. G throws a grenade. X changes grenade type. E reads enemy locations. T reads your status. Escape or P pauses. In the tutorial, H repeats an instruction and N presses Next. Press Next to finish.'},
+  {end:1,go(){tutClear()},t:'Basic training complete, warrior. You have used every button in the game. Targets will now keep appearing anywhere around you, so keep practicing for as long as you like: find them with Enemy locations, turn until you hear the ping, wait for the double chirp and fire. When you are ready for more, choose Intermediate learner to meet every enemy, or Battle scholar to study the weapons and grenades. To leave, press Pause, then Quit to main menu.'}]}
+
+/* ----- level 2: Intermediate learner ----- */
+const ETIPS={
+  soldier:'Your bread-and-butter enemy. Two Colt 1911 hits or one Desert Eagle hit drops one. Take them while they are still far out, since they reach you in a few seconds from close range. Any rifle handles them well.',
+  stalker:'The fastest light enemy in the rainforest. It covers 30 feet in about 3 seconds, so turn to it the moment you hear it and fire straight away. A shotgun is ideal once it is close, and a frag grenade cleans it up if it reaches you.',
+  drone:'Fast and small, with a metal shell, so your hits make a metallic tink. It often comes in swarms, especially in the Hive Queen\'s fight. Burst weapons like the AK-47, M4A1 or P90 work well, and a shotgun catches several at once.',
+  brute:'Slow but it hits very hard, 15 a hit. You have time, so line up headshots from range with a sniper rifle or a heavy pistol. Never let it reach you without cover: take cover if it gets close and finish it with a shotgun.',
+  wolf:'The fastest regular enemy in the game. It bites for 9 and attacks every second once it reaches you. React instantly: about face if it is behind you, and use a shotgun or an automatic weapon up close. A cryo grenade slows a pack right down.',
+  raider:'Armored and slow, with a heavy ice axe that hits for 14. Bullets land with a deep armored thud. Use your hardest-hitting gun, or armor piercing rounds. Kill it before it arrives, or take cover while you finish it off.',
+  scav:'A medium-speed melee enemy, much like the Mercenary. Two pistol hits or a rifle burst handles it. Take them at range.',
+  sentry:'A slow metal walker with 7 health that fires a laser and hits for 15. It shrugs off light bullets, so use a sniper rifle, a heavy pistol or the M2 Browning. It is slow, so you usually have time to deal with other enemies first.',
+  jaguar:'A quick, hard-hitting mini boss, one in every regular wave on Verdant Hollow. It announces itself with a rising two-note siren. It moves fast for its size, so start shooting as soon as you hear the siren, and keep a frag grenade ready.',
+  overseer:'An armored plasma commander, one in every regular wave on Xeth Prime. Heavy weapons and headshots are the answer. Take cover if it gets close, because it hits for 17.',
+  behemoth:'The toughest mini boss, slow but crushing, with 20 health and 18 a hit. On Frostfang Tundra. Slow it further with a cryo grenade, and pour damage in from range before it reaches you.',
+  warden:'A metal enforcer mini boss in Ashgrave that fires rapid shots. Bullets tink off it. A sniper rifle or the anti-tank rifle is ideal. Take cover when it is close.',
+  goblin:'A light, medium-speed enemy in Goofy Gulch that farts on you when it attacks. Two pistol hits handle it.',
+  clown:'A heavy, slow enemy in Goofy Gulch. It honks a two-note clown horn, then throws a pie and laughs at you. It has 6 health and hits for 14, so treat it like any heavy: big damage from range, cover if it is close.',
+  pigeon:'A pigeon the size of a car: the Goofy Gulch mini boss. It coos, then flaps and pecks for 16. Hit it hard from range and save a frag grenade for when it lands next to you.',
+  boss:'The boss of Verdant Hollow, with 80 health and 20 a hit. Every few seconds he changes direction with a whoosh, so keep listening and use Enemy locations often. Take cover when he roars, because that roar is him winding up a big hit. Minions keep joining the fight, so clear them with grenades.',
+  queen:'The boss of Xeth Prime, with 75 health. She calls in drone swarms more often than any other boss, so clear the drones with a shotgun or grenades and keep coming back to her. Take cover when she winds up.',
+  titan:'The boss of Frostfang Tundra, the toughest regular boss, with 95 health and 24 a hit. He winds up and charges 33 feet toward you, with an announcement. Use the time before his charge to hit him hard, and take cover when he is close. A cryo grenade slows his charge.',
+  revenant:'The boss of Ashgrave. He hangs back at about 26 feet and fires rockets instead of walking up to you. When you hear the rocket whistle, take cover at once, and leave cover again to shoot back. Long-range weapons like sniper rifles are best.',
+  yardle:'The boss of Goofy Gulch. He yells yardle yardle yardle every few seconds, so you always know where he is. He has 85 health and hits for 19. Keep shooting and take cover when he winds up.',
+  zombie:'The basic zombie. Slow, with a long groan, and only 3 health. In Zombie siege it has to break through a window first, so you can shoot it while it bangs on the glass. Zombies get tougher every wave.',
+  zrunner:'A fast zombie with a rasping snarl and only 2 health. It gets through a broken window quickly, so turn to it first. Any automatic weapon or a shotgun deals with it.',
+  zbrute:'The bloated zombie: slow and gurgling, with 7 health, so it soaks up bullets. Use your heaviest gun, and do not let several of them reach you at once.',
+  zgiant:'The giant zombie boss comes every fifth wave in zombie modes, with 120 health. It smashes through a window in about a second and its footsteps shake the ground. Every tenth wave also brings a mega giant with five times the health. Your best weapons, grenades and cover all come into play here.',
+  zancient:'The ultimate zombie boss. It awakens every 50th wave in every zombie mode, always with 10,000 health, with a deafening roar, and keeps roaring every few seconds so you always know where it is. Bring mythical weapons, the Fat Man, and everything else you have.'};
+const EMAT={flesh:'Flesh: your bullets land with a soft thud.',metal:'Metal: your bullets land with a metallic tink.',armor:'Armored: your bullets land with a deep, heavy thud.'};
+const EGRP=[['Light enemies. Each battlefield has its own light enemy, the most common enemy there.',['soldier','stalker','drone','wolf','scav','goblin'],4],
+  ['Heavy enemies. Slower and much tougher, and they hit hard.',['brute','raider','sentry','clown'],8],
+  ['Mini bosses. One comes in every regular wave, announced by a rising two-note siren before its cry. They pay 50 silver.',['jaguar','overseer','behemoth','warden','pigeon'],10],
+  ['Bosses. Each battlefield has its own boss, on wave five of the campaign, every fifth wave of endless survival, and in boss rush. Bosses pay 83 silver, and mega bosses with double health pay 250.',['boss','queen','titan','revenant','yardle'],14],
+  ['Zombies. These come in the zombie modes.',['zombie','zrunner','zbrute','zgiant','zancient'],12]];
+function interSteps(){const T=()=>G.tut,out=[{t:'Welcome to intermediate training. You will meet every enemy in the game, one at a time: the light and heavy enemies of each battlefield, the mini bosses, the bosses and the zombies. For each one you hear its stats and the best way to handle it. Then a practice copy appears somewhere around you so you can learn its sound. Practice copies stand still, cannot hurt you, and have reduced health so they go down quickly. Find each one with Enemy locations, turn until you hear the lock-on ping, and take it down. About the stats. Health is how much damage it takes to kill: your Colt 1911 does 2 damage a shot, before attachments. These are starting numbers. In endless survival and the zombie modes, enemies get tougher every wave, and the hardest difficulty setting gives them half as much health again. Speed is how fast it walks toward you. Damage is how much health it takes from you with each hit once it reaches you, about 4 feet away, and it hits again every so many seconds. Silver is what it pays when you kill it. Press Next to meet the first enemy.'}];
+  let n=0;const tot=EGRP.reduce((a,g)=>a+g[1].length,0);
+  EGRP.forEach(([gn,ids,cap],gi)=>ids.forEach((id,k)=>{const t=EN[id],big=t.boss||t.mini;n++;const num=n;
+    out.push({w:tutKill(),go(){tutClear();const rel=(Math.floor(Math.random()*24)*15)-165;T().set=[tutSpawn(id,rel===0?45:rel,big?45:25+Math.floor(Math.random()*15),cap)]},
+      t:()=>{const e=T().set[0];return `${k===0?gn+' ':''}Enemy ${num} of ${tot}: ${t.name}. ${ENINFO[id]||''} Health ${t.hp.toLocaleString('en-US')}. Speed about ${Math.round(t.speed*3.281*10)/10} feet a second. ${t.dmg} damage a hit, one attack every ${t.atk} seconds. ${EMAT[t.mat]||''} Worth ${t.reward.toLocaleString('en-US')} silver. How to handle it: ${ETIPS[id]||''} Its practice copy is at ${tutWhere(e)}${big?', with its health cut way down for practice':''}. Listen to its sound, turn to it and take it down.`}})}));
+  out.push({end:1,go(){tutClear()},t:'Intermediate training complete. You have met every enemy in the game. Targets from this battlefield will now keep appearing so you can keep practicing. Remember the big ideas: take light enemies at range, use your heaviest weapons and headshots on heavies, take cover when a boss roars or a rocket whistles, and save grenades for when enemies reach you. Next, try Battle scholar to study the weapons and grenades. To leave, press Pause, then Quit to main menu.'});
+  return out}
+
+/* ----- level 3: Battle scholar ----- */
+const WBEST={
+  pistol:'A reliable backup. Use it on light enemies at short to medium range, and as the gun you switch to when your main weapon is empty. It falls off past about 40 feet, so do not use it for long shots.',
+  deagle:'One-shotting light enemies at short to medium range, and headshots on heavies. Each shot counts, so wait for the double chirp before you fire.',
+  beretta:'Fast follow-up bursts on light enemies up close. A good sidearm when you want more shots than the Desert Eagle but still a pistol\'s quick reload.',
+  glock:'Shredding light enemies up close. It empties fast, so tap it in short pulls rather than holding the trigger the whole time.',
+  gyrojet:'Long shots only. It is weak up close and strongest out near 70 feet, so pick off enemies as they approach and switch to something else once they are near.',
+  skorpion:'Long fights against crowds of light enemies, since the 100-round drum almost never runs dry. Its wide aim forgives sloppy turning. Weak against armor.',
+  p90:'Fast bursts against light enemies at close to medium range, more accurate than the Skorpion. Switch to something heavier for armored enemies.',
+  ak:'An all-rounder for light and heavy enemies at medium range. Its 3-round bursts and 30-round magazine carry most early fights.',
+  an94:'Medium-range fights where you want every round to hit. It never misses and each round hits harder than the AK-47. Great for steady damage on heavies.',
+  m4:'Accurate medium-range work. It sits between the AK-47 and the AN-94, with fast bursts that almost always land.',
+  m249:'Holding off big waves. The 200-round belt means you can keep firing for a long time, but plan for a very slow reload, and do not reload in the middle of a crowd.',
+  mg42:'Pure firepower against crowds. Hold fire and sweep, but its long reload means you should switch to a backup gun when the belt runs dry instead of waiting.',
+  m2:'Tearing through heavies, mini bosses and bosses with full damage out to about 100 feet. The best machine gun for big targets, with a very long reload.',
+  barrett:'Long-range kills and lines of enemies, since it punches through several enemies in a row. Slow to fire, so pick your shots and wait for headshots.',
+  svd:'Fast sniper fire. It fires more than twice as fast as the heavy snipers, so use it to pick off a stream of enemies at range.',
+  osv96:'Barrett-level damage at a faster rate of fire. Great for bosses at range and lines of enemies.',
+  cheytac:'The hardest hits below the anti-tank rifle. Use it on bosses and mini bosses from far away, and on long lines of enemies, since it punches through up to 8.',
+  antitank:'Mini bosses, bosses and long lines of enemies. It punches through up to 20 enemies and knocks survivors back 23 feet, which buys you time. Very slow, so make every shot count.',
+  spas:'Close range crowds. Its wide spread hits every enemy in front of you and splashes those near the one you hit. Weak past about 23 feet, so wait for enemies to come in close.',
+  ksg:'Close range, with harder hits than the SPAS-12 and 14 shells per load. Good for heavies that reach you.',
+  coach:'A huge close-range blast, then a quick reload. Save it for enemies right on top of you.',
+  bshot:'Close fights where you want three blasts with every trigger pull. Short range.',
+  aa12:'Clearing a crowd up close. Hold fire for 3 blasts a second. Keep enemies close, since its range is short.',
+  jackfrost:'Slowing down dangerous enemies. Each icicle slows a target more, so freeze bosses and fast runners, then finish them. Its blizzard blast on reload freezes everything within 40 feet.',
+  jet:'Long lines of enemies and bosses. Every round does 200 and punches through many enemies. Remember the short spool-up before each shot.',
+  tetra:'Long-range fights where you want instant kills. Every crystal has a chance to crystallize the target no matter where you aim, and bosses are locked in crystal for 3 seconds.',
+  banshee:'Crowds in front of you. It never misses, hits everything in a wide cone, and stuns within 40 feet, so it stops a rush in its tracks.',
+  symbiote:'Long runs where you can let it grow. It only gets stronger when it kills, but it eats your maximum health to do it, so feed it early and switch away if your health gets low.',
+  rivet:'Pinning tough single targets. Every 10th nail in the same enemy pins it so it cannot move or attack. Great on mini bosses and bosses.',
+  thunder:'Crowds at any distance. Every blast hits everything in front of you for at least 75, harder up close, and chains lightning between enemies.',
+  hades:'Burning down crowds. Everything caught in the flame burns until it dies, and fire spreads between enemies, so one good blast into a crowd keeps working.',
+  hydra:'Several enemies at once. Each trigger pull fires 3 homing rockets that lock onto different enemies, so you do not even need to aim precisely.',
+  blackhole:'Packed crowds. The orb drags everything within 25 feet into one spot, crushes it, then collapses with a big blast. Great before a wave reaches you.',
+  salvo:'Crowds that you want to burn. Each lantern hits for 90, explodes and sets everything within 12 feet on fire.',
+  boomer:'Crowds across the front of you. It slices every enemy on its path out and back for 400, and never needs reloading. Wait for it to come back before throwing again.',
+  katana:'Enemies that reach you. The blade kills anything within 5 feet instantly, and every swing sends out a purple wave that hits harder the farther it travels, up to 35 feet.',
+  quasar:'Surrounded situations. Enemies behind you are sucked in and shredded, and enemies in front are blown away. Bosses are too heavy to be sucked in. Watch the heat, because it overheats if you hold it too long.'};
+const WCATN={pistol:'Pistol',smg:'Submachine gun',rifle:'Assault rifle',lmg:'Machine gun',sniper:'Sniper rifle',shotgun:'Shotgun',mythic:'Mythical or legendary weapon'};
+const NBEST={frag:'Enemies that have reached you and are attacking. It only reaches 5 feet, so wait until they are close.',
+  cryo:'Fast enemies and bosses that have reached you. Slowing them buys time to shoot them or get to cover.',
+  incend:'Crowds closing in. Everything within 15 feet burns until it dies, and the ring of fire keeps catching anything else that comes close for 15 seconds.',
+  jack:'Setting a trap in front of you before enemies arrive. Place it facing where they are coming from, then turn to deal with others.',
+  horizon:'Gathering a crowd into one spot so a shotgun, the Banshee or a launcher hits all of them. It does no damage itself.',
+  fatman:'Emergencies: when you are about to be overrun, or to wipe out a boss instantly. They are expensive, so save them.'};
+function tutLoad(ids){G.lo=ids.map(i=>build(WBY[i]));G.ammo=G.lo.map(w=>[w.mag,w.akimbo?w.mag:0]);G.side=G.lo.map(()=>0);G.w=0;G.jobs=[];G.chargeT=0;G.cd=.3;G.heat={};hud();pauseLabels()}
+const tutStats=id=>statLine(WBY[id]).replace(/^Mastery level[^.]*\.\s*(Attachments \d+ percent stronger\.\s*)?/,'').replace(/^Right now:\s*/,'');
+function tutFireHow(w){return w.katana?'Press Fire to swing the sword. The target is just in front of you, within reach of the blade.':w.boomer?'Press Fire to throw the boomerang, then listen to it loop out across the front of you and come back to your hand.':w.turbine?'Press and hold Fire to run the turbine. Two targets are right behind you, where the intake sucks them in, and one is in front of you, where the exhaust blows it away. Keep holding until one behind you is shredded, and let go if you hear fast beeping, which means it is about to overheat.':w.charge?'Press Fire once. It spools up for a moment before the round goes off.':w.hole?'Press Fire to launch the orb into the group, then listen to it pull them in and collapse.':'Tap Fire for one trigger pull, or hold Fire to keep shooting.'}
+// where to put targets so each weapon shows what it does best
+function tutWSetup(w){const ty=MAPS[G.map].types[0],S=(r,f)=>tutSpawn(ty,r,f,10);
+  if(w.katana)return[S(0,4)];if(w.boomer)return[S(0,20),S(20,22)];
+  if(w.turbine)return[S(180,10),S(165,14),S(0,20)];
+  if(w.spread)return w.hades||w.chain?[S(0,25),S(-10,28),S(10,30)]:[S(0,14),S(-8,16),S(8,17)];
+  if(w.hydra||w.lantern||w.hole||w.sonic)return[S(-15,35),S(0,38),S(15,35)];
+  if(w.gyro)return[S(0,65)];if(w.pierce)return[S(0,40),S(0,55),S(0,70)];
+  return[S(0,w.rng&&w.rng<16?25:40)]}
+function tutWDesc(w){return w.turbine?'straight behind you and straight ahead':w.pierce&&!w.katana?'in a line straight ahead, at 40, 55 and 70 feet, so you can hear a round punch through more than one':w.spread?'grouped just in front of you, so you can hear the spread hit more than one':w.hydra||w.lantern||w.hole||w.sonic?'spread across the front of you, about 35 feet out':w.boomer?'in front of you, along the boomerang\'s path':`straight ahead, ${ft(G.tut.set[0].dist)} feet`}
+function scholarSteps(ids,first){const T=()=>G.tut,out=[];const fresh=ids.filter(i=>!G.tut.taught.has(i)),list=ids.map(i=>WBY[i].name);
+  if(first)out.push({go(){T().lockW=true},t:`Welcome, battle scholar. You picked ${ids.length} weapon${ids.length>1?'s':''}: ${list.join(', ')}. For each one, the tutorial puts it in your hands, reads its stats and the best ways to use it, then has you take down practice targets with it and hear it reload. Until every weapon has been covered, the tutorial chooses which weapon you are holding, so Switch weapon is locked. After the weapons, you will study all six grenades. When it is all done you are free to switch between your weapons, and Pause will have a Change practice weapons button, so you can pick new weapons to study without going back to the main menu. Stats include any attachments and mastery you have on that gun. Press Next to start with the ${list[0]}.`});
+  fresh.forEach((id,k)=>{const W=WBY[id];
+    out.push({w:tutKill(),go(){tutClear();T().lockW=true;const i=G.lo.findIndex(w=>w.id===id);if(i>=0){G.w=i;G.ammo[i]=[G.lo[i].mag,G.lo[i].akimbo?G.lo[i].mag:0];G.jobs=[];G.cd=.3;hud();pauseLabels()}
+        T().set=tutWSetup(G.lo[G.w]);T().taught.add(id)},
+      t:()=>{const w=G.lo[G.w];return `Weapon ${k+1} of ${fresh.length}: the ${W.name}. It is now in your hands. ${WCATN[catOf(id)]}. Stats: ${tutStats(id)} ${W.traits} Best use: ${WBEST[id]||''} Practice targets are ${tutWDesc(w)}. ${tutFireHow(w)} Take one down.`}});
+    if(!(W.katana||W.boomer||W.turbine))out.push({w:'reload',t:()=>`Now press Reload so you know how the ${W.name} sounds when it reloads. A full reload takes ${r1(build(W).reload)} seconds${W.shell?', one shell at a time, so you can stop early with only a few shells loaded':''}. Never start a long reload with enemies right next to you: switch to another gun instead.`})});
+  if(first){
+    NTYPES.forEach((t,k)=>{const N=NADE[t];
+      out.push({w:(ev,d)=>ev==='nade'&&d===t,go(){tutClear();T().lockW=false;T().lockN=true;G.w=Math.min(G.w,G.lo.length-1);G.gt=t;G.gren[t]=99;pauseLabels();timeGo();
+          const ty=MAPS[G.map].types[0],S=(r,f)=>tutSpawn(ty,r,f,10);
+          T().set=t==='frag'?[S(60,3),S(-60,4)]:t==='cryo'?[S(0,6),S(90,7)]:t==='incend'?[S(-45,10),S(45,12)]:t==='jack'?[S(0,12)]:t==='horizon'?[S(30,10),S(-30,11)]:[S(-90,25),S(0,40),S(120,30)]},
+        t:()=>`${k===0?'Weapons complete. You can now switch weapons freely. On to grenades. Grenades go off around you, so there is no aiming, and none of them can ever hurt you. While the grenade lesson runs, the tutorial chooses your grenade type. ':''}Grenade ${k+1} of 6: the ${N.name}. It is now selected. ${N.desc} Best use: ${NBEST[t]} ${t==='jack'?'A target is straight ahead at 12 feet, close to where the box lands. Do not turn before you throw it.':t==='fatman'?'Three targets are spread around you, 25 to 40 feet out.':'Targets are '+(T().set.map(e=>tutWhere(e)).join(' and '))+'.'} Press Grenade to throw it.`})});
+    out.push({end:1,go(){T().lockW=T().lockN=false},t:'Battle scholar training complete. You are free to switch between your weapons and grenades, and targets will keep appearing anywhere around you. To study other weapons, press Pause, then Change practice weapons, and pick up to 4 new ones. The tutorial will teach you about any you have not studied yet. To leave, press Pause, then Quit to main menu.'})}
+  else out.push({end:1,go(){T().lockW=T().lockN=false},t:'Done. You are free to switch between your new weapons, and targets will keep appearing. Pause, then Change practice weapons, any time to pick more.'});
+  return out}
+
+/* ----- the weapon picker ----- */
+const TPK={sel:[],cb:null,from:null};
+const TPKG=[['Pistols','pistol'],['Submachine guns','smg'],['Assault rifles','rifle'],['Machine guns','lmg'],['Sniper rifles','sniper'],['Shotguns','shotgun'],['Mythical and legendary weapons','mythic']];
+function tpickCount(){const n=TPK.sel.length;$('tpick-n').textContent=n?`Picked ${n} of 4: ${TPK.sel.map(i=>WBY[i].name).join(', ')}.`:'Nothing picked yet. Pick at least 1 weapon, up to 4.';
+  document.querySelectorAll('.tpick-s').forEach(s=>s.textContent=n?`${n} of 4 picked`:'Pick at least 1 weapon first')}
+function tpickOpen(cb,from){TPK.cb=cb;TPK.from=from;const box=$('tpick-list');box.textContent='';
+  const prev=(Array.isArray(S.tpick)?S.tpick:P.carry).filter(i=>WBY[i]).slice(0,4);TPK.sel=prev.slice();
+  TPKG.forEach(([gn,c])=>{const h=document.createElement('h3');h.className='grp';h.textContent=gn;box.appendChild(h);
+    WCAT[c].forEach(id=>{const W=WBY[id];if(!W)return;const lb=document.createElement('label');lb.className='check';lb.htmlFor='tpk-'+id;
+      const cbx=document.createElement('input');cbx.type='checkbox';cbx.id='tpk-'+id;cbx.checked=TPK.sel.includes(id);
+      const sp=document.createElement('span');sp.textContent=W.name;const sm=document.createElement('small');sm.textContent=(W.traits.match(/^.*?\.(?=\s|$)/)||[''])[0]+(P.owned&&P.owned.includes&&!P.owned.includes(id)?' Not owned yet.':'');sp.appendChild(sm);
+      cbx.onchange=()=>{if(cbx.checked){if(TPK.sel.length>=4){cbx.checked=false;fx.click();say('You already picked 4 weapons. Uncheck one first.');return}TPK.sel.push(id)}else TPK.sel=TPK.sel.filter(x=>x!==id);
+        tpickCount();say(`${W.name} ${cbx.checked?'picked':'removed'}. ${TPK.sel.length} of 4 picked.${TPK.sel.length===4?' Start training is at the top and bottom of the list.':''}`)};
+      lb.append(cbx,sp);box.appendChild(lb)})});
+  tpickCount();$('tpick').hidden=false;$('tpick').scrollTop=0;setTimeout(()=>$('tpick-h').focus(),60);
+  say(`Pick your practice weapons. Choose up to 4 from every weapon in the game, then press Start training.${prev.length?' Your last picks are already checked.':''}`)}
+document.querySelectorAll('.tpick-go').forEach(b=>b.onclick=()=>{if(!TPK.sel.length){fx.click();say('Pick at least one weapon first.');return}$('tpick').hidden=true;const cb=TPK.cb;TPK.cb=null;if(cb)cb(TPK.sel.slice())});
+$('tpick-back').onclick=()=>{$('tpick').hidden=true;TPK.cb=null;if(TPK.from==='pause'){setTimeout(()=>$('pause-h').focus(),50);say('Paused.')}else say('Back to choose a battlefield.')};
+// pause menu: after the weapon lessons, pick new weapons without leaving the game
+$('b-ptw').onclick=()=>{if(!G||!G.tut||G.tut.lvl!=='scholar'||!G.tut.free)return;
+  tpickOpen(ids=>{const T=G.tut;TUTIDS=ids;S.tpick=ids;saveS();tutLoad(ids);const fresh=ids.filter(i=>!T.taught.has(i));
+    if(fresh.length){const n=T.steps.length;T.steps.push(...scholarSteps(ids,false));T.free=false;$('b-ptw').hidden=true;$('tut-skip').hidden=false;T.i=n-1;resume();tutNext()}
+    else{resume();say(`Practice weapons changed to ${ids.map(i=>WBY[i].name).join(', ')}. You have studied all of them already, so you are free to practice. ${G.lo[0].name} drawn.`)}},'pause')};
+
 $('b-left').onclick=()=>turn(-15);$('b-right').onclick=()=>turn(15);$('b-about').onclick=()=>turn(180);
 /* Fire: tap for one shot. Press and hold (VoiceOver: double-tap and hold) to keep firing. */
 const bf=$('b-fire');let downAt=-1e9,holdTm=0;
@@ -4440,12 +4724,12 @@ $('b-radar').onclick=radar;$('b-status').onclick=status;$('b-pause').onclick=pau
 $('b-resume').onclick=resume;$('b-quit').onclick=quit;$('b-pswitch').onclick=switchW;$('b-pntype').onclick=nadeType;$('b-retry').onclick=()=>begin(lastMap);$('b-menu').onclick=quit;
 document.addEventListener('keydown',e=>{
   if(!G||$('game').hidden)return;
-  if(!$('perks').hidden)return;
+  if(!$('perks').hidden||!$('tpick').hidden)return;
   if(G.paused){if(e.key==='Escape'||e.key==='p'){e.preventDefault();resume()}else if(!$('pause').hidden&&!e.repeat&&(e.key==='q'||e.key==='Q'||e.key==='x'||e.key==='X')){e.preventDefault();(/q/i.test(e.key)?switchW:nadeType)()}return}
   if(G.over)return;
   const k=e.key.toLowerCase();
   if(k===' '||k==='f'){e.preventDefault();if(!e.repeat){fire();G.hold=true}return}
-  const map={arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,e:radar,t:status,escape:pause,p:pause};
+  const map={arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,e:radar,t:status,escape:pause,p:pause,h:tutRepeat,n:()=>$('tut-next').hidden||$('tut-next').click()};
   if(map[k]&&!e.repeat){e.preventDefault();map[k]()}
 });
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if((k===' '||k==='f')&&G)G.hold=false});
