@@ -323,7 +323,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Aiming.</b> Turn left and turn right rotate you 15 degrees. About face spins you all the way around. When an enemy is in your sights you hear a fast high ping. Closer enemies ping higher. The ping sounds the same on every map, and the background ambience dips while something is in your sights so the ping stays clear. You can raise it with the Lock-on ping volume slider in Settings. Facing north plays a bright two-note chime.</p>
     <p><b>Range.</b> Battlefields are big. Enemies appear close, at mid-range, or far off, up to about 160 feet away, and every enemy is announced with its distance in feet. Far-off enemies sound quieter and duller. Pistols and submachine guns are only fully effective to about 40 feet, except the Gyrojet rocket pistol, which works the other way: weak up close and stronger the farther the rocket flies, hardest at its 70-foot limit, and rifles to about 85 to 100 feet; past that they lose damage and accuracy. Shotguns lose power past about 23 feet, and their blast also hurts enemies standing within 10 feet of the one you hit. Hollow point rounds hit much harder within 25 feet but weaker far away. Sniper rifles never lose damage, so they are the tool for long shots. Any round that punches through enemies, like the anti-tank rifle, the Jet rifle, or the M249 with armor piercing rounds, never loses damage to distance either. Attacking enemies are about 4 feet from you.</p>
     <p><b>Headshots.</b> When the lock-on ping turns into a double chirp, the enemy is dead centre. Shots then land as headshots for 60 percent more damage, 30 percent on bosses, with a crisp crack on impact. A reflex sight makes headshots hit much harder. A sniper scope turns most long-range hits into headshots. With both Ramjet ammo upgrades on, a Jet rifle headshot hits for 10,000. A precision scope makes sniper headshots hit far harder and almost every sniper shot land. A grip widens the dead-centre zone and turns some off-centre hits into headshots. Shotguns cannot headshot unless they have a grip.</p>
-    <p><b>Enemy locations</b> reads out every enemy by clock position, distance in feet and health percent. 12 o'clock is straight ahead, 3 o'clock is to your right, 6 o'clock is behind you. After you wound an enemy you also hear its health percent.</p>
+    <p><b>Enemy locations</b> reads out the enemies by clock position, distance in feet and health percent, nearest first. 12 o'clock is straight ahead, 3 o'clock is to your right, 6 o'clock is behind you. To keep big waves short, enemies at the same clock position and within 5 feet of each other are read as one group, like 5 Zombie runners, 2 o'clock, 50 to 54 feet, average health 80 percent. A group of mixed types says what is in it, like 7 zombies, 2 o'clock, 50 to 54 feet: 6 Zombie runners and 1 Zombie. Bosses, mini bosses and mega enemies are always read on their own. With more than 8 groups, the nearest 8 are read in full, plus any boss, and the rest are summed up by direction, like Farther out: 12 at 12 o'clock. After you wound an enemy you also hear its health percent.</p>
     <p><b>Hits and misses.</b> Every bullet that lands makes a short thud from where the enemy is: a soft thud on people and wolves, a metallic tink on drones and mechs, a deep heavy thud on armored brutes, raiders and bosses. A bullet zipping past the enemy means you missed it. A distant ricochet or dirt puff means nothing was there.</p>
     <p><b>Reloading.</b> Guns reload by themselves the moment the magazine runs dry, and when you switch to an empty gun. Press Reload any time to top up early.</p>
     <p><b>Holding fire.</b> Tap Fire for one trigger pull. To keep firing, press and hold the Fire button. With VoiceOver, double-tap and hold. On a keyboard, hold Space. A faint tick on each shot means your magazine is running low.</p>
@@ -3565,11 +3565,42 @@ function stepRockets(dt){
   G.rockets.forEach(r=>{r.t-=dt;if(r.t<=0){fx.rocketHit(norm(r.angle-G.heading));hurtPlayer(12)}});
   G.rockets=G.rockets.filter(r=>r.t>0);
 }
+/* Enemy locations, summarized like kill callouts so big waves stay short.
+   Enemies at the same clock position and within 5 feet of each other are read as one group: "5 Zombie runners,
+   2 o'clock, 50 to 54 feet, average health 80 percent, 2 on fire", or with mixed types "7 zombies, 2 o'clock, 50 to 54
+   feet: 6 Zombie runners and 1 Zombie, ...". Bosses, mini bosses and mega enemies are always read on their own, with
+   every detail. With more than 8 groups, the nearest 8 are read in full (plus any boss, wherever it is) and the rest
+   are summed up by direction, busiest first: "Farther out: 12 at 12 o'clock, 6 at 3 o'clock, plus 9 elsewhere". */
+const RADAR_GAP=5,RADAR_MAX=8;
+const enPlural=n=>/[^aeiou]y$/.test(n)?n.slice(0,-1)+'ies':/wolf$/.test(n)?n.slice(0,-1)+'ves':n+'s';
+// what is happening to an enemy: [words for one enemy, words used when counting a group]
+function enStates(e){const o=[],add=(one,many)=>o.push([one,many||one]);
+  if(e.pinG&&e.pinG.mem.length>1)add(`pinned with ${e.pinG.mem.length-1} other${e.pinG.mem.length>2?'s':''}`,'pinned');
+  if(e.crysT>0)add('locked in crystal');else if(e.frozeT>0)add('frozen solid');else if(e.slowT>0)add('frozen');
+  if(e.stunT>0)add('stunned');if(e.shockT>0)add('shocked');if(e.inf)add('infected');if(e.ice)add(`chilled ${e.ice} of 5`,'chilled');
+  if(e.fireT>0)add('on fire');if(e.acidT>0)add('covered in acid');if(e.bleedT>0)add('bleeding');
+  if(e.crawl)add('crawling, no legs','crawling');else if(e.rdOn)add('on its knees','on their knees');if(e.rdb)add('knocked down');return o}
+const enHp=e=>Math.max(1,Math.round(e.hp/e.maxhp*100));
 function radar(){
   if(!G||G.over)return;
   if(!G.enemies.length){say(G.mode==='practice'?'Next target coming.':'No enemies nearby.');return}
-  const list=[...G.enemies].sort((a,b)=>a.dist-b.dist).map(e=>`${e.mega?'Mega ':''}${EN[e.type].name}, ${clock(norm(e.angle-G.heading))}, ${ft(e.dist)} feet, ${Math.max(1,Math.round(e.hp/e.maxhp*100))} percent${e.pinG&&e.pinG.mem.length>1?`, pinned with ${e.pinG.mem.length-1} other${e.pinG.mem.length>2?'s':''}`:''}${e.crysT>0?', locked in crystal':e.frozeT>0?', frozen solid':e.slowT>0?', frozen':''}${e.stunT>0?', stunned':''}${e.shockT>0?', shocked':''}${e.inf?', infected':''}${e.ice?`, chilled ${e.ice} of 5`:''}${e.fireT>0?', on fire':''}${e.acidT>0?', covered in acid':''}${e.bleedT>0?', bleeding':''}${e.crawl?', crawling, no legs':e.rdOn?', on its knees':''}${e.rdb?', knocked down':''}`);
-  say(list.join('. ')+'.');
+  const all=[...G.enemies].sort((a,b)=>a.dist-b.dist),groups=[];
+  for(const e of all){const T=EN[e.type],ck=clock(norm(e.angle-G.heading)),d=ft(e.dist),solo=T.boss||T.mini||e.mega;
+    const g=!solo&&groups.find(g=>!g.solo&&g.ck===ck&&d-g.d0<=RADAR_GAP);
+    if(g){g.m.push(e);g.d1=d}else groups.push({type:e.type,ck,d0:d,d1:d,m:[e],solo,boss:!!(T.boss||T.mini)})}
+  const say1=g=>{const e=g.m[0];return `${e.mega?'Mega ':''}${EN[e.type].name}, ${g.ck}, ${g.d0} feet, ${enHp(e)} percent${enStates(e).map(x=>', '+x[0]).join('')}`};
+  const sayN=g=>{const n=g.m.length,avg=Math.round(g.m.reduce((a,e)=>a+enHp(e),0)/n),cnt={};
+    g.m.forEach(e=>enStates(e).forEach(([,k])=>cnt[k]=(cnt[k]||0)+1));
+    const kinds={};g.m.forEach(e=>kinds[e.type]=(kinds[e.type]||0)+1);const ks=Object.entries(kinds).sort((a,b)=>b[1]-a[1]);
+    const what=ks.length===1?`${n} ${enPlural(EN[g.type].name)}`:`${n} ${g.m.every(e=>EN[e.type].z)?'zombies':'enemies'}`;
+    const mix=ks.length>1?': '+ks.map(([t,c])=>`${c} ${c>1?enPlural(EN[t].name):EN[t].name}`).join(', ').replace(/, ([^,]*)$/,' and $1')+',':',';
+    return `${what}, ${g.ck}, ${g.d0===g.d1?g.d0:`${g.d0} to ${g.d1}`} feet${mix} ${avg===100?'full health':`average health ${avg} percent`}${Object.entries(cnt).map(([k,c])=>`, ${c===n?(n>2?'all ':'both '):c+' '}${k}`).join('')}`};
+  const near=groups.slice(0,RADAR_MAX),far=groups.slice(RADAR_MAX),bossFar=far.filter(g=>g.boss),rest=far.filter(g=>!g.boss);
+  const parts=[...near,...bossFar].sort((a,b)=>a.d0-b.d0).map(g=>g.m.length>1?sayN(g):say1(g));
+  if(rest.length){const by={};rest.forEach(g=>by[g.ck]=(by[g.ck]||0)+g.m.length);const dirs=Object.entries(by).sort((a,b)=>b[1]-a[1]),top=dirs.slice(0,4),other=dirs.slice(4).reduce((a,x)=>a+x[1],0);
+    parts.push('Farther out: '+top.map(([c,n])=>`${n} at ${c}`).join(', ')+(other?`, plus ${other} elsewhere`:''))}
+  const head=all.length>3?`${all.length} ${all.every(e=>EN[e.type].z)?'zombies':'enemies'}${groups.length<all.length?` in ${groups.length} group${groups.length>1?'s':''}`:''}. `:'';
+  say(head+parts.join('. ')+'.');
 }
 function status(){
   if(!G)return;const w=G.lo[G.w];
@@ -4454,6 +4485,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-04-radargroups',date:'November 4, 2026',title:'Enemy locations groups enemies together',items:['Enemy locations is now summarized like kill callouts, so big waves no longer give you a huge list. Enemies at the same clock position and within 5 feet of each other are read as one group, for example: 5 Zombie runners, 2 o\'clock, 50 to 54 feet, average health 80 percent, 2 on fire. A group of mixed types says what is in it, like 7 zombies, 2 o\'clock, 50 to 54 feet: 6 Zombie runners and 1 Zombie.','With more than 3 enemies, it starts with the total, like 23 zombies in 6 groups.','Bosses, mini bosses and mega enemies are always read on their own, with all their details.','With more than 8 groups, the nearest 8 are read in full, plus any boss wherever it is, and the rest are summed up by direction, busiest first, like Farther out: 12 at 12 o\'clock, 6 at 3 o\'clock, plus 9 elsewhere.']},
   {id:'2026-11-04-stake3',date:'November 4, 2026',title:'Stakes go through more enemies',items:['Vlad the Impaler stakes now go through 3 enemies by default and with Blood crank: the one you kill plus up to 2 living enemies behind it. With Grindstone they go through 6: the one you kill plus up to 5 behind it.','Damage now drops by 15 percent of what is left for each enemy down the stake, instead of 2.5 at a time, so it never runs out: 10, then 8.5, 7.2, 6.1, 5.2 and 4.4.']},
   {id:'2026-11-04-winregen',date:'November 4, 2026',title:'Windows take longer to seal',items:['In the zombie modes, a broken window now seals itself 15 seconds after it breaks, up from 6, so zombies have much longer to pour through. The same goes for windows smashed by flying bodies.']},
   {id:'2026-11-04-radarstop',date:'November 4, 2026',title:'Enemy locations stops time',items:['Enemy locations now stops time while it reads every enemy to you, just like Status, for as long as the whole readout takes. Firing, turning, reloading, throwing a grenade or taking cover starts time again straight away.']},
