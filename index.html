@@ -498,16 +498,19 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <div class="wallet"><b id="shop-coins">0</b><span id="shop-coins-l">silver coins</span></div>
   <button class="btn" id="b-unequip">Unequip all guns<small id="unequip-sub">Put every gun in storage, then choose a fresh loadout</small></button>
   <div class="seg" id="shop-cats" role="group" aria-label="Shop sections">
-    <button data-cat="pistol">Pistols</button>
-    <button data-cat="smg">Submachine guns</button>
-    <button data-cat="rifle">Rifles</button>
-    <button data-cat="lmg">Light machine guns</button>
-    <button data-cat="sniper">Sniper rifles</button>
-    <button data-cat="shotgun">Shotguns</button>
-    <button data-cat="mythic">Legendary<small>Sets of legendary weapons</small></button>
-    <button data-cat="armor">Body armor</button>
     <button data-cat="grenades">Grenades</button>
     <button data-cat="perks">Perks</button>
+    <button data-cat="armor">Body armor</button>
+    <button data-cat="std">Standard weapons<small>Pistols, submachine guns, rifles, light machine guns, sniper rifles and shotguns</small></button>
+    <button data-cat="mythic">Legendary<small>Sets of legendary weapons</small></button>
+  </div>
+  <div class="seg" id="std-sub" role="group" aria-label="Standard weapon type" hidden>
+    <button data-std="pistol">Pistols</button>
+    <button data-std="smg">Submachine guns</button>
+    <button data-std="rifle">Rifles</button>
+    <button data-std="lmg">Light machine guns</button>
+    <button data-std="sniper">Sniper rifles</button>
+    <button data-std="shotgun">Shotguns</button>
   </div>
   <div class="seg" id="leg-sub" role="group" aria-label="Legendary set" hidden>
     <button data-set="mythic">Mythical<small>Rifles, sniper rifles, submachine guns, shotguns, launchers and heavy weapons</small></button>
@@ -4516,6 +4519,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-05-shoporder',date:'November 5, 2026',title:'Tidier Armory shop',items:['The shop sections are now in this order: Grenades, Perks, Body armor, Standard weapons, then Legendary.','Pistols, submachine guns, rifles, light machine guns, sniper rifles and shotguns are now grouped under Standard weapons. Choose Standard weapons to open them, then pick a weapon type.','The shop now opens on Grenades.']},
   {id:'2026-11-04-perk150',date:'November 4, 2026',title:'Toughness and Field medic go up to level 150',items:['Toughness and Field medic in the Armory now go up to level 150 instead of 50, and every level past 50 keeps giving the same boost as levels 21 to 50. Deadeye and Scavenger still max out at level 50.','At level 150, Toughness gives 1,540 maximum health and Field medic heals 705 between waves.','Prices up to level 50 are unchanged. Past level 50, each level costs only 3 percent more than the one before, so the top levels stay within reach.']},
   {id:'2026-11-04-emerald',date:'November 4, 2026',title:'Emerald implosion for the Tetra-prism sniper',items:['New special ability for the Tetra-prism sniper: Emerald implosion, 25,000 silver. Use it or Shattered glass, not both.','Enemies you crystallize become crystalline mines. When another enemy walks into a crystal statue, it implodes, dragging every enemy within 5 feet into it for three quarters of a second, then bursts outward for 60 damage to everything within 5 feet, throwing them like an explosion. Survivors are knocked down and have to get back up.','A burst that reaches another mine sets that one off too, so statues can go off in a chain. Kills count toward the Tetra-prism\'s mastery. Hear it in the Training sound check.']},
   {id:'2026-11-04-radargroups',date:'November 4, 2026',title:'Enemy locations groups enemies together',items:['Enemy locations is now summarized like kill callouts, so big waves no longer give you a huge list. Enemies at the same clock position and within 5 feet of each other are read as one group, for example: 5 Zombie runners, 2 o\'clock, 50 to 54 feet, average health 80 percent, 2 on fire. A group of mixed types says what is in it, like 7 zombies, 2 o\'clock, 50 to 54 feet: 6 Zombie runners and 1 Zombie.','With more than 3 enemies, it starts with the total, like 23 zombies in 6 groups.','Bosses, mini bosses and mega enemies are always read on their own, with all their details.','With more than 8 groups, the nearest 8 are read in full, plus any boss wherever it is, and the rest are summed up by direction, busiest first, like Farther out: 12 at 12 o\'clock, 6 at 3 o\'clock, plus 9 elsewhere.']},
@@ -5265,7 +5269,8 @@ const NIGHTN={gun:'Nightwalker pack machine guns. Vlad the Impaler fires wooden 
 const SAMN={blade:'Samurai pack swords. Swing with the Fire button. You must own the Samurai armor before you can buy the Samurai sword.',armor:'Samurai pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Samurai armor has its own special ability, Dark samurai, listed under it.'};
 const SCAVN={throw:'Scavenger pack throwing weapons. Throw them with the Fire button and they come back to you.',armor:'Scavenger pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep.'};
 const setOf=id=>Object.keys(LSET).find(k=>LSET[k].list&&LSET[k].list.includes(id))||'mythic';
-let curCat='pistol',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade',curNight='gun';
+const GUNCATS=['pistol','smg','rifle','lmg','sniper','shotgun'];let curStd='pistol';
+let curCat='grenades',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade',curNight='gun';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
 const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
@@ -5297,7 +5302,8 @@ function mkItem(list,id,title,text,o={}){
 function setItem(id,meta,act,aria,primary,on){const it=$(id);if(!it)return;it.classList.toggle('owned',!!on);it.querySelector('.meta').textContent=meta;
   const b=it.querySelector('.act');b.textContent=act;b.setAttribute('aria-label',aria);b.classList.toggle('primary',!!primary)}
 $('b-unequip').onclick=()=>{initAudio();if(!P.carry.length)return;P.carry=[];fx.reload(.3);saveP();updateShop();say(`All guns put in storage. Choose Carry into battle on up to ${MAXCARRY} guns before you deploy.`)};
-document.querySelectorAll('#shop-cats button').forEach(b=>b.onclick=()=>{initAudio();curCat=b.dataset.cat;buildShop(true)});
+document.querySelectorAll('#shop-cats button').forEach(b=>b.onclick=()=>{initAudio();if(b.dataset.cat==='std'){curCat=curStd;buildShop(true);say('Standard weapons. Choose a weapon type.')}else{curCat=b.dataset.cat;buildShop(true)}});
+document.querySelectorAll('#std-sub button').forEach(b=>b.onclick=()=>{initAudio();curStd=curCat=b.dataset.std;buildShop(true)});
 document.querySelectorAll('#leg-sub button').forEach(b=>b.onclick=()=>{initAudio();curSet=b.dataset.set;buildShop(true);say(curSet==='mythic'?'Mythical set. Choose a weapon type.':LSET[curSet].note+' Choose a section.')});
 document.querySelectorAll('#scav-sub button').forEach(b=>b.onclick=()=>{initAudio();curScav=b.dataset.scav;buildShop(true);say(SCAVN[curScav])});
 document.querySelectorAll('#sam-sub button').forEach(b=>b.onclick=()=>{initAudio();curSam=b.dataset.sam;buildShop(true);say(SAMN[curSam])});
@@ -5308,7 +5314,9 @@ const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor ha
 const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&(curArm==='mythic'?a.myth:!a.myth));
 const shopArmors=()=>curCat==='armor'?armList():curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):[];
 function buildShop(keepFocus){
-  document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+  const isGun=GUNCATS.includes(curCat);if(isGun)curStd=curCat;
+  document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat==='std'?isGun:b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+  $('std-sub').hidden=!isGun;document.querySelectorAll('#std-sub button').forEach(b=>{const on=b.dataset.std===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   $('arm-sub').hidden=curCat!=='armor';$('leg-sub').hidden=curCat!=='mythic';$('myth-sub').hidden=curCat!=='mythic'||curSet!=='mythic';$('scav-sub').hidden=curCat!=='mythic'||curSet!=='scav';$('sam-sub').hidden=curCat!=='mythic'||curSet!=='samurai';$('night-sub').hidden=curCat!=='mythic'||curSet!=='night';
   document.querySelectorAll('#night-sub button').forEach(b=>{const on=b.dataset.night===curNight;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#scav-sub button').forEach(b=>{const on=b.dataset.scav===curScav;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
