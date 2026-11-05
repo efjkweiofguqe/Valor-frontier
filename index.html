@@ -2264,6 +2264,16 @@ const ATT=[
   {id:'vlfast',name:'Abnormal agility',price:20000,for:'vlad',desc:()=>'Inhumanly quick hands. Cuts the reload time in half, from 5 seconds to 2 and a half. Works with every other Vlad the Impaler attachment.'},
   {id:'vlgrind',name:'Grindstone',price:15000,for:'vlad',alt:'vlad',grp:'special',desc:()=>'Ground to a long, cruel point. A stake that kills can now skewer up to 5 living enemies behind the body instead of 2, pinning 6 together in all, with each one taking 15 percent less than the one before: 10, then 8.5, 7.2, 6.1, 5.2 and 4.4. The heavier stakes slow it to one every 1.4 seconds. Use Grindstone or Blood crank, not both.'},
   {id:'vlcrank',name:'Blood crank',price:15000,for:'vlad',alt:'vlad',grp:'special',desc:()=>'A blood-driven crank on the feed. Fires one stake every 0.4 seconds instead of one every second. Use Grindstone or Blood crank, not both.'},
+  {id:'kwhet1',name:'Whetstone V1',price:8000,for:'katana',desc:()=>'A finer edge that slides through the air. One swing every 0.8 seconds instead of every second.'},
+  {id:'kwhet2',name:'Whetstone V2',price:15000,for:'katana',req:'kwhet1',desc:()=>'A mirror-polished edge. One swing every 0.6 seconds. Buy V1 first.'},
+  {id:'klong',name:'Long blade',price:10000,for:'katana',desc:()=>'A longer nodachi blade. The cut reaches 8 feet in front of you instead of 5, and is 8 feet wide.'},
+  {id:'kspirit1',name:'Spirit focus V1',price:10000,for:'katana',desc:()=>'The energy wave travels 45 feet instead of 35, still rising to 1,000 damage at its full reach.'},
+  {id:'kspirit2',name:'Spirit focus V2',price:18000,for:'katana',req:'kspirit1',desc:()=>'The energy wave travels 55 feet, still rising to 1,000 damage at its full reach. Buy V1 first.'},
+  {id:'ktemper',name:'Tempered steel',price:12000,for:'katana',desc:()=>'The blade bites deep into the biggest enemies. Bosses and mini bosses take 250 from the blade instead of 100.'},
+  {id:'kiaido',name:'Iaido draw',price:20000,for:'katana',grp:'special',desc:()=>'Special ability. Hold Fire for 1 second to charge. A tone rises as it charges, and a bright ring tells you it is ready. Let go to unleash one wave twice as wide and twice as strong, up to 2,000 damage. Tap Fire for a normal swing. With this on, holding Fire charges instead of swinging over and over.'},
+  {id:'kcresc',name:'Crescent echo',price:15000,for:'katana',grp:'special',desc:()=>'Special ability. Every third swing sends a second full-strength wave 0.3 seconds after the first, so you hear a double swing and a double hum.'},
+  {id:'kbushido',name:'Bushido spirit',price:25000,for:'katana',grp:'special',desc:()=>'Special ability. Every 20 kills with the sword builds your focus. A golden chime and a callout tell you it is ready, and your next wave turns golden and spreads in a full circle all around you.'},
+  {id:'kbloss',name:'Cherry blossom storm',price:18000,for:'katana',grp:'special',desc:()=>'Special ability. Every enemy the wave kills bursts into cherry blossom petals with a soft rustle, slowing every enemy within 10 feet of it to half speed for 3 seconds.'},
   {id:'ralens',name:'Magnifying glass',price:15000,for:'ra',desc:()=>'A great lens fixed over the Lantern of Ra that gathers its light into a thin, searing beam about 1 foot wide all the way out to 50 feet. The beam no longer spreads, but it does 35 percent more damage, 13.5 every 0.2 seconds, and burns straight through up to 15 enemies in a line at once, doing full damage to every one of them. Enemies it touches still catch fire and spread it.'},
   {id:'vlstack',name:'Stacking stakes',price:15000,for:'vlad',grp:'special',desc:()=>'Every stake that lands in an enemy makes the next stake hit that enemy harder, by 20 percent of a stake\'s full damage: 10, then 12, 14, 16 and so on, for as long as it lives. The more stakes in it, the harder the next one hits. Great on bosses and anything with a lot of health. Works with Grindstone or Blood crank.'},
   {id:'scyleech',name:'Leeching edge',price:12000,for:'scythe',grp:'special',desc:()=>'The blade drinks from every cut. Every enemy it hits heals you 10 percent of the damage it deals: 7.5 health for one enemy, 75 for ten enemies, on top of the healing from kills.'},
@@ -2306,6 +2316,8 @@ function build(w){
   if(w.id==='vlad'){b.mag=has('vlext')?150:100;b.reload=w.reload*(has('vlfast')?.5:1);b.pinN=has('vlgrind')?5:2;b.cd=has('vlgrind')?1.4:has('vlcrank')?.4:w.cd;b.stack=has('vlstack')}
   if(w.id==='scythe'){b.leech=has('scyleech');b.scyR=has('scythirst')?20:10}
   if(w.id==='ra')b.lens=has('ralens');
+  if(w.id==='katana'){b.cd=has('kwhet2')?.6:has('kwhet1')?.8:w.cd;b.katBlade=has('klong')?8:5;b.katR=has('kspirit2')?55:has('kspirit1')?45:35;b.katBoss=has('ktemper')?250:100;
+    b.iaido=has('kiaido');b.crescent=has('kcresc');b.bushido=has('kbushido');b.blossom=has('kbloss')}
   if(w.id==='boomer'){const lv=has('bmrange2')?2:has('bmrange1')?1:0;b.bmFt=[30,50,80][lv];b.bmR=b.bmFt/3.281;b.bmPath=has('bmcircle')?'circle':has('bmnarrow')?'narrow':'wide';
     b.bmT=[1.5,2.5,3.5][lv]*(b.bmPath==='circle'?1.6:1);b.bmCap=has('bmblades2')?Infinity:has('bmblades1')?60:30}
   // penetration: pen = most enemies one round can pass through, exit = how far it carries past each one
@@ -2899,7 +2911,7 @@ function fire(){
   if(G.lo[G.w].turbine){quasarTrigger(G.lo[G.w]);return}
   if(G.lo[G.w].ra){raTrigger();return}
   if(G.lo[G.w].boomer){boomThrow(G.lo[G.w]);return}
-  if(G.lo[G.w].katana){katanaSwing(G.lo[G.w]);return}
+  if(G.lo[G.w].katana){katanaFire(G.lo[G.w]);return}
   if(G.lo[G.w].scythe){scytheSwing(G.lo[G.w]);return}
   const wi=G.w,A=G.ammo[wi];let w=G.lo[wi];const busy=s=>G.jobs.some(j=>j.wi===wi&&j.side===s);
   let side=0;
@@ -3628,25 +3640,67 @@ function boomThrow(w){
    50 feet a second, passes through every enemy in its path once, and spreads from 5 feet wide at the blade to 35 feet
    wide at its full 35 foot reach. It hits harder the farther it has travelled: 100 at the blade, rising evenly to 1,000. */
 const KAT_R=35/3.281,KAT_SP=50/3.281,KAT_BLADE=5/3.281;
-function katanaSwing(w){
-  G.cd=w.cd;fx.katSwing();vib(40);if(rdOn())RD.slash=.3;
-  const h0=G.heading,pos=e=>{const a=norm(e.angle-h0)*Math.PI/180;return[e.dist*Math.cos(a),e.dist*Math.sin(a)]},gm=gunMult();
-  G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0)return;const[f,l]=pos(e);if(f<0||f>KAT_BLADE||Math.abs(l)>KAT_BLADE/2)return;
-    const T=EN[e.type],rel=norm(e.angle-G.heading);if(T.boss||T.mini)e.hp-=100*gm;else e.hp=0;rdShot(e,{id:'katana'},false);fx.katBlade(rel,e.dist);if(e.hp<=0)fx.kill(rel,e.dist,.12,e.type)});
+/* Samurai sword upgrades. Attachments: Whetstone V1 and V2 (faster swings), Long blade (8 foot reach and cut),
+   Spirit focus V1 and V2 (wave reaches 45 then 55 feet, still climbing to 1,000 at full reach), Tempered steel (250 to bosses).
+   Special abilities: Iaido draw (hold Fire 1 second to charge, release for a wave twice as wide and twice as strong; tap Fire for a normal swing),
+   Crescent echo (every third swing sends a second full wave 0.3 seconds later), Bushido spirit (every 20 kills, the next wave
+   turns golden and spreads in a full circle around you), Cherry blossom storm (each enemy the wave kills slows every enemy within
+   10 feet by half for 3 seconds). */
+const KAT_IAI_T=1,KAT_FOCUS=20,KAT_BLOSS_R=10/3.281,KAT_BLOSS_T=3;
+let firePressed=false;
+function katanaFire(w){
+  if(!w.iaido){katanaSwing(w);return}
+  if(G.kChg)return;
+  G.kChg={t:0,ready:false,w:G.w,snd:iaiCharge()};
+}
+function katTick(dt){const C=G.kChg;if(!C)return;
+  if(G.w!==C.w||G.over){G.kChg=null;return}
+  C.t+=dt;if(!C.ready&&C.t>=KAT_IAI_T){C.ready=true;iaiReady();vib(30)}
+  if(!firePressed){G.kChg=null;try{if(C.snd&&!C.ready)C.snd.gain.setTargetAtTime(0,ctx.currentTime,.03)}catch(e){}
+    katanaSwing(G.lo[G.w],{iai:C.ready})}
+}
+function katanaSwing(w,o={}){
+  G.cd=w.cd;fx.katSwing();vib(o.iai?80:40);if(rdOn())RD.slash=.3;
+  const h0=G.heading,pos=e=>{const a=norm(e.angle-h0)*Math.PI/180;return[e.dist*Math.cos(a),e.dist*Math.sin(a)]},gm=gunMult(),bl=(w.katBlade||5)/3.281;
+  let kills=0;
+  G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0)return;const[f,l]=pos(e);if(f<0||f>bl||Math.abs(l)>bl/2)return;
+    const T=EN[e.type],rel=norm(e.angle-G.heading);if(T.boss||T.mini)e.hp-=(w.katBoss||100)*gm;else e.hp=0;rdShot(e,{id:'katana'},false);fx.katBlade(rel,e.dist);if(e.hp<=0){fx.kill(rel,e.dist,.12,e.type);kills++}});
   processDead('katana');if(G.over)return;
-  const hit=new Set(),wave={h0,r:0};(G.kw=G.kw||[]).push(wave);fx.katWave(KAT_R/KAT_SP);
-  later(dt=>{if(G.over)return true;const r0=wave.r;wave.r=Math.min(KAT_R,r0+KAT_SP*dt);let died=false;
-    G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0||hit.has(e))return;const[f,l]=pos(e);if(f<0||f<r0-.3||f>wave.r)return;
-      const fft=Math.min(35,f*3.281);if(Math.abs(l)*3.281>(5+30*fft/35)/2)return;
-      hit.add(e);const k=fft/35,rel=norm(e.angle-G.heading);e.hp-=(100+900*k)*gm;rdShot(e,{id:'katwave'},false);fx.katGhost(rel,e.dist,k);
-      if(e.hp<=0){fx.kill(rel,e.dist,.06,e.type);died=true}});
-    if(died)processDead('katana');if(G.over)return true;
-    if(wave.r<KAT_R)return false;
+  katFocus(w,kills);
+  let gold=false;if(w.bushido&&G.kGold){gold=true;G.kGold=false}
+  katWave(w,h0,{mul:o.iai?2:1,wid:o.iai?2:1,gold});
+  if(w.crescent){G.kSw=(G.kSw||0)+1;if(G.kSw%3===0)katWave(w,h0,{mul:1,wid:1,gold:false,delay:.3})}
+}
+/* Bushido spirit: kills by the blade and its waves build focus; at 20 the next wave turns golden */
+function katFocus(w,n){if(!w.bushido||!n)return;G.kFoc=(G.kFoc||0)+n;
+  if(G.kFoc>=KAT_FOCUS&&!G.kGold){G.kFoc=0;G.kGold=true;goldChime();say('Bushido spirit ready. Your next wave is golden.')}}
+function katWave(w,h0,o){
+  const Rft=w.katR||35,R=Rft/3.281,pos=e=>{const a=norm(e.angle-h0)*Math.PI/180;return[e.dist*Math.cos(a),e.dist*Math.sin(a)]},gm=gunMult();
+  const hit=new Set(),wave={h0,r:0,R,wid:o.wid||1,gold:!!o.gold};(G.kw=G.kw||[]).push(wave);let wait=o.delay||0;if(!wait)fx.katWave(R/KAT_SP);if(o.gold)goldChime();
+  later(dt=>{if(G.over)return true;if(wait>0){wait-=dt;if(wait<=0){fx.katSwing();fx.katWave(R/KAT_SP)}return false}const r0=wave.r;wave.r=Math.min(R,r0+KAT_SP*dt);let died=0;const dead=[];
+    G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0||hit.has(e))return;let f,l;
+      if(o.gold){f=e.dist;l=0}else{[f,l]=pos(e);if(f<0)return}
+      if(f<r0-.3||f>wave.r)return;
+      const fft=Math.min(Rft,f*3.281);if(!o.gold&&Math.abs(l)*3.281>(5+30*Math.min(35,fft)/35)*(o.wid||1)/2)return;
+      hit.add(e);const k=fft/Rft,rel=norm(e.angle-G.heading);e.hp-=(100+900*k)*(o.mul||1)*gm;rdShot(e,{id:'katwave'},false);fx.katGhost(rel,e.dist,k);
+      if(e.hp<=0){fx.kill(rel,e.dist,.06,e.type);died++;dead.push(e)}});
+    if(died){if(w.blossom)dead.forEach(d=>blossom(d));processDead('katana');if(G.over)return true;katFocus(w,died)}
+    if(wave.r<R)return false;
     G.kw=G.kw.filter(x=>x!==wave);
     const big=[...hit].find(e=>e.hp>0&&(EN[e.type].boss||EN[e.type].mini)&&G.enemies.includes(e));
     if(big&&S.hpcall){const now=performance.now();if(now-G.hpT>1500&&!killQuiet()){G.hpT=now;say(`${big.mega?'Mega ':''}${EN[big.type].name}, ${Math.max(1,Math.round(big.hp/big.maxhp*100))} percent.`)}}
     return true});
 }
+/* Cherry blossom storm: a burst of petals where the enemy fell, slowing everyone within 10 feet by half for 3 seconds */
+function blossom(d){const[x,y]=xy(d.angle,d.dist);petals(norm(d.angle-G.heading),d.dist);
+  G.enemies.forEach(e=>{if(e===d||e.hp<=0)return;const[ex,ey]=xy(e.angle,e.dist);if(Math.hypot(ex-x,ey-y)<=KAT_BLOSS_R)e.blossT=KAT_BLOSS_T})}
+/* sounds for the sword's abilities */
+function iaiCharge(){if(!ctx)return null;try{const d=gunDest(0),t=ctx.currentTime;tone(d,{type:'sine',f:220,f2:880,dur:KAT_IAI_T,vol:.22,attack:.05});
+  noise(d,{dur:KAT_IAI_T,vol:.12,type:'bandpass',f:600,f2:3000,q:2,attack:.1});return d}catch(e){return null}}
+function iaiReady(){if(!ctx)return;const d=gunDest(0);[1,1.5,2].forEach((m,i)=>tone(d,{type:'triangle',f:1320*m,dur:.9,vol:.12-.03*i,attack:.003}))}
+function goldChime(){if(!ctx)return;const d=gunDest(0);[523,659,784,1047].forEach((f,i)=>tone(d,{type:'sine',f,dur:.8,vol:.14,at:i*.06,attack:.004}))}
+function petals(rel,dist){if(!ctx)return;const d=out(rel,dist,.6,enBus);noise(d,{dur:.9,vol:.25,type:'highpass',f:3500,f2:6000,attack:.15});
+  [0,.15,.3].forEach(at=>tone(d,{type:'sine',f:1800+Math.random()*600,dur:.25,vol:.05,at,attack:.01}))}
 function stepBoom(dt){const B=G.boom;if(!B)return;B.t+=dt;const u=Math.min(1,B.t/B.T),p=bmPos(B,u),cur=xy(p.ang,p.d),[ax,ay]=B.prev;
   const sx=cur[0]-ax,sy=cur[1]-ay,L2=sx*sx+sy*sy;let died=false;
   if(B.cut<B.cap)for(const e of G.enemies){if(e.hp<=0||e.hb>0)continue;if(B.hit.has(e)&&B.t-B.hit.get(e)<.35*B.T)continue;   // one slice per pass: it has to come round again for a second
@@ -3820,8 +3874,8 @@ function stepEnemy(e,dt){
   if(e.frozeT>0)e.frozeT-=dt;
   if(e.crysT>0){e.crysT-=dt;e.cue=Math.max(e.cue,.3);if(e.crysT<=0){fx.crysFree(norm(e.angle-G.heading),e.dist);if(EN[e.type].boss)say(`${e.mega?'Mega ':''}${EN[e.type].name} breaks out of the crystal!`)}}
   if(e.rdb){rdDowned(e,dt);return}   // Ragdoll sandbox: knocked flat, it cannot walk or attack until it gets back up
-  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1);
-  if(e.slowT>0)e.slowT-=dt;
+  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1);
+  if(e.slowT>0)e.slowT-=dt;if(e.blossT>0)e.blossT-=dt;
   if(e.hz){e.engaged=false;e.wind=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}
   if(e.hb>0){e.hb-=dt*(slow>0?1:0);e.bt-=dt;const pg=1-e.hb/e.hb0;
     if(e.bt<=0){e.bt=.45;e.kind==='bar'?fx.boardBang(rel,pg,e.dist):fx.glassBang(rel,pg,e.dist);
@@ -3859,7 +3913,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  stepNades(dt);stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;
+  stepNades(dt);stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;katTick(dt);if(G.over)return;
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -4496,9 +4550,11 @@ function rdDraw(){
     c.strokeStyle='#160b1a';c.lineWidth=Math.max(2,sz/3.5);c.lineCap='round';c.beginPath();c.moveTo(a[0]-sz,a[1]-sz*.6*fl);c.lineTo(a[0]-sz*.4,a[1]-sz*.1);c.lineTo(a[0],a[1]);c.lineTo(a[0]+sz*.4,a[1]-sz*.1);c.lineTo(a[0]+sz,a[1]-sz*.6*fl);c.stroke();
     c.fillStyle='#ff3b4a';c.fillRect(a[0]-sz*.18,a[1]-sz*.12,Math.max(1,sz*.12),Math.max(1,sz*.12));c.fillRect(a[0]+sz*.06,a[1]-sz*.12,Math.max(1,sz*.12),Math.max(1,sz*.12))}
   // samurai sword: purple waves rolling out, and the slash of the blade across the bottom of the view
-  for(const wv of(G.kw||[])){if(wv.r<.3)continue;const t=wv.h0*Math.PI/180,fx0=Math.sin(t),fz0=Math.cos(t),hw=(5+30*Math.min(35,wv.r*3.281)/35)/2/3.281,cxw=fx0*wv.r,czw=fz0*wv.r;
+  for(const wv of(G.kw||[])){if(wv.r<.3)continue;const t=wv.h0*Math.PI/180,fx0=Math.sin(t),fz0=Math.cos(t),hw=(5+30*Math.min(35,wv.r*3.281)/35)*(wv.wid||1)/2/3.281,cxw=fx0*wv.r,czw=fz0*wv.r;
+    if(wv.gold){const ring=[];for(let d=0;d<=360;d+=10){const u=d*Math.PI/180,o2=[0,0,0];if(P(Math.sin(u)*wv.r,1,Math.cos(u)*wv.r,o2))ring.push(o2);else ring.push(null)}
+      c.strokeStyle=`rgba(255,205,60,${.8*(1-.5*wv.r/(wv.R||KAT_R))})`;c.lineWidth=Math.max(3,W/80);c.beginPath();let pen=false;ring.forEach(v=>{if(!v){pen=false;return}pen?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]);pen=true});c.stroke();continue}
     const pts=[[-hw,.05],[hw,.05],[hw,2.1],[-hw,2.1]].map(([u,y])=>{const o=[0,0,0];return P(cxw+fz0*u,y,czw-fx0*u,o)?o:null});
-    if(pts.some(v=>!v))continue;const al=.45*(1-.5*wv.r/KAT_R);c.fillStyle=`rgba(160,70,255,${al})`;c.strokeStyle=`rgba(225,170,255,${al+.3})`;c.lineWidth=Math.max(1.5,W/150);
+    if(pts.some(v=>!v))continue;const al=.45*(1-.5*wv.r/(wv.R||KAT_R));c.fillStyle=`rgba(160,70,255,${al})`;c.strokeStyle=`rgba(225,170,255,${al+.3})`;c.lineWidth=Math.max(1.5,W/150);
     c.beginPath();pts.forEach((v,i)=>i?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]));c.closePath();c.fill();c.stroke()}
   if(RD.slash>0){const k=RD.slash/.3;c.strokeStyle=`rgba(235,200,255,${.9*k})`;c.lineWidth=Math.max(4,W/30)*k;c.lineCap='round';c.beginPath();
     c.moveTo(W*.05,H*.95);c.quadraticCurveTo(W*.5,H*(.45+.25*(1-k)),W*.95,H*.7);c.stroke();c.strokeStyle=`rgba(160,70,255,${.6*k})`;c.lineWidth=Math.max(10,W/12)*k;c.stroke()}
@@ -4602,6 +4658,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-05-katana',date:'November 5, 2026',title:'Samurai sword upgrades',items:['The Samurai sword now has attachments. Find them with the Attachments button under the sword in the Armory.','Whetstone V1 and V2 for faster swings, 0.8 then 0.6 seconds. Long blade for an 8 foot reach. Spirit focus V1 and V2 send the wave 45 then 55 feet, still rising to 1,000 at full reach. Tempered steel makes the blade do 250 to bosses and mini bosses.','Special abilities: Iaido draw, hold Fire 1 second then let go for a wave twice as wide and twice as strong. Crescent echo, every third swing sends a second wave. Bushido spirit, every 20 kills your next wave turns golden and spreads all around you. Cherry blossom storm, wave kills slow nearby enemies to half speed for 3 seconds.']},
   {id:'2026-11-05-ralens',date:'November 5, 2026',title:'Magnifying glass for the Lantern of Ra',items:['New attachment for the Lantern of Ra: the Magnifying glass, 15,000 silver. Find it with the Attachments button under the lantern in the Armory.','It focuses the light into a thin beam about 1 foot wide all the way out to 50 feet, does 35 percent more damage, 13.5 every 0.2 seconds, and burns through up to 15 enemies in a line at full damage to each.','Enemies it touches still catch fire, and the fire still spreads.']},
   {id:'2026-11-05-ra',date:'November 5, 2026',title:'New Nightwalker weapon: Lantern of Ra',items:['The Nightwalker pack has a new Lanterns section with the Lantern of Ra, 50,000 silver.','Hold Fire to shine a ray of sunlight out to 50 feet with no damage falloff. The beam starts narrow and spreads to about 10 feet wide at 50 feet, and the light slips between enemies, so it hits every enemy inside it.','Every enemy in the light takes 10 damage every 0.2 seconds and catches fire, then keeps burning for 8 seconds at 10 damage a second.','Fire spreads: a burning enemy that comes within 1 and a half feet of another sets it on fire, and bodies keep burning and spreading fire for 3 seconds after they die.','It overheats after 15 seconds of continuous fire and then cools down for 10. Let go early and it cools as you rest.']},
   {id:'2026-11-05-shoporder',date:'November 5, 2026',title:'Tidier Armory shop',items:['The shop sections are now in this order: Grenades, Perks, Body armor, Standard weapons, then Legendary.','Pistols, submachine guns, rifles, light machine guns, sniper rifles and shotguns are now grouped under Standard weapons. Choose Standard weapons to open them, then pick a weapon type.','The shop now opens on Grenades.']},
@@ -5245,7 +5302,7 @@ const NBEST={frag:'Enemies that have reached you and are attacking. It only reac
   fatman:'Emergencies: when you are about to be overrun, or to wipe out a boss instantly. They are expensive, so save them.'};
 function tutLoad(ids){G.lo=ids.map(i=>build(WBY[i]));G.ammo=G.lo.map(w=>[w.mag,w.akimbo?w.mag:0]);G.side=G.lo.map(()=>0);G.w=0;G.jobs=[];G.chargeT=0;G.cd=.3;G.heat={};hud();pauseLabels()}
 const tutStats=id=>statLine(WBY[id]).replace(/^Mastery level[^.]*\.\s*(Attachments \d+ percent stronger\.\s*)?/,'').replace(/^Right now:\s*/,'');
-function tutFireHow(w){return w.ra?'Press and hold Fire to shine the Lantern of Ra. The targets are spread across the beam ahead of you. Hold the light on them and listen to them catch fire. Let go before 15 seconds or it overheats.':w.scythe?'Press Fire to swing the scythe in a full circle around you. Targets are close to you on every side, so listen to the blade travel round and hit each one.':w.stake?'Tap Fire for one stake. The second target is standing just behind the first, so when the first one dies its body is thrown back and pinned to the second.':w.katana?'Press Fire to swing the sword. The target is just in front of you, within reach of the blade.':w.boomer?'Press Fire to throw the boomerang, then listen to it loop out across the front of you and come back to your hand.':w.turbine?'Press and hold Fire to run the turbine. Two targets are right behind you, where the intake sucks them in, and one is in front of you, where the exhaust blows it away. Keep holding until one behind you is shredded, and let go if you hear fast beeping, which means it is about to overheat.':w.charge?'Press Fire once. It spools up for a moment before the round goes off.':w.hole?'Press Fire to launch the orb into the group, then listen to it pull them in and collapse.':'Tap Fire for one trigger pull, or hold Fire to keep shooting.'}
+function tutFireHow(w){return w.ra?'Press and hold Fire to shine the Lantern of Ra. The targets are spread across the beam ahead of you. Hold the light on them and listen to them catch fire. Let go before 15 seconds or it overheats.':w.scythe?'Press Fire to swing the scythe in a full circle around you. Targets are close to you on every side, so listen to the blade travel round and hit each one.':w.stake?'Tap Fire for one stake. The second target is standing just behind the first, so when the first one dies its body is thrown back and pinned to the second.':w.katana?(w.iaido?'Tap Fire to swing the sword, or hold Fire for 1 second until the bright ring, then let go for an Iaido draw. The target is just in front of you, within reach of the blade.':'Press Fire to swing the sword. The target is just in front of you, within reach of the blade.'):w.boomer?'Press Fire to throw the boomerang, then listen to it loop out across the front of you and come back to your hand.':w.turbine?'Press and hold Fire to run the turbine. Two targets are right behind you, where the intake sucks them in, and one is in front of you, where the exhaust blows it away. Keep holding until one behind you is shredded, and let go if you hear fast beeping, which means it is about to overheat.':w.charge?'Press Fire once. It spools up for a moment before the round goes off.':w.hole?'Press Fire to launch the orb into the group, then listen to it pull them in and collapse.':'Tap Fire for one trigger pull, or hold Fire to keep shooting.'}
 // where to put targets so each weapon shows what it does best
 function tutWSetup(w){const ty=MAPS[G.map].types[0],S=(r,f)=>tutSpawn(ty,r,f,10);
   if(w.ra)return[S(0,20),S(-6,32),S(6,42)];
@@ -5302,8 +5359,8 @@ $('b-left').onclick=()=>turn(-15);$('b-right').onclick=()=>turn(15);$('b-about')
 /* Fire: tap for one shot. Press and hold (VoiceOver: double-tap and hold) to keep firing. */
 const bf=$('b-fire');let downAt=-1e9,holdTm=0;
 bf.addEventListener('pointerdown',e=>{if(!G)return;downAt=performance.now();try{bf.setPointerCapture(e.pointerId)}catch(_){}
-  fire();clearTimeout(holdTm);holdTm=setTimeout(()=>{if(G&&!G.paused&&!G.over)G.hold=true},260)});
-const stopHold=()=>{clearTimeout(holdTm);if(G)G.hold=false};
+  firePressed=true;fire();clearTimeout(holdTm);holdTm=setTimeout(()=>{if(G&&!G.paused&&!G.over)G.hold=true},260)});
+const stopHold=()=>{firePressed=false;clearTimeout(holdTm);if(G)G.hold=false};
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>bf.addEventListener(t,stopHold));
 bf.addEventListener('click',()=>{if(performance.now()-downAt<1200)return;fire()});
 bf.addEventListener('contextmenu',e=>e.preventDefault());
@@ -5316,11 +5373,11 @@ document.addEventListener('keydown',e=>{
   if(G.paused){if(e.key==='Escape'||e.key==='p'){e.preventDefault();resume()}else if(!$('pause').hidden&&!e.repeat&&(e.key==='q'||e.key==='Q'||e.key==='x'||e.key==='X')){e.preventDefault();(/q/i.test(e.key)?switchW:nadeType)()}return}
   if(G.over)return;
   const k=e.key.toLowerCase();
-  if(k===' '||k==='f'){e.preventDefault();if(!e.repeat){fire();G.hold=true}return}
+  if(k===' '||k==='f'){e.preventDefault();if(!e.repeat){firePressed=true;fire();G.hold=true}return}
   const map={arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,e:radar,t:status,escape:pause,p:pause,h:tutRepeat,n:()=>$('tut-next').hidden||$('tut-next').click()};
   if(map[k]&&!e.repeat){e.preventDefault();map[k]()}
 });
-document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if((k===' '||k==='f')&&G)G.hold=false});
+document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k===' '||k==='f'){firePressed=false;if(G)G.hold=false}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();flushSave();flushCloud()}else wakeAudio()});
 addEventListener('pagehide',flushCloud);
 
@@ -5429,7 +5486,7 @@ function updateShop(){
   $('shop-coins').textContent=P.coins;$('shop-coins-l').textContent=P.coins===1?'silver coin':'silver coins';
   catW().forEach(w=>{const it=$('it-'+w.id);if(!it)return;const L=shopLabel(w),owned=P.owned.includes(w.id);
     setItem('it-'+w.id,L.meta,L.act,L.aria,!owned&&!L.locked&&P.coins>=w.price,owned);
-    const at=it.querySelector('.att');if(!at)return;at.hidden=!owned||!!w.katana;const n=attOf(w.id).eq.length;
+    const at=it.querySelector('.att');if(!at)return;at.hidden=!owned;const n=attOf(w.id).eq.length;
     at.innerHTML=`Attachments<small>${n?n+' on':'Ammo, barrels, mags and more'}</small>`;at.setAttribute('aria-label',`${w.name} attachments. ${n?n+' on.':'None on.'}`)});
   MARMUP.forEach(u=>{if(!$('mu-'+u.id))return;const a=ARMBY[u.arm],own=!!P.marm[u.id];
     if(!own&&u.req&&!P.marm[u.req]&&P.armor.own.includes(a.id))setItem('mu-'+u.id,`Price ${u.price} silver · Needs ${MUBY[u.req].name} first`,'Locked',`${u.name}, ${u.price} silver. Locked: buy ${MUBY[u.req].name} first`,false,false);
@@ -5514,7 +5571,7 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   if(b.ra)return[b.lens?`Damage: ${D(RA_HIT*RA_LENS)} every ${RA_TICK} seconds, Magnifying glass on: a thin beam about 1 foot wide out to ${RA_R} feet, burning through up to ${RA_PEN} enemies in a line at full damage.`:`Damage: ${D(RA_HIT)} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet. The beam widens to about 10 feet at the far end.`,`Fire: everything the light touches burns ${RA_BDPS} a second for ${RA_BURN} seconds, spreads to enemies within ${RA_SPREAD} feet, and bodies keep burning for ${RA_CORPSE} seconds.`,`Runs ${RA_DUR} seconds before it overheats, then cools down for ${RA_COOL} seconds. Never needs reloading.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')];
   if(b.scythe)return[`Damage: ${D(SCY_DMG)} to everything within ${b.scyR} feet of you, all the way around, once every ${SCY_T} seconds.`,`Healing: every kill heals you 20 percent of the enemy's full health.${b.leech?` Leeching edge: every hit also heals you 10 percent of its damage, ${n1(D(SCY_DMG)*.1)} health per enemy.`:''}`,'Never needs reloading.',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')];
   if(b.stake){const fo=Array.from({length:b.pinN+1},(_,i)=>n1(D(b.dmg)*Math.pow(.85,i))).join(', then ');return[`Damage: ${D(b.dmg)} per stake to the first enemy. A stake that kills skewers up to ${b.pinN} living ${b.pinN>1?'enemies':'enemy'} within 10 feet behind the body: ${fo}.`,`${n1(1/b.cd)} stakes per second. Belt of ${b.mag}. Reload ${r1(b.reload)} seconds.`,b.stack?'Stacking stakes: every stake in an enemy makes the next one hit it 20 percent of full damage harder.':'',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')].filter(Boolean)}
-  if(b.katana)return[`Blade: anything within 5 feet in front of you dies instantly, except bosses and mini bosses, which take ${D(100)}.`,`Wave: ${D(100)} at the blade, rising evenly to ${D(1000)} at 35 feet, passing through every enemy in its path. 5 feet wide at the blade, 35 feet wide at 35 feet.`,'One swing a second. Never needs reloading.',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')];
+  if(b.katana)return[`Blade: anything within ${b.katBlade} feet in front of you dies instantly, except bosses and mini bosses, which take ${D(b.katBoss)}.`,`Wave: ${D(100)} at the blade, rising evenly to ${D(1000)} at ${b.katR} feet, passing through every enemy in its path.`,`One swing every ${n1(b.cd)} seconds. Never needs reloading.`,b.iaido?`Iaido draw: hold Fire 1 second, then let go for a wave twice as wide and twice as strong, up to ${D(2000)}.`:'',b.crescent?'Crescent echo: every third swing sends a second full wave.':'',b.bushido?`Bushido spirit: every ${KAT_FOCUS} kills, the next wave turns golden and spreads all around you.`:'',b.blossom?'Cherry blossom storm: wave kills slow every enemy within 10 feet to half speed for 3 seconds.':'',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')].filter(Boolean);
   if(b.boomer){out.push(`Damage: ${D(b.dmg)} to every enemy it slices, once on the way out and once on the way back.`,`Flight: ${b.bmPath==='circle'?'a full circle all the way around you':b.bmPath==='narrow'?'a narrow arc just either side of where you face':'a wide loop across the front of you, out on the left and back on the right'}, ${b.bmFt} feet out, about ${n1(b.bmT)} seconds there and back.`,`Slices through ${b.bmCap===Infinity?'every enemy in its path, no limit':'up to '+b.bmCap+' enemies'} per throw.`,'Never needs reloading.',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:''));return out}
   const pulls=1/b.cd,acc=b.acc||w.acc||.92;
   if(b.turbine){out.push('Intake: everything behind you except bosses is sucked in and killed instantly. Exhaust: everything in front of you is blown away, unharmed. Bosses in front are pushed back slowly.',`Runs ${b.qDur} seconds before it overheats, then cools down for ${b.qCool} seconds. Letting go early cools it as you rest.`,`Quasar propulsion: every 30 enemies sucked in, a laser hits everything in a ${QBEAM*2} degree beam straight ahead for ${D(QLASER)}, bosses included.`);if(b.qBeam)out.push(`Devourer beam: every enemy sucked in fires a laser straight ahead for ${D(QBDMG)}, through up to ${QBPEN} enemies in line, at any range, never missing.`);return out}
@@ -5563,7 +5620,7 @@ function renderStats(w){const box=$('mods-stats');box.textContent='';
   const ul=document.createElement('ul');fullStats(w).forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li)});box.appendChild(ul)}
 function statLine(w){const b=build(w);if(b.ra){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${b.lens?`${r1(RA_HIT*RA_LENS)} damage every ${RA_TICK} seconds in a thin beam through up to ${RA_PEN} enemies. Magnifying glass on.`:`${RA_HIT} damage every ${RA_TICK} seconds to every enemy in the light.`}`}if(b.scythe){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: 75 damage to everything within ${b.scyR} feet, one full circle every ${SCY_T} seconds.${b.leech?' Leeching edge on.':''}`}
   if(b.stake){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per stake, skewers up to ${b.pinN} behind a kill. Belt of ${b.mag}. Reload ${r1(b.reload)} seconds. ${r1(1/b.cd)} stakes per second.${b.stack?' Stacking stakes on.':''}`}
-  if(b.katana){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Blade kills instantly within 5 feet. Wave 100 rising to 1,000 at 35 feet.`}if(b.boomer){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per slice, ${b.bmFt} feet out, ${b.bmCap===Infinity?'no limit on':'up to '+b.bmCap} enemies per throw.`}
+  if(b.katana){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Blade kills instantly within ${b.katBlade} feet. Wave 100 rising to 1,000 at ${b.katR} feet. One swing every ${n1(b.cd)} seconds.`}if(b.boomer){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per slice, ${b.bmFt} feet out, ${b.bmCap===Infinity?'no limit on':'up to '+b.bmCap} enemies per throw.`}
   const L=b.mlv,k=P.mast[w.id]||0;
   return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Attachments ${(L-1)*5} percent stronger. Right now: ${r1(b.dmg)} damage per round${b.shots>1?`, ${b.shots}-round bursts`:''}. Magazine ${b.mag}${b.akimbo?' in each gun':''}. Reload ${r1(b.reload)} seconds. ${b.charge?`${r1(b.charge)} second charge-up per shot.`:`${r1(1/b.cd)} trigger pulls per second.`} ${b.pen>1?`Punches through ${b.pen===Infinity?'every enemy in line':'up to '+b.pen+' enemies'}${b.exit<Infinity?`, carrying ${ft(b.exit)} feet past each`:''}. `:''}${b.hades?`Reaches ${ft(b.hR)} feet.`:b.rng&&!(b.pen>1)?`Full damage to ${ft(b.rng)} feet.`:b.spread?`Full damage to ${ft(b.range[0])} feet.`:'No falloff.'}`}
 function modLabel(a,w){const st=attOf(w.id),p=priceOf(a,w);
