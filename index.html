@@ -2277,7 +2277,7 @@ const ATT=[
   {id:'ralens',name:'Magnifying glass',price:15000,for:'ra',desc:()=>'A great lens fixed over the Lantern of Ra that gathers its light into a thin, searing beam about 1 foot wide all the way out to 50 feet. The beam no longer spreads, but it does 35 percent more damage, 13.5 every 0.2 seconds, and burns straight through up to 15 enemies in a line at once, doing full damage to every one of them. Enemies it touches still catch fire and spread it.'},
   {id:'vlstack',name:'Stacking stakes',price:15000,for:'vlad',grp:'special',desc:()=>'Every stake that lands in an enemy makes the next stake hit that enemy harder, by 20 percent of a stake\'s full damage: 10, then 12, 14, 16 and so on, for as long as it lives. The more stakes in it, the harder the next one hits. Great on bosses and anything with a lot of health. Works with Grindstone or Blood crank.'},
   {id:'scyleech',name:'Leeching edge',price:12000,for:'scythe',grp:'special',desc:()=>'The blade drinks from every cut. Every enemy it hits heals you 10 percent of the damage it deals: 7.5 health for one enemy, 75 for ten enemies, on top of the healing from kills.'},
-  {id:'scyspirit',name:'Spirit leech',price:25000,for:'scythe',grp:'special',desc:()=>'Special ability. Instead of lifesteal, this scythe becomes a conduit, stealing strength and agility. The life force harvested now raises damage and attack speed. Kills heal you only 10 percent of the enemy\'s full health instead of 20, but every kill makes the scythe 2 percent stronger, with no limit, and swings it faster, from 2.7 seconds a circle down to 1 second at the fastest. Every 10 kills you hear how strong it has become. If 15 seconds pass without a scythe kill, the power drains away to normal in about a second and a half. A soft heartbeat warns you 3 seconds before.'},
+  {id:'scyspirit',name:'Spirit leech',price:25000,for:'scythe',grp:'special',desc:()=>'Special ability. Instead of lifesteal, this scythe becomes a conduit, stealing strength and agility. The life force harvested now raises damage and attack speed. Kills heal you only 10 percent of the enemy\'s full health instead of 20, but every kill makes the scythe 2 percent stronger, with no limit, and swings it 5 percent faster, from 2.7 seconds a circle down to 1 second at the fastest. Every 10 kills you hear how strong it has become. If 15 seconds pass without a scythe kill, the power drains away to normal in about a second and a half. A soft heartbeat warns you 3 seconds before.'},
   {id:'scythirst',name:'Bloodthirsty energy',price:20000,for:'scythe',grp:'special',desc:()=>'Special ability. The blade trails a wave of red energy that doubles its reach: everything within 20 feet takes the hit instead of 10.'},
   {id:'akimbo',name:'Akimbo',only:HAND,desc:()=>'A second pistol in your other hand, each with its own magazine. Empty one and it reloads while the other keeps firing. The left gun sounds on your left, the right gun on your right.'}
 ];
@@ -3426,9 +3426,9 @@ const SCY_T=2.7,SCY_DMG=75;
 /* Spirit leech (special ability): kill healing drops from 20 to 10 percent, but every kill adds SL_STEP (2 percent) to the scythe's
    damage with no limit, and speeds up the swing (2.7 seconds divided by 1 + 2 percent per kill) down to SL_MIN, 1 second.
    If 15 seconds pass without a scythe kill, the stacks drain away to nothing over 1.5 seconds. */
-const SL_STEP=.02,SL_MIN=1,SL_KEEP=15,SL_DRAIN=1.5;
+const SL_STEP=.02,SL_SPD=.05,SL_MIN=1,SL_KEEP=15,SL_DRAIN=1.5;
 const slN=()=>G&&G.slN>0?G.slN:0;
-const scyTime=w=>w.spLeech?Math.max(SL_MIN,SCY_T/(1+SL_STEP*slN())):SCY_T;
+const scyTime=w=>w.spLeech?Math.max(SL_MIN,SCY_T/(1+SL_SPD*slN())):SCY_T;
 function slGain(n){const before=Math.floor(slN()/10);G.slN=slN()+n;G.slT=0;G.slDrop=0;G.slWarn=false;
   const now=Math.floor(G.slN/10);if(now>before)(g=>setTimeout(()=>{if(G===g&&!G.over)say(`Spirit leech, ${Math.floor(G.slN)} kills. ${Math.round(G.slN*SL_STEP*100)} percent more damage, one swing every ${r1(scyTime({spLeech:true}))} seconds.`)},400))(G)}
 function slTick(dt){if(!(G.slN>0))return;G.slT=(G.slT||0)+dt;
