@@ -74,7 +74,10 @@ label{display:flex;flex-direction:column;gap:6px;font-weight:700}
 select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:8px;padding:10px}
 /* game */
 #game{margin:0 auto;height:100%;display:flex;flex-direction:column;gap:8px;padding-block:8px;box-sizing:border-box}
-.hud{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-variant-numeric:tabular-nums}
+.hud{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-variant-numeric:tabular-nums;padding-right:52px}
+#game{position:relative}
+#b-flock{position:absolute;top:8px;right:0;width:46px;height:46px;min-height:0;padding:0;margin:0;font-size:10px;line-height:1.05;border-radius:8px;z-index:5;background:var(--panel);border:1px solid var(--line);color:inherit}
+#b-flock[aria-checked="true"]{background:#c0392b;color:#fff;border-color:#fff}
 .hud div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 7px;min-width:0}
 .hud b{display:block;font-family:var(--display);font-weight:400;font-size:20px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hud span{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
@@ -668,6 +671,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 <!-- GAME -->
 <section id="game" hidden>
   <h2 class="sr" id="game-h" tabindex="-1">Battle</h2>
+  <button id="b-flock" role="switch" aria-checked="false" aria-label="Fire lock">Fire<br>lock</button>
   <div id="tut" class="tutbox" hidden>
     <p class="tag" id="tut-tag">Tutorial</p>
     <p id="tut-t"></p>
@@ -2858,7 +2862,7 @@ const bossOf=()=>MAPS[G.map].boss,miniOf=()=>MAPS[G.map].mini;
     fx[k]=function(...a){const now=ctx?ctx.currentTime:0;if(now-t0>win){t0=now;n=0}if(++n>max)return;return f.apply(this,a)}})})();
 function newGame(map,mode){
   sortCarry();const lo=(mode==='practice'&&TUTIDS&&TUTIDS.length?TUTIDS:P.carry).map(i=>build(WBY[i])),mh=maxHP();
-  G={map,mode,lo,earned:0,heading:0,hp:mh,maxhp:mh,w:0,ammo:lo.map(w=>[w.mag,w.akimbo?w.mag:0]),side:lo.map(()=>0),jobs:[],hold:false,cd:0,
+  G={map,mode,lo,earned:0,heading:0,hp:mh,maxhp:mh,w:0,ammo:lo.map(w=>[w.mag,w.akimbo?w.mag:0]),side:lo.map(()=>0),jobs:[],hold:false,flock:false,cd:0,
      wave:1,toSpawn:0,spawnT:2,enemies:[],kills:0,lockT:0,lockE:null,beatT:0,ambT:3,breakT:0,paused:false,over:false,
      bossWave:false,bossSpawned:false,minionT:6,cover:false,gt:'frag',nades:[],rockets:[],ncd:0,hpT:0,told:{},
      symMult:1,gren:mode==='practice'?{frag:99,cryo:99,incend:99,jack:99,horizon:99,fatman:99}:{...P.gren},pShots:0,pHits:0,duck:false};
@@ -3399,7 +3403,7 @@ function hurtPlayer(dmg,by){
   if(P.armor.on==='shadow'&&P.marm.batswarm&&!(G.batT>0)){const need=G.maxhp*.5,c0=G.batC||0;G.batC=c0+d;if(G.batC>=need){G.batC=0;batSwarm()}else if(c0<need/2&&G.batC>=need/2){fx.batFlap(0,1);say('Bat swarm half charged.')}}
   if(P.armor.on==='samurai'&&P.marm.darksam&&!(G.oniT>0)){const r0=G.dark||0;G.dark=r0+d;if(G.dark>=110){G.dark=0;darkSamurai()}else if(r0<55&&G.dark>=55){fx.oniSnarl(0,1,.5);say('Dark samurai half charged.')}}
   if(zerk&&P.marm.rage&&!(G.ringT>0)){const r0=G.rage||0;G.rage=r0+d;if(G.rage>=100){G.rage=0;berserkRage()}else if(r0<50&&G.rage>=50){fx.rageRoar();say('Rage half full.')}}
-  if(G.hp<=0&&G.pk&&G.pk.revive&&!G.revUsed){G.revUsed=true;G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);rdBlast(0,0,3,7,{c:'255,255,255'});
+  if(G.hp<=0&&G.pk&&G.pk.revive&&!G.revUsed){G.revUsed=true;setFlock(false);G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);rdBlast(0,0,3,7,{c:'255,255,255'});
     G.enemies.forEach(e=>{if(e.dist<=MELEE+.3&&!EN[e.type].boss){e.dist=Math.max(e.dist,3);e.engaged=false}});
     say(`Second wind! You get back up with ${G.hp} health. Nearby zombies are shoved back.`)}
   hud();if(G.hp<=0)endGame(false);
@@ -3605,9 +3609,9 @@ function reload(){
 function switchW(){
   if(!G||G.over)return;if(G.paused&&$('pause').hidden)return;if(!G.paused)timeStop();
   if(G.lo.length<2){say('You are only carrying the '+G.lo[0].name+'. Carry more guns from the Armory shop.');return}
-  G.w=(G.w+1)%G.lo.length;G.jobs=[];G.chargeT=0;G.cd=.3;fx.reload(.4);
+  G.w=(G.w+1)%G.lo.length;G.jobs=[];G.chargeT=0;G.cd=.3;fx.reload(.4);const flWas=G.flock;setFlock(false);
   const nw=G.lo[G.w],NA=G.ammo[G.w];let auto='';(nw.akimbo?[0,1]:[0]).forEach(s=>{if(NA[s]<=0){startReload(G.w,s);auto=' Empty, reloading.'}});
-  say(`${nw.name}. ${ammoWords()}.${auto}`);hud();pauseLabels();
+  say(`${nw.name}. ${ammoWords()}.${auto}${flWas?' Fire lock off.':''}`);hud();pauseLabels();
 }
 function cover(){
   if(!G||G.paused||G.over)return;timeGo();
@@ -4088,7 +4092,7 @@ function step(dt){
       j.left-=dt;const fr=1-j.left/j.total;while(j.i<j.ev.length&&j.ev[j.i][0]<=fr){j.ev[j.i][1](rdest(j.pan));j.i++}if(j.left<=0)done.push(j)}catch(e){logErr(e,'reload');j.ev=[];j.shell=false;j.left=0;done.push(j)}});   // a broken reload sound never jams the gun: it just finishes
     if(done.length){G.jobs=G.jobs.filter(j=>!done.includes(j));
       done.forEach(j=>{const w=G.lo[j.wi];G.ammo[j.wi][j.side]=w.mag;if(j.shell&&!sgPlay(rdest(0),'pump',{at:.12,rate:SG_PITCH[w.id]||1}))MECH.pump(.12,rdest(0));say(w.akimbo?`${j.side?'Right':'Left'} gun ready.`:`${w.short} ready.`)});hud()}}
-  if(G.hold&&G.cd<=0)fire();
+  if((G.hold||flockLive())&&G.cd<=0)fire();
   if(G.over)return;
   // spawning (in co-op, only the host spawns enemies)
   if(G.coop!=='guest'){
@@ -4833,6 +4837,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-06-flock',date:'November 6, 2026',title:'New: Fire lock',items:['New Fire lock switch in the very top right corner of the battle screen. Press it once and your gun keeps firing on its own, so you can turn left and right freely. Press it again to stop. With a keyboard, press L.','Holding the Fire button still works the same as before. If Fire lock is on and you press and let go of Fire, firing stops and Fire lock turns off.','Fire lock stays on through reloads and keeps firing once the reload is done. On guns that overheat, like the Lantern of Ra and the Dark Quasar Turbine, it waits out the cooldown and starts again by itself.','Fire lock stays on while paused. It turns off when you switch weapons, when you die or when the match ends. It does not work with melee weapons.']},
   {id:'2026-11-05-coopz',date:'November 5, 2026',title:'Zombie siege in co-op',items:['Co-op now has Zombie siege, in Standard, Watch my six and Ragdoll sandbox. Horror hallway stays solo only.','The host picks the zombie mode and every Advanced option: spawn rate, starting wave, Giants only and difficulty. Your teammate hears the choices as you make them. Fog stays your own choice, since it only changes the picture.','Co-op zombie waves have half as many zombies again, and they are tougher.','Each of you gets your own perk machine every fifth wave, with your own silver. The next wave waits until you are both done, and you hear when your teammate is still shopping.','Also in co-op: Campaign, Endless survival and Boss rush, under Mode.']},
   {id:'2026-11-06-kbat',date:'November 6, 2026',title:'New mythical weapon: the Kinetic bat',items:['New mythical melee weapon, the Kinetic bat, 40,000 silver, in the Armory under Legendary, Mythical, in the new Melee weapons section. Press Fire to swing it and knock a special baseball at the nearest enemy you are facing. The ball travels slowly, about 3 feet a second, and you can hear it whistle through the air and follow its target.','Each hit does 15 damage. Then the ball bounces on to the nearest other enemy within 7 feet, and keeps bouncing from enemy to enemy as long as there is always one within 7 feet. Each baseball lasts 15 seconds, then fades away with a soft falling shimmer, or drops to the ground sooner if nobody is in reach. Up to 6 baseballs can be in play at once, and it never needs reloading.','Fastball attachment, 12,000 silver: baseballs travel 4.4 times as fast, 13.2 feet a second.','Batting practice special ability, 20,000 silver: the baseball always hits heads, so every hit and every bounce is a headshot, 24 damage, or 19.5 against bosses.','New sound check button for the Kinetic bat, and the bat is in the Battle scholar tutorial.']},
   {id:'2026-11-05-tip',date:'November 5, 2026',title:'How to play best, on the main menu',items:['The main menu now opens with a short tip: play in landscape with your screen reader on and headphones in, for the full experience.']},
@@ -5274,7 +5279,7 @@ function begin(map){
 document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>begin(b.dataset.map));
 function endGame(won){
   if(G.coop&&!coopFromNet)coopSend({t:'end',won:!!won});
-  G.over=true;G.hold=false;stopAmb();won?fx.win():fx.lose();if(won&&G.mode==='campaign')P.stats.wins++;saveP();flushCloud();
+  G.over=true;G.hold=false;setFlock(false);stopAmb();won?fx.win():fx.lose();if(won&&G.mode==='campaign')P.stats.wins++;saveP();flushCloud();
   let msg;
   if(G.mode==='zombies'&&G.zm==='hall'){const B=P.bestZH,K=zKey(G.map,G.zd,G.zg),n=hallScore(),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
     msg=`${ZDIFF[G.zd].n} horror hallway score ${n}: ${hallFt()} feet walked and ${G.kills} kills, reaching wave ${G.wave}. ${nb?'New best! ':`Best: ${best}. `}`}
@@ -5288,7 +5293,7 @@ function endGame(won){
 }
 function pause(){if(!G||G.over||G.paused)return;timeGo();G.paused=true;pauseLabels();flushSave();G.hold=false;if(ambBus)ambBus.gain.value=0;$('pause').hidden=false;setTimeout(()=>$('pause-h').focus(),50);say(coopFromNet?'Your teammate paused the game.':'Paused.');if(G.coop&&!coopFromNet)coopSend({t:'pause'})}
 function resume(){if(!G)return;wakeAudio();G.paused=false;if(ambBus&&S.amb)ambBus.gain.value=S.avol;$('pause').hidden=true;setTimeout(()=>$('b-fire').focus(),50);say(coopFromNet?'Your teammate resumed. Back to the fight.':'Resumed.');if(G.coop&&!coopFromNet)coopSend({t:'resume'})}
-function quit(){if(G&&G.coop&&!G.over&&!coopFromNet)coopLeave(true);if(G){G.over=true}stopAmb();G=null;flushCloud();show('menu')}
+function quit(){setFlock(false);if(G&&G.coop&&!G.over&&!coopFromNet)coopLeave(true);if(G){G.over=true}stopAmb();G=null;flushCloud();show('menu')}
 /* ---------- Tutorial/practice ----------
    The practice range is now a guided tutorial with three levels, picked from a dropdown under Mode:
    basic (every button, one at a time), inter (every enemy, its stats and how to handle it) and scholar (any 4 weapons
@@ -5543,11 +5548,25 @@ $('b-ptw').onclick=()=>{if(!G||!G.tut||G.tut.lvl!=='scholar'||!G.tut.free)return
     else{resume();say(`Practice weapons changed to ${ids.map(i=>WBY[i].name).join(', ')}. You have studied all of them already, so you are free to practice. ${G.lo[0].name} drawn.`)}},'pause')};
 
 $('b-left').onclick=()=>turn(-15);$('b-right').onclick=()=>turn(15);$('b-about').onclick=()=>turn(180);
+/* Fire lock: a small switch in the top right corner. On, the gun keeps firing as if Fire were held down.
+   Stays on through reloads, overheat cooldowns and pausing. Turns off when you press and let go of Fire,
+   switch weapons, die or the match ends. Does nothing with melee weapons. Keyboard: L. */
+const isMelee=w=>!!(w&&(w.kbat||w.katana||w.scythe));
+function setFlock(on){if(G)G.flock=!!on;const b=$('b-flock');if(b)b.setAttribute('aria-checked',on?'true':'false')}
+function toggleFlock(){if(!G||G.over)return;
+  if(G.flock){setFlock(false);fx.click();say('Fire lock off.');return}
+  if(isMelee(G.lo[G.w])){fx.click();say('Fire lock does not work with melee weapons.');return}
+  setFlock(true);fx.click();vib(30);say('Fire lock on.')}
+function flockLive(){if(!G||!G.flock||G.paused||G.over)return false;const w=G.lo[G.w];
+  if(isMelee(w)){setFlock(false);return false}
+  if((w.ra&&G.raCool>0)||(w.turbine&&G.qCool>0)){if(!G.flWait){G.flWait=true;say('Overheated. Fire lock will start again when it cools down.')}return false}
+  G.flWait=false;return true}
+$('b-flock').addEventListener('click',toggleFlock);
 /* Fire: tap for one shot. Press and hold (VoiceOver: double-tap and hold) to keep firing. */
 const bf=$('b-fire');let downAt=-1e9,holdTm=0;
 bf.addEventListener('pointerdown',e=>{if(!G)return;downAt=performance.now();try{bf.setPointerCapture(e.pointerId)}catch(_){}
   firePressed=true;fire();clearTimeout(holdTm);holdTm=setTimeout(()=>{if(G&&!G.paused&&!G.over)G.hold=true},260)});
-const stopHold=()=>{firePressed=false;clearTimeout(holdTm);if(G)G.hold=false};
+const stopHold=e=>{const was=firePressed;firePressed=false;clearTimeout(holdTm);if(G){G.hold=false;if(was&&G.flock&&e&&e.type==='pointerup'){setFlock(false);say('Fire lock off.')}}};
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>bf.addEventListener(t,stopHold));
 bf.addEventListener('click',()=>{if(performance.now()-downAt<1200)return;fire()});
 bf.addEventListener('contextmenu',e=>e.preventDefault());
@@ -5561,10 +5580,10 @@ document.addEventListener('keydown',e=>{
   if(G.over)return;
   const k=e.key.toLowerCase();
   if(k===' '||k==='f'){e.preventDefault();if(!e.repeat){firePressed=true;fire();G.hold=true}return}
-  const map={arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,e:radar,t:status,escape:pause,p:pause,h:tutRepeat,n:()=>$('tut-next').hidden||$('tut-next').click()};
+  const map={l:toggleFlock,arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,e:radar,t:status,escape:pause,p:pause,h:tutRepeat,n:()=>$('tut-next').hidden||$('tut-next').click()};
   if(map[k]&&!e.repeat){e.preventDefault();map[k]()}
 });
-document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k===' '||k==='f'){firePressed=false;if(G)G.hold=false}});
+document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k===' '||k==='f'){const was=firePressed;firePressed=false;if(G){G.hold=false;if(was&&G.flock){setFlock(false);say('Fire lock off.')}}}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();flushSave();flushCloud()}else wakeAudio()});
 addEventListener('pagehide',flushCloud);
 
