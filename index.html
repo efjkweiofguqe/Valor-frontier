@@ -166,12 +166,13 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <p class="tag">Play together</p>
   <h2 id="coop-h" tabindex="-1">Co-op</h2>
   <button class="btn back" data-go="menu">Back</button>
-  <p class="note">Team up with one friend online, anywhere in the world. You stand back to back on the same battlefield against the same enemies, each with your own weapons, armor and upgrades. There are more enemies, and they are tougher. You both earn silver for every kill. You hear your teammate's gunfire from the direction they are facing, and Status tells you their health. If either of you falls, the battle ends for both of you. Pausing pauses it for both of you.</p>
+  <p class="note">Team up with one friend online, anywhere in the world. You stand back to back on the same battlefield against the same enemies, each with your own weapons, armor and upgrades. Play Campaign, Endless survival, Boss rush or Zombie siege. Zombie siege works in Standard, Watch my six and Ragdoll sandbox, with all of its Advanced options, and each of you gets your own perk machine. Horror hallway is solo only. There are more enemies, and they are tougher. You both earn silver for every kill. You hear your teammate's gunfire from the direction they are facing, and Status tells you their health. If either of you falls, the battle ends for both of you. Pausing pauses it for both of you.</p>
   <p id="coop-st" class="note" role="status" aria-live="polite"></p>
   <h3 class="acct-h" id="coop-opts-h">Host a match</h3>
   <div id="coop-opts" class="field">
       <label class="flabel" for="coop-mode">Mode</label>
-      <select id="coop-mode"><option value="campaign">Campaign</option><option value="endless">Endless survival</option><option value="bossrush">Boss rush</option></select>
+      <select id="coop-mode"><option value="campaign">Campaign</option><option value="endless">Endless survival</option><option value="bossrush">Boss rush</option><option value="zombies">Zombie siege</option></select>
+      <div id="coop-z"></div>
       <label class="flabel" for="coop-map">Battlefield</label>
       <select id="coop-map"><option value="rainforest">Verdant Hollow</option><option value="alien">Xeth Prime</option><option value="tundra">Frostfang Tundra</option><option value="meme">Goofy Gulch</option><option value="city">Ashgrave</option></select>
   </div>
@@ -758,6 +759,8 @@ document.querySelectorAll('.seg[data-key]').forEach(g=>{const k=g.dataset.key,bt
 const ZSPAWN={normal:{n:'Normal',x:1,br:6},fast:{n:'Fast',x:1.5,br:4.5},faster:{n:'Faster',x:2,br:3},hyper:{n:'Hyperspeed',x:8,br:1.5}},ZBATCH=50;
 const ZDIFF={normal:{n:'Normal',hp:.05,dmg:0,pay:1},hard:{n:'Hard',hp:.08,dmg:0,pay:1.25},hardcore:{n:'Hardcore',hp:.12,dmg:0,pay:1.6},hellish:{n:'Hellish',hp:.18,dmg:.06,pay:2}};
 const zSp=()=>ZSPAWN[S.zspawn]||ZSPAWN.normal,zDf=()=>ZDIFF[S.zdiff]||ZDIFF.normal;
+/* in battle: the match's own settings, so both co-op phones use the host's choices */
+const zSpG=()=>ZSPAWN[G&&G.zs]||zSp(),zDfG=()=>ZDIFF[G&&G.zd]||zDf();
 const zKey=(map,zd,g)=>(zd&&zd!=='normal'&&ZDIFF[zd]?map+'|'+zd:map)+(g?'#g':'');
 const zKeyOk=k=>{const [m,d]=k.replace(/#g$/,'').split('|');return !!MAPS[m]&&(d==null||(!!ZDIFF[d]&&d!=='normal'))};
 const ZMAXSTART=150,zStart=()=>Math.max(1,Math.min(ZMAXSTART,Math.round(+S.zstart||1)));
@@ -2832,8 +2835,8 @@ function newGame(map,mode){
      wave:1,toSpawn:0,spawnT:2,enemies:[],kills:0,lockT:0,lockE:null,beatT:0,ambT:3,breakT:0,paused:false,over:false,
      bossWave:false,bossSpawned:false,minionT:6,cover:false,gt:'frag',nades:[],rockets:[],ncd:0,hpT:0,told:{},
      symMult:1,gren:mode==='practice'?{frag:99,cryo:99,incend:99,jack:99,horizon:99,fatman:99}:{...P.gren},pShots:0,pHits:0,duck:false};
-  if(coopRole&&mode!=='practice'&&mode!=='zombies'){G.coop=coopRole;G.eid=0}   // co-op: who runs the enemies (host) and who follows along (guest)
-  if(mode==='zombies'){loadZRec();G.zm=['standard','six','hall','ragdoll'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.zg=!!S.zgiants;G.pk={};G.fenceT=4;G.zStart=zStart();G.wave=G.zStart;
+  if(coopRole&&mode!=='practice'&&!(mode==='zombies'&&S.zmode==='hall')){G.coop=coopRole;G.eid=0}   // co-op: who runs the enemies (host) and who follows along (guest)
+  if(mode==='zombies'){loadZRec();G.zm=['standard','six','hall','ragdoll'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.zs=ZSPAWN[S.zspawn]?S.zspawn:'normal';G.zg=!!S.zgiants;G.pk={};G.fenceT=4;G.zStart=zStart();G.wave=G.zStart;
     if(G.zm==='hall'){G.win=null;G.pos=0;G.spd=HALLV;G.stepT=0;G.stepSide=0;G.mileAt=100/3.281;G.stopped=false;G.moveSayT=0}
     else G.win=(G.zm==='six'?[0,180]:[0,90,180,270]).map(a=>({a,broken:false,regenT:0,bang:0,busy:0,bt:0}))}
   rdReset();
@@ -2880,11 +2883,12 @@ function startWave(){
   G.pools=[];
   if(G.statues&&G.statues.length){const n=G.statues.length;G.statues=[];setTimeout(()=>{if(ctx)fx.crumble(n)},1200)}
   const w=G.wave,end=G.mode==='endless',sym='';
+  G.toldShop=0;G.waitWave=false;if(G.coop==='host')coopSend({t:'wv',w});   // co-op: the guest starts each wave when the host does
   G.spawnT=2.5;G.minionT=6;G.bossSpawned=false;fx.horn();
   if(G.mode==='bossrush'){G.bossWave=false;G.miniDue=false;G.mega=w%7===0;G.toSpawn=brCount(w);G.maxAlive=G.toSpawn;G.spawnT=3;
     say(sym+`Boss rush, wave ${w}. ${G.mega?'Mega boss wave! ':''}${G.toSpawn>1?G.toSpawn+' bosses':'One boss'} incoming${G.mega?', one of them a mega boss with double health':''}.`);return}
-  if(G.mode==='zombies'){G.bossWave=false;G.miniDue=false;G.zMegaDue=w%10===0;G.zBossDue=!G.zg&&w%5===0;G.zAncDue=w%50===0;G.toSpawn=Math.round(4*w);
-    G.maxAlive=Infinity;G.zBatch=0;G.spawnT=(G.zm==='hall'?1:3)/zSp().x;   // no limit on zombies alive at once: the whole wave can be on you
+  if(G.mode==='zombies'){G.bossWave=false;G.miniDue=false;G.zMegaDue=w%10===0;G.zBossDue=!G.zg&&w%5===0;G.zAncDue=w%50===0;G.toSpawn=Math.round(4*w*(G.coop?1.5:1));   // co-op: half as many again
+    G.maxAlive=Infinity;G.zBatch=0;G.spawnT=(G.zm==='hall'?1:3)/zSpG().x;   // no limit on zombies alive at once: the whole wave can be on you
     say(sym+`Wave ${w}. ${G.toSpawn} ${G.zg?(G.toSpawn>1?'giant zombies':'giant zombie'):'zombies'}${G.zm==='hall'?' ahead':''}${zBossWords()}.`);return}
   G.mega=end&&w%7===0;G.bossWave=end?(w%5===0||G.mega):w===MAXW;G.miniDue=!G.bossWave;
   if(!G.bossWave){G.toSpawn=3+Math.min(w,10)*2;G.maxAlive=Math.min(2+Math.floor(w/2),end?6:4)+(S.diff>1.5?1:0);if(G.coop){G.toSpawn=Math.round(G.toSpawn*1.5);G.maxAlive+=2}}   // co-op: half as many again, and 2 more at once
@@ -2900,7 +2904,7 @@ function spawn(type,mega){
   const rel=G.tutR!=null?G.tutR:boss&&!br?(Math.random()*120-60):(Math.random()*2-1)*spread;
   let hp=t.hp*(S.diff>1.5?1.5:1),dm=1,sm=1,am=1;
   if(G.mode==='endless')hp*=1+.08*(G.wave-1);
-  if(G.mode==='zombies'){hp*=1+zDf().hp*(G.wave-1);dm*=1+zDf().dmg*(G.wave-1)}
+  if(G.mode==='zombies'){hp*=1+zDfG().hp*(G.wave-1);dm*=1+zDfG().dmg*(G.wave-1)}
   if(mega)hp*=G.mode==='zombies'?5:2;   // zombie mega giants have five times a giant's health, other mega bosses double
   // boss rush starts soft and climbs far faster than endless
   if(br){const w=G.wave-1;hp*=.35*Math.pow(1.25,w);dm=.5*Math.pow(1.12,w);sm=Math.min(1.8,.75*Math.pow(1.04,w));am=Math.max(.45,1.15*Math.pow(.96,w))}
@@ -3330,7 +3334,7 @@ function processDead(src){
   let pay=0,lv='',heal='',healN=0;
   if(src==='symbiote'){lv+=symGrow(dead.length);const sw=G.lo.find(x=>x.id==='symbiote');
     if(sw&&sw.vamp){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal=` Plus ${got} health.`;healN+=got;fx.symHeal();hud()}}}
-  const msg=dead.map(e=>{G.kills++;const t=EN[e.type];pay+=e.mega?(G.mode==='zombies'?Math.round(5*t.reward*paySc()*zDf().pay):Math.round(250*paySc()/(1+.08*6))):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDf().pay:1));if(src!=='mate'){P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++}
+  const msg=dead.map(e=>{G.kills++;const t=EN[e.type];pay+=e.mega?(G.mode==='zombies'?Math.round(5*t.reward*paySc()*zDfG().pay):Math.round(250*paySc()/(1+.08*6))):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDfG().pay:1));if(src!=='mate'){P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++}
     if(src&&WBY[src]){const b=mlevel(src);P.mast[src]=(P.mast[src]||0)+1;const a=mlevel(src);
       if(a>b){lv=` ${WBY[src].name} mastery level ${a}. Attachments stronger.`;const i=G.lo.findIndex(x=>x.id===src);if(i>=0)G.lo[i]=build(WBY[src])}}
     return (src==='fence'?'Fried! ':'')+(e.crys?'Crystallized! ':e.hk?'Headshot! ':'')+(t.boss?`${e.mega?'Mega ':''}${t.name} is down!`:`${t.name} down.`)});
@@ -3915,7 +3919,7 @@ function buyPerk(p){
   say(`${p.name} bought. ${P.coins} silver left.`);
 }
 function closePerks(){
-  if(!G)return;$('perks').hidden=true;wakeAudio();G.paused=false;if(ambBus&&S.amb)ambBus.gain.value=S.avol;
+  if(!G)return;$('perks').hidden=true;wakeAudio();G.paused=false;if(G.coop)coopSend({t:'pk',o:0});if(ambBus&&S.amb)ambBus.gain.value=S.avol;
   setTimeout(()=>$('b-fire').focus(),50);say(`Back to the fight. Wave ${G.wave+1} is coming.`);
 }
 $('b-perks-done').onclick=closePerks;
@@ -3977,7 +3981,11 @@ function step(dt){
   if(G.over)return;
   rdStep(dt);
   if(G.mode==='zombies'&&G.zm==='hall')stepHall(dt);
-  if(G.breakT>0){G.breakT-=dt;if(G.breakT<=0){G.wave++;G.lastUsed=false;startWave()}return}
+  if(G.breakT>0){G.breakT-=dt;if(G.breakT<=0){
+      if(G.coop==='host'&&G.mateShop&&coopOn()){G.breakT=.25;if(!G.toldShop){G.toldShop=1;say(`Waiting for ${C.mate||'your teammate'} to finish at the perk machine.`)}}
+      else if(G.coop==='guest'&&coopOn()){G.breakT=0;G.waitWave=true;if(G.mateShop&&!G.toldShop){G.toldShop=1;say(`Waiting for ${C.mate||'your teammate'} to finish at the perk machine.`)}}
+      else{G.wave++;G.lastUsed=false;startWave()}}return}
+  if(G.waitWave)return;   // co-op guest: wave cleared, waiting for the host to start the next one
   if(G.jobs.length){const done=[];
     G.jobs.forEach(j=>{try{if(j.shell){j.left-=dt;if(j.left<=0){const A=G.ammo[j.wi],sw=G.lo[j.wi];A[j.side]=Math.min(sw.mag,A[j.side]+1);if(!sgShell(rdest(j.pan),SG_PITCH[sw.id]||1))shellIn(rdest(j.pan));
         if(A[j.side]>=sw.mag)done.push(j);else j.left+=j.per;hud()}return}
@@ -3993,12 +4001,12 @@ function step(dt){
   else if(G.mode==='bossrush'){
     if(G.toSpawn>0&&G.spawnT<=0){spawn(G.wave===1&&G.toSpawn===brCount(1)?bossOf():BOSSES[Math.floor(Math.random()*BOSSES.length)],G.mega&&G.toSpawn===brCount(G.wave));G.toSpawn--;G.spawnT=6}
   }else if(G.mode==='zombies'){
-    if(G.zAncDue&&G.spawnT<=0){G.zAncDue=false;spawn('zancient');G.spawnT=4/zSp().x}
-    else if(G.zMegaDue&&G.spawnT<=0){G.zMegaDue=false;spawn('zgiant',true);G.spawnT=2.5/zSp().x}
-    else if(G.zBossDue&&G.spawnT<=0){G.zBossDue=false;spawn('zgiant');G.spawnT=2.5/zSp().x}
+    if(G.zAncDue&&G.spawnT<=0){G.zAncDue=false;spawn('zancient');G.spawnT=4/zSpG().x}
+    else if(G.zMegaDue&&G.spawnT<=0){G.zMegaDue=false;spawn('zgiant',true);G.spawnT=2.5/zSpG().x}
+    else if(G.zBossDue&&G.spawnT<=0){G.zBossDue=false;spawn('zgiant');G.spawnT=2.5/zSpG().x}
     else if(G.toSpawn>0&&G.spawnT<=0&&G.enemies.length<G.maxAlive){const r=Math.random(),w=G.wave,pb=Math.min(.25,Math.max(0,(w-4)*.02)),pr=Math.min(.35,.1+w*.01);
-      spawn(G.zg?'zgiant':r<pb?'zbrute':r<pb+pr?'zrunner':'zombie');G.toSpawn--;G.spawnT=(G.zm==='hall'?Math.max(.4,1.3-w*.03):Math.max(.6,2.4-w*.04))/zSp().x;
-      G.zBatch=(G.zBatch||0)+1;if(G.zBatch%ZBATCH===0&&G.toSpawn>0)G.spawnT+=zSp().br}   // a short breather after every 50
+      spawn(G.zg?'zgiant':r<pb?'zbrute':r<pb+pr?'zrunner':'zombie');G.toSpawn--;G.spawnT=(G.zm==='hall'?Math.max(.4,1.3-w*.03):Math.max(.6,2.4-w*.04))/zSpG().x;
+      G.zBatch=(G.zBatch||0)+1;if(G.zBatch%ZBATCH===0&&G.toSpawn>0)G.spawnT+=zSpG().br}   // a short breather after every 50
   }else if(!G.bossWave){
     if(G.miniDue&&G.spawnT<=0&&G.toSpawn<=Math.ceil((3+Math.min(G.wave,10)*2)/2)){G.miniDue=false;spawn(miniOf());G.spawnT=3.5}
     else if(G.toSpawn>0&&G.spawnT<=0&&G.enemies.length<G.maxAlive){spawn(G.map==='meme'?memeType(G.wave):Math.random()<Math.min(.6,.2+G.wave*.1)?ty[1]:ty[0]);G.toSpawn--;G.spawnT=3.5}
@@ -4063,6 +4071,7 @@ function step(dt){
     let bonus='';if(G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'){const b=(G.mode==='bossrush'?6:2)*G.wave*(G.pk&&G.pk.gold?2:1);P.coins+=b;G.earned+=b;P.stats.earned+=b;saveP();bonus=` Survival bonus, plus ${b} silver.`}
     const perkNow=G.mode==='zombies'&&G.wave%5===0&&perksHere().some(p=>!G.pk[p.id]);   // no point opening the machine once every perk is owned
     say(`Wave ${G.wave} clear. ${gain>0?'Health plus '+Math.round(gain)+'. ':''}All weapons reloaded.${bonus}${perkNow?' The perk machine is opening.':''}`);G.breakT=G.mode==='zombies'&&G.zm==='hall'&&!perkNow?2.5:5;hud();
+    if(G.coop&&G.mode==='zombies')coopSend({t:'pk',o:perkNow?1:0});   // co-op: tell your teammate whether you are going to the perk machine
     if(perkNow){const g=G;setTimeout(()=>{if(G===g&&!G.over)openPerks()},2600)}
   }
 }
@@ -4728,6 +4737,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-05-coopz',date:'November 5, 2026',title:'Zombie siege in co-op',items:['Co-op now has Zombie siege, in Standard, Watch my six and Ragdoll sandbox. Horror hallway stays solo only.','The host picks the zombie mode and every Advanced option: spawn rate, starting wave, Giants only and difficulty. Your teammate hears the choices as you make them. Fog stays your own choice, since it only changes the picture.','Co-op zombie waves have half as many zombies again, and they are tougher.','Each of you gets your own perk machine every fifth wave, with your own silver. The next wave waits until you are both done, and you hear when your teammate is still shopping.','Also in co-op: Campaign, Endless survival and Boss rush, under Mode.']},
   {id:'2026-11-05-tip',date:'November 5, 2026',title:'How to play best, on the main menu',items:['The main menu now opens with a short tip: play in landscape with your screen reader on and headphones in, for the full experience.']},
   {id:'2026-11-05-coop',date:'November 5, 2026',title:'New: Co-op with a friend online',items:['New Co-op button on the main menu. Team up with one friend anywhere in the world. One of you creates a room and gets a 5 number code, and the other joins with that code.','You stand back to back on the same battlefield, against the same enemies, each with your own weapons, armor and upgrades. Co-op works in Campaign, Endless survival and Boss rush.','There are half as many enemies again, and they are tougher. Each enemy goes after one of you. When one is attacking your teammate, you hear that it is attacking your teammate instead of you.','You hear your teammate\'s gunfire from the direction they are facing. Status also tells you their health and which way they face, and you get a warning when they are low on health.','Kill silver is shared: you both earn silver for every kill, whoever made it.','Pausing pauses the game for both of you. If either of you falls, the battle ends for both. If your teammate leaves or loses connection, the battle carries on with just you.']},
   {id:'2026-11-05-fog',date:'November 5, 2026',title:'Smoother huge waves, and fog',items:['In very big zombie waves, only the nearest 150 zombies are drawn on screen, so the game stays smooth. Every zombie is still there, still makes its sounds and still attacks.','New option in Zombie mode, Advanced options: Fog. A fog hangs over the battlefield and enemies step out of it as they come closer. It only changes the picture. Sound is not affected.']},
@@ -5126,7 +5136,7 @@ function show(id){
   curScr=id;setTimeout(menuAmbSync,0);
   screens.forEach(s=>$(s).hidden=s!==id);$('pause').hidden=true;$('over').hidden=true;$('perks').hidden=true;
   if(id==='menu')$('menu-coins').textContent=`Weapons, attachments, armor, grenades and perks. You have ${P.coins} silver.`;
-  if(id==='maps')updateMaps();
+  if(id==='maps'){zfHome();updateMaps()}
   if(id==='shop')buildShop();
   if(id==='mods')buildMods();
   if(id==='pid')updatePid();
@@ -5150,6 +5160,7 @@ const PERKNOTE=' After every fifth wave the perk machine opens: spend silver on 
 const bestOf=(m,zm=S.zmode)=>m==='endless'?P.best:m==='bossrush'?P.bestBoss:m==='zombies'?(zm==='six'?P.bestZ6:zm==='hall'?P.bestZH:zm==='ragdoll'?P.bestZR:P.bestZ):null;
 function updateMaps(){setTimeout(menuAmbSync,0);
   const m=S.mode||'campaign';$('maps-note').textContent=MODENOTE[m]+(m==='zombies'?(ZNOTE[S.zmode]||ZNOTE.standard)+PERKNOTE:'');$('zmode-field').hidden=m!=='zombies';$('tut-field').hidden=m!=='practice';
+  if(curScr==='coop')coopZField();
   document.querySelectorAll('[data-map]').forEach(b=>{const k=b.dataset.map,M=MAPS[k],sm=b.querySelector('small');
     const B=bestOf(m),bk=m==='zombies'?zKey(k,S.zdiff,S.zgiants):k;sm.textContent=b.dataset.desc+` Boss: ${m==='zombies'?(S.zgiants?'Every zombie is a giant zombie, plus a mega giant every tenth wave':'Giant zombie every fifth wave, plus a mega giant every tenth wave')+', and the Ancient One every 50th wave':EN[M.boss].name}.`+(B?` Best${m==='zombies'?' on '+zDf().n+(S.zgiants?', giants only':''):''}: ${B[bk]?(m==='zombies'&&S.zmode==='hall'?'score ':'wave ')+B[bk]:'none yet'}.`:'')});
 }
@@ -5845,10 +5856,27 @@ document.querySelectorAll('[data-test]').forEach(b=>{const t=EN[b.dataset.test];
    much damage it did, with a sequence number so the host can say which damage it has already counted. Kill silver is
    shared: both players earn silver for every kill. If either player falls, the battle ends for both. Pausing pauses both. */
 const COOP_RELAY='https://valor-turn.obamav-saliens2.workers.dev';
-const COOP_MODES={campaign:'Campaign',endless:'Endless survival',bossrush:'Boss rush'};
+const COOP_MODES={campaign:'Campaign',endless:'Endless survival',bossrush:'Boss rush',zombies:'Zombie siege'};
+const COOP_ZM={standard:'Standard',six:'Watch my six',ragdoll:'Ragdoll sandbox'};   // Horror hallway is solo only
+/* the host's zombie settings, sent to the guest so both phones run the same match */
+const coopZ=()=>({zm:COOP_ZM[S.zmode]?S.zmode:'standard',zs:ZSPAWN[S.zspawn]?S.zspawn:'normal',zd:ZDIFF[S.zdiff]?S.zdiff:'normal',zst:zStart(),zg:S.zgiants?1:0});
+function coopDesc(mode,map,z){const mn=MAPS[map]?MAPS[map].name:'Verdant Hollow';
+  if(mode!=='zombies'||!z)return `${COOP_MODES[mode]||'Campaign'} on ${mn}`;
+  return `Zombie siege, ${COOP_ZM[z.zm]||'Standard'}, on ${mn}. Starting wave ${z.zst||1}, spawn rate ${(ZSPAWN[z.zs]||ZSPAWN.normal).n}, ${(ZDIFF[z.zd]||ZDIFF.normal).n} difficulty${z.zg?', giants only':''}`}
+/* the Deploy screen's zombie options are borrowed by the co-op screen while the host picks Zombie siege, then put back */
+const ZF={home:$('zmode-field').parentNode,next:$('zmode-field').nextSibling};
+const hallBtn=()=>document.querySelector('[data-key=zmode] [data-val=hall]');
+function zfHome(){const f=$('zmode-field');if(f.parentNode!==ZF.home)ZF.home.insertBefore(f,ZF.next);const h=hallBtn();if(h)h.hidden=false}
+function coopZField(){const f=$('zmode-field'),box=$('coop-z');
+  if($('coop-mode').value==='zombies'&&(!C.pc||C.role==='host')){
+    if(f.parentNode!==box)box.appendChild(f);const h=hallBtn();if(h)h.hidden=true;
+    if(!COOP_ZM[S.zmode]){S.zmode='standard';saveS();segSyncs.forEach(x=>x())}
+    f.hidden=false}
+  else if(f.parentNode===box)f.hidden=true;
+}
 let coopRole=null,coopFromNet=false,coopHurtNow=false;
 const C={pc:null,dc:null,role:null,code:'',mate:'',unsub:null,ice:null,iceAt:0,
-  seq:0,ack:0,pend:{},sent:[],dead:new Map(),sendT:0,mateH:0,mateHp:0,mateMax:100,mateLow:false,shotAt:0,mode:'campaign',map:'rainforest'};
+  seq:0,ack:0,pend:{},sent:[],dead:new Map(),sendT:0,mateH:0,mateHp:0,mateMax:100,mateLow:false,shotAt:0,mode:'campaign',map:'rainforest',z:null,setTm:0};
 const coopOn=()=>!!(C.dc&&C.dc.readyState==='open');
 const coopName=()=>P.player||'Your teammate';
 function coopSend(m){if(coopOn())try{C.dc.send(JSON.stringify(m))}catch(e){}}
@@ -5869,7 +5897,7 @@ function coopGather(pc,ms=4000){return new Promise(r=>{if(pc.iceGatheringState==
 function coopWire(dc){
   C.dc=dc;
   dc.onopen=()=>{coopCleanRoom();
-    coopSend({t:'hi',n:P.player||'',map:C.map,mode:C.mode});updateCoop()};
+    coopSend({t:'hi',n:P.player||'',map:C.map,mode:C.mode,z:C.role==='host'?coopZ():null});updateCoop()};
   dc.onmessage=ev=>{let m;try{m=JSON.parse(ev.data)}catch(e){return}try{coopRecv(m)}catch(e){logErr(e,'co-op')}};
   dc.onclose=()=>coopLost();
 }
@@ -5954,6 +5982,8 @@ function coopSolo(){
   if(!G)return;
   if(G.coop==='guest'){G.enemies.forEach(e=>{if(e.moveT===Infinity)e.moveT=7+Math.random()*3;e.tg=0});if(!G.maxAlive)G.maxAlive=4}
   G.enemies.forEach(e=>{e.tg=0});
+  G.mateShop=false;
+  if(G.coop==='guest'&&G.waitWave){G.coop=null;G.waitWave=false;G.wave++;G.lastUsed=false;startWave();return}
   G.coop=null;
 }
 function updateCoop(){
@@ -5961,7 +5991,8 @@ function updateCoop(){
   $('coop-start').hidden=room;$('coop-room').hidden=!room;
   $('coop-opts').hidden=$('coop-opts-h').hidden=room&&C.role!=='host';$('coop-opts-h').textContent=room?'Match settings':'Host a match';
   const go=$('coop-go');go.hidden=!(on&&C.role==='host');
-  const mm=`${COOP_MODES[C.mode]||'Campaign'} on ${MAPS[C.map]?MAPS[C.map].name:'Verdant Hollow'}`;
+  coopZField();
+  const mm=coopDesc(C.mode,C.map,C.mode==='zombies'?(C.role==='guest'?C.z:coopZ()):null);
   $('coop-go-s').textContent=mm;
   $('coop-room-t').textContent=!room?'':C.role==='host'?(on?`${C.mate} is here. Start the match when you are both ready: ${mm}.`:`Your room code is ${C.code.split('').join(' ')}. Waiting for your teammate to join.`)
     :(on?`You are in ${C.mate}'s room: ${mm}. Waiting for ${C.mate} to start the match.`:`Connecting to ${C.mate}'s room…`);
@@ -5971,11 +6002,14 @@ function coopGo(){
   if(!coopOn()||C.role!=='host')return;
   if(!P.carry.length){fx.click();return say('You are not carrying any guns. Open the Armory shop and choose Carry into battle on up to 4 guns.')}
   C.mode=$('coop-mode').value;C.map=$('coop-map').value;
-  coopSend({t:'go',map:C.map,mode:C.mode});coopBegin('host',C.map,C.mode);
+  const z=C.mode==='zombies'?coopZ():null;coopSend({t:'go',map:C.map,mode:C.mode,z});coopBegin('host',C.map,C.mode,z);
 }
-function coopBegin(role,map,mode){
-  coopReset();const keep=S.mode;S.mode=COOP_MODES[mode]?mode:'campaign';coopRole=role;
-  try{begin(map)}finally{S.mode=keep;coopRole=null}
+function coopBegin(role,map,mode,z){
+  coopReset();const keep={mode:S.mode,zmode:S.zmode,zspawn:S.zspawn,zdiff:S.zdiff,zstart:S.zstart,zgiants:S.zgiants};
+  S.mode=COOP_MODES[mode]?mode:'campaign';coopRole=role;
+  if(S.mode==='zombies'){z=z||{};S.zmode=COOP_ZM[z.zm]?z.zm:'standard';S.zspawn=ZSPAWN[z.zs]?z.zs:'normal';S.zdiff=ZDIFF[z.zd]?z.zd:'normal';
+    S.zstart=Math.max(1,Math.min(ZMAXSTART,Math.round(+z.zst||1)));S.zgiants=z.zg?1:0}   // this match only: the host's zombie settings
+  try{begin(map)}finally{Object.assign(S,keep);coopRole=null}
   if(!G||!G.coop){if(role==='guest')coopSend({t:'nogun'});return}
   setTimeout(()=>{if(G&&G.coop)say(`Co-op with ${C.mate}. You stand back to back. Your teammate's gunfire comes from the way they face.`)},2600);
 }
@@ -6019,9 +6053,12 @@ function coopTick(dt){
   if(!coopOn())return;
   C.sendT-=dt;if(C.sendT>0)return;C.sendT=.1;
   if(G.coop==='host'){
+    const live=G.enemies.filter(e=>e.hp>0&&e.id!=null);
+    C.sendT=Math.min(.3,.1+live.length*.001);   // huge zombie waves: up to 3 updates a second instead of 10, to keep the data small
     coopSend({t:'s',a:C.ack,h:Math.round(G.heading),hp:Math.ceil(G.hp),mx:G.maxhp,
-      w:[G.wave,G.toSpawn,G.miniDue?1:0,G.bossWave?1:0,G.bossSpawned?1:0],
-      e:G.enemies.filter(e=>e.hp>0&&e.id!=null).map(e=>[e.id,e.type,Math.round(e.angle*10)/10,Math.round(e.dist*100)/100,Math.ceil(e.hp),Math.ceil(e.maxhp),e.mega?1:0,e.tg||0])});
+      w:[G.wave,G.toSpawn,G.miniDue?1:0,G.bossWave?1:0,G.bossSpawned?1:0,G.zBossDue?1:0,G.zMegaDue?1:0,G.zAncDue?1:0],
+      wn:G.win?G.win.map(W=>W.broken?1:0):null,
+      e:live.map(e=>[e.id,e.type,Math.round(e.angle*10)/10,Math.round(e.dist*100)/100,Math.ceil(e.hp),Math.ceil(e.maxhp),e.mega?1:0,e.tg||0,e.win??-1,e.inside?1:0])});
   }else{
     coopCollect();const m={t:'g',h:Math.round(G.heading),hp:Math.ceil(G.hp),mx:G.maxhp};
     if(Object.keys(C.pend).length){m.s=++C.seq;m.d={};for(const k in C.pend)m.d[k]=Math.ceil(C.pend[k]*10)/10;C.sent.push({s:m.s,d:m.d});C.pend={}}
@@ -6029,9 +6066,11 @@ function coopTick(dt){
   }
 }
 function coopMk(r){
-  const [id,type,angle,dist,hp,maxhp,mega,tg]=r,t=EN[type];
-  return {id,type,angle,dist,hp,_hp:hp,maxhp,cue:.2+Math.random()*.6,atkT:t.atk,dm:1,sm:1,am:1,engaged:false,moveT:Infinity,
+  const [id,type,angle,dist,hp,maxhp,mega,tg,win,inside]=r,t=EN[type];
+  const e={id,type,angle,dist,hp,_hp:hp,maxhp,cue:.2+Math.random()*.6,atkT:t.atk,dm:1,sm:1,am:1,engaged:false,moveT:Infinity,
     rocketT:5+Math.random()*2,slowT:0,wind:0,charge:0,mega:!!mega,tg};
+  if(G.win&&win>=0&&G.win[win]){e.win=win;e.inside=!!inside}   // zombie siege: which window it is coming through
+  return e;
 }
 /* the guest brings its copy of the battle in line with the host's */
 function coopSnap(m){
@@ -6044,14 +6083,17 @@ function coopSnap(m){
     if(C.dead.has(id)){if(m.a>=C.dead.get(id))C.dead.delete(id);else continue}   // you killed it, and the host has not counted your shot yet
     const want=r[4]-(un[id]||0);let e=by.get(id);
     if(!e){if(want<=0)continue;e=coopMk(r);G.enemies.push(e);
-      if(!G.tutQ){const t=EN[e.type];say(`${e.mega?'Mega boss! Mega ':t.mini?'Mini boss! ':''}${t.name}, ${clock(coopRel(e.angle))}, ${ft(e.dist)} feet.`)}}
-    else{if(Math.abs(norm(r[2]-e.angle))>20){fx.whoosh();e.cue=0}e.angle=r[2];e.dist=r[3]}
+      const t=EN[e.type],zq=G.mode==='zombies';   // zombie siege, like the host: only bosses are announced, and not every giant in Giants only
+      if(!G.tutQ&&!(zq&&(!t.boss||(G.zg&&!e.mega))))say(`${e.mega?'Mega boss! Mega ':t.mini?'Mini boss! ':t.z?'Boss! ':''}${t.name}, ${clock(coopRel(e.angle))}, ${ft(e.dist)} feet.`)}
+    else{if(Math.abs(norm(r[2]-e.angle))>20){fx.whoosh();e.cue=0}e.angle=r[2];e.dist=r[3];if(e.win!=null&&r[9])e.inside=true}
     e.tg=r[7];e.maxhp=r[5];e.hp=e._hp=Math.max(.5,want);
   }
   for(const id of [...C.dead.keys()])if(!seen.has(id))C.dead.delete(id);
   let gone=0;G.enemies.forEach(e=>{if(e.id!=null&&!seen.has(e.id)&&!C.dead.has(e.id)&&e.hp>0){e.hp=e._hp=0;gone++;fx.kill(coopRel(e.angle),e.dist,0,e.type)}});
   if(gone)processDead('mate');
-  if(!(G.breakT>0)&&!G.over){const w=m.w;G.wave=w[0];G.toSpawn=w[1];G.miniDue=!!w[2];G.bossWave=!!w[3];G.bossSpawned=!!w[4]}
+  if(!(G.breakT>0)&&!G.waitWave&&!G.over){const w=m.w;G.wave=w[0];G.toSpawn=w[1];G.miniDue=!!w[2];G.bossWave=!!w[3];G.bossSpawned=!!w[4];G.zBossDue=!!w[5];G.zMegaDue=!!w[6];G.zAncDue=!!w[7]}
+  // a window the host's zombies broke: break it here too, with its sounds, on the next frame
+  if(G.win&&m.wn)m.wn.forEach((b,i)=>{const W=G.win[i];if(W&&b&&!W.broken){W.bang=ZBREAK;W.busy=Math.max(W.busy,1)}});
 }
 /* the host counts the guest's damage */
 function coopGuestMsg(m){
@@ -6062,17 +6104,19 @@ function coopGuestMsg(m){
     if(k)processDead('mate')}
 }
 function coopRecv(m){
-  if(m.t==='hi'){if(m.n)C.mate=m.n;if(C.role==='guest'){C.mode=m.mode;C.map=m.map}
+  if(m.t==='hi'){if(m.n)C.mate=m.n;if(C.role==='guest'){C.mode=m.mode;C.map=m.map;C.z=m.z||null}
     coopMsg(C.role==='host'?`${C.mate} joined your room. Start the match when you are both ready.`:`Connected to ${C.mate}'s room. Waiting for ${C.mate} to start the match.`);updateCoop();return}
   if(m.t==='bye'){coopLost(false);return}
-  if(m.t==='set'&&C.role==='guest'){C.map=m.map;C.mode=m.mode;updateCoop();coopMsg(`${C.mate} picked ${COOP_MODES[C.mode]||'Campaign'} on ${MAPS[C.map]?MAPS[C.map].name:'Verdant Hollow'}.`);return}
-  if(m.t==='go'&&C.role==='guest'){C.map=m.map;C.mode=m.mode;if(G&&!G.over)quit();coopBegin('guest',m.map,m.mode);return}
+  if(m.t==='set'&&C.role==='guest'){C.map=m.map;C.mode=m.mode;C.z=m.z||null;updateCoop();coopMsg(`${C.mate} picked ${coopDesc(C.mode,C.map,C.z)}.`);return}
+  if(m.t==='go'&&C.role==='guest'){C.map=m.map;C.mode=m.mode;C.z=m.z||null;if(G&&!G.over)quit();coopBegin('guest',m.map,m.mode,m.z);return}
   if(m.t==='nogun'){if(G&&G.coop&&!G.over){coopFromNet=true;try{G.coopWhy=`${C.mate} is not carrying any guns, so the match could not start.`;quit();show('coop')}finally{coopFromNet=false}}
     coopMsg(`${C.mate} is not carrying any guns. They need to choose Carry into battle in the Armory shop first.`);return}
   if(!G||!G.coop)return;
   if(m.t==='s'){coopSnap(m);return}
   if(m.t==='g'){coopGuestMsg(m);return}
   if(m.t==='f'){coopMateShot(m.w,m.h);return}
+  if(m.t==='pk'){const was=G.mateShop;G.mateShop=!!m.o;if(was&&!m.o&&G.toldShop)say(`${C.mate||'Your teammate'} is done at the perk machine.`);return}
+  if(m.t==='wv'){if(G.coop==='guest'&&!G.over&&(G.waitWave||G.breakT>0||m.w>G.wave)){G.breakT=0;G.waitWave=false;G.wave=m.w;G.lastUsed=false;startWave()}return}
   if(m.t==='h'&&G.coop==='guest'&&!G.over){const e=G.enemies.find(x=>x.id===m.id);coopHurtNow=true;try{hurtPlayer(m.d,e||null)}finally{coopHurtNow=false};return}
   coopFromNet=true;
   try{
@@ -6087,7 +6131,10 @@ $('coop-host').onclick=()=>{initAudio();coopHost()};
 $('coop-join').onclick=()=>{initAudio();coopJoin()};
 $('coop-leave').onclick=()=>coopLeave(false);
 $('coop-go').onclick=()=>{initAudio();coopGo()};
-$('coop-mode').onchange=$('coop-map').onchange=()=>{C.mode=$('coop-mode').value;C.map=$('coop-map').value;updateCoop();if(C.role==='host')coopSend({t:'set',map:C.map,mode:C.mode})};
+function coopSetNow(){C.mode=$('coop-mode').value;C.map=$('coop-map').value;updateCoop();
+  if(C.role==='host')coopSend({t:'set',map:C.map,mode:C.mode,z:C.mode==='zombies'?coopZ():null})}
+$('coop-mode').onchange=$('coop-map').onchange=coopSetNow;
+['click','change','pointerup'].forEach(t=>$('coop-z').addEventListener(t,()=>{clearTimeout(C.setTm);C.setTm=setTimeout(()=>{if(curScr==='coop')coopSetNow()},700)}));
 $('coop-code').onkeydown=e=>{if(e.key==='Enter')coopJoin()};
 updateCoop();
 
