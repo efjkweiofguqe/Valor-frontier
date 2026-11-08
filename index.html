@@ -2210,6 +2210,7 @@ Object.entries(ELBOOST).forEach(([k,db])=>{const f=fx[k];if(!f||!db)return;const
 const HEAVY=['barrett','svd','antitank','osv96','cheytac'],HAND=['pistol','deagle','beretta','glock','gyrojet'];
 const HACID=12,HPOOL=12,SHOTS=['spas','aa12','bshot','ksg','coach'],MYTHNEW=['thunder','blackhole','banshee','hydra'],MYTHOK=['barrel','silencer','fastmag','extmag'];
 const HOLLOW=['pistol','deagle','beretta','skorpion','ak','an94','m249','glock','p90','m4','mg42'],SLOW=['spas','barrett','antitank','ksg','cheytac'],LMG=['m249','mg42','m2'];
+const LASERG=[...HAND,'skorpion','p90',...SHOTS];   // under-barrel laser: regular pistols, submachine guns and shotguns only
 const SNIPERS=['barrett','svd','antitank','osv96','cheytac','jackfrost'],APGUNS=['m249','m2','barrett','svd','antitank','osv96','cheytac'];
 const PEN={barrett:[5,8],svd:[3,5],antitank:[20,30],osv96:[5,8],cheytac:[8,12]};   // [stock, with armor piercing rounds]
 const ATT=[
@@ -2246,6 +2247,7 @@ const ATT=[
   {id:'barrel',name:'Extended barrel',price:70,desc:w=>w.spread?'Slightly more damage, plus 15 percent, and the shotgun keeps its power at much longer range. Gives the gunshot a deeper, fuller boom.':'Slightly more damage, plus 15 percent'+(w.rng?', and full damage reaches 25 percent farther':'')+'. Gives the gunshot a deeper, fuller boom.'},
   {id:'jetbarrel2',name:'Extended barrel V2',price:2000,for:'jet',req:'barrel',desc:()=>'A longer jet barrel. Another 15 percent more damage, stacking with the first extended barrel. Buy the first extended barrel first.'},
   {id:'silencer',name:'Silencer',price:50,not:['gyrojet'],desc:()=>'Muffles the gunshot down to a soft thump. Changes the sound only.'},
+  {id:'laser',name:'Under-barrel laser',price:150,only:LASERG,desc:()=>'A laser mounted under the barrel. It shines a red beam straight out from the gun, with a red dot where it lands, so sighted players can see exactly where the barrel is lined up. It is for looks only: no extra damage, accuracy, headshots or range, and no sound change.'},
   {id:'reflex',name:'Reflex sight',price:85,noSpread:true,desc:()=>'A red-dot sight. Headshots hit much harder: 110 percent extra damage instead of 60, and 55 percent instead of 30 on bosses.'},
   {id:'scope',name:'Sniper scope',price:120,only:HEAVY,desc:()=>'A long-range optic. Beyond 50 feet, 7 in 10 hits that are not already dead centre still land as headshots.'},
   {id:'pscope',name:'Precision scope',price:1000,only:SNIPERS,myth:true,desc:()=>'A high-power tactical scope. Headshots hit much harder: 60 percent extra on top of your usual headshot bonus, 30 on bosses. Almost every shot lands, and enemies count as in your sights a little further off centre. Stacks with the sniper scope.'},
@@ -2402,7 +2404,7 @@ function build(w){
   if(b.barrel&&w.rng)b.rng=w.rng*1.25;
   if(w.id==='symbiote'){const nb=(has('symbarrel1')?1:0)+(has('symbarrel2')?1:0);b.rng=has('symbrake')?120/3.281:w.rng*(1+.25*nb)}
   b.hs=w.id==='vlad'?2.5:1.6+(has('reflex')?.5*k:0);b.hsBoss=w.id==='vlad'?2.5:1.3+(has('reflex')?.25*k:0);   // Vlad the Impaler: built-in 2.5 times headshots, bosses toob.scope=has('scope')?Math.min(.95,.7*k):0;
-  b.inc=has('inc');b.splash=.5*k;b.sil=has('silencer');b.akimbo=has('akimbo')&&HAND.includes(w.id);
+  b.inc=has('inc');b.splash=.5*k;b.sil=has('silencer');b.akimbo=has('akimbo')&&HAND.includes(w.id);b.laser=has('laser')&&LASERG.includes(w.id);
   if(has('pscope')){b.acc=.99;b.cone=w.cone+4;b.hs+=.6*k;b.hsBoss+=.3*k}
   b.hz=HEADZONE*(has('grip')?1.5:1);b.grip=has('grip')?Math.min(.4,.2*k):0;
   if(w.spread){const rm=w.rm||1;b.range=b.barrel?[11*rm,20*rm,.45]:[7*rm,14*rm,.25]}
@@ -4739,6 +4741,15 @@ function rdDraw(){
     c.beginPath();pts.forEach((v,i)=>i?c.lineTo(v[0],v[1]):c.moveTo(v[0],v[1]));c.closePath();c.fill();c.stroke()}
   if(RD.slash>0){const k=RD.slash/.3;c.strokeStyle=`rgba(235,200,255,${.9*k})`;c.lineWidth=Math.max(4,W/30)*k;c.lineCap='round';c.beginPath();
     c.moveTo(W*.05,H*.95);c.quadraticCurveTo(W*.5,H*(.45+.25*(1-k)),W*.95,H*.7);c.stroke();c.strokeStyle=`rgba(160,70,255,${.6*k})`;c.lineWidth=Math.max(10,W/12)*k;c.stroke()}
+  // under-barrel laser: a red beam from under the gun out along your aim, stopping on the first enemy in line (looks only)
+  {const lw=G.lo[G.w];if(lw&&lw.laser){let L=G.win?ZWIN:hall?40:30;if(S.zfog)L=Math.min(L,FOG_B);
+    for(const it of items){if(it.out||!it.e||!(it.e.hp>0)||it.b)continue;const ex=it.p[6],ez=it.p[8],d=cz(ex,ez);if(d>NEAR&&d<L&&Math.abs(cx(ex,ez))<.3*(it.s.w||1))L=d}
+    const fx0=sh,fz0=ch,rx=ch,rz=-sh,s0=[0,0,0],s1=[0,0,0];
+    if(P(fx0*.45+rx*.2,RDEYE-.32,fz0*.45+rz*.2,s0)&&P(fx0*L,RDEYE-.12,fz0*L,s1)){
+      c.save();c.lineCap='round';const lg=c.createLinearGradient(s0[0],s0[1],s1[0],s1[1]);lg.addColorStop(0,'rgba(255,40,40,.85)');lg.addColorStop(1,'rgba(255,40,40,.35)');
+      c.strokeStyle=lg;c.lineWidth=Math.max(1.5,W/260);c.beginPath();c.moveTo(s0[0],s0[1]);c.lineTo(s1[0],s1[1]);c.stroke();
+      const dr=Math.max(2.5,W/150),gd=c.createRadialGradient(s1[0],s1[1],0,s1[0],s1[1],dr*3);gd.addColorStop(0,'rgba(255,90,90,.95)');gd.addColorStop(.35,'rgba(255,30,30,.6)');gd.addColorStop(1,'rgba(255,0,0,0)');
+      c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   // sights and muzzle flash
   const lock=!!G.lockE;c.strokeStyle=lock?'#ff5a4a':'rgba(255,255,255,.7)';c.lineWidth=Math.max(1.5,W/220);const cs=Math.max(6,W/40);
   c.beginPath();c.moveTo(X0-cs,Y0);c.lineTo(X0-cs*.35,Y0);c.moveTo(X0+cs*.35,Y0);c.lineTo(X0+cs,Y0);c.moveTo(X0,Y0-cs);c.lineTo(X0,Y0-cs*.35);c.moveTo(X0,Y0+cs*.35);c.lineTo(X0,Y0+cs);c.stroke();
@@ -4840,6 +4851,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-08-laser',date:'November 8, 2026',title:'New attachment: Under-barrel laser',items:['New attachment for every regular pistol, submachine gun and shotgun: the Under-barrel laser, 150 silver. Find it in the Sights and grip group with the Attachments button under the gun in the Armory. Mythical and legendary weapons cannot take it.','It shines a red laser beam straight out from under the barrel in the first-person view, with a red dot where it lands, so sighted players can see exactly where the gun is lined up. The beam stops on the first enemy in its path.','It is for looks only. It does not change damage, accuracy, headshots, range or the gunshot sound.']},
   {id:'2026-11-06-kbcd',date:'November 6, 2026',title:'Kinetic bat recharge, and tutorial updates',items:['The Kinetic bat now needs 5 seconds to recharge after each swing, so you can hit one baseball every 5 seconds. Pressing Fire sooner tells you how many seconds are left, and a two-note chime means it is ready. The weapon box shows WAIT and the seconds left while it recharges.','Basic info in Tutorial/practice now teaches Fire lock: turning it on, sweeping across two targets while it fires for you, and turning it off. It also explains that Status and Enemy locations stop time while they are read, how Enemy locations groups enemies in big waves, and points you to Co-op, Account, the Update log and the melee weapons.','The Training and sound check page now covers Fire lock and Co-op, and the keyboard list includes L for Fire lock.']},
   {id:'2026-11-06-flock',date:'November 6, 2026',title:'New: Fire lock',items:['New Fire lock switch in the very top right corner of the battle screen. Press it once and your gun keeps firing on its own, so you can turn left and right freely. Press it again to stop. With a keyboard, press L.','Holding the Fire button still works the same as before. If Fire lock is on and you press and let go of Fire, firing stops and Fire lock turns off.','Fire lock stays on through reloads and keeps firing once the reload is done. On guns that overheat, like the Lantern of Ra and the Dark Quasar Turbine, it waits out the cooldown and starts again by itself.','Fire lock stays on while paused. It turns off when you switch weapons, when you die or when the match ends. It does not work with melee weapons.']},
   {id:'2026-11-05-coopz',date:'November 5, 2026',title:'Zombie siege in co-op',items:['Co-op now has Zombie siege, in Standard, Watch my six and Ragdoll sandbox. Horror hallway stays solo only.','The host picks the zombie mode and every Advanced option: spawn rate, starting wave, Giants only and difficulty. Your teammate hears the choices as you make them. Fog stays your own choice, since it only changes the picture.','Co-op zombie waves have half as many zombies again, and they are tougher.','Each of you gets your own perk machine every fifth wave, with your own silver. The next wave waits until you are both done, and you hear when your teammate is still shopping.','Also in co-op: Campaign, Endless survival and Boss rush, under Mode.']},
@@ -5849,7 +5861,7 @@ const ATTGRP=[{id:'ammo',name:'Ammo'},{id:'barrel',name:'Barrel and muzzle'},{id
   {id:'mag',name:'Magazines'},{id:'reload',name:'Reload speed'},{id:'special',name:'Special abilities'}];
 const ATTCAT={ap:'ammo',ramjet2:'ammo',ionic:'ammo',jffrag:'ammo',svloaded:'ammo',tover:'ammo',
   barrel:'barrel',jetbarrel2:'barrel',gauss:'barrel',symbarrel1:'barrel',symbarrel2:'barrel',bnbarrel2:'barrel',bnamp:'barrel',silencer:'barrel',symbrake:'barrel',tchoke:'barrel',
-  reflex:'optic',scope:'optic',pscope:'optic',grip:'optic',
+  laser:'optic',reflex:'optic',scope:'optic',pscope:'optic',grip:'optic',
   trigger:'trigger',trigger2:'trigger',bump:'trigger',osvtrig:'trigger',rvhot:'ammo',rvsharp:'ammo',rvmag1:'mag',rvmag2:'mag',rvmag3:'mag',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
   extmag:'mag',extmag2:'mag',extbelt:'mag',jetmag1:'mag',jetmag2:'mag',svmag1:'mag',jfmag1:'mag',jfmag2:'mag',jfmag3:'mag',symmag1:'mag',symmag2:'mag',symmag3:'mag',bnmag1:'mag',bnmag2:'mag',bnmag3:'mag',tdrum:'mag',
   hdbarrel:'barrel',bmrange1:'barrel',bmrange2:'barrel',bmblades1:'mag',bmblades2:'mag',hyhe:'ammo',hycorr:'ammo',hycorr2:'ammo',tpbarrel:'barrel',tpspy:'optic',tpmag1:'mag',tpmag2:'mag',tptrig:'trigger',hdmag1:'mag',hdmag2:'mag',hdtrig1:'trigger',hdtrig2:'trigger',hdfast:'reload',
