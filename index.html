@@ -3493,7 +3493,7 @@ function rdStake(b,e,sp,x,z,ox,oz){let k,ax=0,ay=0,az=0;
   if(sp.g){k='e';sp.g.bodies.push(b);const L=pinLead(sp.g)||sp.g.mem[0];if(L){const[lx,lz]=xy(L.angle,L.dist);ax=lx;az=lz}ay=1.05}
   else{let r=Math.hypot(x,z)+STAKE_BACK;k='floor';if(G.win&&Math.hypot(x,z)<ZWIN&&r>ZWIN-.12){r=ZWIN-.12;k='wall'}ax=ox*r;az=oz*r;ay=k==='wall'?1.15:RDRAD[1]*b.s.h}
   b.pin={k,g:sp.g||null,x:ax,y:ay,z:az,t:0,i:sp.i||0};
-  const vx=(ax-x)/.25,vz=(az-z)/.25;for(let i=0;i<11;i++)rdPush(b,i,vx*(i===1?1:.85),1.2,vz*(i===1?1:.85));rdDecal(x,z,.35*b.s.h)}
+  const vx=(ax-x)/.25,vz=(az-z)/.25;for(let i=0;i<11;i++)rdPush(b,i,vx*(i===1?1:.85),1.2,vz*(i===1?1:.85));rdDecal(x,z,.35*b.s.h,b)}
 function rdPinAt(b){const P0=b.pin;P0.t+=RDH;if(P0.t<.25)return null;
   if(P0.k!=='e')return[P0.x,P0.y,P0.z];
   const L=pinLead(P0.g);if(!L){b.pin=null;return null}
@@ -4413,8 +4413,8 @@ function rdBody(type,pts,vx=0,vy=0,vz=0){
 const rdPush=(b,i,vx,vy,vz)=>{const q=b.q;q[i*3]-=vx*RDH;q[i*3+1]-=vy*RDH;q[i*3+2]-=vz*RDH};
 function rdWake(b){if(b.crys||b.gu)return;b.awake=true;b.calm=0}
 function rdBreak(b,bi,quiet){if(!b.on[bi])return false;b.on[bi]=0;b.mok=Uint8Array.from(RDMIN.map(([i,j])=>rdLinked(b,i,j)?1:0));const j=RDBONE[bi][1];b.stumps.push(RDBONE[bi][0],j);
-  if(!quiet){const p=b.p;rdSnd('rdSnap',p[j*3],p[j*3+1],p[j*3+2],1,b);rdDecal(p[j*3],p[j*3+2],.35*b.s.h)}return true}
-function rdDecal(x,z,r){if(Math.hypot(x,z)>ZWIN+12)return;RD.decals.push({x,z,r:r*(.7+Math.random()*.6),a:Math.random()*3});if(RD.decals.length>160)RD.decals.shift()}
+  if(!quiet){const p=b.p;rdSnd('rdSnap',p[j*3],p[j*3+1],p[j*3+2],1,b);rdDecal(p[j*3],p[j*3+2],.35*b.s.h,b)}return true}
+function rdDecal(x,z,r,b){if(Math.hypot(x,z)>ZWIN+12)return;const T=b&&EN[b.type];RD.decals.push({x,z,r:r*(.7+Math.random()*.6),a:Math.random()*3,zg:!!(T&&T.z)});if(RD.decals.length>160)RD.decals.shift()}
 // one blast on one body: every point is thrown away from the centre and upward, the near side harder, so bodies spin
 function rdBlastBody(b,cx,cy,cz,R,pow,lift,dis){
   const p=b.p,px=p[6]-cx,pz=p[8]-cz;if(Math.hypot(px,pz)>R+1.2*b.s.h)return 0;
@@ -4449,9 +4449,9 @@ function rdCorpse(e,src){
   else b=rdLegless(rdBody(e.type,rdPose(e,RD.tmp),e.rdVx||0,0,e.rdVz||0),e);
   if(src==='quasar'&&e.dist<1.2){   // shredded by the turbine intake: it comes out in pieces
     for(let i=0;i<RDBONE.length;i++)if(b.on[i]){b.on[i]=0;b.stumps.push(RDBONE[i][0])}b.mok.fill(0);
-    for(let i=0;i<11;i++)rdPush(b,i,(Math.random()-.5)*8,3+Math.random()*4,(Math.random()-.5)*8);rdDecal(x,z,.8);return}
+    for(let i=0;i<11;i++)rdPush(b,i,(Math.random()-.5)*8,3+Math.random()*4,(Math.random()-.5)*8);rdDecal(x,z,.8,b);return}
   if(e.stakePin){const sp=e.stakePin;e.stakePin=null;rdStake(b,e,sp,x,z,ox,oz);return}
-  if(e.rdB){const B=e.rdB;e.rdB=null;rdBlastBody(b,B.cx,B.cy,B.cz,B.R*1.15,B.pow,B.lift,B.dis);rdDecal(x,z,.4*b.s.h)}
+  if(e.rdB){const B=e.rdB;e.rdB=null;rdBlastBody(b,B.cx,B.cy,B.cz,B.R*1.15,B.pow,B.lift,B.dis);rdDecal(x,z,.4*b.s.h,b)}
   else if(now-(e.rdHitT||-1e9)<450){   // shot: thrown away from you, from where the bullet landed
     const wid=e.rdW||src,pw=rdSrcPow(wid)*(WCAT.shotgun.includes(wid)||wid==='thunder'?(e.dist<3?1:e.dist<7?.6:.35):1)/b.s.m,head=e.rdHead||e.hk;
     let dx=ox,dz=oz;if(wid==='boomer'||wid==='katana'||wid==='scythe'){const sg=wid==='scythe'?1:Math.random()<.5?-1:1;dx=oz*sg;dz=-ox*sg}
@@ -4503,8 +4503,8 @@ function rdSim(){
           p[i]=ux*nr;p[i+2]=uz*nr;q[i]=p[i]-(tx*.6-vr*.25*ux)*RDH;q[i+2]=p[i+2]-(tz*.6-vr*.25*uz)*RDH;
           if(Math.abs(vr)>wall){wall=Math.abs(vr);wi=k}}}}
     if(hi>=0&&b.st<=0&&hard>1.6){b.st=.09;const i=hi*3;rdSnd(hi<3?'rdThud':'rdSlap',p[i],p[i+1],p[i+2],hard,b);
-      if(hard>9&&b.dead&&Math.random()<.5)rdDecal(p[i],p[i+2],.3*h)}
-    if(wi>=0&&b.stw<=0&&wall>2){b.stw=.15;const i=wi*3;rdSnd('rdSlam',p[i],p[i+1],p[i+2],wall,b);if(wall>8&&b.dead){if(Math.random()<.3)rdDecal(p[i]*.97,p[i+2]*.97,.4*h);
+      if(hard>9&&b.dead&&Math.random()<.5)rdDecal(p[i],p[i+2],.3*h,b)}
+    if(wi>=0&&b.stw<=0&&wall>2){b.stw=.15;const i=wi*3;rdSnd('rdSlam',p[i],p[i+1],p[i+2],wall,b);if(wall>8&&b.dead){if(Math.random()<.3)rdDecal(p[i]*.97,p[i+2]*.97,.4*h,b);
         for(const bi of RDLIMB)if(b.on[bi]&&wall>16&&Math.random()<.15)rdBreak(b,bi)}}
     // bones, then joint limits, a few rounds so the body holds together
     const pa=b.pin?rdPinAt(b):null;
@@ -4571,7 +4571,7 @@ function rdStep(dt){
   // Quasar turbine: the intake behind you drags bodies in and shreds them; the exhaust in front blows them away
   if(G.qOn){const sp=G.qSpin||0,hx=Math.sin(G.heading*Math.PI/180),hz=Math.cos(G.heading*Math.PI/180);
     for(const b of RD.bodies){if(b.crys||b.gu)continue;const p=b.p,d=Math.hypot(p[6],p[8]);if(d>15||d<.05)continue;const fw=(p[6]*hx+p[8]*hz)/d;
-      if(fw<0){if(b.e&&EN[b.e.type].boss)continue;rdWake(b);const a=(10+20*(1-d/15))*sp*dt;for(let i=0;i<11;i++)rdPush(b,i,-p[6]/d*a,a*.1,-p[8]/d*a);if(d<1&&b.dead){b.fade=.01;rdSnd('rdGib',p[6],.5,p[8],1,b);rdDecal(p[6],p[8],.6)}}
+      if(fw<0){if(b.e&&EN[b.e.type].boss)continue;rdWake(b);const a=(10+20*(1-d/15))*sp*dt;for(let i=0;i<11;i++)rdPush(b,i,-p[6]/d*a,a*.1,-p[8]/d*a);if(d<1&&b.dead){b.fade=.01;rdSnd('rdGib',p[6],.5,p[8],1,b);rdDecal(p[6],p[8],.6,b)}}
       else{rdWake(b);const a=(8+14*(1-d/15))*sp*dt;for(let i=0;i<11;i++)rdPush(b,i,p[6]/d*a,a*.25,p[8]/d*a)}}}
   // crystal statues shatter when the next wave starts
   if(!(G.statues&&G.statues.length))for(const b of RD.bodies)if(b.crys){b.crys=false;b.dead=true;b.col='#9ff0ff';b.fade=1.6;b.shard=true;
@@ -4697,7 +4697,11 @@ function rdDraw(){
   if(!hall)for(let s=0;s<12;s++){const t=s/12*Math.PI*2,ux=Math.sin(t),uz=Math.cos(t);let pen=false;for(let R=1;R<=(open?26:ZWIN);R+=1.5){if(P(ux*R,0,uz*R,a)){pen?c.lineTo(a[0],a[1]):c.moveTo(a[0],a[1]);pen=true}else pen=false}}
   c.stroke();
   // blood on the floor
-  c.fillStyle='rgba(110,8,8,.55)';for(const d of RD.decals){if(!P(d.x,0,d.z,a))continue;const rx=d.r*F/a[2],ry=rx*RDEYE/a[2];if(rx<.5)continue;c.beginPath();c.ellipse(a[0],a[1],rx,Math.max(.5,ry),0,0,Math.PI*2);c.fill()}
+  /* Zombie blood is dark green, everything else bleeds red. Pools close to you fade out and are capped in size,
+     so a kill at your feet no longer smears across the bottom of the view: invisible within about 2 feet, full strength from about 10 feet. */
+  {const RMAX=W*.08;c.save();for(const d of RD.decals){const pd=Math.hypot(d.x,d.z),k=Math.max(0,Math.min(1,(pd-.6)/2.4));if(k<=.03)continue;if(!P(d.x,0,d.z,a))continue;
+    const rx=Math.min(RMAX,d.r*F/a[2]),ry=Math.min(rx*RDEYE/a[2],RMAX*.45);if(rx<.5)continue;c.globalAlpha=k;c.fillStyle=d.zg?'rgba(24,62,16,.6)':'rgba(110,8,8,.55)';
+    c.beginPath();c.ellipse(a[0],a[1],rx,Math.max(.5,ry),0,0,Math.PI*2);c.fill()}c.restore()}
   // acid pools, bubbling green, fading as they dry up
   if(G.pools)for(const pl of G.pools){if(!P(pl.x,.01,pl.y,a))continue;const rx=1.25/3.281*F/a[2],ry=rx*RDEYE/a[2];if(rx<.5)continue;
     c.fillStyle=`rgba(120,220,40,${.25+.35*Math.min(1,pl.t/3)})`;c.beginPath();c.ellipse(a[0],a[1],rx,Math.max(.5,ry),0,0,Math.PI*2);c.fill();
@@ -4781,7 +4785,7 @@ function rdFig(it,P,F,pal){
     if(e&&e.hp>0&&!(b&&b.dead)&&hr>3){c.fillStyle=s.mech?'#5ff2ff':'#ff3b2f';c.beginPath();c.arc(A[0]-hr*.38,A[1]-hr*.1,hr*.16,0,Math.PI*2);c.arc(A[0]+hr*.38,A[1]-hr*.1,hr*.16,0,Math.PI*2);c.fill()}}
   // torn-off limbs bleed at the stumps
   if(e&&e.rdOn&&!b){c.fillStyle='#8fd13a';for(const k of e.crawl?[2]:[7,9]){if(P(p[k*3],p[k*3+1],p[k*3+2],A)){c.beginPath();c.arc(A[0],A[1],Math.max(1,.06*h*F/A[2]),0,Math.PI*2);c.fill()}}}   // acid-eaten stumps
-  if(b&&b.stumps.length&&!b.shard){c.fillStyle='#8a0b0b';for(const k of b.stumps){if(P(p[k*3],p[k*3+1],p[k*3+2],A)){c.beginPath();c.arc(A[0],A[1],Math.max(1,.05*h*F/A[2]),0,Math.PI*2);c.fill()}}}
+  if(b&&b.stumps.length&&!b.shard){c.fillStyle=EN[b.type]&&EN[b.type].z?'#1f4a12':'#8a0b0b';for(const k of b.stumps){if(P(p[k*3],p[k*3+1],p[k*3+2],A)){c.beginPath();c.arc(A[0],A[1],Math.max(1,.05*h*F/A[2]),0,Math.PI*2);c.fill()}}}
   c.globalAlpha=1;
 }
 const NEARD=.3;
@@ -4851,6 +4855,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-08-blood',date:'November 8, 2026',title:'Green zombie blood, and less blood at your feet',items:['Zombies now bleed dark green instead of red. Their blood pools on the floor and torn-off limbs are dark green. Every other enemy still bleeds red.','Blood pools right next to you now fade out and stay small, so killing enemies up close no longer smears blood across the bottom of the picture. Pools a few feet away fade in, and from about 10 feet out they look the same as before.']},
   {id:'2026-11-08-laser',date:'November 8, 2026',title:'New attachment: Under-barrel laser',items:['New attachment for every regular pistol, submachine gun and shotgun: the Under-barrel laser, 150 silver. Find it in the Sights and grip group with the Attachments button under the gun in the Armory. Mythical and legendary weapons cannot take it.','It shines a red laser beam straight out from under the barrel in the first-person view, with a red dot where it lands, so sighted players can see exactly where the gun is lined up. The beam stops on the first enemy in its path.','It is for looks only. It does not change damage, accuracy, headshots, range or the gunshot sound.']},
   {id:'2026-11-06-kbcd',date:'November 6, 2026',title:'Kinetic bat recharge, and tutorial updates',items:['The Kinetic bat now needs 5 seconds to recharge after each swing, so you can hit one baseball every 5 seconds. Pressing Fire sooner tells you how many seconds are left, and a two-note chime means it is ready. The weapon box shows WAIT and the seconds left while it recharges.','Basic info in Tutorial/practice now teaches Fire lock: turning it on, sweeping across two targets while it fires for you, and turning it off. It also explains that Status and Enemy locations stop time while they are read, how Enemy locations groups enemies in big waves, and points you to Co-op, Account, the Update log and the melee weapons.','The Training and sound check page now covers Fire lock and Co-op, and the keyboard list includes L for Fire lock.']},
   {id:'2026-11-06-flock',date:'November 6, 2026',title:'New: Fire lock',items:['New Fire lock switch in the very top right corner of the battle screen. Press it once and your gun keeps firing on its own, so you can turn left and right freely. Press it again to stop. With a keyboard, press L.','Holding the Fire button still works the same as before. If Fire lock is on and you press and let go of Fire, firing stops and Fire lock turns off.','Fire lock stays on through reloads and keeps firing once the reload is done. On guns that overheat, like the Lantern of Ra and the Dark Quasar Turbine, it waits out the cooldown and starts again by itself.','Fire lock stays on while paused. It turns off when you switch weapons, when you die or when the match ends. It does not work with melee weapons.']},
