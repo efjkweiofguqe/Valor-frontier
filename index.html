@@ -99,6 +99,10 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 .arena .turn{background:var(--panel);border:2px solid var(--line);border-radius:18px;font-weight:700;font-size:20px;padding:6px;min-width:0;touch-action:manipulation}
 .arena .turn:active{transform:scale(.97)}
 .arena .turn:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+.arena .turn small{display:block;font-weight:400;font-size:13px;color:var(--muted)}
+#game.roam .arena .turn{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;border-color:var(--accent)}
+#game.roam .pad{grid-template-columns:repeat(10,1fr);gap:6px}#game.roam .pad button{font-size:12.5px;padding:6px 2px}
+@media (orientation:portrait){#game.roam .pad{grid-template-columns:repeat(3,1fr);gap:14px}#game.roam .pad button{font-size:15px;padding:6px}#game.roam #b-look{grid-column:1/-1}#game.roam .arena .turn{min-height:120px}}
 @media (orientation:portrait){.arena{grid-template-columns:1fr 1fr;grid-template-areas:"fire fire" "left right";grid-template-rows:1fr auto;column-gap:56px;row-gap:16px}.arena .turn{min-height:84px}}
 .aim button,.pad button{background:var(--panel);border:2px solid var(--line);border-radius:14px;font-weight:700;padding:6px;min-width:0}
 
@@ -300,6 +304,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
       <button role="radio" data-val="six" data-name="Watch my six">Watch my six<small>Only from straight ahead and right behind you</small></button>
       <button role="radio" data-val="hall" data-name="Horror hallway">Horror hallway<small>Walk a hallway while they pour out of the walls</small></button>
       <button role="radio" data-val="ragdoll" data-name="Ragdoll sandbox">Ragdoll sandbox<small>Zombie siege with real ragdoll physics and a picture to watch</small></button>
+      <button role="radio" data-val="roam" data-name="Jungle scavenger">Jungle scavenger<small>Walk the rainforest trails freely and collect supply crates between waves</small></button>
     </div>
     <button class="btn disclose" id="zadv-btn" aria-expanded="false" aria-controls="zadv">Advanced options<small id="zadv-sum"></small></button>
     <div id="zadv" class="adv" hidden>
@@ -372,6 +377,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Modes.</b> Campaign is five waves ending in the battlefield's boss. Endless survival never stops, brings a boss every fifth wave and a mega boss with twice a boss's health every seventh wave, and pays a bonus for every wave you clear. Boss rush is only bosses: it starts with one weakened boss and gets brutal far faster than endless, with a mega boss every seventh wave. Tutorial/practice is a guided tutorial with three levels, chosen from the Tutorial level dropdown under Mode: Basic info teaches every button, Intermediate learner introduces every enemy, and Battle scholar teaches any 4 weapons you pick plus every grenade. Each instruction is spoken and waits for you to do it. Afterwards targets keep coming so you can practice. Targets stand still and cannot hurt you. Zombie siege is endless waves of the undead. Four glass windows surround you about 50 feet out, at north, east, south and west. A zombie has to smash through a window to reach you, which takes a few seconds: you hear banging and cracking glass from that direction, then a crash when it shatters. Broken windows seal themselves again 15 seconds later. Every fifth wave brings a giant zombie boss, and every tenth wave also brings a mega giant zombie boss with five times a giant's health, paying five times a giant's silver, so waves 10, 20, 30 and so on have both. Every 50th wave, in every zombie mode, the Ancient One awakens: the ultimate zombie boss with 10,000 health, the same on every difficulty. It wakes with a deafening roar that shakes the ground, and keeps roaring every few seconds. In Giants only, there is just the mega giant every tenth wave. The horde grows every wave, to about 200 zombies by wave 50, and there is no limit on how many can be after you at once, so the whole wave can be alive together. After every 50 zombies come in there is a short breather before the next ones: 6 seconds on Normal spawning, 4 and a half on Fast, 3 on Faster and 1 and a half on Hyperspeed. Zombies hit softer than soldiers and pay 20 percent less silver, but kills pay 8 percent more every wave. Status reads the state of every window. That is the Standard zombie mode. In Advanced options, the Giants only checkbox makes every zombie a giant zombie boss, in the same numbers as a normal wave, so by wave 50 you face about 200 giants, plus a mega giant every tenth wave. Giants only keeps its own best records.</p>
     <p><b>Watch my six.</b> A zombie mode with only two windows: one straight ahead of you at 12 o'clock and one right behind you at 6 o'clock. Nothing comes from the left or right, so About face is your best friend.</p>
     <p><b>Horror hallway.</b> A zombie mode where you walk down a long hallway on your own, with no walk button. Your footsteps tell you your pace: quick, close together steps when the hallway ahead is clear, slowing down the more zombies are ahead, until you stop completely. You also stop while a zombie is right in front of you or grabbing you. Zombies come straight out of the walls with no barriers, appearing 10 to 20 feet away, so react fast. They start a little slower than in other modes and get faster every wave, up to double speed around wave 25. Waves come one after another with only a short pause, so expect a steady flow. If you walk past one, it chases you from behind, fast, but never faster than double speed. A soft double tick plays every 100 feet. Your score is every foot you walk plus 10 points for every kill. Status reads your distance, kills and score.</p>
+    <p><b>Jungle scavenger.</b> A zombie mode on Verdant Hollow where you walk freely. The map is eight clearings joined by straight trails: Base camp in the middle, River crossing to the north and the Waterfall beyond it, Parrot tree to the east, Frog pond to the west, Crashed plane to the south, Stone ruins to the north east and Bamboo grove to the north west. Each trail is about 120 feet long, or about 170 feet for the diagonal ones. Every clearing has its own sound so you can tell where it is: a crackling campfire, running water, a roaring waterfall, parrot squawks, frog croaks, radio beeps, a hollow wind and bamboo knocks. To walk, hold and drag on the Turn left button: drag up to walk forward, down to back up, sideways to sidestep. To turn, hold and drag sideways on the Turn right button, and you turn one step for every short drag. A quick tap on either button still turns you one step. Dragging with two thumbs needs your screen reader off, with Announcements set to Built-in voice in Settings. With a screen reader on, use Turn left and Turn right as usual and press the Walk button, where Take cover normally is, to walk forward on your own, and press it again to stop. You hear your footsteps as you move. Leaves brush on the side where you touch the jungle, and the edge steers you along the trail. The game says the name of each clearing as you arrive and each trail as you step onto it. Zombies come through the jungle from every side, 70 to 115 feet away, and a zombie standing right in front of you blocks your way. Supply crates wait in the clearings and beep: two rising beeps for a medkit, three wooden clicks for a grenade crate, a coin chime for a silver cache. Walk onto a crate to collect it. A medkit restores 40 percent of your health, a grenade crate gives 2 grenades that you keep, and a silver cache pays 20 silver plus 10 for every wave. Clearing a wave does not heal you here, apart from your Field medic perk, but it drops two new crates, one of them always a medkit, and gives you 20 seconds to scavenge before the next wave. The Surroundings button reads where you are, which trails lead where, and where every crate is, with the trail to take. There is no cover in this mode: when a giant winds up, back away.</p>
     <p><b>Perk machine.</b> In every zombie mode, after you clear every fifth wave the perk machine opens with a music-box jingle. Perks cost silver and last for the rest of that run. Electric fence: an electrified band from 20 feet in to 14 feet around you. A zombie touching it makes a loud electric crack, then sharp zaps while it struggles through at 60 percent speed, taking damage every second. Weaker zombies usually fry, but tougher zombies in later waves get through hurt, and runners can dash across. Giant zombies take more damage but are not slowed. A soft hum every few seconds tells you the fence is on. The electric fence is not offered in Horror hallway, since you keep walking forward. Iron gut: 50 more maximum health. Quick hands: reloads twice as fast. Double tap: your shots hit 35 percent harder. Second wind: the first time you would fall, you get back up with half your health. Bloodthirst: every kill heals you 3 health, or 10 for a mini boss or boss. Gold rush: double silver for the rest of the run. Frost skin: any zombie that hits you is frozen for 2 seconds, bosses for 1. Last stand: when your health drops below a quarter, a shockwave hits every zombie within 15 feet for 150 damage and throws survivors back, once per wave.</p>
     <p><b>Mythical weapons.</b> Thunderclap chains lightning: listen for crackles jumping between enemies. Thunderclap upgrades: a static field makes shocked enemies buzz and move at half speed, the ball lightning slug fires a fizzing orb straight ahead that passes through up to 7 enemies, scorches anyone within 2 feet of them and bursts into chain lightning, and when the lightning rod is charged you hear a rising hum and then electricity crackling around you until you fire your supercharged blast with its long deep rumble. The Black Hole Cannon's orb hums where it lands, drags enemies toward it, then collapses with a boom. The Banshee's scream hits and stuns everything in front of you, and stunned enemies make a ringing sound. It is strongest within 40 feet and weakens out to 160 feet. The Hydra's three rockets each explode where their target is, so you hear up to three blasts in different places, or six with Severed heads. High explosive shells land with a bigger, deeper, rolling blast. Corrosive shells land with a wet splat and a hiss, splashing acid onto anyone within 2 feet, and enemies covered in acid fizz and smoke every second until it fades after 10 seconds. With Corrosive shells V2, a bubbling, popping sound is an acid pool on the ground: anything walking through it sizzles, and the bubbling stops after 7 seconds when the pool dries up. The Alien Symbiote fires wet, fleshy bursts. It only feeds when you use it: every kill it makes eats 2 of your maximum health and makes it stronger, at 40 percent more damage for every 50 health eaten. Now and then you hear it feed, a squelch, a growl and a heartbeat, and you hear its damage each time it passes another whole multiple. It is fully grown at 600 damage per second, or 2400 with Feeding frenzy, or when your maximum health is down to 100. Status tells you how strong it has grown. Carrying it without using it never costs you health. With vampiric rounds, every kill it makes gives you back 2 health with a soft heartbeat pulse. With Hair trigger V2, the Banshee becomes a tactical rifle: each trigger pull is a tight burst of 3 quick shrieks that hit harder, with a short pause between bursts. The Jack Frost chills hard: each icicle slows an enemy more, down to a tenth of its speed after four hits. Its Blizzard blast goes off when you reload: a whirling wind storm circles you, then a crunch of ice as every enemy within 40 feet freezes completely still for 15 seconds. Ice cracking means they are moving again, and a crystal chime means the next blizzard is ready, 10 seconds after the last. The Jet rifle's heat vent goes off with a roaring rush of hot air, bigger the more rounds you fired. With both Ramjet upgrades, a Jet round punches through every enemy in its line, with no limit, and never skips one, even from cover. The Dark Quasar Turbine roars like a jet engine for as long as you hold fire. Behind you, enemies are sucked into the intake and shredded with a grinding crunch, and a rising ping counts each one toward Quasar propulsion. In front of you, enemies are blown away by the exhaust and you hear them moving off into the distance. Fast beeping means it is about to overheat, a long hiss of steam means it has, quiet metal pings mean it is still cooling, and a two-note chime means it is ready again. After every 30 enemies sucked in, you hear a rising charge whine and then a huge laser blast fires straight ahead. With the Devourer beam, every enemy sucked in also fires a quick bright laser zap straight ahead, so a stream of zaps means the turbine is feeding well. The Hades Pump Action roars out a jet of fire and racks its pump after every shot. Enemies it hits crackle as they burn, and the fire never goes out until they die. The Lantern of Ra hums with a bright, shimmering chord for as long as you hold Fire, rising in pitch as it heats up, and every enemy it touches flares up with a burst of fire and then crackles as it burns. Volcanic slugs land with a deep boom and a gloopy sizzle as the enemy erupts. You hear every shell click in as it reloads, and the pump racks when it is full. The Tetra-prism sniper fires crystals that ring out like a struck crystal bowl. Every crystal that hits has a 15 percent chance, 24 with the Ruby spyglass, of a crystallizing headshot, wherever you aim: a racing crackle and a shimmering chord mean the enemy has been turned to crystal and is dead. Bosses and mini bosses get a lower, heavier version: they are locked in crystal for 3 seconds, silent and still, then burst out with a crack and a spray of shards. Crystal statues stay put until the next wave, then crumble into tinkling dust around you, and Status tells you how many are standing. Its Emerald implosion ability, which you use instead of Shattered glass, turns crystal statues into mines: when an enemy walks into one, you hear a rising, sucking crystal whirl as everything within 5 feet is dragged in for three quarters of a second, then a bright shattering boom as it bursts outward, hitting everything within 5 feet for 60 and throwing them like an explosion. Survivors are knocked down and get back up. A burst that reaches another mine sets it off too, so a field of statues can go off in a chain.</p>
     <p><b>Silver and the Armory.</b> Every kill pays silver: 10 for light enemies, 16 for heavy ones, 50 for mini bosses, 83 for bosses and 250 for mega bosses. In endless survival, boss rush and zombie siege, every kill pays 8 percent more silver for each wave you have survived, so wave 11 pays almost double. Every regular wave has one mini boss: it announces itself with a rising two-note siren before its cry, and it is far tougher than a normal enemy. Spend it in the Armory shop on weapons, attachments, body armor, grenades and perks. Toughness and Field medic go up to level 150, Deadeye and Scavenger up to level 50: Toughness for more health, Field medic for more healing between waves, Deadeye for more gun damage and Scavenger for more silver per kill. Kills also raise each gun's mastery, up to level 10, making its attachments stronger.</p>
@@ -383,7 +389,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p><b>Dark samurai.</b> A special ability for the Samurai armor. It charges from the damage you take while wearing it, with a low snarl and Dark samurai half charged at 55 damage. At 110 damage a dark rift opens with a deep rumble, and two oni demons snarl at your left and right, then run out to attack. Listen for their snarls moving across the battlefield and the snapping bites when they hit. They go for the enemies closest to you first. After 25 seconds a falling hiss means they have vanished.</p>
     <p><b>Samurai pack.</b> The Samurai sword is swung with Fire, one heavy swing a second: a ring of steel and a deep whoosh sweeping left to right. Anything within 5 feet straight in front of you is cut down instantly, with a slicing cleave, except bosses and mini bosses, which take 100. Every swing also sends a purple energy wave straight ahead. You hear it hum away from you, climbing in pitch as it grows stronger, and every enemy it passes through gives off a ghostly shimmer, brighter the harder it was hit. The wave starts 5 feet wide and spreads to 35 feet wide at its full reach of 35 feet, and the farther it travels the harder it hits: 100 at the blade, 1,000 at 35 feet. So enemies a little way off take the most. You must own the Samurai armor, which cuts the damage you take by 75 percent, before you can buy the sword.</p>
     <p><b>Switching freezes time.</b> Switching weapon or grenade type stops the whole battle for 2 and a half seconds after your last press, so you can cycle through without being swarmed. Status and Enemy locations stop time too, for as long as it takes to read the whole thing to you. A falling whoosh means time has stopped and the battle sounds go quiet. Firing, turning, reloading, throwing a grenade or taking cover starts time again straight away, with a rising whoosh. You can also switch weapon and grenade type from the pause menu, with its buttons or with Q and X.</p>
-    <p><b>Keyboard.</b> Left and right arrows turn. Down arrow is about face. Hold Space to fire. L turns Fire lock on and off. R reloads. Q switches weapon. C takes cover. G throws a grenade. X switches grenade type. E reads enemy locations. T is status. Escape pauses.</p>
+    <p><b>Keyboard.</b> Left and right arrows turn. Down arrow is about face. Hold Space to fire. L turns Fire lock on and off. R reloads. Q switches weapon. C takes cover. G throws a grenade. X switches grenade type. E reads enemy locations. T is status. Escape pauses. In Jungle scavenger, W or the up arrow walks forward, S walks backward, C starts and stops walking on your own, and V reads your surroundings.</p>
   </div>
   <h2>Sound check</h2>
   <div class="row">
@@ -429,6 +435,14 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="zbar-break">Barrier breaks</button>
     <button class="btn" data-test="hall-steps">Footsteps in the hallway, fast then slowing</button>
     <button class="btn" data-test="hall-mile">Every 100 feet in the hallway</button>
+    <button class="btn" data-test="roam-steps">Jungle scavenger: your footsteps</button>
+    <button class="btn" data-test="roam-brush">Jungle scavenger: brushing the jungle edge, left then right</button>
+    <button class="btn" data-test="roam-arrive">Jungle scavenger: arriving at a clearing</button>
+    <button class="btn" data-test="roam-med">Jungle scavenger: medkit beacon</button>
+    <button class="btn" data-test="roam-nade">Jungle scavenger: grenade crate beacon</button>
+    <button class="btn" data-test="roam-silver">Jungle scavenger: silver cache beacon</button>
+    <button class="btn" data-test="roam-pickup">Jungle scavenger: crate collected</button>
+    <button class="btn" data-test="roam-land">Jungle scavenger: the eight clearing sounds, each one named first</button>
     <button class="btn" data-test="perk-open">Perk machine opens</button>
     <button class="btn" data-test="fence">Electric fence zap</button>
     <button class="btn" data-test="revive">Second wind</button>
@@ -702,6 +716,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button id="b-nade">Grenade</button>
     <button id="b-ntype">Grenade type</button>
     <button id="b-pause">Pause</button>
+    <button id="b-look" hidden>Surroundings</button>
   </div>
 </section>
 
@@ -2436,7 +2451,7 @@ function build(w){
    Progress lives in two places: this device (instant, but a phone can wipe it) and your
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
-const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,fatman:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},
+const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,fatman:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
   stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',ts:0};
 const P0=JSON.stringify(P);   // a brand new save, used when logging in or out
 function resetP(){Object.keys(P).forEach(k=>delete P[k]);Object.assign(P,JSON.parse(P0))}
@@ -2459,7 +2474,7 @@ function loadP(s){
   P.best={};if(s.best&&typeof s.best==='object')for(const k in s.best)if(MAPS[k])P.best[k]=Math.max(0,num(s.best[k])|0);
   P.bestBoss={};if(s.bestBoss&&typeof s.bestBoss==='object')for(const k in s.bestBoss)if(MAPS[k])P.bestBoss[k]=Math.max(0,num(s.bestBoss[k])|0);
   P.bestZ={};if(s.bestZ&&typeof s.bestZ==='object')for(const k in s.bestZ)if(zKeyOk(k))P.bestZ[k]=Math.max(0,num(s.bestZ[k])|0);
-  ['bestZ6','bestZH','bestZR'].forEach(b=>{P[b]={};if(s[b]&&typeof s[b]==='object')for(const k in s[b])if(zKeyOk(k))P[b][k]=Math.max(0,num(s[b][k])|0)});
+  ['bestZ6','bestZH','bestZR','bestZF'].forEach(b=>{P[b]={};if(s[b]&&typeof s[b]==='object')for(const k in s[b])if(zKeyOk(k))P[b][k]=Math.max(0,num(s[b][k])|0)});
   if(s.stats&&typeof s.stats==='object')for(const k in P.stats)P.stats[k]=Math.max(0,Math.floor(num(s.stats[k])));
   if(typeof s.player==='string'&&/^[A-Za-z0-9_]{3,16}$/.test(s.player))P.player=s.player;
   P.carry=['pistol','ak','barrett'];if(Array.isArray(s.carry)){const c=s.carry.filter(i=>P.owned.includes(i)).slice(0,MAXCARRY);P.carry=c}
@@ -2870,11 +2885,12 @@ function newGame(map,mode){
      wave:1,toSpawn:0,spawnT:2,enemies:[],kills:0,lockT:0,lockE:null,beatT:0,ambT:3,breakT:0,paused:false,over:false,
      bossWave:false,bossSpawned:false,minionT:6,cover:false,gt:'frag',nades:[],rockets:[],ncd:0,hpT:0,told:{},
      symMult:1,gren:mode==='practice'?{frag:99,cryo:99,incend:99,jack:99,horizon:99,fatman:99}:{...P.gren},pShots:0,pHits:0,duck:false};
-  if(coopRole&&mode!=='practice'&&!(mode==='zombies'&&S.zmode==='hall')){G.coop=coopRole;G.eid=0}   // co-op: who runs the enemies (host) and who follows along (guest)
-  if(mode==='zombies'){loadZRec();G.zm=['standard','six','hall','ragdoll'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.zs=ZSPAWN[S.zspawn]?S.zspawn:'normal';G.zg=!!S.zgiants;G.pk={};G.fenceT=4;G.zStart=zStart();G.wave=G.zStart;
+  if(coopRole&&mode!=='practice'&&!(mode==='zombies'&&(S.zmode==='hall'||S.zmode==='roam'))){G.coop=coopRole;G.eid=0}   // co-op: who runs the enemies (host) and who follows along (guest)
+  if(mode==='zombies'){loadZRec();G.zm=['standard','six','hall','ragdoll','roam'].includes(S.zmode)?S.zmode:'standard';G.zd=ZDIFF[S.zdiff]?S.zdiff:'normal';G.zs=ZSPAWN[S.zspawn]?S.zspawn:'normal';G.zg=!!S.zgiants;G.pk={};G.fenceT=4;G.zStart=zStart();G.wave=G.zStart;
     if(G.zm==='hall'){G.win=null;G.pos=0;G.spd=HALLV;G.stepT=0;G.stepSide=0;G.mileAt=100/3.281;G.stopped=false;G.moveSayT=0}
+    else if(G.zm==='roam')roamInit();
     else G.win=(G.zm==='six'?[0,180]:[0,90,180,270]).map(a=>({a,broken:false,regenT:0,bang:0,busy:0,bt:0}))}
-  rdReset();
+  rdReset();rUi();
   if(mode==='practice'){G.miniDue=false;G.toSpawn=Infinity;G.spawnT=1.5}else startWave();
 }
 const BOSSES=['boss','queen','titan','revenant','yardle'];
@@ -2924,7 +2940,7 @@ function startWave(){
     say(sym+`Boss rush, wave ${w}. ${G.mega?'Mega boss wave! ':''}${G.toSpawn>1?G.toSpawn+' bosses':'One boss'} incoming${G.mega?', one of them a mega boss with double health':''}.`);return}
   if(G.mode==='zombies'){G.bossWave=false;G.miniDue=false;G.zMegaDue=w%10===0;G.zBossDue=!G.zg&&w%5===0;G.zAncDue=w%50===0;G.toSpawn=Math.round(4*w*(G.coop?1.5:1));   // co-op: half as many again
     G.maxAlive=Infinity;G.zBatch=0;G.spawnT=(G.zm==='hall'?1:3)/zSpG().x;   // no limit on zombies alive at once: the whole wave can be on you
-    say(sym+`Wave ${w}. ${G.toSpawn} ${G.zg?(G.toSpawn>1?'giant zombies':'giant zombie'):'zombies'}${G.zm==='hall'?' ahead':''}${zBossWords()}.`);return}
+    say(sym+`Wave ${w}. ${G.toSpawn} ${G.zg?(G.toSpawn>1?'giant zombies':'giant zombie'):'zombies'}${G.zm==='hall'?' ahead':G.zm==='roam'?' closing in through the jungle':''}${zBossWords()}.`);return}
   G.mega=end&&w%7===0;G.bossWave=end?(w%5===0||G.mega):w===MAXW;G.miniDue=!G.bossWave;
   if(!G.bossWave){G.toSpawn=3+Math.min(w,10)*2;G.maxAlive=Math.min(2+Math.floor(w/2),end?6:4)+(S.diff>1.5?1:0);if(G.coop){G.toSpawn=Math.round(G.toSpawn*1.5);G.maxAlive+=2}}   // co-op: half as many again, and 2 more at once
   else{G.toSpawn=0;G.maxAlive=S.diff>1.5?4:3}
@@ -2954,6 +2970,7 @@ function spawn(type,mega){
   if(zq&&G.zm==='hall'){   // horror hallway: zombies step straight out of the side walls 10 to 20 feet ahead, no barriers to break
     const sd=Math.random()<.5?-1:1,x=sd*(.5+Math.random()*(HALLW-.5)),y=Math.sqrt(Math.max(0,Math.pow((10+Math.random()*10)/3.281,2)-x*x));
     e.angle=(Math.atan2(x,y)*180/Math.PI+360)%360;e.dist=Math.hypot(x,y)}
+  else if(zq&&G.zm==='roam'){e.angle=Math.random()*360;e.dist=(70+Math.random()*45)/3.281}   // Jungle scavenger: out of the jungle on any side, 70 to 115 feet away
   else if(zq){const wi=Math.floor(Math.random()*G.win.length);e.win=wi;e.angle=(G.win[wi].a+Math.random()*12-6+360)%360;e.dist=ZWIN+2+Math.random()*7}
   G.enemies.push(e);
   if(type==='zancient'){e.cue=4.5;ancientRoar(out(norm(e.angle-G.heading),e.dist,2,enBus,3),0,1);vib(800);
@@ -2961,7 +2978,7 @@ function spawn(type,mega){
   if(zq&&(!boss||(G.zg&&!mega)))return;   // giants only: too many to announce each one
   if(G.tutQ)return;   // the tutorial announces its own targets
   const where=clock(norm(e.angle-G.heading));
-  say(`${pr?'Target: ':mega?'Mega boss! Mega ':t.mini?'Mini boss! ':t.z?'Boss! ':''}${t.name}, ${where}, ${ft(dist)} feet.`);
+  say(`${pr?'Target: ':mega?'Mega boss! Mega ':t.mini?'Mini boss! ':t.z?'Boss! ':''}${t.name}, ${where}, ${ft(e.dist)} feet.`);
 }
 
 /* ---------- actions ---------- */
@@ -3619,6 +3636,7 @@ function switchW(){
 }
 function cover(){
   if(!G||G.paused||G.over)return;timeGo();
+  if(roamOn()){rWalkToggle();return}   // Jungle scavenger: this button is Walk, there is no cover
   G.cover=!G.cover;fx.cover(G.cover);const b=$('b-cover');b.textContent=G.cover?'Leave cover':'Take cover';b.setAttribute('aria-pressed',G.cover);
   say(G.cover?'In cover. You take half damage, but your aim is shakier.':'Out of cover. Aim steady.');
 }
@@ -3938,7 +3956,7 @@ function status(){
   if(!G)return;const w=G.lo[G.w];
   if(G.mode==='practice'){say(`Tutorial/practice. ${G.kills} target${G.kills===1?'':'s'} down.${rdWords()} Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
   const left=G.enemies.length+G.toSpawn;
-  const wv=G.mode==='zombies'?(G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}${rdWords()}`:`${G.zm==='six'?'Watch my six':G.zm==='ragdoll'?'Ragdoll sandbox':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.${rdWords()}`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.name).join(', ')}${G.revUsed?', second wind used':''}${G.lastUsed?', last stand recharging':''}.`:''):(G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`)+rdWords();
+  const wv=G.mode==='zombies'?(G.zm==='roam'?`Jungle scavenger, wave ${G.wave}. ${rWhere()} ${G.rm.crates.length} supply crate${G.rm.crates.length===1?'':'s'} out, ${G.rm.got} collected.${rdWords()}`:G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}${rdWords()}`:`${G.zm==='six'?'Watch my six':G.zm==='ragdoll'?'Ragdoll sandbox':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.${rdWords()}`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.name).join(', ')}${G.revUsed?', second wind used':''}${G.lastUsed?', last stand recharging':''}.`:''):(G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`)+rdWords();
   say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${P.armor.on==='shadow'&&P.marm.batswarm?(G.batT>0?`Bats out, ${Math.ceil(G.batT)} seconds left. `:`Bat swarm ${Math.min(99,Math.floor((G.batC||0)/(G.maxhp*.5)*100))} percent charged. `):''}${P.armor.on==='barbed'&&P.marm.hungry?`Hungry barbs at ${Math.round(barbMult()*100)} percent, ${Math.min(HB_MAX,G.barbK||0)} of ${HB_MAX} barb kills. `:''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing${G.statues.some(x=>x.mine)?`, ${G.statues.filter(x=>x.mine).length} armed as emerald mines`:''}.`:''} Facing ${facing()}. ${P.coins} silver.${coopMates()}`);
 }
 
@@ -4002,6 +4020,149 @@ const PERKZ=[
   {id:'gold',name:'Gold rush',price:800,desc:'Double silver for the rest of the run, from kills and from wave survival bonuses.'},
   {id:'frost',name:'Frost skin',price:450,desc:'Any zombie that hits you is frozen solid for 2 seconds. Bosses freeze for 1 second.'},
   {id:'last',name:'Last stand',price:550,desc:'When your health drops below a quarter, you let out a shockwave. Zombies within 15 feet take 150 damage and survivors are thrown back. Recharges every wave.'}];
+/* ---------- Jungle scavenger (zombie mode 'roam') ----------
+   The first mode where the player walks freely. The map is a network of eight rainforest clearings joined by
+   straight trails, in metres, x east and y north, with Base camp at 0,0. Everything else in the game keeps the player
+   at the origin, so walking moves the world instead: every enemy, box, statue, pool and ragdoll is shifted the other
+   way (roamShift). Zombies ignore the trails and push straight through the jungle at you.
+   Controls: hold and drag on Turn left to walk (up is forward), drag sideways on Turn right to turn, 15 degrees
+   every 30 pixels. A tap on either still turns 15 degrees, so it also works with a screen reader on, and the Walk
+   button (where Take cover normally is) walks forward on its own. Keyboard: W or up arrow forward, S back, V surroundings.
+   Sound: every clearing has its own landmark sound, supply crates beep by type, leaves brush on the side where you
+   touch the jungle, and the jungle edge steers you along a trail instead of stopping you dead. */
+const ROAMV=2.6,ROAM_R=7,ROAM_HW=2.5,RDEAD=14,RTURNPX=30,RBREAK=20;
+const RNODES=[{name:'Base camp',x:0,y:0,gap:2.6,s:'camp'},{name:'River crossing',x:0,y:36,gap:2.3,s:'river'},{name:'Waterfall',x:0,y:72,gap:2.5,s:'falls'},
+  {name:'Parrot tree',x:36,y:0,gap:3.2,s:'parrot'},{name:'Stone ruins',x:36,y:36,gap:3.6,s:'ruins'},{name:'Frog pond',x:-36,y:0,gap:2.9,s:'frog'},
+  {name:'Bamboo grove',x:-36,y:36,gap:3.1,s:'bamboo'},{name:'Crashed plane',x:0,y:-36,gap:3.4,s:'plane'}];
+const RTRAILS=[[0,1],[1,2],[0,3],[3,4],[1,4],[4,2],[0,5],[5,6],[1,6],[6,2],[0,7],[7,5],[7,3]];
+const RPAD={mv:null,tn:null,skipL:0,skipR:0},RKEY={f:false,b:false};
+const roamOn=()=>!!(G&&G.mode==='zombies'&&G.zm==='roam'&&G.rm);
+const RSND={
+  camp(d){for(let i=0;i<7;i++)noise(d,{dur:.03+Math.random()*.05,vol:.5,type:'bandpass',f:1200+Math.random()*2600,q:3,at:Math.random()*.9,attack:.001});noise(d,{dur:1,vol:.25,type:'lowpass',f:300,attack:.2})},
+  river(d){noise(d,{dur:1.6,vol:.4,type:'bandpass',f:1100,f2:1500,q:.8,attack:.4});noise(d,{dur:1.2,vol:.18,type:'highpass',f:3000,at:.2,attack:.4})},
+  falls(d){noise(d,{dur:2,vol:.7,type:'lowpass',f:500,attack:.5});noise(d,{dur:1.8,vol:.25,type:'bandpass',f:2200,q:.7,at:.1,attack:.5})},
+  parrot(d){[0,.22].forEach(t=>{tone(d,{type:'sawtooth',f:1500,f2:950,dur:.16,vol:.3,at:t});noise(d,{dur:.12,vol:.2,type:'bandpass',f:2600,q:4,at:t})})},
+  ruins(d){tone(d,{f:196,dur:1.6,vol:.3,attack:.5});tone(d,{f:294,dur:1.4,vol:.18,at:.15,attack:.5});noise(d,{dur:1.5,vol:.2,type:'bandpass',f:520,q:9,attack:.5})},
+  frog(d){const n=2+Math.floor(Math.random()*2);for(let i=0;i<n;i++){tone(d,{type:'square',f:118,f2:92,dur:.13,vol:.3,at:i*.24});tone(d,{type:'square',f:236,f2:180,dur:.1,vol:.12,at:i*.24})}},
+  bamboo(d){const n=3+Math.floor(Math.random()*3);for(let i=0;i<n;i++)tone(d,{type:'triangle',f:[420,520,640,740][Math.floor(Math.random()*4)],dur:.07,vol:.4,at:i*.13+Math.random()*.04,attack:.002})},
+  plane(d){[0,.14,.28].forEach(t=>tone(d,{f:1040,dur:.07,vol:.25,at:t}));tone(d,{type:'sawtooth',f:140,f2:90,dur:.5,vol:.12,at:.5,attack:.1})}};
+const RCRATE={
+  med:{name:'Medkit',snd(d){tone(d,{f:880,dur:.12,vol:.35});tone(d,{f:1175,dur:.16,vol:.35,at:.16})}},
+  nade:{name:'Grenade crate',snd(d){[0,.1,.2].forEach(t=>{tone(d,{type:'triangle',f:330,dur:.05,vol:.4,at:t,attack:.002});noise(d,{dur:.03,vol:.25,f:1800,q:3,at:t,attack:.001})})}},
+  silver:{name:'Silver cache',snd(d){tone(d,{f:2637,dur:.1,vol:.25});tone(d,{f:3520,dur:.18,vol:.22,at:.07})}}};
+function rStep(side){const d=out(side?14:-14,0,.5);noise(d,{dur:.08,vol:.45,type:'lowpass',f:320,attack:.003});noise(d,{dur:.06,vol:.22,type:'bandpass',f:3200,q:1.2,at:.015,attack:.002})}
+function rBrush(rel){const d=out(rel,1,.6);noise(d,{dur:.22,vol:.5,type:'bandpass',f:2800,f2:1500,q:1,attack:.02});noise(d,{dur:.12,vol:.3,type:'highpass',f:4500,at:.05,attack:.01})}
+function rArrive(){const d=out(0,0,.5);tone(d,{type:'triangle',f:784,dur:.1,vol:.25});tone(d,{type:'triangle',f:1047,dur:.16,vol:.25,at:.1})}
+function rPickup(){const d=out(0,0,.6);noise(d,{dur:.08,vol:.4,type:'lowpass',f:500,attack:.002});[660,990,1320].forEach((f,i)=>tone(d,{type:'triangle',f,dur:.12,vol:.22,at:.08+i*.07}))}
+/* ----- map geometry ----- */
+function rSegPt(x,y,A,B){const vx=B.x-A.x,vy=B.y-A.y,t=Math.max(0,Math.min(1,((x-A.x)*vx+(y-A.y)*vy)/(vx*vx+vy*vy)));return[A.x+vx*t,A.y+vy*t]}
+/* the nearest spot you are allowed to stand to x,y, and how far outside the walkable ground x,y was (0 when it is fine) */
+function rClamp(x,y){let bx=x,by=y,bd=1e9;
+  for(const n of RNODES){const d=Math.hypot(x-n.x,y-n.y);if(d<=ROAM_R)return[x,y,0];const o=d-ROAM_R;if(o<bd){bd=o;const k=(ROAM_R-.01)/d;bx=n.x+(x-n.x)*k;by=n.y+(y-n.y)*k}}
+  for(const[a,b] of RTRAILS){const[sx,sy]=rSegPt(x,y,RNODES[a],RNODES[b]),d=Math.hypot(x-sx,y-sy);if(d<=ROAM_HW)return[x,y,0];const o=d-ROAM_HW;if(o<bd){bd=o;const k=(ROAM_HW-.01)/d;bx=sx+(x-sx)*k;by=sy+(y-sy)*k}}
+  return[bx,by,bd]}
+/* 'n3' in clearing 3, 't5' on trail 5 */
+function rRegion(x,y){for(let i=0;i<RNODES.length;i++)if(Math.hypot(x-RNODES[i].x,y-RNODES[i].y)<=ROAM_R)return'n'+i;
+  let bi=0,bd=1e9;RTRAILS.forEach(([a,b],i)=>{const[sx,sy]=rSegPt(x,y,RNODES[a],RNODES[b]),d=Math.hypot(x-sx,y-sy);if(d<bd){bd=d;bi=i}});return't'+bi}
+const rPolar=(wx,wy)=>{const dx=wx-G.rm.x,dy=wy-G.rm.y;return[norm((Math.atan2(dx,dy)*180/Math.PI+360)%360-G.heading),Math.hypot(dx,dy)]};
+const rDir=(A,B)=>DIRS[Math.round(((Math.atan2(B.x-A.x,B.y-A.y)*180/Math.PI+360)%360)/45)%8];
+const rWhere=()=>rAt(G.rm.x,G.rm.y);
+const rNearest=()=>{let bi=0,bd=1e9;RNODES.forEach((n,i)=>{const d=Math.hypot(n.x-G.rm.x,n.y-G.rm.y);if(d<bd){bd=d;bi=i}});return bi};
+function rAt(x,y){const g=rRegion(x,y);if(g[0]==='n')return `At ${RNODES[+g.slice(1)].name}.`;const[a,b]=RTRAILS[+g.slice(1)];return `On the trail between ${RNODES[a].name} and ${RNODES[b].name}.`}
+/* first clearing to walk to from clearing a on the shortest way to clearing b */
+function rHop(a,b){if(a===b)return b;const prev={[a]:-1},q=[a];while(q.length){const c=q.shift();if(c===b)break;RTRAILS.forEach(([m,n])=>{const o=m===c?n:n===c?m:-1;if(o>=0&&!(o in prev)){prev[o]=c;q.push(o)}})}
+  let c=b;while(prev[c]!==a&&prev[c]>=0)c=prev[c];return c}
+function roamInit(){G.win=null;G.rm={x:0,y:0,reg:'n0',regT:0,lt:RNODES.map((n,i)=>.4+i*.35),crates:[],stepD:0,side:0,brT:0,stuck:0,blockT:0,sayT:0,auto:false,got:0};
+  RPAD.mv=RPAD.tn=null;RKEY.f=RKEY.b=false;G.rm.first=rDrop(['nade','silver'])}
+function rUi(){const on=roamOn(),L=$('b-left'),T=$('b-right'),c=$('b-cover');$('game').classList.toggle('roam',on);$('b-look').hidden=!on;
+  if(on){L.innerHTML='Turn left<small>Drag to walk</small>';L.setAttribute('aria-label','Turn left. Hold and drag to walk.');T.innerHTML='Turn right<small>Drag to turn</small>';T.setAttribute('aria-label','Turn right. Hold and drag to turn.');rAutoSync()}
+  else{L.textContent='Turn left';T.textContent='Turn right';L.removeAttribute('aria-label');T.removeAttribute('aria-label');if(c.textContent==='Walk'||c.textContent==='Stop walking'){c.textContent='Take cover';c.setAttribute('aria-pressed','false')}}}
+function rAutoSync(){const c=$('b-cover'),a=!!(G&&G.rm&&G.rm.auto);c.textContent=a?'Stop walking':'Walk';c.setAttribute('aria-pressed',a?'true':'false')}
+function rWalkToggle(){const R=G.rm;R.auto=!R.auto;rAutoSync();fx.click();say(R.auto?'Walking forward.':'Stopped.')}
+/* walking moves the world: everything that has a place on the ground slides the other way */
+function roamShift(dx,dy){
+  const sh=o=>{const[x,y]=xy(o.angle,o.dist),nx=x-dx,ny=y-dy;o.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;o.dist=Math.max(.3,Math.hypot(nx,ny))};
+  G.enemies.forEach(sh);if(G.boxes)G.boxes.forEach(sh);if(G.statues)G.statues.forEach(sh);if(G.hz)sh(G.hz);if(G.pools)G.pools.forEach(p=>{p.x-=dx;p.y-=dy});
+  for(const b of RD.bodies){const p=b.p,q=b.q;if(b.pin&&b.pin.k!=='e'){b.pin.x-=dx;b.pin.z-=dy}for(let i=0;i<33;i+=3){p[i]-=dx;q[i]-=dx;p[i+2]-=dy;q[i+2]-=dy}if(b.gu)for(let i=0;i<33;i+=3){b.gu.from[i]-=dx;b.gu.from[i+2]-=dy}}
+  for(const d of RD.decals){d.x-=dx;d.z-=dy}for(const f of RD.flash){f.x-=dx;f.z-=dy}
+  if(RD.decals.length>40&&Math.hypot(RD.decals[0].x,RD.decals[0].z)>45)RD.decals=RD.decals.filter(d=>Math.hypot(d.x,d.z)<=45)}
+/* supply crates: put one of each listed type in a clearing that has none, never the one you are standing nearest to */
+function rDrop(types){const R=G.rm,here=rNearest(),free=RNODES.map((n,i)=>i).filter(i=>i!==here&&!R.crates.some(c=>c.n===i)),got=[];
+  types.forEach(t=>{if(!free.length||R.crates.length>=5)return;const i=free.splice(Math.floor(Math.random()*free.length),1)[0],n=RNODES[i],a=Math.random()*6.283,r=Math.random()*3;
+    const c={type:t,n:i,x:n.x+Math.sin(a)*r,y:n.y+Math.cos(a)*r,t:.6+Math.random()*1.2,full:false};R.crates.push(c);got.push(c)});
+  return got.map(c=>`${RCRATE[c.type].name.toLowerCase()} at ${RNODES[c.n].name}`).join(' and ')}
+function rWaveDrop(){const w=rDrop(['med',Math.random()<.5?'nade':'silver']);return w?` Supply drop: ${w}.`:' No room for a supply drop: collect the crates already out.'}
+function rTake(c){const R=G.rm;
+  if(c.type==='med'&&G.hp>=G.maxhp){if(!c.full){c.full=true;say('Medkit here. You are at full health, so it stays for later.')}return}
+  R.crates=R.crates.filter(x=>x!==c);R.got++;rPickup();vib(40);
+  if(c.type==='med'){G.hp=Math.min(G.maxhp,G.hp+Math.round(G.maxhp*.4));say(`Medkit. Health ${Math.ceil(G.hp)} of ${G.maxhp}.`)}
+  else if(c.type==='nade'){const t=['frag','frag','cryo','incend'][Math.floor(Math.random()*4)];G.gren[t]+=2;P.gren[t]=(P.gren[t]||0)+2;saveP();say(`Grenade crate. 2 ${NADE[t].plural}. You have ${G.gren[t]}.`)}
+  else{const b=20+10*G.wave;P.coins+=b;G.earned+=b;P.stats.earned+=b;saveP();fx.coin(3);say(`Silver cache. ${b} silver.`)}
+  hud()}
+function stepRoam(dt){const R=G.rm;
+  let f=0,s=0;const m=RPAD.mv;
+  if(m&&m.drag){const h=Math.hypot(m.dx,m.dy);if(h>RDEAD){const k=Math.min(1,(h-RDEAD)/50)/h;f=-m.dy*k;s=m.dx*k}}
+  else if(R.auto)f=1;
+  if(RKEY.f)f=1;else if(RKEY.b)f=-1;
+  if(f<0)f*=.6;s*=.8;
+  const hr=G.heading*Math.PI/180,sn=Math.sin(hr),cs=Math.cos(hr);
+  let dx=(f*sn+s*cs)*ROAMV*dt,dy=(f*cs-s*sn)*ROAMV*dt;const want=Math.hypot(dx,dy);
+  R.blockT-=dt;R.sayT-=dt;
+  if(want>1e-6){
+    // a zombie standing right where you are heading blocks you: shoot your way through or back off
+    if(G.enemies.some(e=>{if(e.hp<=0||e.rdb||e.hz||e.dist>MELEE+.15)return false;const[ex,ey]=xy(e.angle,e.dist);return(ex*dx+ey*dy)/(e.dist*want)>.5})){
+      if(R.blockT<=0){R.blockT=3;say('A zombie is in your way.')}}
+    else{const tx=R.x+dx,ty=R.y+dy,[nx,ny,off]=rClamp(tx,ty),mx=nx-R.x,my=ny-R.y,moved=Math.hypot(mx,my);
+      if(off>1e-4){R.brT-=dt;if(R.brT<=0){R.brT=.45;rBrush(norm((Math.atan2(tx-nx,ty-ny)*180/Math.PI+360)%360-G.heading))}
+        if(moved<want*.3){R.stuck+=dt;if(R.stuck>.6){R.stuck=0;if(R.auto){R.auto=false;rAutoSync()}if(R.sayT<=0){R.sayT=4;say('Thick jungle. Turn and try another way, or press Surroundings.')}}}else R.stuck=0}
+      else{R.stuck=0;R.brT=Math.min(R.brT,.1)}
+      if(moved>1e-6){R.x=nx;R.y=ny;roamShift(mx,my);R.stepD+=moved;if(R.stepD>=.8){R.stepD=0;R.side^=1;rStep(R.side)}}}
+  }
+  // where you are: say it when you step into a clearing or onto a trail
+  R.regT-=dt;if(R.regT<=0){R.regT=.15;const g=rRegion(R.x,R.y);if(g!==R.reg){const was=R.reg;R.reg=g;
+    if(g[0]==='n'){const i=+g.slice(1),cr=R.crates.find(c=>c.n===i);rArrive();say(`${RNODES[i].name}.${cr?' '+RCRATE[cr.type].name+' here.':''}`)}
+    else{const[a,b]=RTRAILS[+g.slice(1)],from=was[0]==='n'&&(+was.slice(1)===a||+was.slice(1)===b)?+was.slice(1):(Math.hypot(RNODES[a].x-R.x,RNODES[a].y-R.y)<Math.hypot(RNODES[b].x-R.x,RNODES[b].y-R.y)?a:b),to=from===a?b:a;
+      say(`Trail ${rDir(RNODES[from],RNODES[to])} to ${RNODES[to].name}.`)}}}
+  // landmark sounds from every clearing in earshot
+  RNODES.forEach((n,i)=>{R.lt[i]-=dt;if(R.lt[i]>0)return;R.lt[i]=n.gap*(.8+Math.random()*.4);const[rel,d]=rPolar(n.x,n.y);if(d>60)return;
+    RSND[n.s](out(rel,d,.05+.6*Math.pow(1-d/60,1.3)))});
+  // crates: a beacon every couple of seconds, picked up by walking onto them
+  for(const c of [...R.crates]){const[rel,d]=rPolar(c.x,c.y);c.t-=dt;if(c.t<=0){c.t=1.8;RCRATE[c.type].snd(out(rel,d,Math.max(.4,1-d/80)))}
+    if(d<=1.7)rTake(c);else if(d>4)c.full=false}
+  if(Math.random()<dt*.5)hud();
+}
+/* Surroundings: where you are, which trails lead where, and where every supply crate is */
+function rLook(){if(!roamOn()||G.over||G.paused)return;const R=G.rm,g=rRegion(R.x,R.y),pol=o=>{const[rel,d]=rPolar(o.x,o.y);return `${clock(rel)}, ${ft(d)} feet`};let s,at=-1;
+  if(g[0]==='n'){at=+g.slice(1);const n=RNODES[at],ex=RTRAILS.filter(t=>t.includes(at)).map(t=>{const o=RNODES[t[0]===at?t[1]:t[0]];return `${rDir(n,o)} to ${o.name}`});
+    s=`${n.name}. Trails lead ${ex.join(', ').replace(/, ([^,]*)$/,' and $1')}.`}
+  else{const[a,b]=RTRAILS[+g.slice(1)].map(i=>RNODES[i]);s=`On the trail between ${a.name} and ${b.name}. ${a.name}, ${pol(a)}. ${b.name}, ${pol(b)}.`}
+  const cr=R.crates.map(c=>[c,rPolar(c.x,c.y)[1]]).sort((p,q)=>p[1]-q[1]).map(([c])=>c);
+  s+=cr.length?` ${cr.length} supply crate${cr.length>1?'s':''}: `+cr.map(c=>`${RCRATE[c.type].name.toLowerCase()} at ${RNODES[c.n].name}, ${pol(c)}${at>=0&&c.n!==at?`, take the trail ${rDir(RNODES[at],RNODES[rHop(at,c.n)])}`:''}`).join('; ')+'.':' No supply crates out.';
+  say(s+` Facing ${facing()}.`)}
+/* the trails, clearings and crates on the radar scope, for sighted players */
+function rDrawMap(cx,cy,Rpx,dpr,ink){const R=G.rm,k=Rpx/50;c2.save();c2.beginPath();c2.arc(cx,cy,Rpx,0,Math.PI*2);c2.clip();c2.translate(cx,cy);c2.rotate(-G.heading*Math.PI/180);c2.scale(k,-k);
+  c2.globalAlpha=.22;c2.strokeStyle=ink;c2.fillStyle=ink;c2.lineWidth=ROAM_HW*2;c2.lineCap='round';
+  RTRAILS.forEach(([a,b])=>{c2.beginPath();c2.moveTo(RNODES[a].x-R.x,RNODES[a].y-R.y);c2.lineTo(RNODES[b].x-R.x,RNODES[b].y-R.y);c2.stroke()});
+  RNODES.forEach(n=>{c2.beginPath();c2.arc(n.x-R.x,n.y-R.y,ROAM_R,0,Math.PI*2);c2.fill()});
+  c2.globalAlpha=.9;R.crates.forEach(c=>{c2.fillRect(c.x-R.x-1.3,c.y-R.y-1.3,2.6,2.6)});c2.restore();c2.globalAlpha=1;c2.lineWidth=1.5*dpr;c2.lineCap='butt'}
+/* the two pads: Turn left doubles as the walking stick, Turn right as the turning wheel */
+{const L=$('b-left'),T=$('b-right'),live=()=>roamOn()&&!G.paused&&!G.over,cap=(el,e)=>{try{el.setPointerCapture(e.pointerId)}catch(_){}};
+  L.addEventListener('pointerdown',e=>{if(!live())return;cap(L,e);RPAD.mv={id:e.pointerId,x0:e.clientX,y0:e.clientY,dx:0,dy:0,drag:false,t:performance.now()}});
+  L.addEventListener('pointermove',e=>{const m=RPAD.mv;if(!m||m.id!==e.pointerId)return;m.dx=e.clientX-m.x0;m.dy=e.clientY-m.y0;
+    if(!m.drag&&Math.hypot(m.dx,m.dy)>RDEAD){m.drag=true;timeGo();if(roamOn()&&G.rm.auto){G.rm.auto=false;rAutoSync()}}});
+  const endL=e=>{const m=RPAD.mv;if(!m||m.id!==e.pointerId)return;if(m.drag||performance.now()-m.t>350)RPAD.skipL=performance.now();RPAD.mv=null};
+  T.addEventListener('pointerdown',e=>{if(!live())return;cap(T,e);RPAD.tn={id:e.pointerId,x:e.clientX,drag:false,t:performance.now()}});
+  T.addEventListener('pointermove',e=>{const m=RPAD.tn;if(!m||m.id!==e.pointerId||!live())return;let n=0;
+    while(e.clientX-m.x>=RTURNPX&&n<8){m.x+=RTURNPX;m.drag=true;turn(15);n++}
+    while(m.x-e.clientX>=RTURNPX&&n<8){m.x-=RTURNPX;m.drag=true;turn(-15);n++}});
+  const endT=e=>{const m=RPAD.tn;if(!m||m.id!==e.pointerId)return;if(m.drag||performance.now()-m.t>350)RPAD.skipR=performance.now();RPAD.tn=null};
+  ['pointerup','pointercancel','lostpointercapture'].forEach(t=>{L.addEventListener(t,endL);T.addEventListener(t,endT)});
+  [L,T].forEach(el=>el.addEventListener('contextmenu',e=>{if(roamOn())e.preventDefault()}));
+  $('b-look').onclick=stopWhileRead(rLook);
+  document.addEventListener('keydown',e=>{if(!live()||$('game').hidden||!$('perks').hidden)return;const k=e.key.toLowerCase();
+    if(k==='w'||k==='arrowup'){e.preventDefault();if(!RKEY.f){RKEY.f=true;timeGo()}}else if(k==='s'){e.preventDefault();if(!RKEY.b){RKEY.b=true;timeGo()}}else if(k==='v'&&!e.repeat){e.preventDefault();$('b-look').click()}});
+  document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k==='w'||k==='arrowup')RKEY.f=false;else if(k==='s')RKEY.b=false});
+}
 const perksHere=()=>PERKZ.filter(p=>!(p.id==='fence'&&G.zm==='hall'));   // the fence makes no sense while walking the hallway
 function openPerks(){
   G.paused=true;G.hold=false;if(ambBus)ambBus.gain.value=0;fx.perkOpen();buildPerks();$('perks').hidden=false;
@@ -4069,7 +4230,7 @@ function stepEnemy(e,dt){
     if(e.wind>0){e.wind-=dt*slow;if(e.wind<=0){if(atkOk())ATTACK[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));hurtPlayer(t.dmg*(e.dm||1),e)}return}
     e.atkT-=dt*slow;
     if(e.atkT<=0){e.atkT=t.atk*(e.am||1);
-      if(t.boss){e.wind=.9;fx.windup(rel,e.dist,1);if(!G.told.wind){G.told.wind=1;say(`${t.name} winds up. Take cover!`)}}
+      if(t.boss){e.wind=.9;fx.windup(rel,e.dist,1);if(!G.told.wind){G.told.wind=1;say(`${t.name} winds up. ${roamOn()?'Back away!':'Take cover!'}`)}}
       else{if(atkOk())ATTACK[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));const g=G;setTimeout(()=>{if(G===g&&!G.over&&!G.paused&&e.hp>0)hurtPlayer(t.dmg*(e.dm||1),e)},250)}}   // only this game, and only if the attacker is still alive
   }
 }
@@ -4086,6 +4247,7 @@ function step(dt){
   if(G.over)return;
   rdStep(dt);
   if(G.mode==='zombies'&&G.zm==='hall')stepHall(dt);
+  if(roamOn())stepRoam(dt);
   if(G.breakT>0){G.breakT-=dt;if(G.breakT<=0){
       if(G.coop==='host'&&G.mateShop&&coopOn()){G.breakT=.25;if(!G.toldShop){G.toldShop=1;say(`Waiting for ${C.mate||'your teammate'} to finish at the perk machine.`)}}
       else if(G.coop==='guest'&&coopOn()){G.breakT=0;G.waitWave=true;if(G.mateShop&&!G.toldShop){G.toldShop=1;say(`Waiting for ${C.mate||'your teammate'} to finish at the perk machine.`)}}
@@ -4170,12 +4332,12 @@ function step(dt){
   G.ambT-=dt;if(G.ambT<=0){ambDetail(G.map);G.ambT=2.5+Math.random()*4}
   // wave clear
   if(G.mode!=='practice'&&G.toSpawn===0&&!G.miniDue&&G.enemies.length===0&&(!G.bossWave||G.bossSpawned)&&!G.zBossDue&&!G.zMegaDue&&!G.zAncDue){
-    const so=S.diff>1.5,hb=healBonus(P.perk.heal),base=(so?10:25)+(so?hb/2:hb);
+    const so=S.diff>1.5,hb=healBonus(P.perk.heal),roam=roamOn(),base=(roam?0:so?10:25)+(so?hb/2:hb);   // Jungle scavenger: no free healing between waves, only the Field medic perk. Medkits do the rest
     const gain=Math.min(base,G.maxhp-G.hp);G.hp+=gain;fx.heal();
     G.ammo=G.lo.map(x=>[x.mag,x.akimbo?x.mag:0]);G.jobs=[];G.heat={};if(G.win)G.win.forEach(W=>{W.broken=false;W.bang=0});
     let bonus='';if(G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'){const b=(G.mode==='bossrush'?6:2)*G.wave*(G.pk&&G.pk.gold?2:1);P.coins+=b;G.earned+=b;P.stats.earned+=b;saveP();bonus=` Survival bonus, plus ${b} silver.`}
     const perkNow=G.mode==='zombies'&&G.wave%5===0&&perksHere().some(p=>!G.pk[p.id]);   // no point opening the machine once every perk is owned
-    say(`Wave ${G.wave} clear. ${gain>0?'Health plus '+Math.round(gain)+'. ':''}All weapons reloaded.${bonus}${perkNow?' The perk machine is opening.':''}`);G.breakT=G.mode==='zombies'&&G.zm==='hall'&&!perkNow?2.5:5;hud();
+    say(`Wave ${G.wave} clear. ${gain>0?'Health plus '+Math.round(gain)+'. ':''}All weapons reloaded.${bonus}${perkNow?' The perk machine is opening.':''}${roam?rWaveDrop()+` Next wave in ${RBREAK} seconds.`:''}`);G.breakT=roam?RBREAK:G.mode==='zombies'&&G.zm==='hall'&&!perkNow?2.5:5;hud();
     if(G.coop&&G.mode==='zombies')coopSend({t:'pk',o:perkNow?1:0});   // co-op: tell your teammate whether you are going to the perk machine
     if(perkNow){const g=G;setTimeout(()=>{if(G===g&&!G.over)openPerks()},2600)}
   }
@@ -4833,6 +4995,7 @@ function draw(){
   const css=getComputedStyle(document.documentElement),ink=css.getPropertyValue('--accent-ink'),dan=css.getPropertyValue('--danger');
   c2.clearRect(0,0,W,H);c2.lineWidth=1.5*dpr;c2.strokeStyle=ink;
   [1,.66,.33].forEach(k=>{c2.beginPath();c2.arc(cx,cy,R*k,0,Math.PI*2);c2.stroke()});
+  if(roamOn())rDrawMap(cx,cy,R,dpr,ink);
   const cone=G.lo[G.w].cone*Math.PI/180;
   c2.fillStyle=ink;c2.globalAlpha=.18;c2.beginPath();c2.moveTo(cx,cy);c2.arc(cx,cy,R,-Math.PI/2-cone,-Math.PI/2+cone);c2.closePath();c2.fill();c2.globalAlpha=1;
   c2.beginPath();c2.moveTo(cx,cy);c2.lineTo(cx,cy-R);c2.stroke();
@@ -4855,6 +5018,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-11-roam',date:'November 11, 2026',title:'New zombie mode: Jungle scavenger, with free movement',items:['New zombie mode, Jungle scavenger, on Verdant Hollow. For the first time you can walk around the map. Choose Zombie siege, then Jungle scavenger under Zombie mode. It is solo only.','The map is eight clearings joined by trails: Base camp in the middle, River crossing, Waterfall, Parrot tree, Stone ruins, Frog pond, Bamboo grove and Crashed plane. Every clearing has its own sound, and the game says each clearing and trail as you reach it.','To walk, hold and drag on the Turn left button: up is forward, down is back, sideways is a sidestep. To turn, hold and drag sideways on the Turn right button. A quick tap on either still turns one step. Dragging with two thumbs needs your screen reader off, with Announcements set to Built-in voice in Settings.','With a screen reader on, turn with the buttons as usual and press the new Walk button, where Take cover normally is, to walk forward on your own. Press it again to stop.','Leaves brush on the side where you touch the jungle, and the jungle edge steers you along the trail instead of stopping you.','Zombies come through the jungle from every side. A zombie right in front of you blocks your way.','Supply crates beep from the clearings. Walk onto one to collect it: a medkit restores 40 percent of your health, a grenade crate gives 2 grenades to keep, and a silver cache pays 20 silver plus 10 per wave. Clearing a wave no longer heals you in this mode, but it drops two new crates and gives you 20 seconds to scavenge.','New Surroundings button reads where you are, which trails lead where, and where every crate is, with the trail to take.','Training and sound check has the new sounds to try, under the hallway sounds. With a keyboard: W or up arrow walks forward, S walks back, C starts and stops walking on your own, V reads your surroundings.']},
   {id:'2026-11-08-blood',date:'November 8, 2026',title:'Green zombie blood, and less blood at your feet',items:['Zombies now bleed dark green instead of red. Their blood pools on the floor and torn-off limbs are dark green. Every other enemy still bleeds red.','Blood pools right next to you now fade out and stay small, so killing enemies up close no longer smears blood across the bottom of the picture. Pools a few feet away fade in, and from about 10 feet out they look the same as before.']},
   {id:'2026-11-08-laser',date:'November 8, 2026',title:'New attachment: Under-barrel laser',items:['New attachment for every regular pistol, submachine gun and shotgun: the Under-barrel laser, 150 silver. Find it in the Sights and grip group with the Attachments button under the gun in the Armory. Mythical and legendary weapons cannot take it.','It shines a red laser beam straight out from under the barrel in the first-person view, with a red dot where it lands, so sighted players can see exactly where the gun is lined up. The beam stops on the first enemy in its path.','It is for looks only. It does not change damage, accuracy, headshots, range or the gunshot sound.']},
   {id:'2026-11-06-kbcd',date:'November 6, 2026',title:'Kinetic bat recharge, and tutorial updates',items:['The Kinetic bat now needs 5 seconds to recharge after each swing, so you can hit one baseball every 5 seconds. Pressing Fire sooner tells you how many seconds are left, and a two-note chime means it is ready. The weapon box shows WAIT and the seconds left while it recharges.','Basic info in Tutorial/practice now teaches Fire lock: turning it on, sweeping across two targets while it fires for you, and turning it off. It also explains that Status and Enemy locations stop time while they are read, how Enemy locations groups enemies in big waves, and points you to Co-op, Account, the Update log and the melee weapons.','The Training and sound check page now covers Fire lock and Co-op, and the keyboard list includes L for Fire lock.']},
@@ -5278,23 +5442,24 @@ const MODENOTE={campaign:'Four waves, each with a mini boss, then the battlefiel
 const ZNOTE={standard:' Standard: four glass windows surround you at north, east, south and west.',
   six:' Watch my six: only two windows, straight ahead of you and right behind you. Nothing comes from the left or right.',
   ragdoll:' Ragdoll sandbox: Zombie siege with real physics. Zombies you kill become ragdolls that fly, tumble, slam into the wall, smash through windows and knock other zombies over. Blasts throw survivors off their feet, and they get back up where they land. Big explosions tear limbs off. Every body that lands, slides or hits something makes a sound from where it happens. Sighted players see a simple first-person view in the Fire button. Separate best records.',
+  roam:' Jungle scavenger: on Verdant Hollow only, and solo only. You walk freely between eight clearings joined by trails. Hold and drag on Turn left to walk, and drag sideways on Turn right to turn. Dragging needs your screen reader off, with Announcements set to Built-in voice in Settings. With a screen reader on, turn with the buttons as usual and press Walk to walk forward on your own. There are no windows: zombies come through the jungle from every side. Supply crates beep from the clearings: medkits, grenades and silver. Clearing a wave does not heal you, but it drops two new crates and gives you 20 seconds to scavenge. Surroundings reads the trails and crates around you. Separate best records.',
   hall:' Horror hallway: you walk down a hallway on your own, quickly when it is clear ahead and slowing to a stop the more zombies there are ahead. Zombies come straight out of the walls 10 to 20 feet away, with no barriers, and get faster every wave up to double speed. Score is every foot walked plus 10 per kill.'};
 const PERKNOTE=' After every fifth wave the perk machine opens: spend silver on perks that last the rest of the run.';
-const bestOf=(m,zm=S.zmode)=>m==='endless'?P.best:m==='bossrush'?P.bestBoss:m==='zombies'?(zm==='six'?P.bestZ6:zm==='hall'?P.bestZH:zm==='ragdoll'?P.bestZR:P.bestZ):null;
+const bestOf=(m,zm=S.zmode)=>m==='endless'?P.best:m==='bossrush'?P.bestBoss:m==='zombies'?(zm==='six'?P.bestZ6:zm==='hall'?P.bestZH:zm==='ragdoll'?P.bestZR:zm==='roam'?P.bestZF:P.bestZ):null;
 function updateMaps(){setTimeout(menuAmbSync,0);
   const m=S.mode||'campaign';$('maps-note').textContent=MODENOTE[m]+(m==='zombies'?(ZNOTE[S.zmode]||ZNOTE.standard)+PERKNOTE:'');$('zmode-field').hidden=m!=='zombies';$('tut-field').hidden=m!=='practice';
   if(curScr==='coop')coopZField();
-  document.querySelectorAll('[data-map]').forEach(b=>{const k=b.dataset.map,M=MAPS[k],sm=b.querySelector('small');
+  document.querySelectorAll('[data-map]').forEach(b=>{const k=b.dataset.map,M=MAPS[k],sm=b.querySelector('small');b.hidden=m==='zombies'&&S.zmode==='roam'&&k!=='rainforest';   // Jungle scavenger is built on Verdant Hollow
     const B=bestOf(m),bk=m==='zombies'?zKey(k,S.zdiff,S.zgiants):k;sm.textContent=b.dataset.desc+` Boss: ${m==='zombies'?(S.zgiants?'Every zombie is a giant zombie, plus a mega giant every tenth wave':'Giant zombie every fifth wave, plus a mega giant every tenth wave')+', and the Ancient One every 50th wave':EN[M.boss].name}.`+(B?` Best${m==='zombies'?' on '+zDf().n+(S.zgiants?', giants only':''):''}: ${B[bk]?(m==='zombies'&&S.zmode==='hall'?'score ':'wave ')+B[bk]:'none yet'}.`:'')});
 }
 document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{initAudio();show(b.dataset.go)});
 let lastMap='rainforest';
 function begin(map){
-  initAudio();
+  initAudio();if((S.mode||'campaign')==='zombies'&&S.zmode==='roam')map='rainforest';
   if(!P.carry.length){fx.click();say('You are not carrying any guns. Open the Armory shop and choose Carry into battle on up to 4 guns.');return}lastMap=map;const mode=S.mode||'campaign';show('game');newGame(map,mode);if(mode!=='practice'){P.stats.games++;saveP()}hud();startAmb(map);
-  const bc=$('b-cover');bc.textContent='Take cover';bc.setAttribute('aria-pressed','false');
+  const bc=$('b-cover');bc.textContent='Take cover';bc.setAttribute('aria-pressed','false');rUi();
   const lead=MAPS[map].intro+' '+G.lo[0].name+' drawn. ';
-  say(lead+(mode==='practice'?'Tutorial/practice. Targets stand still and cannot hurt you. Grenades are free.':mode==='zombies'?(G.zm==='hall'?`Horror hallway. You walk on your own. Quick footsteps mean the way is clear. You slow down as zombies gather ahead, and stop when it is packed. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()} ahead${zBossWords()}.`:G.zm==='six'?`Watch my six. Two windows, 50 feet out, straight ahead and right behind you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='ragdoll'?`Ragdoll sandbox. Four windows surround you, 50 feet out, at north, east, south and west. Blasts throw zombies around, and you can hear every body land. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:`Zombie siege. Four windows surround you, 50 feet out, at north, east, south and west. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`):mode==='endless'?`Endless survival. Wave 1. ${G.toSpawn} hostiles and a mini boss.`:mode==='bossrush'?'Boss rush. One boss incoming.':`Wave 1. ${G.toSpawn} hostiles and a mini boss.`));
+  say(lead+(mode==='practice'?'Tutorial/practice. Targets stand still and cannot hurt you. Grenades are free.':mode==='zombies'?(G.zm==='roam'?`Jungle scavenger. You are at Base camp, in the middle of eight clearings joined by trails. Hold and drag on Turn left to walk, and drag sideways on Turn right to turn, or press Walk to walk forward on your own. Zombies come through the jungle from every side. Supply crates beep from the clearings: walk onto one to collect it. Out now: ${G.rm.first}. Press Surroundings to hear the trails and crates around you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='hall'?`Horror hallway. You walk on your own. Quick footsteps mean the way is clear. You slow down as zombies gather ahead, and stop when it is packed. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()} ahead${zBossWords()}.`:G.zm==='six'?`Watch my six. Two windows, 50 feet out, straight ahead and right behind you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='ragdoll'?`Ragdoll sandbox. Four windows surround you, 50 feet out, at north, east, south and west. Blasts throw zombies around, and you can hear every body land. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:`Zombie siege. Four windows surround you, 50 feet out, at north, east, south and west. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`):mode==='endless'?`Endless survival. Wave 1. ${G.toSpawn} hostiles and a mini boss.`:mode==='bossrush'?'Boss rush. One boss incoming.':`Wave 1. ${G.toSpawn} hostiles and a mini boss.`));
   setTimeout(()=>$('b-fire').focus(),60);
 }
 document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>begin(b.dataset.map));
@@ -5305,7 +5470,7 @@ function endGame(won){
   if(G.mode==='zombies'&&G.zm==='hall'){const B=P.bestZH,K=zKey(G.map,G.zd,G.zg),n=hallScore(),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
     msg=`${ZDIFF[G.zd].n} horror hallway score ${n}: ${hallFt()} feet walked and ${G.kills} kills, reaching wave ${G.wave}. ${nb?'New best! ':`Best: ${best}. `}`}
   else if(bestOf(G.mode,G.zm)){const K=G.mode==='zombies'?zKey(G.map,G.zd,G.zg):G.map,B=bestOf(G.mode,G.zm),n=G.wave-(G.mode==='zombies'?(G.zStart||1):1),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
-    msg=`${G.mode==='zombies'?ZDIFF[G.zd].n+' difficulty. ':''}${G.zm==='six'?'Watch my six. ':G.zm==='ragdoll'?'Ragdoll sandbox. ':''}You survived ${n} wave${n===1?'':'s'}${G.mode==='zombies'&&G.zStart>1?`, from wave ${G.zStart} to wave ${G.wave}`:''} on ${MAPS[G.map].name}. ${nb?'New best! ':`Best: ${best}. `}${G.kills} kills.`}
+    msg=`${G.mode==='zombies'?ZDIFF[G.zd].n+' difficulty. ':''}${G.zm==='six'?'Watch my six. ':G.zm==='ragdoll'?'Ragdoll sandbox. ':G.zm==='roam'?'Jungle scavenger. ':''}You survived ${n} wave${n===1?'':'s'}${G.mode==='zombies'&&G.zStart>1?`, from wave ${G.zStart} to wave ${G.wave}`:''} on ${MAPS[G.map].name}. ${nb?'New best! ':`Best: ${best}. `}${G.kills} kills.${G.rm?` ${G.rm.got} supply crate${G.rm.got===1?'':'s'} collected.`:''}`}
   else msg=won?`Victory on ${MAPS[G.map].name}. ${G.kills} kills.`:`You fell on wave ${G.wave}. ${G.kills} kills.`;
   msg+=` Earned ${G.earned} silver. You have ${P.coins}.`;
   if(G.coopWhy)msg=G.coopWhy+' '+msg.replace(/^You fell on/,'The battle ended on');
@@ -5572,7 +5737,7 @@ $('b-ptw').onclick=()=>{if(!G||!G.tut||G.tut.lvl!=='scholar'||!G.tut.free)return
     if(fresh.length){const n=T.steps.length;T.steps.push(...scholarSteps(ids,false));T.free=false;$('b-ptw').hidden=true;$('tut-skip').hidden=false;T.i=n-1;resume();tutNext()}
     else{resume();say(`Practice weapons changed to ${ids.map(i=>WBY[i].name).join(', ')}. You have studied all of them already, so you are free to practice. ${G.lo[0].name} drawn.`)}},'pause')};
 
-$('b-left').onclick=()=>turn(-15);$('b-right').onclick=()=>turn(15);$('b-about').onclick=()=>turn(180);
+$('b-left').onclick=()=>{if(performance.now()-RPAD.skipL<450)return;turn(-15)};$('b-right').onclick=()=>{if(performance.now()-RPAD.skipR<450)return;turn(15)};   // a drag on either pad in Jungle scavenger is not a tap$('b-about').onclick=()=>turn(180);
 /* Fire lock: a small switch in the top right corner. On, the gun keeps firing as if Fire were held down.
    Stays on through reloads, overheat cooldowns and pausing. Turns off when you press and let go of Fire,
    switch weapons, die or the match ends. Does nothing with melee weapons. Keyboard: L. */
@@ -5623,8 +5788,8 @@ function record(){
   const best=Object.keys(MAPS).filter(k=>P.best[k]).map(k=>`${MAPS[k].name} wave ${P.best[k]}`).join(', ');
   const bb=Object.keys(MAPS).filter(k=>P.bestBoss[k]).map(k=>`${MAPS[k].name} wave ${P.bestBoss[k]}`).join(', ');
   const zb=(R,pre)=>[0,1].flatMap(g=>Object.keys(ZDIFF).map(d=>{const l=Object.keys(MAPS).filter(k=>R[zKey(k,d,g)]).map(k=>`${MAPS[k].name} ${pre}${R[zKey(k,d,g)]}`).join(', ');return l?`${ZDIFF[d].n}${g?' giants only':''}: ${l}`:''})).filter(Boolean).join('. ');
-  const bz=zb(P.bestZ,'wave '),b6=zb(P.bestZ6,'wave '),bh=zb(P.bestZH,''),br=zb(P.bestZR,'wave ');
-  say(`Service record. ${t.games} battles, ${t.wins} campaign victories. ${t.kills} kills, ${t.headshots} by headshot, ${acc} percent. ${t.bossKills} bosses defeated. ${t.earned} silver earned in total, ${P.coins} in hand. Mastery: ${ms}.${best?' Endless best: '+best+'.':''}${bb?' Boss rush best: '+bb+'.':''}${bz?' Zombie siege best: '+bz+'.':''}${b6?' Watch my six best: '+b6+'.':''}${bh?' Horror hallway best score: '+bh+'.':''}${br?' Ragdoll sandbox best: '+br+'.':''}`);
+  const bz=zb(P.bestZ,'wave '),b6=zb(P.bestZ6,'wave '),bh=zb(P.bestZH,''),br=zb(P.bestZR,'wave '),bj=zb(P.bestZF,'wave ');
+  say(`Service record. ${t.games} battles, ${t.wins} campaign victories. ${t.kills} kills, ${t.headshots} by headshot, ${acc} percent. ${t.bossKills} bosses defeated. ${t.earned} silver earned in total, ${P.coins} in hand. Mastery: ${ms}.${best?' Endless best: '+best+'.':''}${bb?' Boss rush best: '+bb+'.':''}${bz?' Zombie siege best: '+bz+'.':''}${b6?' Watch my six best: '+b6+'.':''}${bh?' Horror hallway best score: '+bh+'.':''}${br?' Ragdoll sandbox best: '+br+'.':''}${bj?' Jungle scavenger best: '+bj+'.':''}`);
 }
 $('b-record').onclick=record;
 
@@ -5927,6 +6092,12 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
   if(k==='zbar-break'){fx.boardBreak(0,10);return}
   if(k==='hall-steps'){let t=0;[.32,.32,.32,.32,.4,.48,.58,.7,.85,1].forEach((g,i)=>{setTimeout(()=>fx.step(i%2),t*1000);t+=g});return}
   if(k==='hall-mile'){fx.mile();return}
+  if(k==='roam-steps'){for(let i=0;i<8;i++)setTimeout(()=>rStep(i%2),i*310);return}
+  if(k==='roam-brush'){rBrush(-70);setTimeout(()=>rBrush(70),700);return}
+  if(k==='roam-arrive'){rArrive();return}
+  if(k==='roam-med'||k==='roam-nade'||k==='roam-silver'){const c=RCRATE[k.slice(5)];[0,1.8].forEach(t=>setTimeout(()=>c.snd(out(0,3,.9)),t*1000));return}
+  if(k==='roam-pickup'){rPickup();return}
+  if(k==='roam-land'){RNODES.forEach((n,i)=>{setTimeout(()=>say(n.name+'.'),i*3600);setTimeout(()=>RSND[n.s](out(0,6,.6)),i*3600+1300)});return}
   if(k==='perk-open'){fx.perkOpen();return}
   if(k==='rivetpin'){fx.pinned(0,6);return}
   if(k==='rivetmag'){fx.magnet();return}
@@ -6018,6 +6189,10 @@ function coopZField(){const f=$('zmode-field'),box=$('coop-z');
     f.hidden=false}
   else if(f.parentNode===box)f.hidden=true;
 }
+/* Jungle scavenger is solo only, like Horror hallway: its button hides and shows with the hallway one */
+{const rb=()=>document.querySelector('[data-key=zmode] [data-val=roam]'),z0=zfHome,c0=coopZField;
+  zfHome=function(){z0();const r=rb();if(r)r.hidden=false};
+  coopZField=function(){c0();const h=hallBtn(),r=rb();if(h&&r)r.hidden=h.hidden}}
 let coopRole=null,coopFromNet=false,coopHurtNow=false;
 const C={pc:null,dc:null,role:null,code:'',mate:'',unsub:null,ice:null,iceAt:0,
   seq:0,ack:0,pend:{},sent:[],dead:new Map(),sendT:0,mateH:0,mateHp:0,mateMax:100,mateLow:false,shotAt:0,mode:'campaign',map:'rainforest',z:null,setTm:0};
