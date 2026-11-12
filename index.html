@@ -698,6 +698,14 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p class="note">On iPhone, the game sound drops every time the Built-in voice speaks, and stays low for about a second after. Sounds keeps reloads from cutting your gunfire off.</p>
   </div>
   <div class="field">
+    <p class="flabel" aria-hidden="true">Game sound with the Built-in voice</p>
+    <div class="seg" role="radiogroup" aria-label="Game sound with the Built-in voice" data-key="amix">
+      <button role="radio" data-val="mix" data-name="Shared">Shared<small>The game shares the speaker with the voice, so speaking cannot switch the game sound off. Needs Silent Mode off</small></button>
+      <button role="radio" data-val="solo" data-name="Exclusive">Exclusive<small>The older way. Plays even in Silent Mode, but on iPhone the voice can cut the game sound out</small></button>
+    </div>
+    <p class="note">Only matters on iPhone and iPad with Announcements set to Built-in voice. If the game goes silent on Shared, check that Silent Mode is off, or the ring switch is set to ring.</p>
+  </div>
+  <div class="field">
     <p class="flabel" aria-hidden="true">Vibration</p>
     <div class="seg" role="radiogroup" aria-label="Vibration" data-key="haptic">
       <button role="radio" data-val="1" data-name="On">On<small>Pulse on lock-on and when hit</small></button>
@@ -792,6 +800,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 /* ---------- settings ---------- */
 const S={voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1,zgiants:0,mread:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('vf-settings')||'{}'))}catch(e){}
+if(S.amix!=='solo')S.amix='mix';   // game sound with the Built-in voice: share the speaker (see unlockIOS)
 if(S.rcall!=='cue'&&S.rcall!=='say')S.rcall=S.voice==='tts'?'cue':'say';   // reload callouts: sounds by default with the Built-in voice, spoken with a screen reader
 function saveS(){try{localStorage.setItem('vf-settings',JSON.stringify(S))}catch(e){}acctMark();if(typeof cloud!=='undefined'&&cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1500)}}
 const $=id=>document.getElementById(id);
@@ -852,10 +861,17 @@ function say(text){
     if(!sayTm)sayTm=setTimeout(()=>{sayTm=null;const t=sayQ.join(' ');sayQ=[];if(t)speak(t)},350-gap);return}
   speak(text);
 }
+/* The Built-in voice and the sound engine. On iPhone the voice can interrupt the game's sound engine outright, not just
+   turn it down. ttsBusy says the voice has spoken in the last moment or is still speaking, so the watchdog below waits
+   and resumes instead of tearing the sound engine down, and every finished announcement nudges the engine awake. */
+let ttsAt=-1e9;
+function ttsBusy(){const d=performance.now()-ttsAt;if(d<1500)return true;try{return d<15000&&!!window.speechSynthesis&&speechSynthesis.speaking}catch(e){return false}}
+function ttsNudge(){[60,450,1100].forEach(ms=>setTimeout(()=>{if(ctx&&ctx.state!=='running'&&ctx.state!=='closed'&&!document.hidden){try{const pr=ctx.resume();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}},ms))}
+function ttsMark(u){ttsAt=performance.now();if(u){u.onend=ttsNudge;u.onerror=ttsNudge}}
 function speak(text){
   sayLast=performance.now();
   if(S.voice==='tts'&&window.speechSynthesis){
-    try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=S.rate;u.volume=Math.min(1,S.tvol);speechSynthesis.speak(u)}catch(e){}
+    try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.rate=S.rate;u.volume=Math.min(1,S.tvol);ttsMark(u);speechSynthesis.speak(u)}catch(e){}
   }else{
     flip=!flip;sr.textContent='';setTimeout(()=>{sr.textContent=text+(flip?'​':'')},30);
   }
@@ -864,7 +880,15 @@ $('test-voice').onclick=()=>{initAudio();say('Hostile at 3 o\'clock, 40 feet.')}
 
 /* ---------- audio ---------- */
 let ctx,master,sfx,ambBus,noiseBuf,ambNodes=[],silentEl=null;
-function unlockIOS(){try{if(!silentEl){silentEl=new Audio('data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==');silentEl.loop=true;silentEl.setAttribute('playsinline','')}const pr=silentEl.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}
+/* iPhone sound session. The silent looping clip below makes the phone treat the game like a music player: it plays in
+   Silent Mode, but it also takes the speaker exclusively, and then every Built-in voice announcement interrupts the whole
+   sound engine. With the Built-in voice on (Game sound with the Built-in voice: Shared) the clip stays off and the game
+   asks for a shared session instead, so the voice plays alongside the game. iPhones can lose a shared session after a
+   trip to the background, so the first tap after coming back rebuilds the sound engine (sessStale). */
+let sessStale=false;
+const mixMode=()=>S.voice==='tts'&&S.amix!=='solo';
+function sessType(t){try{const a=navigator.audioSession;if(a&&a.type!==t)a.type=t}catch(e){}}
+function unlockIOS(){try{if(mixMode()){sessType('ambient');if(silentEl&&!silentEl.paused)silentEl.pause();return}sessType('auto');if(!silentEl){silentEl=new Audio('data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==');silentEl.loop=true;silentEl.setAttribute('playsinline','')}const pr=silentEl.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}
 function initAudio(){
   if(ctx){wakeAudio();return}
   unlockIOS();
@@ -904,18 +928,22 @@ let audioStuck=0;
    If the phone suspended it during a fight, try to resume, and let the next tap rebuild it if that fails. */
 let wdT=0,wdCT=-1;
 setInterval(()=>{if(!ctx||document.hidden)return;const now=performance.now();
-  if(ctx.state==='running'){if(ctx.currentTime===wdCT&&now-wdT>1500){rebuildAudio();wdCT=-1;return}if(ctx.currentTime!==wdCT){wdCT=ctx.currentTime;wdT=now}return}
-  wdCT=-1;if(G&&!G.over&&!G.paused){if(!audioStuck)audioStuck=now;else if(now-audioStuck>2500){rebuildAudio();return}try{ctx.resume()}catch(e){}}},1000);
+  if(ctx.state==='running'){if(ctx.currentTime===wdCT&&now-wdT>1500){if(ttsBusy()){wdT=now;return}rebuildAudio();wdCT=-1;return}if(ctx.currentTime!==wdCT){wdCT=ctx.currentTime;wdT=now}return}
+  wdCT=-1;if(G&&!G.over&&!G.paused){try{const pr=ctx.resume();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
+    if(ttsBusy()){audioStuck=0;return}   // the voice has the speaker: wait for it, never rebuild underneath it
+    if(!audioStuck)audioStuck=now;else if(now-audioStuck>2500){rebuildAudio();return}}},1000);
 function wakeAudio(){
-  if(!ctx)return;unlockIOS();
+  if(!ctx)return;
+  if(sessStale){sessStale=false;if(mixMode()&&navigator.audioSession){rebuildAudio();return}}
+  unlockIOS();
   if(ctx.state==='running'){audioStuck=0;return}
-  const now=performance.now();
-  if(ctx.state==='closed'||(audioStuck&&now-audioStuck>1000)){rebuildAudio();return}
-  if(!audioStuck)audioStuck=now;
+  const now=performance.now(),busy=ttsBusy();
+  if(ctx.state==='closed'||(!busy&&audioStuck&&now-audioStuck>1000)){rebuildAudio();return}
+  if(busy)audioStuck=0;else if(!audioStuck)audioStuck=now;
   try{const pr=ctx.resume();if(pr&&pr.then)pr.then(()=>{if(ctx&&ctx.state==='running')audioStuck=0},()=>{})}catch(e){}
 }
 function rebuildAudio(){
-  const old=ctx;ctx=null;audioStuck=0;ambNodes=[];vEnds=[];duckAt=0;menuBus=null;menuWant=null;menuHum=[];try{old.close()}catch(e){}
+  const old=ctx;ctx=null;audioStuck=0;ambNodes=[];vEnds=[];duckAt=0;menuBus=null;menuWant=null;menuHum=[];if(mixMode())sessType('auto');try{old.close()}catch(e){}
   initAudio();applyVol();setTimeout(menuAmbSync,0);
   if(G&&!G.over){startAmb(G.map);if(G.paused&&ambBus)ambBus.gain.value=0}
 }
@@ -1066,7 +1094,7 @@ function clownLaugh(d,at=0){loadClownRecs();if(!clownBufs)return honk(d,at,280);
   if(clownLaughLast&&clownLaughLast.ctx===ctx){const g=clownLaughLast.g;try{g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+.15);clownLaughLast.src.stop(t+.2)}catch(e){}}
   const r=clownRec(d,at,1,.6,.95+Math.random()*.1);clownLaughLast={src:r.src,g:r.g,ctx};r.src.onended=()=>{if(clownLaughLast&&clownLaughLast.src===r.src)clownLaughLast=null}}
 function honk(d,at=0,f=330){tone(d,{type:'square',f,f2:f*.92,dur:.18,vol:.22,at});tone(d,{type:'sawtooth',f:f*1.5,f2:f*1.4,dur:.18,vol:.12,at})}
-function yell(text,pitch,rate){try{if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(text);u.pitch=pitch;u.rate=rate;u.volume=1;speechSynthesis.speak(u)}catch(e){}}
+function yell(text,pitch,rate){try{if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(text);u.pitch=pitch;u.rate=rate;u.volume=1;ttsMark(u);speechSynthesis.speak(u)}catch(e){}}
 Object.assign(CRY,{
   goblin(d){loadFartRecs();[0,.12,.24].forEach((t,i)=>tone(d,{type:'square',f:700+i*120,f2:600+i*120,dur:.08,vol:.2,at:t}));tone(d,{type:'triangle',f:300,f2:200,dur:.2,vol:.25,at:.4})},
   clown(d){clownHorn(d,0)},
@@ -5082,6 +5110,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-11-amix',date:'November 11, 2026',title:'Fix: game sound cutting out completely with the Built-in voice',items:[
+    'On iPhone, with VoiceOver off and the Built-in voice on, an announcement could switch the whole game sound off, not just turn it down. The game was holding the speaker exclusively, so the phone treated the voice as an interruption, and the game then kept restarting its sound engine while the voice was still talking.',
+    'With the Built-in voice on, the game now shares the speaker with the voice, and it waits for the voice to finish instead of restarting the sound engine.',
+    'Important: in this mode the phone must not be in Silent Mode. If you hear nothing at all, turn Silent Mode off, or set the ring switch to ring.',
+    'If this is worse for you, go to Settings and set Game sound with the Built-in voice to Exclusive to get the old behaviour back.']},
   {id:'2026-11-11-rcall',date:'November 11, 2026',title:'Fix: sound cutting out when you fire with the Built-in voice on',items:[
     'On iPhone, the phone turns the game sound right down every time the Built-in voice speaks, and keeps it low for about a second after. Guns with small magazines, like the Jet rifle, announced Magazine empty, reloading and then Ready after nearly every shot, so the sound cut out each time you fired.',
     'Reloads now use two short sounds instead of the voice: two falling notes when a reload starts, and two rising notes when the gun is ready. You can hear both in Training, Sound check.',
@@ -5868,7 +5901,7 @@ document.addEventListener('keydown',e=>{
   if(map[k]&&!e.repeat){e.preventDefault();map[k]()}
 });
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k===' '||k==='f'){const was=firePressed;firePressed=false;if(G){G.hold=false;if(was&&G.flock){setFlock(false);say('Fire lock off.')}}}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();flushSave();flushCloud()}else wakeAudio()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){pause();flushSave();flushCloud()}else{wakeAudio();if(ctx&&mixMode()&&navigator.audioSession)sessStale=true}});
 addEventListener('pagehide',flushCloud);
 
 function refreshAfterLoad(){
@@ -6578,7 +6611,7 @@ function mrdRoot(){
 }
 function mrdSpeak(t,queue){
   if(!window.speechSynthesis||!t)return;MRD.last=performance.now();
-  try{if(!queue)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=S.rate;u.volume=Math.min(1,S.tvol);speechSynthesis.speak(u)}catch(e){}
+  try{if(!queue)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=S.rate;u.volume=Math.min(1,S.tvol);ttsMark(u);speechSynthesis.speak(u)}catch(e){}
 }
 const MRDCTL='button,a[href],input,select,textarea,summary,[role=button],[role=radio],[role=switch],[role=checkbox],[role=link],[role=tab]';
 function mrdHid(el){
