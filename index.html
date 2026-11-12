@@ -2099,7 +2099,7 @@ const WPN=[
    traits:'Mythical jet engine you hold in your hands. Hold fire to run it. Its intake behind you sucks in every enemy behind you, pulling harder the closer they get, and anything that reaches it dies instantly. Bosses are too heavy to be sucked in. Its exhaust blows every enemy in front of you away like a hurricane, pushing them back without hurting them, and even bosses get pushed back slowly. It runs for 10 seconds before it overheats, then has to cool down for 25. Let go early and it cools as you rest. Special ability, Quasar propulsion: every 30 enemies it sucks in, it fires a massive laser blast straight ahead, hitting everything in a 50 degree beam at any distance for 3000, bosses included. Takes only its own upgrades.'},
   {id:'vlad',rng:30.5,name:'Vlad the Impaler',short:'VLAD',mag:100,dmg:10,cone:12,cd:1,reload:5,shots:1,acc:.95,stake:true,price:45000,
    traits:'Nightwalker pack light machine gun that fires sharpened wooden stakes from a belt of 100, one every second, each with a pneumatic thump and a whistle. A stake hits the first enemy in your sights for 10. Built-in trait: headshots do 2.5 times damage, 25 a stake, on bosses too, with a heavy chained slicing sound. A stake that kills throws the body 10 feet back. If living enemies are standing in those 10 feet behind it, in line with the shot, the stake punches through and pins them together: at stock it skewers up to 2 enemies behind the body, 3 on one stake in all, each taking 15 percent less than the one before, 8.5 then 7.2. Living enemies pinned together keep coming and keep attacking, but move as one clump at the speed of the slowest, until each one takes a fatal hit. With nobody behind it, the body is pinned to the floor, or to the wall in the zombie window modes. Bosses can never be pinned: they fall over when it kills them, but other enemies can be pinned to a living boss. Works on every enemy in every mode. Takes only its own upgrades.'},
-  {id:'ra',rng:0,name:'Lantern of Ra',short:'RA',mag:1,dmg:10,cone:6,cd:.05,reload:0,shots:1,ra:true,price:50000,
+  {id:'ra',rng:0,name:'Lantern of Ra',short:'RA',mag:1,dmg:10,cone:8,cd:.05,reload:0,shots:1,ra:true,price:50000,
    traits:'Nightwalker pack lantern. Hold Fire to shine a ray of sunlight from an ancient lantern. The ray reaches 50 feet with no damage falloff. It starts about 1 foot wide at the lantern and spreads out like a flashlight to about 10 feet wide at 50 feet, and the light slips between and around enemies, so it hits every enemy inside the beam, not just the first one. Every enemy in the light takes 10 damage every 0.2 seconds and catches fire. Once the light leaves it, an enemy keeps burning for 8 seconds at 10 damage a second. Fire spreads: any burning enemy that comes within 1 and a half feet of another enemy sets it on fire too, and bodies keep burning and spreading fire for 3 seconds after they die. Works on every enemy, bosses included. It runs for 15 seconds of continuous fire before it overheats, then has to cool down for 10. Let go early and it cools as you rest. Attachment: Magnifying glass.'},
   {id:'kbat',rng:0,name:'Kinetic bat',short:'KINETIC BAT',mag:1,dmg:15,cone:20,cd:5,reload:0,shots:1,kbat:true,price:40000,
    traits:'Mythical melee weapon. A humming metal bat charged with kinetic energy. Press Fire to swing it and knock a special baseball at the nearest enemy you are facing, or straight ahead if nothing is in your sights. The ball is slow, about 3 feet a second, so you can follow it by ear and it chases its target as it moves. Every time it hits an enemy for 15, it bounces on to the nearest other enemy within 7 feet, and it keeps bouncing from enemy to enemy, as long as there is always another enemy within 7 feet of the last one it hit. Each baseball lasts 15 seconds from the swing, then fades away. If there is no one left in reach before then, it drops to the ground. A hit lands as a headshot only if the enemy was dead centre when you swung. The bat needs 5 seconds to recharge after each swing, so you can hit one baseball every 5 seconds, and a two-note chime tells you it is ready again. It never needs reloading. Takes only its own upgrades.'},
@@ -3282,7 +3282,13 @@ function quasarPropulsion(){G.qLaser=true;G.qN-=30;fx.qCharge();vib(150);say('Qu
    RA_DUR seconds of continuous fire overheats it, then it cools for RA_COOL; letting go early cools it as you rest. */
 const RA_THIN=.5,RA_LENS=1.35,RA_PEN=15,RA_R=50,RA_HIT=10,RA_TICK=.2,RA_BURN=8,RA_BDPS=10,RA_SPREAD=1.5,RA_CORPSE=3,RA_DUR=15,RA_COOL=10;
 const raHalf=f=>(1+9*Math.min(1,Math.max(0,f)/RA_R))/2;   // half the beam's width in feet, f feet from the lantern
-function inRa(e,thin){const r=norm(e.angle-G.heading)*Math.PI/180,D=e.dist*3.281,f=D*Math.cos(r),l=Math.abs(D*Math.sin(r));   /* e.dist is in metres */return f>0&&f<=RA_R&&l<=(thin?RA_THIN:raHalf(f))}
+/* The beam is measured against each enemy's body, not a single point at its centre: RA_BODY feet either side, more for the big ones.
+   ax is the direction the beam points. Like every other gun, the lantern aims itself at the enemy giving you the lock-on ping. */
+const RA_BODY=1,RA_BIG=2.5;
+function inRa(e,thin,ax){const r=norm(e.angle-(ax==null?G.heading:ax))*Math.PI/180,D=e.dist*3.281,f=D*Math.cos(r),l=Math.abs(D*Math.sin(r)),T=EN[e.type]||{};   /* e.dist is in metres */
+  return f>0&&f<=RA_R+RA_BODY&&l<=(thin?RA_THIN:raHalf(f))+(T.boss||T.mini?RA_BIG:RA_BODY)}
+/* a quick searing hiss on an enemy every time the light bites it, so you can hear the beam landing */
+function raSear(e){if(!ctx)return;const d=out(norm(e.angle-G.heading),e.dist,.85,enBus);noise(d,{dur:.09,vol:.3,type:'highpass',f:3800,attack:.004});tone(d,{type:'triangle',f:1500,f2:900,dur:.08,vol:.1,attack:.004})}
 function raIgnite(e,at){const was=e.fireT>0;e.raFire=true;if(e.fireT!==Infinity)e.fireT=Math.max(e.fireT||0,RA_BURN);
   e.fireDps=Math.max(e.fireDps||0,RA_BDPS);if(!was){e.fireSrc='ra';fx.burn(norm(e.angle-G.heading),e.dist,at||0)}}
 function raTrigger(){
@@ -3316,7 +3322,13 @@ function raTick(dt){
   G.raHudT=(G.raHudT||0)-dt;if(G.raHudT<=0){G.raHudT=.25;hud()}
   G.raT=(G.raT||0)-dt;
   if(G.raT<=0){G.raT=RA_TICK;let died=0;
-    const lens=!!w.lens;let hits=G.enemies.filter(e=>e.hp>0&&!e.hz&&inRa(e,lens));if(lens)hits=hits.sort((a,b)=>a.dist-b.dist).slice(0,RA_PEN);
+    const lens=!!w.lens,live=G.enemies.filter(e=>e.hp>0&&!e.hz);
+    const lock=live.filter(e=>Math.abs(norm(e.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist)[0];
+    const ax=lock&&lock.dist*3.281<=RA_R+RA_BODY?lock.angle:G.heading;
+    let hits=live.filter(e=>inRa(e,lens,ax)).sort((a,b)=>a.dist-b.dist);if(lens)hits=hits.slice(0,RA_PEN);
+    hits.slice(0,3).forEach(raSear);
+    if(G.raFarT>0)G.raFarT-=RA_TICK;
+    if(!hits.length&&lock&&!(G.raFarT>0)){G.raFarT=4;say(`Out of the lantern's reach. Nearest enemy ${Math.round(lock.dist*3.281)} feet, the light reaches ${RA_R}.`)}
     hits.forEach(e=>{const rel=norm(e.angle-G.heading);
       e.hp-=RA_HIT*(lens?RA_LENS:1)*gunMult();rdShot(e,{id:'ra'},false);raIgnite(e,0);if(e.hp<=0){fx.kill(rel,e.dist,.05,e.type);died++}});
     if(died){processDead('ra');if(G.over)return}}
@@ -5121,6 +5133,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-12-rafix',date:'November 12, 2026',title:'Fix: Lantern of Ra doing no damage',items:[
+    'The Lantern of Ra was barely hitting anything, and with the Magnifying glass on it hit almost nothing at all. The light was only counting an enemy if the exact centre of the beam crossed the exact centre of its body. It now burns anything whose body is in the light.',
+    'Like every other gun, the lantern now aims itself at the enemy giving you the lock-on ping. If you hear the ping and the enemy is within 50 feet, the light is on it.',
+    'You can now hear the light landing: a quick searing hiss on each enemy every time the beam bites it.',
+    'If you shine the lantern at an enemy that is further than 50 feet away, a voice tells you it is out of reach and how far away it is.']},
   {id:'2026-11-11-roampad',date:'November 11, 2026',title:'Jungle scavenger: new layout and hold to keep turning',items:[
     'New layout, in Jungle scavenger only. Fire is now a strip across the top of the screen. The walk pad and the turn pad fill all the space below it, side by side: walking on the left half, turning on the right half. The lower buttons, such as Switch weapon, have not moved.',
     'Hold to keep turning. Drag sideways on the turn pad and keep your finger held there, and you keep turning in that direction. Hold further out to turn faster. Slide back towards where you started, or lift your finger, to stop.',
