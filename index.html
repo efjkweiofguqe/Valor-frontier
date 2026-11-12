@@ -437,6 +437,8 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="zbar-break">Barrier breaks</button>
     <button class="btn" data-test="hall-steps">Footsteps in the hallway, fast then slowing</button>
     <button class="btn" data-test="hall-mile">Every 100 feet in the hallway</button>
+    <button class="btn" data-test="rc-empty">Reload callout: reloading</button>
+    <button class="btn" data-test="rc-ready">Reload callout: ready</button>
     <button class="btn" data-test="roam-steps">Jungle scavenger: your footsteps</button>
     <button class="btn" data-test="roam-jsteps">Jungle scavenger: your footsteps off the trail</button>
     <button class="btn" data-test="roam-bsteps">Jungle scavenger: your footsteps walking backward</button>
@@ -688,6 +690,14 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     </div>
   </div>
   <div class="field">
+    <p class="flabel" aria-hidden="true">Reload callouts</p>
+    <div class="seg" role="radiogroup" aria-label="Reload callouts" data-key="rcall">
+      <button role="radio" data-val="cue" data-name="Sounds">Sounds<small>Two falling notes for reloading, two rising notes for ready</small></button>
+      <button role="radio" data-val="say" data-name="Spoken">Spoken<small>The voice says Reloading and Ready</small></button>
+    </div>
+    <p class="note">On iPhone, the game sound drops every time the Built-in voice speaks, and stays low for about a second after. Sounds keeps reloads from cutting your gunfire off.</p>
+  </div>
+  <div class="field">
     <p class="flabel" aria-hidden="true">Vibration</p>
     <div class="seg" role="radiogroup" aria-label="Vibration" data-key="haptic">
       <button role="radio" data-val="1" data-name="On">On<small>Pulse on lock-on and when hit</small></button>
@@ -782,6 +792,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 /* ---------- settings ---------- */
 const S={voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1,zgiants:0,mread:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('vf-settings')||'{}'))}catch(e){}
+if(S.rcall!=='cue'&&S.rcall!=='say')S.rcall=S.voice==='tts'?'cue':'say';   // reload callouts: sounds by default with the Built-in voice, spoken with a screen reader
 function saveS(){try{localStorage.setItem('vf-settings',JSON.stringify(S))}catch(e){}acctMark();if(typeof cloud!=='undefined'&&cloud){cloudDirty=true;clearTimeout(cloudTm);cloudTm=setTimeout(pushCloud,1500)}}
 const $=id=>document.getElementById(id);
 $('set-rate').value=S.rate;$('set-vol').value=S.vol;
@@ -3173,9 +3184,9 @@ function fire(){
   const th=Math.max(2,Math.ceil(w.mag*.2));if(A[side]>0&&A[side]<=th)fx.lowammo(gap*shots+.05);
   if(w.akimbo){
     if(A[side]===0){startReload(wi,side);const o=1-side,h=side?'Right':'Left';
-      if(A[o]>0&&!busy(o)){G.side[wi]=o;setTimeout(()=>say(`${h} gun empty, reloading. Firing ${o?'right':'left'}.`),250)}
-      else setTimeout(()=>say('Both guns reloading.'),250)}
-  }else if(A[0]===0){startReload(wi,0);setTimeout(()=>say('Magazine empty. Reloading.'),250)}
+      if(A[o]>0&&!busy(o)){G.side[wi]=o;setTimeout(()=>rSay(`${h} gun empty, reloading. Firing ${o?'right':'left'}.`),250)}
+      else setTimeout(()=>rSay('Both guns reloading.'),250)}
+  }else if(A[0]===0){startReload(wi,0);setTimeout(()=>rSay('Magazine empty. Reloading.'),250)}
   hud();
 }
 /* ---------- Dark Quasar Turbine ----------
@@ -3616,6 +3627,15 @@ function emBurst(st,cx,cz){const rel=norm(st.angle-G.heading);fx.emBlast(rel,st.
   rdBlast(cx,cz,EM_R*1.6,13,{c:'90,255,150',dis:.25});
   for(const o of G.statues)if(o!==st&&o.mine&&!o.boom&&!(o.chain>0)){const[x,z]=xy(o.angle,o.dist);if(Math.hypot(x-cx,z-cz)<=EM_R*1.6)o.chain=.15}
   processDead('tetra')}
+/* Reload callouts. On iPhone every Built-in voice announcement makes the system turn the game sound right down, for as
+   long as the voice talks and about a second after. A gun with a small magazine reloads after nearly every shot, so
+   "Magazine empty. Reloading." and "Ready." kept cutting the gunfire off. With Reload callouts set to Sounds these are
+   two short cues instead, on the aiming-cue path so nothing can bury them: two falling notes for reloading, two rising
+   notes for ready. The words still go to the on-screen feed. */
+Object.assign(fx,{
+  rEmpty(){if(!ctx)return;const d=uiBus;tone(d,{type:'triangle',f:560,dur:.08,vol:.4,attack:.003});tone(d,{type:'triangle',f:370,dur:.12,vol:.4,at:.1,attack:.003})},
+  rReady(){if(!ctx)return;const d=uiBus;tone(d,{type:'triangle',f:440,dur:.07,vol:.4,attack:.003});tone(d,{type:'triangle',f:660,dur:.13,vol:.42,at:.09,attack:.003})}});
+function rSay(t,ready){if(S.rcall==='cue'){ready?fx.rReady():fx.rEmpty();$('feed').textContent=t;return}say(t)}
 function startReload(wi,side){const w=G.lo[wi];
   if(w.shell){const per=Math.max(.2,w.shell*(G.pk&&G.pk.quick?.5:1));G.jobs.push({wi,side,shell:true,per,left:per,total:per,i:0,ev:[],pan:0});return}if(w.vent&&G.heat&&G.heat[wi]){heatVent(G.heat[wi]);G.heat[wi]=0}
   if(w.blizz&&!(G.blizzT>0))blizzard();const rt=w.reload*(G.pk&&G.pk.quick?.5:1);if(SMG_PITCH[w.id])loadSmgRec();if(SG_PITCH[w.id])loadSgRec();const rk=RKIND[w.id];G.jobs.push({wi,side,total:rt,left:rt,i:0,ev:SMG_PITCH[w.id]&&smgBuf?smgReloadEv(rt):SG_PITCH[w.id]&&sgBuf&&['shells','twin','break'].includes(rk)?sgReloadEv(w.id,rk):(RSEQ[rk]||RSEQ.hand),pan:w.akimbo?(side?.45:-.45):0})}
@@ -3640,7 +3660,7 @@ function reload(){
   const need=(w.akimbo?[0,1]:[0]).filter(s=>A[s]<w.mag&&!G.jobs.some(j=>j.wi===wi&&j.side===s));
   if(!need.length){say(G.jobs.some(j=>j.wi===wi)?'Already reloading.':'Magazine full.');return}
   need.forEach(s=>startReload(wi,s));
-  say(need.length>1?'Reloading both guns.':w.akimbo?`Reloading ${need[0]?'right':'left'} gun.`:'Reloading.');
+  rSay(need.length>1?'Reloading both guns.':w.akimbo?`Reloading ${need[0]?'right':'left'} gun.`:'Reloading.');
 }
 function switchW(){
   if(!G||G.over)return;if(G.paused&&$('pause').hidden)return;if(!G.paused)timeStop();
@@ -4302,7 +4322,7 @@ function step(dt){
         if(A[j.side]>=sw.mag)done.push(j);else j.left+=j.per;hud()}return}
       j.left-=dt;const fr=1-j.left/j.total;while(j.i<j.ev.length&&j.ev[j.i][0]<=fr){j.ev[j.i][1](rdest(j.pan));j.i++}if(j.left<=0)done.push(j)}catch(e){logErr(e,'reload');j.ev=[];j.shell=false;j.left=0;done.push(j)}});   // a broken reload sound never jams the gun: it just finishes
     if(done.length){G.jobs=G.jobs.filter(j=>!done.includes(j));
-      done.forEach(j=>{const w=G.lo[j.wi];G.ammo[j.wi][j.side]=w.mag;if(j.shell&&!sgPlay(rdest(0),'pump',{at:.12,rate:SG_PITCH[w.id]||1}))MECH.pump(.12,rdest(0));say(w.akimbo?`${j.side?'Right':'Left'} gun ready.`:`${w.short} ready.`)});hud()}}
+      done.forEach(j=>{const w=G.lo[j.wi];G.ammo[j.wi][j.side]=w.mag;if(j.shell&&!sgPlay(rdest(0),'pump',{at:.12,rate:SG_PITCH[w.id]||1}))MECH.pump(.12,rdest(0));rSay(w.akimbo?`${j.side?'Right':'Left'} gun ready.`:`${w.short} ready.`,true)});hud()}}
   if((G.hold||flockLive())&&G.cd<=0)fire();
   if(G.over)return;
   // spawning (in co-op, only the host spawns enemies)
@@ -5062,6 +5082,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-11-rcall',date:'November 11, 2026',title:'Fix: sound cutting out when you fire with the Built-in voice on',items:[
+    'On iPhone, the phone turns the game sound right down every time the Built-in voice speaks, and keeps it low for about a second after. Guns with small magazines, like the Jet rifle, announced Magazine empty, reloading and then Ready after nearly every shot, so the sound cut out each time you fired.',
+    'Reloads now use two short sounds instead of the voice: two falling notes when a reload starts, and two rising notes when the gun is ready. You can hear both in Training, Sound check.',
+    'This is on by default with the Built-in voice. To get the spoken callouts back, set Reload callouts to Spoken in Settings.',
+    'The game sound will still dip for other announcements, such as kills and warnings. That is how iPhones treat the Built-in voice. A faster Built-in voice speed makes each dip shorter.',
+    'New with the Built-in voice: rest a finger on any battle button for a moment, or slide across the buttons, and the voice names each one. Lift your finger to press the one you last heard, or slide off the buttons to press nothing. A quick tap still presses straight away.',
+    'Fixed the battle buttons doing nothing while another finger was held down, for example pressing Reload or Switch weapon while your thumb was on the walk pad in Jungle scavenger.']},
   {id:'2026-11-11-steps',date:'November 11, 2026',title:'Jungle scavenger: louder footsteps for every direction',items:['Your own movement in Jungle scavenger is now much louder and always cuts through enemy sounds, even with a full horde on top of you. Enemies dip for an instant on each step so you never lose track of yourself.','Each direction has its own sound. Forward is a firm boot step. Backward is a toe drag followed by a heel. Sidestepping is a slide and a tap, heard on the side you are moving to.','Turning now has a sound too: a pivot scuff on the side you turn to, rising in pitch when you turn right and falling when you turn left. Turning around gives two scuffs.','Off the trails every step still swishes through the undergrowth.','You can try all of these in Training, Sound check.']},
   {id:'2026-11-11-mread',date:'November 11, 2026',title:'New: Menu reader, for playing with your screen reader off',items:['New Menu reader. With your screen reader off, the Built-in voice can now read every menu, so the whole game can be used without VoiceOver: the main menu, battlefields, Armory, attachments, Co-op, Account, Settings, the Update log, the pause menu, the perk machine and the mission over screen.','To turn it on, hold two fingers still on any menu for two seconds, or set Menu reader to On in Settings. It also switches Announcements to Built-in voice. Hold two fingers for two seconds again to turn it off.','Touch or drag a finger to hear what is under it. Swipe right or left for the next or previous item. Double-tap anywhere to press the item you last heard.','Swipe up or down on a slider or picker to change it. Anywhere else, swipe up or down to jump between headings, which is a quick way through the Armory. Drag two fingers to scroll.','In a text box, double-tap to bring up the keyboard. Each letter is spoken as you type it, including in password boxes, so use headphones if others are nearby. Double-tap again when you are done.','The battle screen is not changed and still works by direct touch. If your screen reader is on, leave Menu reader off.']},
   {id:'2026-11-11-roam',date:'November 11, 2026',title:'New zombie mode: Jungle scavenger, with free movement',items:['New zombie mode, Jungle scavenger, on Verdant Hollow. For the first time you can walk around the map. Choose Zombie siege, then Jungle scavenger under Zombie mode. It is solo only.','The map is eight clearings joined by trails: Base camp in the middle, River crossing, Waterfall, Parrot tree, Stone ruins, Frog pond, Bamboo grove and Crashed plane. Every clearing has its own sound, and the game says each clearing and trail as you reach it.','To walk, hold and drag on the Turn left button: up is forward, down is back, sideways is a sidestep. To turn, hold and drag sideways on the Turn right button. A quick tap on either still turns one step. Dragging with two thumbs needs your screen reader off, with Announcements set to Built-in voice in Settings.','With a screen reader on, turn with the buttons as usual and press the new Walk button, where Take cover normally is, to walk forward on your own. Press it again to stop.','You can leave the trails and cut straight through the jungle, just like the zombies. Off the trails you walk at a bit over half speed, your footsteps swish, and the game says when you step off a trail and when you are back on one. The map ends about 65 feet beyond the outer clearings.','Zombies come through the jungle from every side. A zombie right in front of you blocks your way.','Supply crates beep from the clearings. Walk onto one to collect it: a medkit restores 40 percent of your health, a grenade crate gives 2 grenades to keep, and a silver cache pays 20 silver plus 10 per wave. Clearing a wave no longer heals you in this mode, but it drops two new crates and gives you 20 seconds to scavenge.','New Surroundings button reads where you are, which trails lead where, and where every crate is, with the trail to take. Off the trails it reads the nearest trail and clearing.','Training and sound check has the new sounds to try, under the hallway sounds. With a keyboard: W or up arrow walks forward, S walks back, C starts and stops walking on your own, V reads your surroundings.']},
@@ -5806,6 +5833,27 @@ const stopHold=e=>{const was=firePressed;firePressed=false;clearTimeout(holdTm);
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>bf.addEventListener(t,stopHold));
 bf.addEventListener('click',()=>{if(performance.now()-downAt<1200)return;fire()});
 bf.addEventListener('contextmenu',e=>e.preventDefault());
+/* Battle buttons by touch. Two things the plain click handlers below could not do:
+   1. With the Built-in voice on, rest a finger on a battle button for a moment, or slide across them, and the voice
+      names each one. Lift your finger to press the one you last heard; slide off the buttons to press nothing.
+      A quick tap still presses straight away, without the name.
+   2. A phone sends no click for a tap made while another finger is down, so the buttons did nothing while a thumb
+      was held on the walk or turn pad in Jungle scavenger. Those taps are now pressed here. */
+(function(){const SEL='.pad button,#b-flock',gm=$('game');let T=null,skipT=0;
+  const own=el=>{const b=el&&el.closest?el.closest(SEL):null;return b&&gm.contains(b)&&!b.hidden&&!b.disabled?b:null};
+  const label=b=>b.id==='b-flock'?`Fire lock, ${G&&G.flock?'on':'off'}`:(b.firstChild&&b.firstChild.nodeType===3?b.firstChild.nodeValue:b.textContent).trim();
+  const talk=()=>S.voice==='tts'&&G&&!G.over&&!G.paused;
+  const mine=e=>T&&[...e.changedTouches].find(t=>t.identifier===T.id);
+  gm.addEventListener('touchstart',e=>{if(T)return;const t=[...e.changedTouches].find(t=>own(t.target));if(!t)return;const b=own(t.target);
+    T={id:t.identifier,cur:b,moved:false,tm:setTimeout(()=>{if(T&&T.cur&&talk())say(label(T.cur))},280)}},{passive:true});
+  gm.addEventListener('touchmove',e=>{const t=mine(e);if(!t)return;const b=own(document.elementFromPoint(t.clientX,t.clientY));
+    if(b===T.cur)return;T.cur=b;T.moved=true;clearTimeout(T.tm);if(b&&talk())say(label(b))},{passive:true});
+  gm.addEventListener('touchend',e=>{if(!mine(e))return;const s=T;T=null;clearTimeout(s.tm);
+    if(!s.moved&&!e.touches.length)return;   // a plain one-finger tap: the normal click does the pressing
+    if(e.cancelable)e.preventDefault();skipT=performance.now()+500;if(s.cur){initAudio();s.cur.click()}},{passive:false});
+  gm.addEventListener('touchcancel',e=>{if(!mine(e))return;clearTimeout(T.tm);T=null});
+  gm.addEventListener('click',e=>{if(e.isTrusted&&performance.now()<skipT&&own(e.target)){e.stopImmediatePropagation();e.preventDefault()}},true);
+})();
 $('b-reload').onclick=reload;$('b-switch').onclick=switchW;$('b-cover').onclick=cover;$('b-nade').onclick=throwNade;$('b-ntype').onclick=nadeType;
 $('b-radar').onclick=radar;$('b-status').onclick=status;$('b-pause').onclick=pause;
 $('b-resume').onclick=resume;$('b-quit').onclick=quit;$('b-pswitch').onclick=switchW;$('b-pntype').onclick=nadeType;$('b-retry').onclick=()=>coopOn()?show('coop'):begin(lastMap);$('b-menu').onclick=quit;
@@ -6145,6 +6193,7 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
   if(k==='roam-tsteps'){for(let i=0;i<6;i++)setTimeout(()=>rTurnStep(i<3?-1:1),i*350+(i<3?0:500));return}
   if(k==='roam-brush'){rBrush(-70);setTimeout(()=>rBrush(70),700);return}
   if(k==='roam-arrive'){rArrive();return}
+  if(k==='rc-empty'){fx.rEmpty();return}if(k==='rc-ready'){fx.rReady();return}
   if(k==='roam-med'||k==='roam-nade'||k==='roam-silver'){const c=RCRATE[k.slice(5)];[0,1.8].forEach(t=>setTimeout(()=>c.snd(out(0,3,.9)),t*1000));return}
   if(k==='roam-pickup'){rPickup();return}
   if(k==='roam-land'){RNODES.forEach((n,i)=>{setTimeout(()=>say(n.name+'.'),i*3600);setTimeout(()=>RSND[n.s](out(0,6,.6)),i*3600+1300)});return}
@@ -6686,7 +6735,7 @@ function mrdProbe(x,y,force){
 }
 function mrdScroller(){const r=MRD.root;if(r&&r.scrollHeight>r.clientHeight+4&&/(auto|scroll)/.test(getComputedStyle(r).overflowY))return r;return document.scrollingElement||document.documentElement}
 function mrdSet(on){
-  if(on){S.mread=1;S.voice='tts'}else S.mread=0;
+  if(on){S.mread=1;if(S.voice!=='tts')S.rcall='cue';S.voice='tts'}else S.mread=0;
   saveS();syncSettingsUI();MRD.root=null;mrdMark(null);MRD.idx=-1;
   if(on)mrdSpeak('Menu reader on. '+MRDHELP);
   else{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('Menu reader off. Menus work by normal touch again.');u.rate=S.rate;speechSynthesis.speak(u)}catch(e){}}
@@ -6780,6 +6829,7 @@ document.querySelectorAll('[data-key=mread] button').forEach(b=>b.addEventListen
     setTimeout(()=>mrdSpeak('Menu reader on. Announcements are set to Built-in voice. '+MRDHELP),420)}
   else{mrdMark(null);MRD.idx=-1}}));
 document.querySelectorAll('[data-key=voice] button').forEach(b=>b.addEventListener('click',()=>{
+  {const r=S.voice==='tts'?'cue':'say';if(S.rcall!==r){S.rcall=r;saveS();syncSettingsUI()}}   // reload callouts follow the voice: sounds with the Built-in voice, spoken with a screen reader
   if(S.voice!=='tts'&&S.mread){S.mread=0;saveS();syncSettingsUI();mrdMark(null);MRD.idx=-1}}));
 
 if(window.claude&&claude.use)initCloud();else setCloud('local');
