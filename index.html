@@ -1225,7 +1225,7 @@ const SND={hades:{gap:0},pistol:{gap:0,mech:'slide',cas:1},deagle:{gap:0,mech:'s
   skorpion:{gap:.062,cas:.4},m249:{gap:.075,cas:.5},spas:{gap:0,mech:'pump'},barrett:{gap:0,cas:1},antitank:{gap:0,mech:'bolt'},
   beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},tetra:{gap:.09},salvo:{gap:0},jet:{gap:0},rivet:{gap:0},vlad:{gap:0},scythe:{gap:0},
   glock:{gap:.035,mech:'slide',cas:.5},gyrojet:{gap:0},p90:{gap:.04,cas:.4},m4:{gap:.075,cas:1},mg42:{gap:.042,cas:.4},m2:{gap:.13,cas:1},aa12:{gap:0,cas:1},bshot:{gap:.11,cas:1},ksg:{gap:0,mech:'pump'},coach:{gap:.018},
-  thunder:{gap:0},blackhole:{gap:0},banshee:{gap:.09},hydra:{gap:0},symbiote:{gap:.045},quasar:{gap:0}};
+  thunder:{gap:0},blackhole:{gap:0},bubble:{gap:0},banshee:{gap:.09},hydra:{gap:0},symbiote:{gap:.045},quasar:{gap:0}};
 function gunDest(pan,bus){const g=ctx.createGain();g.__pri=true;bus=bus||gunBus;
   if(pan&&ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=pan;g.connect(p);p.connect(bus)}else g.connect(bus);return g}
 function shot(p,at,d,o={}){
@@ -1535,6 +1535,7 @@ function hadesShot(d,am,cd=1){
 function gunSound(w,n=1,side=-1){
   duckForGun();if(G&&G.coop)coopShot(w);
   if(w.boomer){fx.boomDemo(w.bmPath||'wide');return}
+  if(w.bubble){bubShot(gunDest(0));return}
   if(w.kbat){fx.kbDemo();return}
   if(w.katana){fx.katSwing();setTimeout(()=>{if(ctx)fx.katWave(KAT_R/KAT_SP)},120);return}
   if(w.scythe){fx.scyStart();for(let i=0;i<12;i++)setTimeout(()=>{if(ctx)fx.scySweep(i*30+15)},i*225);return}
@@ -1634,7 +1635,7 @@ const RSEQ={
   bolt:[[.05,d=>{RK.clack(d,0,1500,.45);RK.scrape(d,.06,2500,1600,.12,.12)}],[.22,d=>RK.thud(d,0,.25)],[.55,d=>RK.clack(d,0,1100,.6)],[.8,d=>RK.scrape(d,0,1600,2600,.12,.14)],[.9,d=>RK.clack(d,0,1800,.55)]]
 };
 const RKIND={vlad:'belt',gyrojet:'hand',pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
-  glock:'hand',p90:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',hades:'shells',blackhole:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle',rivet:'rifle',quasar:'heavy'};
+  glock:'hand',p90:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',hades:'shells',blackhole:'heavy',bubble:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle',rivet:'rifle',quasar:'heavy'};
 function rdest(pan){const g=gunDest(pan,sfx);g.gain.value=.9;return g}
 const fx={
   /* Rivet Storm magnetic nails coming back: a rising magnetic zip, then nails clinking into the magazine */
@@ -2085,6 +2086,8 @@ const WPN=[
    traits:'Scavenger pack throwing weapon. A heavy boomerang ringed with razor blades. Press Fire to throw it: it leaves on your left, swings out in a wide loop across the front of you, and curves back in on your right to your hand. You hear its blades whirring as it travels. It slices every enemy it passes for 400, on the way out and again on the way back, cutting through up to 30 enemies per throw. It flies 30 feet out at stock. While it is out, Fire just tells you it is still out. You hear Boomerang returned when you catch it. It never needs reloading. Takes only its own upgrades.'},
   {id:'katana',rng:0,name:'Samurai sword',short:'KATANA',mag:1,dmg:100,cone:27,cd:1,reload:0,shots:1,katana:true,needArm:'samurai',price:40000,
    traits:'Samurai pack melee weapon. A huge katana. Press Fire to swing it, one swing a second, and hold Fire to keep swinging. The blade reaches 5 feet in front of you across a 5 foot wide cut: anything it hits dies instantly, except bosses and mini bosses, which take 100. Every swing also sends out a wave of purple energy that passes through enemies like a ghost, hitting every one in its path. The wave starts 5 feet wide and spreads to 35 feet wide at its full reach of 35 feet, and unlike a shotgun it hits harder the farther it travels: 100 as it leaves the blade, rising steadily to 1,000 at 35 feet. You hear the heavy swing, then the wave humming away from you and rising in pitch as it grows stronger, and a ghostly shimmer from every enemy it passes through, brighter the harder it hits. Never needs reloading. You must own the Samurai armor before you can buy it.'},
+  {id:'bubble',rng:0,name:'Heavy Bubble Blaster',short:'BUBBLE',mag:1,dmg:0,cone:12,cd:2,reload:0,shots:1,bubble:true,price:32000,
+   traits:'Legendary launcher that blows huge, heavy bubbles. It does no damage at all. Each bubble wobbles out to the nearest enemy you are facing, up to 50 feet away, or about 40 feet ahead if nothing is in your sights. The bubble is 10 feet wide and swallows up to 10 enemies within 5 feet of its centre. Trapped enemies float helplessly: they cannot move and cannot attack, but you and your other weapons can still hurt them. Enemies that walk into a bubble with room left are trapped too. Each bubble lasts 1 minute, then pops and lets everything go. You can have 4 bubbles out at once and fire one every 2 seconds. It never needs reloading. Takes only its own upgrades, including the Interdimensional bubble.'},
   {id:'blackhole',rng:0,name:'Black Hole Cannon',short:'BLACK HOLE',mag:2,dmg:70,cone:12,cd:1.6,reload:3.4,shots:1,hole:true,price:45000,
    traits:'Mythical cannon that fires a slow humming orb. It lands on the nearest enemy you are facing, or about 40 feet ahead. For 4 seconds it drags every enemy within 25 feet into it, crushing everything caught in its pull for 9 damage a second, then collapses, hitting everything within 12 feet for 70 and everything else it pulled for half that. Perfect to follow with a shotgun or a grenade. Takes only a few of its own upgrades, including the Dark matter core.'},
   {id:'banshee',rng:0,name:'Banshee',short:'BANSHEE',mag:15,dmg:20,cone:40,cd:.25,reload:3.0,shots:1,sonic:true,acc:1,full:12.2,reach:48.8,price:30000,
@@ -2393,6 +2396,11 @@ const ATT=[
   {id:'jffast1',name:'Fast magazine V1',price:500,for:'jackfrost',desc:()=>'Reloads 30 percent faster.'},
   {id:'jffast2',name:'Fast magazine V2',price:1500,for:'jackfrost',req:'jffast1',desc:()=>'Reloads 55 percent faster. Buy V1 first.'},
   {id:'jfblizz',name:'Blizzard blast',price:25000,for:'jackfrost',desc:()=>'Special ability. When you reload the Jack Frost, a whirling blizzard explodes out of the rifle and freezes every enemy within 40 feet completely still for 15 seconds, bosses included. Frozen enemies cannot move or attack. The storm needs only 10 seconds to build again, and a crystal chime tells you when it is ready for your next reload.'},
+  {id:'bbtrig1',name:'Hair trigger V1',price:3000,for:'bubble',grp:'trigger',desc:()=>'Fires one bubble every second instead of one every 2 seconds.'},
+  {id:'bbtrig2',name:'Hair trigger V2',price:5000,for:'bubble',grp:'trigger',req:'bbtrig1',desc:()=>'Fires one bubble every half second. Buy V1 first.'},
+  {id:'bbtrouble',name:'Bubble trouble',price:12000,for:'bubble',desc:()=>'Doubles how many bubbles you can have out at once, from 4 to 8.'},
+  {id:'bbexpand',name:'Bubble expansion',price:10000,for:'bubble',desc:()=>'Every bubble swells from 10 feet wide to 15 feet wide, trapping enemies within 7 and a half feet of its centre instead of 5.'},
+  {id:'bbinter',name:'Interdimensional bubble',price:25000,for:'bubble',desc:()=>'Special ability. The inside of every bubble opens into another dimension, so there is always room. A bubble no longer stops at 10 enemies: it traps every enemy that is inside it or walks into it, with no limit.'},
   {id:'bhcore',name:'Dark matter core',price:25000,for:'blackhole',desc:()=>'Special ability. A core of dark matter makes every black hole far heavier. Its pull reaches 35 feet instead of 25 and drags enemies in twice as fast, it crushes everything caught in it for 20 damage a second instead of 9, and it stays open for 8 seconds instead of 4 before it collapses.'},
   {id:'heatvent',name:'Heat vent',price:23000,for:'jet',desc:()=>'Special ability. A jet engine this hot has to breathe. Every time you reload, the turbine dumps its stored heat in a roaring blast of superheated exhaust that sets every enemy around you on fire, burning 20 health per second for 5 seconds. The more you fire before reloading, the bigger the blast: 7 feet after 1 round, 15 feet after 2, and 25 feet after 3 or more.'},
   {id:'qcool1',name:'Cryo coolant V1',price:6000,for:'quasar',desc:()=>'Liquid cryo coolant in the turbine jacket. After it overheats, it cools down in 20 seconds instead of 25.'},
@@ -2426,10 +2434,12 @@ const ATT=[
   {id:'akimbo',name:'Akimbo',only:HAND,desc:()=>'A second pistol in your other hand, each with its own magazine. Empty one and it reloads while the other keeps firing. The left gun sounds on your left, the right gun on your right.'}
 ];
 const ATTBY=Object.fromEntries(ATT.map(a=>[a.id,a]));
-const OWNUP=['vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
+const OWNUP=['vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
 const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||((w.id==='symbiote'||w.id==='hades')&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
+/* Heavy Bubble Blaster: reach, lifetime and stock capacity of a bubble */
+const BUB_R=50/3.281,BUB_T=60,BUB_CAP=10;
 function build(w){
   const eq=(P.att[w.id]||{eq:[]}).eq,has=k=>eq.includes(k),b={...w};
   const L=mlevel(w.id),k=1+.05*(L-1);b.mlv=L;   // mastery: each level makes attachments 5 percent stronger
@@ -2450,6 +2460,7 @@ function build(w){
   if(w.id==='symbiote'){b.mag=has('symmag3')?220:has('symmag2')?165:has('symmag1')?110:55;
     const nb=(has('symbarrel1')?1:0)+(has('symbarrel2')?1:0);b.barrel=nb>0;b.dmg=w.dmg*(1+.15*nb);
     b.rng=has('symbrake')?120/3.281:w.rng*(1+.25*nb);if(has('symbrake'))b.acc=.97;b.vamp=has('vamp');b.infect=has('infect')}
+  if(w.id==='bubble'){b.bubMax=has('bbtrouble')?8:4;b.bubR=(has('bbexpand')?7.5:5)/3.281;b.bubCap=has('bbinter')?Infinity:BUB_CAP;b.inter=has('bbinter');b.cd=w.cd*(has('bbtrig2')?.25:has('bbtrig1')?.5:1)}
   if(w.id==='blackhole'){b.core=has('bhcore');b.holeT=b.core?8:4;b.holeDps=b.core?20:9;b.pullR=(b.core?35:25)/3.281;b.pullSp=b.core?2:1}
   if(w.id==='quasar'){b.qDur=has('qburn3')?20:has('qburn2')?16:has('qburn1')?13:10;b.qCool=has('qcool3')?10:has('qcool2')?15:has('qcool1')?20:25;b.qBeam=has('qbeam')}
   if(w.id==='banshee')b.mag=has('bnmag3')?60:has('bnmag2')?45:has('bnmag1')?30:15;
@@ -3063,6 +3074,7 @@ function fire(){
   if(!G||G.paused||G.over||G.cd>0)return;
   if(G.lo[G.w].turbine){quasarTrigger(G.lo[G.w]);return}
   if(G.lo[G.w].ra){raTrigger();return}
+  if(G.lo[G.w].bubble){bubFire(G.lo[G.w]);return}
   if(G.lo[G.w].boomer){boomThrow(G.lo[G.w]);return}
   if(G.lo[G.w].kbat){kbSwing(G.lo[G.w]);return}
   if(G.lo[G.w].katana){katanaFire(G.lo[G.w]);return}
@@ -3274,6 +3286,49 @@ function quasarPropulsion(){G.qLaser=true;G.qN-=30;fx.qCharge();vib(150);say('Qu
     if(!G.over&&!k)(g=>setTimeout(()=>{if(G===g&&!G.over)say(n?`Laser hit ${n} ${n>1?'enemies':'enemy'}.`:'The laser hit nothing.')},300))(G);
     if(!G.over&&G.qN>=30)quasarPropulsion();
     return true});
+}
+/* Heavy Bubble Blaster: does no damage. Each bubble flies to the nearest enemy in your sights (at most BUB_R away) and opens there.
+   For BUB_T seconds it traps enemies within its radius, up to its capacity; trapped enemies cannot move or attack but can be hurt.
+   Enemies that walk in later are trapped too while there is room. When it pops, everything inside goes free.
+   e.bub holds the id of the bubble an enemy is in. Only bubMax bubbles can be out at once. */
+function bubShot(d,at=0){tone(d,{type:'sine',f:170,f2:700,dur:.24,vol:.85,at,attack:.012});tone(d,{type:'sine',f:420,f2:1500,dur:.13,vol:.4,at:at+.17,attack:.005});noise(d,{dur:.3,vol:.3,type:'bandpass',f:500,f2:1800,q:3,at,attack:.02})}
+const bubFx={
+  open(rel,dist){const d=out(rel,dist,1,gunBus);tone(d,{type:'sine',f:130,f2:520,dur:.5,vol:.85,attack:.03});tone(d,{type:'sine',f:700,f2:1150,dur:.3,vol:.3,at:.32,attack:.02});noise(d,{dur:.5,vol:.2,type:'bandpass',f:900,f2:2400,q:4,attack:.05})},
+  hum(rel,dist,hot){const d=out(rel,dist,.75,gunBus),f=hot?520:300;tone(d,{type:'sine',f,f2:f*1.5,dur:.12,vol:.4,attack:.01});tone(d,{type:'sine',f:f*1.35,f2:f*2,dur:.1,vol:.3,at:.14,attack:.01})},
+  trap(rel,dist,at=0){const d=out(rel,dist,.9,gunBus);tone(d,{type:'sine',f:900,f2:260,dur:.16,vol:.5,at,attack:.005});tone(d,{type:'sine',f:240,f2:480,dur:.12,vol:.4,at:at+.14,attack:.01})},
+  pop(rel,dist){const d=out(rel,dist,1,gunBus);noise(d,{dur:.05,vol:.9,type:'highpass',f:1800,attack:.001});tone(d,{type:'sine',f:1300,f2:180,dur:.14,vol:.6,attack:.002});noise(d,{dur:.5,vol:.25,type:'bandpass',f:3000,f2:600,q:1.5,at:.05,attack:.01})}};
+function bubFire(w){
+  G.bubs=G.bubs||[];
+  if(G.bubs.length>=w.bubMax){G.cd=.5;if(!(G.bubSayT>performance.now())){G.bubSayT=performance.now()+2500;fx.click();
+      const nx=Math.max(1,Math.ceil(Math.min(...G.bubs.map(b=>b.t))));say(`${w.bubMax} bubbles already out. The next one pops in ${nx} ${nx===1?'second':'seconds'}.`)}return}
+  G.cd=w.cd;gunSound(w,1);if(rdOn())RD.muzzle=.07;
+  const e=G.enemies.filter(o=>o.hp>0&&!(o.hb>0)&&!o.hz&&!o.bub&&Math.abs(norm(o.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist)[0];
+  const dd=Math.min(BUB_R,e?e.dist:12.2);
+  G.bubId=(G.bubId||0)+1;G.bubs.push({id:G.bubId,angle:e?e.angle:G.heading,dist:Math.max(.3,dd),fly:.3+dd*.05,t:BUB_T,hum:0,r:w.bubR,cap:w.bubCap,n:0,newN:0,sayT:0});hud();
+}
+function bubTick(dt){
+  if(!G.bubs||!G.bubs.length)return;let popped=false;
+  G.bubs.forEach(b=>{const rel=norm(b.angle-G.heading);let first=false;
+    if(b.fly>0){b.fly-=dt;if(b.fly>0)return;bubFx.open(rel,b.dist);first=true}
+    b.t-=dt;const[bx,by]=xy(b.angle,b.dist);let got=0,n=G.enemies.filter(o=>o.hp>0&&o.bub===b.id).length;
+    if(b.t>0)G.enemies.forEach(o=>{if(o.hp<=0)return;const[x,y]=xy(o.angle,o.dist),gx=bx-x,gy=by-y,g=Math.hypot(gx,gy);
+      if(o.bub===b.id){   // floating inside: drift gently toward the middle
+        if(g>b.r*.6){const sp=Math.min(g-b.r*.6,2*dt),nx=x+gx/g*sp,ny=y+gy/g*sp;o.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;o.dist=Math.max(MELEE,Math.hypot(nx,ny))}return}
+      if(o.bub||o.hb>0||o.hz||g>b.r||n>=b.cap)return;
+      o.bub=b.id;o.engaged=false;o.wind=0;o.charge=0;n++;got++;if(got<=3)bubFx.trap(norm(o.angle-G.heading),o.dist,(got-1)*.08)});
+    b.n=n;
+    if(got)tutEv('bubtrap');
+    if(first){say(n?`Bubble open. ${n} trapped.`:'Bubble open. Nothing caught yet.');b.sayT=2}
+    else if(got)b.newN+=got;
+    if(b.sayT>0)b.sayT-=dt;
+    if(b.newN&&b.sayT<=0&&b.t>0){say(`Bubble trapped ${b.newN} more. ${n} inside.`);b.newN=0;b.sayT=2.5}
+    if(b.t>0){b.hum-=dt;if(b.hum<=0){const hot=b.t<=5;bubFx.hum(rel,b.dist,hot);b.hum=hot?.45:2.5}
+      if(b.t<=5&&!b.warn){b.warn=true;if(n)say(`A bubble with ${n} inside pops in 5 seconds.`)}return}
+    // pop: everything inside goes free
+    let free=0;G.enemies.forEach(o=>{if(o.bub===b.id){o.bub=0;if(o.hp>0){free++;o.cue=Math.min(o.cue||0,.4)}}});
+    bubFx.pop(rel,b.dist);vib(60);popped=true;
+    if(!G.over)say(free?`Bubble popped. ${free} ${free>1?'enemies':'enemy'} free, ${clock(rel)}, ${ft(b.dist)} feet.`:'Bubble popped. It was empty.')});
+  if(popped){G.bubs=G.bubs.filter(b=>b.t>0);hud()}
 }
 /* Lantern of Ra (Nightwalker pack): hold Fire for a ray of sunlight. The beam is RA_R feet long, about 1 foot wide at the lantern
    and 10 feet wide at the far end. Light slips between and around enemies, so everything inside the beam is hit, not just the first.
@@ -3691,11 +3746,12 @@ function blizzard(){const r=40/3.281;G.blizzT=10;fx.blizzard();vib(250);let c=0;
 function heatVent(n){const f=n>=3?25:n===2?15:7,r=f/3.281;fx.ventBlast(f);vib(60);let c=0;rdBlast(0,0,r,4,{c:'255,120,40'});
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;e.fireT=5;e.fireDps=Math.max(e.fireDps||0,20);e.fireSrc='jet';c++;fx.burn(norm(e.angle-G.heading),e.dist,.15)});
   const msg=`Heat vent, ${f} feet. ${c?c+(c>1?' enemies':' enemy')+' burning.':'Nothing in range.'}`;(g=>setTimeout(()=>{if(G===g&&!G.over)say(msg)},400))(G)}
-function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.kbat){const n=(G.kb||[]).length;return n?`${n} ${n>1?'baseballs':'baseball'} in play`:'no baseballs in play'}if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.katana||w.scythe)return 'blade ready';if(w.ra)return G.raCool>0?`overheated, cooling, ${Math.ceil(G.raCool)} seconds left`:`heat ${Math.round((G.raHeat||0)/RA_DUR*100)} percent`;if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
+function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.kbat){const n=(G.kb||[]).length;return n?`${n} ${n>1?'baseballs':'baseball'} in play`:'no baseballs in play'}if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.katana||w.scythe)return 'blade ready';if(w.bubble){const n=(G.bubs||[]).length;return `${n} of ${w.bubMax} bubbles out`}if(w.ra)return G.raCool>0?`overheated, cooling, ${Math.ceil(G.raCool)} seconds left`:`heat ${Math.round((G.raHeat||0)/RA_DUR*100)} percent`;if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
 function reload(){
   if(G&&!G.paused&&!G.over)timeGo();
   if(!G||G.paused||G.over)return;
   const wi=G.w,w=G.lo[wi],A=G.ammo[wi];
+  if(w.bubble){say(`The bubble blaster never needs reloading. ${ammoWords()}.`);return}
   if(w.ra){say(`The lantern never needs reloading. ${ammoWords()}.`);return}
   if(w.turbine){say(`No magazine, it runs on heat. ${ammoWords()}.`);return}
   if(w.kbat){say(`The Kinetic bat never needs reloading. ${ammoWords()}.`);return}
@@ -4185,7 +4241,7 @@ function rWalkToggle(){const R=G.rm;R.auto=!R.auto;rAutoSync();fx.click();say(R.
 /* walking moves the world: everything that has a place on the ground slides the other way */
 function roamShift(dx,dy){
   const sh=o=>{const[x,y]=xy(o.angle,o.dist),nx=x-dx,ny=y-dy;o.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;o.dist=Math.max(.3,Math.hypot(nx,ny))};
-  G.enemies.forEach(sh);if(G.boxes)G.boxes.forEach(sh);if(G.statues)G.statues.forEach(sh);if(G.hz)sh(G.hz);if(G.pools)G.pools.forEach(p=>{p.x-=dx;p.y-=dy});
+  G.enemies.forEach(sh);if(G.boxes)G.boxes.forEach(sh);if(G.statues)G.statues.forEach(sh);if(G.hz)sh(G.hz);if(G.bubs)G.bubs.forEach(sh);if(G.pools)G.pools.forEach(p=>{p.x-=dx;p.y-=dy});
   for(const b of RD.bodies){const p=b.p,q=b.q;if(b.pin&&b.pin.k!=='e'){b.pin.x-=dx;b.pin.z-=dy}for(let i=0;i<33;i+=3){p[i]-=dx;q[i]-=dx;p[i+2]-=dy;q[i+2]-=dy}if(b.gu)for(let i=0;i<33;i+=3){b.gu.from[i]-=dx;b.gu.from[i+2]-=dy}}
   for(const d of RD.decals){d.x-=dx;d.z-=dy}for(const f of RD.flash){f.x-=dx;f.z-=dy}
   if(RD.decals.length>40&&Math.hypot(RD.decals[0].x,RD.decals[0].z)>45)RD.decals=RD.decals.filter(d=>Math.hypot(d.x,d.z)<=45)}
@@ -4319,6 +4375,7 @@ function stepEnemy(e,dt){
   if(e.rdb){rdDowned(e,dt);return}   // Ragdoll sandbox: knocked flat, it cannot walk or attack until it gets back up
   const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1);
   if(e.slowT>0)e.slowT-=dt;if(e.blossT>0)e.blossT-=dt;
+  if(e.bub){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,.7,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}   // trapped in a bubble: cannot move or attack
   if(e.hz){e.engaged=false;e.wind=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}
   if(e.hb>0){e.hb-=dt*(slow>0?1:0);e.bt-=dt;const pg=1-e.hb/e.hb0;
     if(e.bt<=0){e.bt=.45;e.kind==='bar'?fx.boardBang(rel,pg,e.dist):fx.glassBang(rel,pg,e.dist);
@@ -4356,7 +4413,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  stepNades(dt);stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;katTick(dt);if(G.over)return;slTick(dt);
+  stepNades(dt);stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;bubTick(dt);katTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -4435,7 +4492,7 @@ function step(dt){
   const w=G.lo[G.w];
   const inSight=G.enemies.filter(e=>Math.abs(norm(e.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist)[0];
   G.lockT-=dt;
-  if(inSight){const head=!w.spread&&!w.lantern&&!w.sonic&&!w.hydra&&!w.hole&&!w.turbine&&!w.ra&&Math.abs(norm(inSight.angle-G.heading))<=(w.hz||HEADZONE);
+  if(inSight){const head=!w.spread&&!w.lantern&&!w.sonic&&!w.hydra&&!w.hole&&!w.turbine&&!w.ra&&!w.bubble&&Math.abs(norm(inSight.angle-G.heading))<=(w.hz||HEADZONE);
     if(G.lockE!==inSight){G.lockE=inSight;vib(head?40:20)}
     if(G.lockT<=0){fx.lock(inSight.dist,head);G.lockT=.32}}
   else G.lockE=null;
@@ -5009,6 +5066,10 @@ function rdDraw(){
   if(G.raOn){const hr=G.heading*Math.PI/180,fx0=Math.sin(hr),fz0=Math.cos(hr),rx=Math.cos(hr),rz=-Math.sin(hr),pts=[];
     for(const[f,sg]of[[.6,-1],[RA_R/3.281,-1],[RA_R/3.281,1],[.6,1]]){const hw=(G.lo[G.w]&&G.lo[G.w].lens?RA_THIN:raHalf(f*3.281))/3.281*sg;if(P(fx0*f+rx*hw,1,fz0*f+rz*hw,a))pts.push([a[0],a[1]])}
     if(pts.length===4){c.fillStyle='rgba(255,215,90,.28)';c.beginPath();c.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<4;i++)c.lineTo(pts[i][0],pts[i][1]);c.closePath();c.fill()}}
+  // Heavy Bubble Blaster: each open bubble is a pale shimmering ball
+  if(G.bubs)for(const b of G.bubs){if(b.fly>0)continue;const[bx,by]=xy(b.angle,b.dist);if(!P(bx,1.2,by,a))continue;const rr=Math.max(3,b.r*F/a[2]),k=b.t<=5?.5+.5*Math.sin(b.t*14):1;
+    c.fillStyle=`rgba(150,215,255,${.16*k})`;c.strokeStyle=`rgba(210,240,255,${.75*k})`;c.lineWidth=Math.max(1.5,W/400);c.beginPath();c.arc(a[0],a[1],rr,0,Math.PI*2);c.fill();c.stroke();
+    c.strokeStyle=`rgba(255,255,255,${.6*k})`;c.beginPath();c.arc(a[0],a[1],rr*.72,Math.PI*1.15,Math.PI*1.45);c.stroke()}
   // bats from the Darkest Shadow Suit: little flapping wings with red eyes
   if(G.bats)for(const o of G.bats){if(!P(o.x,1.5+.2*Math.sin(o.fl*7),o.y,a))continue;const sz=Math.max(4,.32*F/a[2]),fl=Math.sin(o.fl*26);
     c.strokeStyle='#160b1a';c.lineWidth=Math.max(2,sz/3.5);c.lineCap='round';c.beginPath();c.moveTo(a[0]-sz,a[1]-sz*.6*fl);c.lineTo(a[0]-sz*.4,a[1]-sz*.1);c.lineTo(a[0],a[1]);c.lineTo(a[0]+sz*.4,a[1]-sz*.1);c.lineTo(a[0]+sz,a[1]-sz*.6*fl);c.stroke();
@@ -5125,7 +5186,7 @@ function draw(){
 function hud(){
   if(!G)return;const w=G.lo[G.w];
   $('v-hp').textContent=Math.max(0,Math.ceil(G.hp));$('hud-hp').classList.toggle('hp-low',G.hp<G.maxhp*.3);
-  $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.kbat?(G.kbCd>0?`WAIT ${Math.ceil(G.kbCd)}`:(G.kb||[]).length?`BALLS ${(G.kb||[]).length}`:'READY'):w.katana||w.scythe?'BLADE':w.boomer?(G.boom?'OUT':'READY'):w.ra?(G.raCool>0?`COOL ${Math.ceil(G.raCool)}`:`HEAT ${Math.round((G.raHeat||0)/RA_DUR*100)}%`):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
+  $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.kbat?(G.kbCd>0?`WAIT ${Math.ceil(G.kbCd)}`:(G.kb||[]).length?`BALLS ${(G.kb||[]).length}`:'READY'):w.katana||w.scythe?'BLADE':w.boomer?(G.boom?'OUT':'READY'):w.bubble?`OUT ${(G.bubs||[]).length}/${w.bubMax}`:w.ra?(G.raCool>0?`COOL ${Math.ceil(G.raCool)}`:`HEAT ${Math.round((G.raHeat||0)/RA_DUR*100)}%`):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
   $('v-wave').textContent=G.mode==='practice'?'—':G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'?`${G.wave}`:`${G.wave}/${MAXW}`;$('v-coins').textContent=P.coins;
   const hall=G.mode==='zombies'&&G.zm==='hall';$('v-wave').previousElementSibling.textContent=hall?'Score':'Wave';if(hall)$('v-wave').textContent=hallScore();
 }
@@ -5133,6 +5194,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-12-bubble',date:'November 12, 2026',title:'New legendary weapon: Heavy Bubble Blaster',items:[
+    'New legendary launcher, the Heavy Bubble Blaster, 32,000 silver. Find it in the Armory under Legendary, Mythical weapons, Launchers.',
+    'It does no damage. It blows a huge bubble out to the nearest enemy you are facing, up to 50 feet away. The bubble is 10 feet wide and traps up to 10 enemies within 5 feet of its centre. Trapped enemies cannot move or attack, but you can still hurt them with your other weapons. Enemies that walk into a bubble with room left are trapped too.',
+    'Each bubble lasts 1 minute, then pops and sets everything free. You can have 4 bubbles out at once and fire one every 2 seconds. It never needs reloading.',
+    'Sounds: a rising bloop when you fire, a deep bloop when the bubble opens, a squeak for each enemy it swallows, a soft double blip every couple of seconds from where each bubble is floating, faster blips in its last 5 seconds, and a sharp pop when it bursts. A voice tells you how many were trapped and how many go free.',
+    'Attachments: Hair trigger V1, 3,000 silver, one bubble a second. Hair trigger V2, 5,000, one bubble every half second. Bubble trouble, 12,000, 8 bubbles out at once instead of 4. Bubble expansion, 10,000, bubbles 15 feet wide instead of 10.',
+    'Special ability: Interdimensional bubble, 25,000 silver. Bubbles trap an unlimited number of enemies.']},
   {id:'2026-11-12-rafix',date:'November 12, 2026',title:'Fix: Lantern of Ra doing no damage',items:[
     'The Lantern of Ra was barely hitting anything, and with the Magnifying glass on it hit almost nothing at all. The light was only counting an enemy if the exact centre of the beam crossed the exact centre of its body. It now burns anything whose body is in the light.',
     'Like every other gun, the lantern now aims itself at the enemy giving you the lock-on ping. If you hear the ping and the enemy is within 50 feet, the light is on it.',
@@ -5806,6 +5874,7 @@ const WBEST={
   thunder:'Crowds at any distance. Every blast hits everything in front of you for at least 75, harder up close, and chains lightning between enemies.',
   hades:'Burning down crowds. Everything caught in the flame burns until it dies, and fire spreads between enemies, so one good blast into a crowd keeps working.',
   hydra:'Several enemies at once. Each trigger pull fires 3 homing rockets that lock onto different enemies, so you do not even need to aim precisely.',
+  bubble:'Buying time. Bubble a packed group, or a boss, to take them out of the fight for a minute, then deal with everything else or shoot the trapped ones while they float. Drop a bubble on a path enemies walk along and it catches them as they arrive.',
   blackhole:'Packed crowds. The orb drags everything within 25 feet into one spot, crushes it, then collapses with a big blast. Great before a wave reaches you.',
   salvo:'Crowds that you want to burn. Each lantern hits for 90, explodes and sets everything within 12 feet on fire.',
   kbat:'Tight groups. Each baseball bounces from enemy to enemy as long as they stand within 7 feet of each other, so one swing can keep hitting a whole crowd. It is slow, so swing early.',
@@ -5825,6 +5894,7 @@ function tutFireHow(w){return w.kbat?'Press Fire to swing the bat. After each sw
 // where to put targets so each weapon shows what it does best
 function tutWSetup(w){const ty=MAPS[G.map].types[0],S=(r,f)=>tutSpawn(ty,r,f,10);
   if(w.kbat)return[S(0,12),S(12,13)];
+  if(w.bubble)return[S(-3,30),S(0,32),S(3,30)];
   if(w.ra)return[S(0,20),S(-6,32),S(6,42)];
   if(w.scythe)return[S(0,6),S(90,7),S(180,6),S(-90,8)];if(w.stake)return[S(0,30),S(0,36)];
   if(w.katana)return[S(0,4)];if(w.boomer)return[S(0,20),S(20,22)];
@@ -5837,10 +5907,10 @@ function tutWDesc(w){return w.kbat?'straight ahead at 12 feet, with a second one
 function scholarSteps(ids,first){const T=()=>G.tut,out=[];const fresh=ids.filter(i=>!G.tut.taught.has(i)),list=ids.map(i=>WBY[i].name);
   if(first)out.push({go(){T().lockW=true},t:`Welcome, battle scholar. You picked ${ids.length} weapon${ids.length>1?'s':''}: ${list.join(', ')}. For each one, the tutorial puts it in your hands, reads its stats and the best ways to use it, then has you take down practice targets with it and hear it reload. Until every weapon has been covered, the tutorial chooses which weapon you are holding, so Switch weapon is locked. After the weapons, you will study all six grenades. When it is all done you are free to switch between your weapons, and Pause will have a Change practice weapons button, so you can pick new weapons to study without going back to the main menu. Stats include any attachments and mastery you have on that gun. Press Next to start with the ${list[0]}.`});
   fresh.forEach((id,k)=>{const W=WBY[id];
-    out.push({w:tutKill(),go(){tutClear();T().lockW=true;const i=G.lo.findIndex(w=>w.id===id);if(i>=0){G.w=i;G.ammo[i]=[G.lo[i].mag,G.lo[i].akimbo?G.lo[i].mag:0];G.jobs=[];G.cd=.3;hud();pauseLabels()}
+    out.push({w:W.bubble?'bubtrap':tutKill(),go(){tutClear();T().lockW=true;const i=G.lo.findIndex(w=>w.id===id);if(i>=0){G.w=i;G.ammo[i]=[G.lo[i].mag,G.lo[i].akimbo?G.lo[i].mag:0];G.jobs=[];G.cd=.3;hud();pauseLabels()}
         T().set=tutWSetup(G.lo[G.w]);T().taught.add(id)},
-      t:()=>{const w=G.lo[G.w];return `Weapon ${k+1} of ${fresh.length}: the ${W.name}. It is now in your hands. ${WCATN[catOf(id)]}. Stats: ${tutStats(id)} ${W.traits} Best use: ${WBEST[id]||''} Practice targets are ${tutWDesc(w)}. ${tutFireHow(w)} Take one down.`}});
-    if(!(W.kbat||W.katana||W.boomer||W.turbine||W.scythe||W.ra))out.push({w:'reload',t:()=>`Now press Reload so you know how the ${W.name} sounds when it reloads. A full reload takes ${r1(build(W).reload)} seconds${W.shell?', one shell at a time, so you can stop early with only a few shells loaded':''}. Never start a long reload with enemies right next to you: switch to another gun instead.`})});
+      t:()=>{const w=G.lo[G.w];return `Weapon ${k+1} of ${fresh.length}: the ${W.name}. It is now in your hands. ${WCATN[catOf(id)]}. Stats: ${tutStats(id)} ${W.traits} Best use: ${WBEST[id]||''} Practice targets are ${tutWDesc(w)}. ${tutFireHow(w)} ${W.bubble?'Trap them in a bubble.':'Take one down.'}`}});
+    if(!(W.kbat||W.katana||W.boomer||W.turbine||W.scythe||W.ra||W.bubble))out.push({w:'reload',t:()=>`Now press Reload so you know how the ${W.name} sounds when it reloads. A full reload takes ${r1(build(W).reload)} seconds${W.shell?', one shell at a time, so you can stop early with only a few shells loaded':''}. Never start a long reload with enemies right next to you: switch to another gun instead.`})});
   if(first){
     NTYPES.forEach((t,k)=>{const N=NADE[t];
       out.push({w:(ev,d)=>ev==='nade'&&d===t,go(){tutClear();T().lockW=false;T().lockN=true;G.w=Math.min(G.w,G.lo.length-1);G.gt=t;G.gren[t]=99;pauseLabels();timeGo();
@@ -5953,8 +6023,8 @@ function record(){
 $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
-const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','tetra','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','salvo','quasar']};
-const MCAT={rifle:['jet','banshee'],sniper:['jackfrost','tetra'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['blackhole','hydra','salvo'],heavy:['quasar'],melee:['kbat']};
+const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','tetra','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar']};
+const MCAT={rifle:['jet','banshee'],sniper:['jackfrost','tetra'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['blackhole','bubble','hydra','salvo'],heavy:['quasar'],melee:['kbat']};
 const MCATN={rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
@@ -5976,7 +6046,7 @@ const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine gu
   grenades:'Grenades go off around you, so there is no aiming: everything inside the blast radius is hit. They are used up when thrown. In battle, Grenade uses one, and Grenade type cycles frag, cryo, incendiary, jack-in-the-box, event horizon and Fat Man.',
   perks:'Permanent upgrades to your soldier. Toughness and Field medic go up to level 150, Deadeye and Scavenger up to level 50. Every level up to 20 gives the full boost, after that each level gives a smaller one. From level 6 to 50, every level costs 10 percent more than the one before, and past 50 only 3 percent more.'};
 const n1=x=>Math.round(x*10)/10;
-function dmgLine(w){if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
+function dmgLine(w){if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
   if(w.hydra)return `Damage: 3 rockets of ${w.dmg} each per trigger pull, each splashing enemies within 5 feet for half. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.hole){const b=build(w);return `Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${w.dmg} on collapse to everything within 12 feet, half that to the rest it pulled in. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(false)return ` For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.sonic)return `Damage: ${w.dmg} to every enemy in the cone within ${ft(w.full)} feet, plus a stun, fading to 40 percent at ${ft(w.reach)} feet. ${n1(1/w.cd)} screams per second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.stake)return `Damage: ${w.dmg} per stake to the first enemy, then 15 percent less for each enemy it skewers behind a body it kills. ${n1(1/w.cd)} stakes per second at stock. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.scythe)return `Damage: ${w.dmg} to everything within 10 feet, all the way around you, once every ${SCY_T} seconds. Kills heal you 20 percent of the enemy's full health. For scale, light enemies have 2 to 3 health and bosses about 80.`;
@@ -6026,7 +6096,7 @@ function buildShop(keepFocus){
   $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
-  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra?'':` Magazine ${w.mag}. ${w.shell?`Loads one shell at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
+  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra||w.bubble?'':` Magazine ${w.mag}. ${w.shell?`Loads one shell at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
   shopArmors().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
     const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
@@ -6123,6 +6193,7 @@ const r1=x=>Math.round(x*10)/10;
 /* attachments screen: the gun's true current power, with every attachment, its mastery and the Deadeye perk counted in */
 const has2=(b,k)=>((P.att[b.id]||{eq:[]}).eq).includes(k);
 function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(P.perk.aim||0)/100,D=x=>n1(x*aim),out=[];
+  if(b.bubble)return[`Damage: none. It traps enemies instead.`,`Each bubble is ${n1(b.bubR*3.281*2)} feet wide and traps ${b.inter?'every enemy':'up to '+b.bubCap+' enemies'} within ${n1(b.bubR*3.281)} feet of its centre${b.inter?', with no limit. Interdimensional bubble on':''}.`,`Bubbles last ${BUB_T} seconds and reach 50 feet.`,`${b.bubMax} bubbles out at once. One bubble every ${n1(b.cd)} ${b.cd===1?'second':'seconds'}. Never needs reloading.`];
   if(b.ra)return[b.lens?`Damage: ${D(RA_HIT*RA_LENS)} every ${RA_TICK} seconds, Magnifying glass on: a thin beam about 1 foot wide out to ${RA_R} feet, burning through up to ${RA_PEN} enemies in a line at full damage.`:`Damage: ${D(RA_HIT)} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet. The beam widens to about 10 feet at the far end.`,`Fire: everything the light touches burns ${RA_BDPS} a second for ${RA_BURN} seconds, spreads to enemies within ${RA_SPREAD} feet, and bodies keep burning for ${RA_CORPSE} seconds.`,`Runs ${RA_DUR} seconds before it overheats, then cools down for ${RA_COOL} seconds. Never needs reloading.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')];
   if(b.scythe)return[`Damage: ${D(SCY_DMG)} to everything within ${b.scyR} feet of you, all the way around, once every ${SCY_T} seconds${b.spLeech?', faster with every Spirit leech kill':''}.`,(b.spLeech?`Spirit leech: every kill adds 2 percent damage, with no limit, and speeds the swing up to one circle a second. Stacks drain away after 15 seconds without a kill.`:'')+`Healing: every kill heals you ${b.spLeech?10:20} percent of the enemy's full health.${b.leech?` Leeching edge: every hit also heals you 10 percent of its damage, ${n1(D(SCY_DMG)*.1)} health per enemy.`:''}`,'Never needs reloading.',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')];
   if(b.stake){const fo=Array.from({length:b.pinN+1},(_,i)=>n1(D(b.dmg)*Math.pow(.85,i))).join(', then ');return[`Damage: ${D(b.dmg)} per stake to the first enemy. A stake that kills skewers up to ${b.pinN} living ${b.pinN>1?'enemies':'enemy'} within 10 feet behind the body: ${fo}.`,`${n1(1/b.cd)} stakes per second. Belt of ${b.mag}. Reload ${r1(b.reload)} seconds.`,b.stack?'Stacking stakes: every stake in an enemy makes the next one hit it 20 percent of full damage harder.':'',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')].filter(Boolean)}
@@ -6174,7 +6245,7 @@ function renderStats(w){const box=$('mods-stats');box.textContent='';
   const h=document.createElement('h3');h.textContent=`${w.name}: current stats`;box.appendChild(h);
   const n=document.createElement('p');n.className='note';n.textContent='With every attachment you have turned on. Changes as you turn attachments on or off.';box.appendChild(n);
   const ul=document.createElement('ul');fullStats(w).forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li)});box.appendChild(ul)}
-function statLine(w){const b=build(w);if(b.kbat){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per hit, ${r1(b.kbSp)} feet a second${b.kbHead?', every hit a headshot':''}.`}if(b.ra){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${b.lens?`${r1(RA_HIT*RA_LENS)} damage every ${RA_TICK} seconds in a thin beam through up to ${RA_PEN} enemies. Magnifying glass on.`:`${RA_HIT} damage every ${RA_TICK} seconds to every enemy in the light.`}`}if(b.scythe){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: 75 damage to everything within ${b.scyR} feet, one full circle every ${SCY_T} seconds.${b.leech?' Leeching edge on.':''}${b.spLeech?' Spirit leech on.':''}`}
+function statLine(w){const b=build(w);if(b.kbat){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per hit, ${r1(b.kbSp)} feet a second${b.kbHead?', every hit a headshot':''}.`}if(b.bubble)return `Right now: ${b.bubMax} bubbles out at once, each ${n1(b.bubR*3.281*2)} feet wide, trapping ${b.inter?'unlimited enemies':'up to '+b.bubCap+' enemies'} for ${BUB_T} seconds. One bubble every ${n1(b.cd)} ${b.cd===1?'second':'seconds'}.`;if(b.ra){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${b.lens?`${r1(RA_HIT*RA_LENS)} damage every ${RA_TICK} seconds in a thin beam through up to ${RA_PEN} enemies. Magnifying glass on.`:`${RA_HIT} damage every ${RA_TICK} seconds to every enemy in the light.`}`}if(b.scythe){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: 75 damage to everything within ${b.scyR} feet, one full circle every ${SCY_T} seconds.${b.leech?' Leeching edge on.':''}${b.spLeech?' Spirit leech on.':''}`}
   if(b.stake){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per stake, skewers up to ${b.pinN} behind a kill. Belt of ${b.mag}. Reload ${r1(b.reload)} seconds. ${r1(1/b.cd)} stakes per second.${b.stack?' Stacking stakes on.':''}`}
   if(b.katana){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Blade kills instantly within ${b.katBlade} feet. Wave 100 rising to 1,000 at ${b.katR} feet. One swing every ${n1(b.cd)} seconds.`}if(b.boomer){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per slice, ${b.bmFt} feet out, ${b.bmCap===Infinity?'no limit on':'up to '+b.bmCap} enemies per throw.`}
   const L=b.mlv,k=P.mast[w.id]||0;
