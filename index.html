@@ -3033,7 +3033,7 @@ function spawn(type,mega){
   const dist=G.tutD!=null?G.tutD:pr?5+Math.random()*43:boss?32+Math.random()*12:t.mini?24+Math.random()*10:spawnDist();
   const e={type,angle:(G.heading+rel+360)%360,dist,hp,maxhp:hp,cue:.2,atkT:t.atk*am,dm,sm,am,
     engaged:false,moveT:7,rocketT:5,slowT:0,wind:0,charge:0,mega:!!mega};
-  if(G.coop){e.id=++G.eid;e.tg=G.coop==='host'&&coopOn()?G.eid%2:0}   // co-op: every enemy has a number, and goes after one of the two players
+  if(G.coop){e.id=++G.eid;e.tg=G.coop==='host'&&coopOn()?(G.down?1:G.mateDown?0:G.eid%2):0}   // co-op: every enemy has a number, and goes after one of the two players
   const zq=G.mode==='zombies';
   if(zq&&G.zm==='hall'){   // horror hallway: zombies step straight out of the side walls 10 to 20 feet ahead, no barriers to break
     const sd=Math.random()<.5?-1:1,x=sd*(.5+Math.random()*(HALLW-.5)),y=Math.sqrt(Math.max(0,Math.pow((10+Math.random()*10)/3.281,2)-x*x));
@@ -3072,6 +3072,7 @@ function hIgnite(e,dps,at){const was=e.hfire;e.hfire=true;e.fireT=Infinity;e.fir
 function fire(){
   if(G&&!G.paused&&!G.over)timeGo();
   if(!G||G.paused||G.over||G.cd>0)return;
+  if(G.down){downNag();return}
   if(G.lo[G.w].turbine){quasarTrigger(G.lo[G.w]);return}
   if(G.lo[G.w].ra){raTrigger();return}
   if(G.lo[G.w].bubble){bubFire(G.lo[G.w]);return}
@@ -3538,6 +3539,7 @@ const BARB_HIT=40,BLEED=10;
 function hurtPlayer(dmg,by){
   if(!G||G.over||G.mode==='practice')return;
   if(G.coop&&coopHurtHook(dmg,by))return;
+  if(G.down)return;   // co-op: knocked down, nothing can hurt you while you wait to be revived
   let d=dmg*(S.diff<1?.7:S.diff>1.5?1.6:1);const ar=ARMBY[P.armor.on];
   if(ar)d*=1-ar.prot;if(G.cover)d*=.5;
   const zerk=P.armor.on==='berserk';if(zerk){const tl=tlv('tough');if(tl)d*=1-MUBY.tough.cut[tl]}
@@ -3552,7 +3554,7 @@ function hurtPlayer(dmg,by){
   if(G.hp<=0&&G.pk&&G.pk.revive&&!G.revUsed){G.revUsed=true;setFlock(false);G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);rdBlast(0,0,3,7,{c:'255,255,255'});
     G.enemies.forEach(e=>{if(e.dist<=MELEE+.3&&!EN[e.type].boss){e.dist=Math.max(e.dist,3);e.engaged=false}});
     say(`Second wind! You get back up with ${G.hp} health. Nearby zombies are shoved back.`)}
-  hud();if(G.hp<=0)endGame(false);
+  hud();if(G.hp<=0){if(coopKnock())return;endGame(false)}
 }
 /* Last stand perk: below a quarter health, a shockwave hits every zombie within 15 feet for 150 and throws survivors back. Once per wave */
 function lastStand(){G.lastUsed=true;const r=15/3.281;let n=0;fx.lastStand();vib(400);rdBlast(0,0,r*1.4,13,{c:'200,220,255'});
@@ -3749,7 +3751,7 @@ function heatVent(n){const f=n>=3?25:n===2?15:7,r=f/3.281;fx.ventBlast(f);vib(60
 function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.kbat){const n=(G.kb||[]).length;return n?`${n} ${n>1?'baseballs':'baseball'} in play`:'no baseballs in play'}if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.katana||w.scythe)return 'blade ready';if(w.bubble){const n=(G.bubs||[]).length;return `${n} of ${w.bubMax} bubbles out`}if(w.ra)return G.raCool>0?`overheated, cooling, ${Math.ceil(G.raCool)} seconds left`:`heat ${Math.round((G.raHeat||0)/RA_DUR*100)} percent`;if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
 function reload(){
   if(G&&!G.paused&&!G.over)timeGo();
-  if(!G||G.paused||G.over)return;
+  if(!G||G.paused||G.over)return;if(G.down){downNag();return}
   const wi=G.w,w=G.lo[wi],A=G.ammo[wi];
   if(w.bubble){say(`The bubble blaster never needs reloading. ${ammoWords()}.`);return}
   if(w.ra){say(`The lantern never needs reloading. ${ammoWords()}.`);return}
@@ -3770,7 +3772,7 @@ function switchW(){
   say(`${nw.name}. ${ammoWords()}.${auto}${flWas?' Fire lock off.':''}`);hud();pauseLabels();
 }
 function cover(){
-  if(!G||G.paused||G.over)return;timeGo();
+  if(!G||G.paused||G.over)return;if(G.down){downNag();return}timeGo();
   if(roamOn()){rWalkToggle();return}   // Jungle scavenger: this button is Walk, there is no cover
   G.cover=!G.cover;fx.cover(G.cover);const b=$('b-cover');b.textContent=G.cover?'Leave cover':'Take cover';b.setAttribute('aria-pressed',G.cover);
   say(G.cover?'In cover. You take half damage, but your aim is shakier.':'Out of cover. Aim steady.');
@@ -3791,7 +3793,7 @@ function timeGo(){if(!G||!(G.tstop>0))return;G.tstop=0;if(ctx){fx.tFreeze(false)
 function pauseLabels(){if(!G||!$('ps-w'))return;const w=G.lo[G.w];$('ps-w').textContent=`Now: ${w.name}, ${ammoWords()}`;$('ps-g').textContent=`Now: ${NADE[G.gt].name}, ${G.gren[G.gt]} left`}
 /* grenades go off around YOU: no aiming, everything inside the radius is hit */
 function throwNade(){
-  if(!G||G.paused||G.over||G.ncd>0)return;timeGo();
+  if(!G||G.paused||G.over||G.ncd>0)return;if(G.down){downNag();return}timeGo();
   const t=G.gt,N=NADE[t];
   if(G.gren[t]<=0){fx.click();say(`No ${N.plural} left.`+(G.mode==='practice'?'':' Buy more in the Armory shop.'));return}
   if(G.nades.some(n=>n.type==='fatman')&&t==='fatman'){fx.click();return}
@@ -3801,7 +3803,7 @@ function throwNade(){
     say(`Jack-in-the-box set, ${facing()}, 10 feet ahead. ${G.gren.jack} left.`);return}
   if(t==='horizon'){if(G.hz){fx.click();say('An event horizon is already out. Wait for it to fade.');return}
     G.gren.horizon--;if(G.mode!=='practice'){P.gren.horizon=Math.max(0,P.gren.horizon-1);saveP()}G.ncd=.8;
-    G.hz={angle:G.heading,dist:10/3.281,arm:1,pulse:0,on:0,warned:0};fx.drop(.1);fx.hzSet();
+    G.hz={angle:G.heading,dist:10/3.281,arm:1,pulse:0,on:0,warned:0};fx.drop(.1);fx.hzSet();if(G.coop)coopSend({t:'hz',a:Math.round(G.heading)});   // co-op: the other phone runs it too, so the zombies there obey it
     say(`Event horizon set, ${facing()}, 10 feet ahead. It switches on when an enemy comes within 13 feet of you. ${G.gren.horizon} left.`);return}
   G.gren[t]--;if(G.mode!=='practice'){P.gren[t]=Math.max(0,P.gren[t]-1);saveP()}
   G.ncd=.8;G.nades.push({type:t,t:N.fuse,tick:.3});
@@ -3827,26 +3829,28 @@ function stepBoxes(dt){
 /* Event horizon: waits 10 feet ahead until an enemy comes within 13 feet of the player, then for 60 seconds pulls every
    enemy that comes within 13 feet of the player into a tight cluster around itself and holds them. No damage. */
 const HZ_HOLD=60,HZ_CLUSTER=2.5/3.281;
-function stepHorizon(dt){
-  const h=G.hz;if(!h)return;const rel=norm(h.angle-G.heading),[hx,hy]=xy(h.angle,h.dist);
+function stepHorizon(dt){hzStep(G.hz,dt);if(G.hzM)hzStep(G.hzM,dt)}   // co-op: G.hzM is your teammate's event horizon
+function hzStep(h,dt){
+  if(!h)return;const rel=norm(h.angle-G.heading),[hx,hy]=xy(h.angle,h.dist),who=h.mate?`${C.mate||'Your teammate'}'s event horizon`:'Event horizon';
   if(h.arm>0){h.arm-=dt;return}
   if(!h.on){h.pulse-=dt;if(h.pulse<=0){fx.hzPulse(rel,h.dist);h.pulse=2.4}
-    if(G.enemies.some(e=>e.hp>0&&!(e.hb>0)&&e.dist<=NADE.horizon.r)){h.on=HZ_HOLD;h.pulse=0;fx.hzOn(rel,h.dist);vib(200);say(`Event horizon on, ${clock(rel)}! Pulling enemies in.`)}
+    if(G.enemies.some(e=>e.hp>0&&!(e.hb>0)&&!e.hz&&e.dist<=NADE.horizon.r)){h.on=HZ_HOLD;h.pulse=0;fx.hzOn(rel,h.dist);vib(200);say(`${who} on, ${clock(rel)}! Pulling enemies in.`)}
     return}
   h.on-=dt;h.pulse-=dt;if(h.pulse<=0){fx.hzHum(rel,h.dist);h.pulse=1.6}
-  if(!h.warned&&h.on<=10){h.warned=1;fx.hzWarn(rel,h.dist);say('Event horizon fading in 10 seconds.')}
-  G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0)return;
-    if(!e.hz){if(e.dist>NADE.horizon.r)return;e.hz=true;e.engaged=false;e.wind=0;e.charge=0}
+  if(!h.warned&&h.on<=10){h.warned=1;fx.hzWarn(rel,h.dist);say(`${who} fading in 10 seconds.`)}
+  G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0||(e.hz&&e.hz!==h))return;   // already held by the other event horizon
+    if(!e.hz){if(e.dist>NADE.horizon.r)return;e.hz=h;e.engaged=false;e.wind=0;e.charge=0}
     const[x,y]=xy(e.angle,e.dist),gx=hx-x,gy=hy-y,g=Math.hypot(gx,gy);if(g<=HZ_CLUSTER)return;
     const sp=Math.min(g-HZ_CLUSTER*.6,(EN[e.type].boss?4:7)*dt),nx=x+gx/g*sp,ny=y+gy/g*sp,R0=MELEE+.6;
     if(Math.hypot(nx,ny)>=R0){e.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;e.dist=Math.hypot(nx,ny);return}
     // the straight line runs through you: swing around you instead, keeping out of arm's reach
     const da=norm(h.angle-e.angle),turn=Math.min(Math.abs(da),sp/R0*180/Math.PI)*(da<0?-1:1)||sp/R0*180/Math.PI;
     e.angle=(e.angle+turn+360)%360;e.dist=R0});
-  if(h.on<=0)releaseHorizon(true);
+  if(h.on<=0)releaseHorizon(true,h);
 }
-function releaseHorizon(speak){if(!G||!G.hz)return;const h=G.hz,wasOn=h.on!==0;G.enemies.forEach(e=>{e.hz=false});G.hz=null;
-  if(speak&&wasOn&&!G.over){fx.hzOff(norm(h.angle-G.heading),h.dist);say('The event horizon has faded. Enemies are free.')}}
+function releaseHorizon(speak,h){if(!G)return;h=h||G.hz;if(!h)return;const wasOn=h.on!==0;G.enemies.forEach(e=>{if(e.hz===h)e.hz=false});
+  if(G.hz===h)G.hz=null;if(G.hzM===h)G.hzM=null;
+  if(speak&&wasOn&&!G.over){fx.hzOff(norm(h.angle-G.heading),h.dist);say(h.mate?`${C.mate||'Your teammate'}'s event horizon has faded.`:'The event horizon has faded. Enemies are free.')}}
 function stepNades(dt){
   stepRing(dt);stepBoom(dt);stepKB(dt);
   G.nades.forEach(n=>{n.t-=dt;n.tick-=dt;if(n.tick<=0&&n.t>.15&&n.type!=='fatman'){fx.fuse(0,1.2);n.tick=.25}if(n.t<=0)explode(n)});
@@ -4413,7 +4417,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  stepNades(dt);stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;bubTick(dt);katTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;bubTick(dt);katTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -5194,6 +5198,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-12-revive',date:'November 12, 2026',title:'Co-op: auto revive, and Event horizon fix',items:[
+    'Fixed: in co-op, an event horizon set by the player who joined the room did nothing to the real zombies, so they kept attacking. Both players\' event horizons now hold zombies on both phones.',
+    'You hear when your teammate sets an event horizon, and when it switches on and fades.',
+    'New in co-op: auto revive. When you run out of health while your teammate is still standing, you are knocked down instead of killed.',
+    'While you are down, nothing can hurt you and you cannot fire. Every enemy goes after your teammate instead.',
+    'If your teammate stays standing for 15 seconds, you get back up with half your health. The countdown is read out at 10, 5, 3, 2 and 1.',
+    'If both of you are down at the same time, the match ends. Status tells you if your teammate is down.']},
   {id:'2026-11-12-bubble',date:'November 12, 2026',title:'New legendary weapon: Heavy Bubble Blaster',items:[
     'New legendary launcher, the Heavy Bubble Blaster, 32,000 silver. Find it in the Armory under Legendary, Mythical weapons, Launchers.',
     'It does no damage. It blows a huge bubble out to the nearest enemy you are facing, up to 50 feet away. The bubble is 10 feet wide and traps up to 10 enemies within 5 feet of its centre. Trapped enemies cannot move or attack, but you can still hurt them with your other weapons. Enemies that walk into a bubble with room left are trapped too.',
@@ -6533,7 +6544,7 @@ function coopLost(failed){
 }
 /* the battle carries on alone: a guest takes over running its own copy of the enemies */
 function coopSolo(){
-  if(!G)return;
+  if(!G)return;G.mateDown=false;if(G.down&&!G.over)setTimeout(()=>{if(G&&G.down&&!G.over)coopUp(false)},1500);
   if(G.coop==='guest'){G.enemies.forEach(e=>{if(e.moveT===Infinity)e.moveT=7+Math.random()*3;e.tg=0});if(!G.maxAlive)G.maxAlive=4}
   G.enemies.forEach(e=>{e.tg=0});
   G.mateShop=false;
@@ -6588,6 +6599,31 @@ function coopCollect(){
 function coopDeadHook(dead,src){
   if(G.coop!=='guest'||src==='mate')return;
   coopCollect();dead.forEach(e=>{if(e.id!=null)C.dead.set(e.id,C.seq+1)});
+}
+/* Knockdown and auto revive: at 0 health, while your teammate is still standing, you are knocked down instead of killed.
+   Nothing can hurt you and you cannot act. If your teammate stays standing for 15 seconds, you get back up with half
+   your health. If both of you are down at once, the match ends. Enemies all go after whoever is still standing. */
+const REV_T=15;
+function coopKnock(){
+  if(!G.coop||!coopOn()||G.mateDown||G.over)return false;
+  G.hp=0;G.down=REV_T;G.hold=false;setFlock(false);vib(500);
+  coopSend({t:'dn'});coopRetarget();hud();
+  say(`You are down! ${C.mate||'Your teammate'} has to stay alive for ${REV_T} seconds and you get back up.`);
+  return true;
+}
+function coopDownTick(dt){
+  const was=G.down;G.down=Math.max(0,G.down-dt);G.hp=0;
+  [10,5,3,2,1].forEach(s=>{if(was>s&&G.down<=s)say(s>3?`Revive in ${s} seconds.`:`${s}`)});
+  if(G.down<=0)coopUp(true);
+}
+function coopUp(send){
+  G.down=0;G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);if(send)coopSend({t:'up'});coopRetarget();hud();
+  say(`Revived! You are back up with ${G.hp} health.`);
+}
+function downNag(){const n=performance.now();if(n-(G.nagAt||0)<1500)return;G.nagAt=n;say(`You are down. Back up in ${Math.ceil(G.down)} seconds.`)}
+function coopRetarget(){   // the host decides who each enemy goes after: only the players still standing
+  if(G.coop!=='host')return;
+  G.enemies.forEach(e=>{if(e.id==null)return;const tg=G.down?1:G.mateDown?0:e.id%2;if(e.tg!==tg){e.tg=tg;e.engaged=false}});
 }
 /* your teammate's gunfire, from the direction they face, a little quieter than your own */
 function coopShot(w){
@@ -6672,6 +6708,12 @@ function coopRecv(m){
   if(m.t==='pk'){const was=G.mateShop;G.mateShop=!!m.o;if(was&&!m.o&&G.toldShop)say(`${C.mate||'Your teammate'} is done at the perk machine.`);return}
   if(m.t==='wv'){if(G.coop==='guest'&&!G.over&&(G.waitWave||G.breakT>0||m.w>G.wave)){G.breakT=0;G.waitWave=false;G.wave=m.w;G.lastUsed=false;startWave()}return}
   if(m.t==='h'&&G.coop==='guest'&&!G.over){const e=G.enemies.find(x=>x.id===m.id);coopHurtNow=true;try{hurtPlayer(m.d,e||null)}finally{coopHurtNow=false};return}
+  if(m.t==='hz'&&!G.over){if(G.hzM)releaseHorizon(false,G.hzM);G.hzM={angle:m.a,dist:10/3.281,arm:1,pulse:0,on:0,warned:0,mate:1};
+    say(`${C.mate||'Your teammate'} set an event horizon, ${clock(coopRel(m.a))}.`);return}
+  if(m.t==='dn'&&!G.over){G.mateDown=true;
+    if(G.down){G.coopWhy='You were both down at once.';endGame(false);return}
+    coopRetarget();vib(300);say(`${C.mate||'Your teammate'} is down! Stay alive for ${REV_T} seconds and they get back up. Every enemy is coming for you.`);return}
+  if(m.t==='up'&&!G.over){G.mateDown=false;coopRetarget();say(`${C.mate||'Your teammate'} is back up!`);return}
   coopFromNet=true;
   try{
     if(m.t==='pause')pause();
@@ -6679,7 +6721,7 @@ function coopRecv(m){
     else if(m.t==='end'&&!G.over){G.coopWhy=m.won?'':`${C.mate||'Your teammate'} fell.`;endGame(!!m.won)}
   }finally{coopFromNet=false}
 }
-const coopMates=()=>G&&G.coop&&coopOn()?` ${C.mate||'Teammate'}: ${Math.max(0,Math.ceil(C.mateHp))} of ${C.mateMax} health, facing ${clock(coopRel(C.mateH))}.`:'';
+const coopMates=()=>G&&G.coop&&coopOn()?` ${C.mate||'Teammate'}: ${G.mateDown?'down, waiting to be revived':`${Math.max(0,Math.ceil(C.mateHp))} of ${C.mateMax} health`}, facing ${clock(coopRel(C.mateH))}.${G.down?` You are down, back up in ${Math.ceil(G.down)} seconds.`:''}`:'';
 
 $('coop-host').onclick=()=>{initAudio();coopHost()};
 $('coop-join').onclick=()=>{initAudio();coopJoin()};
