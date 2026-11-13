@@ -2008,7 +2008,7 @@ const MARMUP=[
   {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
   {id:'tough',arm:'berserk',kind:'trait',name:'Toughness',price:12000,lv:[0,0,150,400],cut:[0,.1,.2,.3],desc:'Special trait with 3 levels. Cuts the damage you take by another 10 percent at level 1, 20 at level 2 and 30 at level 3, on top of the armor. Starts at level 1. Reaches level 2 after 150 kills and level 3 after 400 kills, counted only while you wear the armor after buying this trait.'}
 ];
-MARMUP.push({id:'darksam',arm:'samurai',kind:'ability',name:'Dark samurai',price:30000,desc:'Special ability. Every hit you take while wearing the Samurai armor charges it. After you take damage adding up to a quarter of your max health (25 at 100 health), a dark rift tears open and summons two little oni demons. They are extremely fast and run out snarling like wild animals, attacking the enemies closest to you first and working their way outward, each going after a different enemy when it can. Each oni hits for 10 damage, twice a second. They cannot be hurt and enemies never notice them, so they never draw attacks away from you. After 25 seconds they vanish back into the rift, and the charge starts over. You hear them snarl and bite from wherever they are in the fight.'});
+MARMUP.push({id:'darksam',arm:'samurai',kind:'ability',name:'Dark samurai',price:30000,desc:'Special ability. Every hit you take while wearing the Samurai armor charges it. After you take damage adding up to a quarter of your max health (25 at 100 health), a dark rift tears open and summons two little oni demons. They are extremely fast and run out snarling like wild animals, attacking the enemies closest to you first and working their way outward, each going after a different enemy when it can. Each oni hits for 10 damage, twice a second. Every kill either oni makes speeds both of them up for the rest of the summon: 22 percent faster attacks and 10 percent faster running. They cannot be hurt and enemies never notice them, so they never draw attacks away from you. After 25 seconds they vanish back into the rift, and the charge starts over. You hear them snarl and bite from wherever they are in the fight.'});
 MARMUP.push({id:'hungry',arm:'barbed',kind:'ability',name:'Hungry barbs',price:15000,desc:'Special ability. The barbs grow sharper every time they kill. Every enemy killed by the Razorwire Carapace, torn apart by the barbs when it hits you or bleeding out from their wounds, makes the barbs and the bleeding 10 percent stronger, up to triple damage after 20 barb kills: 120 damage when an enemy hits you, and 30 a second of bleeding. Kills by your guns, grenades and anything else do not count. You hear a rising metal scrape each time they grow sharper, and every 5 barb kills you hear how strong they are. It builds up over each battle and starts over in the next one.'});
 MARMUP.push({id:'batswarm',arm:'shadow',kind:'ability',name:'Bat swarm',price:30000,desc:'Special ability. Every time the damage you take while wearing the Darkest Shadow Suit adds up to half your maximum health, 5 bats burst out of the coat: with 800 health, every 400 damage taken. They fly at 8 feet a second to the enemies closest to you, a different enemy each when they can, and bite for 3 damage a second each. Every bite heals you as much as it deals, so each bite gives back 3 health. They stay out for 10 seconds, then fly off and the charge starts over. It does not charge while they are out. You hear their wings and bites from wherever they are, and Feeding tells you how much health they give you.'},
   {id:'appetite',arm:'shadow',kind:'ability',req:'batswarm',name:'Endless appetite',price:20000,desc:'Second tier of Bat swarm. The bats stay out for 15 seconds instead of 10. Every kill they make drives the whole swarm into a frenzy: they fly 25 percent faster and bite 25 percent faster, and it keeps building with every kill until they fly off. Buy Bat swarm first.'});
@@ -3772,25 +3772,25 @@ function berserkRage(){const r=10/3.281,hit=new Set();let t=5,cue=0;G.ringT=5;fx
    start at your side, hunt the enemy closest to you that the other oni is not already on, and bite it for 10 twice a second.
    Nothing can hurt them and no enemy reacts to them. */
 const DARK_CHG=.25;   // Dark samurai charges after taking a quarter of your max health, so the oni arrive while you can still use them
-const ONI_T=25,ONI_SP=16,ONI_DMG=10,ONI_RATE=.5,ONI_REACH=.9;
+const ONI_T=25,ONI_SP=16,ONI_DMG=10,ONI_RATE=.5,ONI_REACH=.9,ONI_KATK=.22,ONI_KSP=.1;   // every oni kill: +22% attack speed and +10% travel speed for both oni, for the rest of that summon
 function darkSamurai(){const g=G;G.oniT=ONI_T;fx.oniSummon();vib(300);
-  const oni=[-1,1].map(s=>({x:s*.6,y:0,tgt:null,cd:.2,sn:.4+Math.random()*.6}));G.oni=oni;let t=ONI_T;
+  const oni=[-1,1].map(s=>({x:s*.6,y:0,tgt:null,cd:.2,sn:.4+Math.random()*.6}));G.oni=oni;let t=ONI_T,kills=0;
   setTimeout(()=>{if(G===g&&!G.over)say('Dark samurai! Two oni demons are hunting.')},250);
   const pos=e=>{const r=e.angle*Math.PI/180;return[Math.sin(r)*e.dist,Math.cos(r)*e.dist]};
   later(dt=>{if(G.over)return true;t-=dt;G.oniT=t;
-    const live=G.enemies.filter(e=>e.hp>0).sort((a,b)=>a.dist-b.dist);let died=false;
+    const live=G.enemies.filter(e=>e.hp>0).sort((a,b)=>a.dist-b.dist);let died=false;const sp=ONI_SP*(1+ONI_KSP*kills),rate=ONI_RATE/(1+ONI_KATK*kills);
     oni.forEach((o,i)=>{const other=oni[1-i];
       if(!o.tgt||!alive(o.tgt))o.tgt=live.find(e=>e!==other.tgt)||live[0]||null;
       let tx=0,ty=0;if(o.tgt)[tx,ty]=pos(o.tgt);
       const dx=tx-o.x,dy=ty-o.y,dd=Math.hypot(dx,dy),stop=o.tgt?ONI_REACH:1;
-      if(dd>stop){const st=Math.min(ONI_SP*dt,dd-stop*.8);o.x+=dx/dd*st;o.y+=dy/dd*st}
+      if(dd>stop){const st=Math.min(sp*dt,dd-stop*.8);o.x+=dx/dd*st;o.y+=dy/dd*st}
       const od=Math.hypot(o.x,o.y),orel=norm(Math.atan2(o.x,o.y)*180/Math.PI-G.heading);
       o.sn-=dt;if(o.sn<=0){o.sn=1.1+Math.random()*1.2;fx.oniSnarl(orel,od)}
-      o.cd-=dt;if(o.tgt&&dd<=ONI_REACH+.3&&o.cd<=0){o.cd=ONI_RATE;const e=o.tgt,rel=norm(e.angle-G.heading);e.hp-=ONI_DMG;fx.oniBite(rel,e.dist);
-        if(e.hp<=0){fx.kill(rel,e.dist,.1,e.type);died=true;o.tgt=null}}});
+      o.cd-=dt;if(o.tgt&&dd<=ONI_REACH+.3&&o.cd<=0){o.cd=rate;const e=o.tgt,rel=norm(e.angle-G.heading);e.hp-=ONI_DMG;fx.oniBite(rel,e.dist);
+        if(e.hp<=0){fx.kill(rel,e.dist,.1,e.type);died=true;o.tgt=null;kills++}}});
     if(died)processDead('oni');
     if(t<=0){G.oniT=0;G.oni=null;oni.forEach(o=>fx.oniGone(norm(Math.atan2(o.x,o.y)*180/Math.PI-G.heading),Math.hypot(o.x,o.y)));
-      if(!G.over)say('The oni demons vanish. Dark samurai charging again.');return true}return false});
+      if(!G.over)say(`The oni demons vanish${kills?` after ${kills} kill${kills===1?'':'s'}`:''}. Dark samurai charging again.`);return true}return false});
 }
 /* ---------- Nightwalker pack ----------
    Vlad the Impaler: a stake that kills an enemy throws the body 10 feet back. Living enemies standing in that 10 feet
@@ -5395,6 +5395,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-13-onifrenzy',date:'November 13, 2026',title:'Dark samurai oni get faster with every kill',items:[
+    'Every kill either oni demon makes now speeds up both of them: 22 percent faster attacks and 10 percent faster running, adding up with each kill.',
+    'After 5 kills they bite twice as fast as when they arrived, and run one and a half times as fast.',
+    'The boost lasts until they vanish. Each new summon starts at normal speed.',
+    'When they vanish, you hear how many kills they got.']},
   {id:'2026-11-13-oni',date:'November 13, 2026',title:'Dark samurai charges much sooner',items:[
     'The Samurai armor\'s Dark samurai ability now charges after you take damage adding up to a quarter of your max health, instead of 110 damage. At 100 health, that is 25 damage.',
     'Before, it needed more damage than a full health bar, so the oni demons usually arrived too late to help, or never came at all.',
