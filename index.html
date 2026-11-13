@@ -117,7 +117,11 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 .aim button:active,.pad button:active{transform:scale(.97)}
 .overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px max(16px,env(safe-area-inset-left,0px));z-index:5}
 .overlay .stack{width:100%;max-width:420px}
-#perks,#tpick{align-items:flex-start;overflow-y:auto}
+#perks,#tpick,#zsb{align-items:flex-start;overflow-y:auto}
+#zsb .stack{padding-block:12px}
+.zsb-list{list-style:none;margin:8px 0 14px;padding:0}
+.zsb-list li{padding:10px 2px;border-bottom:1px solid var(--line,rgba(255,255,255,.15));font-size:17px;line-height:1.3}
+.zsb-list li b{font-weight:700}
 #tpick .stack{padding-block:12px}
 .tutbox{background:var(--panel);border:2px solid var(--accent);border-radius:12px;padding:6px 10px;display:flex;flex-direction:column;gap:5px;flex:none}
 .tutbox .tag{color:var(--accent)}
@@ -797,6 +801,17 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p class="result" id="over-sum"></p>
     <button class="btn primary" id="b-retry">Fight again</button>
     <button class="btn" id="b-menu">Main menu</button>
+  </div>
+</div>
+
+<div id="zsb" class="overlay" hidden>
+  <div class="stack">
+    <p class="tag">Zombies</p>
+    <h2 id="zsb-h" tabindex="-1">Match scoreboard</h2>
+    <p class="result" id="zsb-tot"></p>
+    <ul class="zsb-list" id="zsb-list"></ul>
+    <p class="note">This scoreboard is for this match only. Once you leave it, it is gone.</p>
+    <button class="btn primary" id="zsb-go">Continue</button>
   </div>
 </div>
 
@@ -3658,7 +3673,35 @@ function flushKills(){const a=KA;if(!a)return;a.tm=null;const b=a.b;a.b=null;if(
   say(`${b.n} kills${b.hs?(b.hs===b.n?', all headshots':`, ${b.hs} headshot${b.hs>1?'s':''}`):''}.${big} Plus ${b.pay} silver.${b.heal?` Plus ${b.heal} health.`:''}${b.lv.slice(-3).join('')}`);
 }
 const killQuiet=()=>!!(KA&&KA.g===G&&(KA.b||performance.now()-KA.last<1200));
-function processDead(src){
+/* Zombies match scoreboard. Every kill in a zombies match is counted by what made it: each gun, burning and acid,
+   grenades, armor abilities (bat swarm, barbs, berserker ring of fire, oni), perks (electric fence, last stand) and a
+   co-op teammate. It shows once, when the match ends by death or by Quit to main menu in the pause menu. It is kept
+   only on this match, never saved, so once the player leaves it, it is gone. */
+const ZSBN={bats:'Bat swarm, Darkest Shadow Suit',barbed:'Razorwire barbs, Razorwire Carapace',berserk:'Berserker rage ring of fire, Viking berserker armor',
+  oni:'Dark samurai oni, Samurai armor',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate'};
+const zsbName=id=>ZSBN[id]||(WBY[id]&&WBY[id].name)||(NADE[id]&&NADE[id].name)||'Other';
+function zsbLabel(src,kind,e){
+  if(kind==='burn'){const f=e.fireSrc||src;return f==='berserk'?'Berserker rage, burn damage':zsbName(f)+', burn damage'}
+  if(kind==='acid')return 'Hydra acid';
+  if(kind==='bleed')return 'Razorwire barbs, bleeding';
+  if(kind==='implode')return 'Emerald implosion mines, Tetra-prism sniper';
+  if(kind&&NADE[kind])return NADE[kind].name;
+  return src?zsbName(src):'Other'}
+function zsbAdd(src,kind,e){if(!G||G.mode!=='zombies')return;const L=zsbLabel(src,kind,e),b=(G.zsb=G.zsb||{}),r=b[L]||(b[L]={n:0,hs:0});r.n++;if(e.hk&&!kind&&WBY[src])r.hs++}
+function zsbSnap(){if(!G||G.mode!=='zombies')return null;
+  return{total:G.kills,wave:G.wave,rows:Object.entries(G.zsb||{}).sort((a,b)=>b[1].n-a[1].n||a[0].localeCompare(b[0]))}}
+const zsbRow=([L,r])=>`${L}: ${r.n} kill${r.n===1?'':'s'}${r.hs?`, ${r.hs} headshot${r.hs===1?'':'s'}`:''}`;
+function zsbOpen(sb,quitting,next){
+  const list=$('zsb-list');list.textContent='';
+  sb.rows.forEach(x=>{const li=document.createElement('li'),b=document.createElement('b');const t=zsbRow(x),i=t.indexOf(':');
+    b.textContent=t.slice(0,i+1);li.append(b,t.slice(i+1));list.append(li)});
+  if(!sb.rows.length){const li=document.createElement('li');li.textContent='No kills this match.';list.append(li)}
+  const tot=`${sb.total} total kill${sb.total===1?'':'s'}, reaching wave ${sb.wave}.`;$('zsb-tot').textContent=tot;
+  $('zsb-go').textContent=quitting?'Continue to main menu':'Continue';
+  $('zsb-go').onclick=()=>{$('zsb').hidden=true;list.textContent='';$('zsb-tot').textContent='';next()};
+  $('zsb').hidden=false;
+  setTimeout(()=>{if($('zsb').hidden)return;$('zsb-h').focus();say(`Match scoreboard. ${tot} ${sb.rows.map(zsbRow).join('. ')}${sb.rows.length?'.':''}`)},400)}
+function processDead(src,kind){
   const dead=G.enemies.filter(e=>e.hp<=0);if(!dead.length)return 0;
   if(G.coop)coopDeadHook(dead,src);
   G.enemies=G.enemies.filter(e=>e.hp>0);
@@ -3666,7 +3709,7 @@ function processDead(src){
   let pay=0,lv='',heal='',healN=0;
   if(src==='symbiote'){lv+=symGrow(dead.length);const sw=G.lo.find(x=>x.id==='symbiote');
     if(sw&&sw.vamp){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal=` Plus ${got} health.`;healN+=got;fx.symHeal();hud()}}}
-  const msg=dead.map(e=>{G.kills++;const t=EN[e.type];pay+=e.mega?(G.mode==='zombies'?Math.round(5*t.reward*paySc()*zDfG().pay):Math.round(250*paySc()/(1+.08*6))):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDfG().pay:1)*(e.type==='zancient'?ancF():1));if(src!=='mate'){P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++}
+  const msg=dead.map(e=>{G.kills++;zsbAdd(src,kind,e);const t=EN[e.type];pay+=e.mega?(G.mode==='zombies'?Math.round(5*t.reward*paySc()*zDfG().pay):Math.round(250*paySc()/(1+.08*6))):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDfG().pay:1)*(e.type==='zancient'?ancF():1));if(src!=='mate'){P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++}
     if(src&&WBY[src]){const b=mlevel(src);P.mast[src]=(P.mast[src]||0)+1;const a=mlevel(src);
       if(a>b){lv=` ${WBY[src].name} mastery level ${a}. Attachments stronger.`;const i=G.lo.findIndex(x=>x.id===src);if(i>=0)G.lo[i]=build(WBY[src])}}
     return (src==='fence'?'Fried! ':'')+(e.crys?'Crystallized! ':e.hk?'Headshot! ':'')+(t.boss?`${e.mega?'Mega ':''}${t.name} is down!`:`${t.name} down.`)});
@@ -3880,7 +3923,7 @@ function emBurst(st,cx,cz){const rel=norm(st.angle-G.heading);fx.emBlast(rel,st.
   for(const e of G.enemies){if(e.hp<=0||e.hb>0)continue;const[x,z]=xy(e.angle,e.dist);if(Math.hypot(x-cx,z-cz)>EM_R+.3)continue;e.hp-=EM_DMG*gunMult();e.rdHitT=0}
   rdBlast(cx,cz,EM_R*1.6,13,{c:'90,255,150',dis:.25});
   for(const o of G.statues)if(o!==st&&o.mine&&!o.boom&&!(o.chain>0)){const[x,z]=xy(o.angle,o.dist);if(Math.hypot(x-cx,z-cz)<=EM_R*1.6)o.chain=.15}
-  processDead('tetra')}
+  processDead('tetra','implode')}
 /* Reload callouts. On iPhone every Built-in voice announcement makes the system turn the game sound right down, for as
    long as the voice talks and about a second after. A gun with a small magazine reloads after nearly every shot, so
    "Magazine empty. Reloading." and "Ready." kept cutting the gunfire off. With Reload callouts set to Sounds these are
@@ -3972,7 +4015,7 @@ function stepBoxes(dt){
       const[bx,by]=xy(b.angle,b.dist),inR=G.enemies.filter(e=>{const[x,y]=xy(e.angle,e.dist);return Math.hypot(x-bx,y-by)<=NADE.jack.r});
       fx.boom(rel,b.dist);vib(200);rdBlast(bx,by,NADE.jack.r,13,{dis:.4});
       inR.forEach(e=>{const[x,y]=xy(e.angle,e.dist),dd=Math.hypot(x-bx,y-by);e.hp-=14*(1-.4*dd/NADE.jack.r);const er=norm(e.angle-G.heading);if(e.hp<=0)fx.kill(er,e.dist,.15,e.type);else fx.impact(er,e.dist,e.type,.05)});
-      b.done=1;const k=processDead(null);if(!k&&!G.over)say(inR.length?`Jack-in-the-box hit ${inR.length} ${inR.length>1?'enemies':'enemy'}.`:'Jack-in-the-box went off.')}return}
+      b.done=1;const k=processDead(null,'jack');if(!k&&!G.over)say(inR.length?`Jack-in-the-box hit ${inR.length} ${inR.length>1?'enemies':'enemy'}.`:'Jack-in-the-box went off.')}return}
     if(b.arm>0){b.arm-=dt;return}
     b.tune-=dt;if(b.tune<=0){fx.jackTune(rel,b.dist);b.tune=2.2}
     const[bx,by]=xy(b.angle,b.dist);
@@ -4013,14 +4056,14 @@ function explode(n){
   const N=NADE[n.type],inR=G.enemies.filter(e=>e.dist<=N.r);
   if(n.type==='fatman'){fx.nuke();vib(600);rdBlast(0,0,N.r*1.3,30,{dis:.8,cy:.6,lift:.3,T:1.2,c:'255,230,180'});
     inR.forEach(e=>{e.hp=0;fx.kill(norm(e.angle-G.heading),e.dist,.3+Math.random()*.4,e.type)});
-    const k=processDead(null);if(!k&&!G.over)say('Fat Man detonated. Nothing was within 50 feet.');return}
+    const k=processDead(null,'fatman');if(!k&&!G.over)say('Fat Man detonated. Nothing was within 50 feet.');return}
   if(n.type==='frag'){fx.boom(0,1.5);vib(200);rdBlast(0,0,N.r*1.6,10,{cy:.15});
     inR.forEach(e=>{e.hp-=8*(1-.5*e.dist/N.r);const er=norm(e.angle-G.heading);if(e.hp<=0)fx.kill(er,e.dist,.15,e.type);else fx.impact(er,e.dist,e.type,.05)});
-    const k=processDead(null);
+    const k=processDead(null,'frag');
     if(!k&&!G.over)say(inR.length?`Grenade hit ${inR.length} ${inR.length>1?'enemies':'enemy'}.`:'Grenade blast. No enemies within 5 feet.');
   }else if(n.type==='incend'){fx.incBurst();vib(200);let lit=0;rdBlast(0,0,N.r,5,{c:'255,120,30'});
     inR.forEach(e=>{e.hp-=30;const er=norm(e.angle-G.heading);if(e.hp<=0)fx.kill(er,e.dist,.15,e.type);else{fireUp(e,.2);lit++}});
-    G.ring=INC_RING;const k=processDead('incend');
+    G.ring=INC_RING;const k=processDead('incend','incend');
     if(!G.over)say((lit?`${lit} ${lit>1?'enemies':'enemy'} set on fire. `:k?'':'No enemies within 15 feet. ')+'Ring of fire burning for 15 seconds.');
   }else{fx.cryo(0,1.5);rdBlast(0,0,N.r,1,{c:'160,220,255'});inR.forEach(e=>{e.slowT=8;fx.frost(norm(e.angle-G.heading),e.dist,.3)});
     say(inR.length?`${inR.length} ${inR.length>1?'enemies':'enemy'} frozen for 8 seconds.`:'Cryo burst. No enemies within 8 feet.')}
@@ -4637,9 +4680,9 @@ function step(dt){
   // Razorwire Carapace bleeding: BLEED health a second until it runs out
   G.enemies.forEach(e=>{if(!(e.bleedT>0)||e.hp<=0)return;e.bleedT-=dt;e.hp-=BLEED*barbMult()*dt;e.bleedCue-=dt;
     if(e.bleedCue<=0&&e.hp>0){fx.bleed(norm(e.angle-G.heading),e.dist);e.bleedCue=1}if(e.hp<=0){e.bleedKill=true;fx.kill(norm(e.angle-G.heading),e.dist,0,e.type)}});
-  if(G.enemies.some(e=>e.hp<=0&&e.bleedKill))processDead('barbed');
-  if(G.enemies.some(e=>e.hp<=0&&e.acidKill))processDead('hydra');
-  {const fd=G.enemies.find(e=>e.hp<=0);if(fd)processDead(fd.fireSrc||'salvo')}
+  if(G.enemies.some(e=>e.hp<=0&&e.bleedKill))processDead('barbed','bleed');
+  if(G.enemies.some(e=>e.hp<=0&&e.acidKill))processDead('hydra','acid');
+  {const fd=G.enemies.find(e=>e.hp<=0);if(fd)processDead(fd.fireSrc||'salvo','burn')}
   // infectious rounds: every 3 seconds the infection eats 30 health from each infected enemy
   G.enemies.forEach(e=>{if(!e.inf||e.hp<=0)return;e.infCue-=dt;if(e.infCue>0)return;e.infCue=3;e.hp-=30;const rel=norm(e.angle-G.heading);fx.infect(rel,e.dist);
     if(e.hp<=0)fx.kill(rel,e.dist,.1,e.type)});
@@ -5351,6 +5394,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-13-zsb',date:'November 13, 2026',title:'New: Zombies match scoreboard',items:[
+    'Every zombies match now ends with a scoreboard, whether you die or use Quit to main menu in the pause menu.',
+    'It lists every kill by what made it: each weapon, with its headshots, plus burn damage, Hydra acid, every grenade type, armor abilities like the Bat swarm, Razorwire barbs, Berserker rage and the Dark samurai oni, perks like the Electric fence and Last stand, and your co-op teammate.',
+    'The biggest killers come first, with your total kills and the wave you reached at the top. The scoreboard is read aloud when it opens.',
+    'It is only for that match. Once you press Continue it is gone, and you cannot go back to it.']},
   {id:'2026-11-13-spectate',date:'November 13, 2026',title:'Co-op: spectate your teammate while you are down',items:[
     'When you are knocked down in co-op, you now automatically spectate your teammate until you are revived.',
     'While spectating, you turn with your teammate: every enemy sound, callout and clock direction is from the way they face, and the picture turns with them too.',
@@ -5817,7 +5865,7 @@ updateLogBtn();
 const screens=['menu','maps','coop','shop','mods','tutorial','settings','pid','req','log','game'];
 function show(id){
   curScr=id;setTimeout(menuAmbSync,0);
-  screens.forEach(s=>$(s).hidden=s!==id);$('pause').hidden=true;$('over').hidden=true;$('perks').hidden=true;
+  screens.forEach(s=>$(s).hidden=s!==id);$('pause').hidden=true;$('over').hidden=true;$('perks').hidden=true;$('zsb').hidden=true;
   if(id==='menu')$('menu-coins').textContent=`Weapons, attachments, armor, grenades and perks. You have ${P.coins} silver.`;
   if(id==='maps'){zfHome();updateMaps()}
   if(id==='shop')buildShop();
@@ -5870,8 +5918,9 @@ function endGame(won){
   else msg=won?`Victory on ${MAPS[G.map].name}. ${G.kills} kills.`:`You fell on wave ${G.wave}. ${G.kills} kills.`;
   msg+=` Earned ${G.earned} silver. You have ${P.coins}.`;
   if(G.coopWhy)msg=G.coopWhy+' '+msg.replace(/^You fell on/,'The battle ended on');
-  $('over-h').textContent=won?'Victory':G.coopWhy?'Teammate down':'Killed in action';$('over-sum').textContent=msg;$('over').hidden=false;
-  const g=G;setTimeout(()=>{if(G!==g||$('over').hidden)return;$('over-h').focus();say(($('over-h').textContent)+'. '+msg)},400);
+  $('over-h').textContent=won?'Victory':G.coopWhy?'Teammate down':'Killed in action';$('over-sum').textContent=msg;
+  const g=G,sb=zsbSnap(),res=()=>{if(G!==g)return;$('over').hidden=false;setTimeout(()=>{if(G!==g||$('over').hidden)return;$('over-h').focus();say(($('over-h').textContent)+'. '+msg)},400)};
+  if(sb)zsbOpen(sb,false,res);else res();
 }
 function pause(){if(!G||G.over||G.paused)return;timeGo();G.paused=true;pauseLabels();flushSave();G.hold=false;if(ambBus)ambBus.gain.value=0;$('pause').hidden=false;setTimeout(()=>$('pause-h').focus(),50);say(coopFromNet?'Your teammate paused the game.':'Paused.');if(G.coop&&!coopFromNet)coopSend({t:'pause'})}
 function resume(){if(!G)return;wakeAudio();G.paused=false;if(ambBus&&S.amb)ambBus.gain.value=S.avol;$('pause').hidden=true;setTimeout(()=>$('b-fire').focus(),50);say(coopFromNet?'Your teammate resumed. Back to the fight.':'Resumed.');if(G.coop&&!coopFromNet)coopSend({t:'resume'})}
@@ -6188,7 +6237,7 @@ bf.addEventListener('contextmenu',e=>e.preventDefault());
 })();
 $('b-reload').onclick=reload;$('b-switch').onclick=switchW;$('b-cover').onclick=cover;$('b-nade').onclick=throwNade;$('b-ntype').onclick=nadeType;
 $('b-radar').onclick=radar;$('b-status').onclick=status;$('b-pause').onclick=pause;
-$('b-resume').onclick=resume;$('b-quit').onclick=quit;$('b-pswitch').onclick=switchW;$('b-pntype').onclick=nadeType;$('b-retry').onclick=()=>coopOn()?show('coop'):begin(lastMap);$('b-menu').onclick=quit;
+$('b-resume').onclick=resume;$('b-quit').onclick=()=>{const sb=G&&!G.over?zsbSnap():null;quit();if(sb)zsbOpen(sb,true,()=>show('menu'))};$('b-pswitch').onclick=switchW;$('b-pntype').onclick=nadeType;$('b-retry').onclick=()=>coopOn()?show('coop'):begin(lastMap);$('b-menu').onclick=quit;
 document.addEventListener('keydown',e=>{
   if(!G||$('game').hidden)return;
   if(!$('perks').hidden||!$('tpick').hidden)return;
