@@ -3106,7 +3106,7 @@ function spawn(type,mega){
 
 /* ---------- actions ---------- */
 function turn(deg){
-  if(!G||G.paused||G.over)return;timeGo();
+  if(!G||G.paused||G.over)return;if(G.down){downNag();return}timeGo();
   G.heading=(G.heading+deg+360)%360;
   if(roamOn())rTurnStep(deg>=0?1:-1,Math.abs(deg)===180);
   if(Math.abs(deg)===180){fx.whoosh();G.enemies.forEach(e=>{e.cue=Math.min(e.cue,.5)});const ahead=G.enemies.filter(e=>Math.abs(norm(e.angle-G.heading))<=90).length;say('Turned around. '+(ahead?ahead+(ahead>1?' enemies':' enemy')+' now in front of you.':'No enemies in front of you.'))}
@@ -5342,7 +5342,7 @@ function draw(){
 }
 function hud(){
   if(!G)return;const w=G.lo[G.w];
-  $('v-hp').textContent=Math.max(0,Math.ceil(G.hp));$('hud-hp').classList.toggle('hp-low',G.hp<G.maxhp*.3);
+  if(!G.down){$('v-hp').textContent=Math.max(0,Math.ceil(G.hp));$('hud-hp').classList.toggle('hp-low',G.hp<G.maxhp*.3);$('hud-hp').firstElementChild.textContent='Health'}   // while down, the box shows your teammate's health
   $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.kbat?(G.kbCd>0?`WAIT ${Math.ceil(G.kbCd)}`:(G.kb||[]).length?`BALLS ${(G.kb||[]).length}`:'READY'):w.katana||w.scythe?'BLADE':w.boomer?(G.boom?'OUT':'READY'):w.bubble?`OUT ${(G.bubs||[]).length}/${w.bubMax}`:w.ra?(G.raCool>0?`COOL ${Math.ceil(G.raCool)}`:`HEAT ${Math.round((G.raHeat||0)/RA_DUR*100)}%`):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
   $('v-wave').textContent=G.mode==='practice'?'—':G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'?`${G.wave}`:`${G.wave}/${MAXW}`;$('v-coins').textContent=P.coins;
   const hall=G.mode==='zombies'&&G.zm==='hall';$('v-wave').previousElementSibling.textContent=hall?'Score':'Wave';if(hall)$('v-wave').textContent=hallScore();
@@ -5351,6 +5351,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-13-spectate',date:'November 13, 2026',title:'Co-op: spectate your teammate while you are down',items:[
+    'When you are knocked down in co-op, you now automatically spectate your teammate until you are revived.',
+    'While spectating, you turn with your teammate: every enemy sound, callout and clock direction is from the way they face, and the picture turns with them too.',
+    'Your teammate\'s gunfire plays right in front of you, as loud as your own gun, so you can follow the fight.',
+    'The Health box on screen reads Spectating and shows your teammate\'s health. Status tells you who you are spectating.',
+    'Turning, firing and other controls are off while you spectate. When you are revived, spectating stops on its own and you are back to your own facing, ready to fight.']},
   {id:'2026-11-13-lnbal',date:'November 13, 2026',title:'Launcher balance: single shots hit harder',items:[
     'Launchers that hold one round now hit harder and wider than the ones that hold several, to make up for reloading after every shot.',
     'RPG-7: the stock warhead now hits for 24 instead of 18, with a 12 foot blast instead of 6, up to 60 percent splash. Tandem warhead: 40, or 80 on armored enemies and bosses, 10 foot blast. Fragmentation: 14, with a 20 foot blast. Thermobaric: 24, with a 20 foot fireball.',
@@ -6799,20 +6805,26 @@ const REV_T=15;
 function coopKnock(){
   if(!G.coop||!coopOn()||G.mateDown||G.over)return false;
   G.hp=0;G.down=REV_T;G.hold=false;setFlock(false);vib(500);
+  G.specH=G.heading;G.heading=C.mateH;G.enemies.forEach(e=>{e.cue=Math.min(e.cue,.3)});   // spectate: you hear and see the fight the way your teammate faces
   coopSend({t:'dn'});coopRetarget();hud();
-  say(`You are down! ${C.mate||'Your teammate'} has to stay alive for ${REV_T} seconds and you get back up.`);
+  const m=C.mate||'your teammate';
+  say(`You are down! Spectating ${m}: you hear the battle the way ${m} faces, with ${m}'s gunfire right in front of you. ${m} has ${Math.max(0,Math.ceil(C.mateHp))} health. Stay alive for ${REV_T} seconds, ${m}, and you are back up.`);
   return true;
 }
 function coopDownTick(dt){
   const was=G.down;G.down=Math.max(0,G.down-dt);G.hp=0;
+  if(coopOn())G.heading=C.mateH;   // spectating: turn with your teammate
+  $('v-hp').textContent=Math.max(0,Math.ceil(C.mateHp));$('hud-hp').firstElementChild.textContent='Spectating';$('hud-hp').classList.toggle('hp-low',C.mateHp<C.mateMax*.3);
   [10,5,3,2,1].forEach(s=>{if(was>s&&G.down<=s)say(s>3?`Revive in ${s} seconds.`:`${s}`)});
   if(G.down<=0)coopUp(true);
 }
 function coopUp(send){
-  G.down=0;G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);if(send)coopSend({t:'up'});coopRetarget();hud();
-  say(`Revived! You are back up with ${G.hp} health.`);
+  G.down=0;G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);if(send)coopSend({t:'up'});coopRetarget();
+  if(G.specH!=null){G.heading=G.specH;G.specH=null;G.enemies.forEach(e=>{e.cue=Math.min(e.cue,.3)})}   // stop spectating: back to your own facing
+  $('hud-hp').firstElementChild.textContent='Health';hud();
+  say(`Revived! You are back up with ${G.hp} health. Stopped spectating, facing ${facing()} again.`);
 }
-function downNag(){const n=performance.now();if(n-(G.nagAt||0)<1500)return;G.nagAt=n;say(`You are down. Back up in ${Math.ceil(G.down)} seconds.`)}
+function downNag(){const n=performance.now();if(n-(G.nagAt||0)<1500)return;G.nagAt=n;say(`You are down, spectating ${C.mate||'your teammate'}. Back up in ${Math.ceil(G.down)} seconds.`)}
 function coopRetarget(){   // the host decides who each enemy goes after: only the players still standing
   if(G.coop!=='host')return;
   G.enemies.forEach(e=>{if(e.id==null)return;const tg=G.down?1:G.mateDown?0:e.id%2;if(e.tg!==tg){e.tg=tg;e.engaged=false}});
@@ -6824,7 +6836,7 @@ function coopShot(w){
 }
 function coopMateShot(id,h){
   if(!ctx||!G)return;C.mateH=h;const p=PR[id]||PR.ak||PR.pistol;
-  try{shot(p,0,out(coopRel(h),1.5,.45,sfx),{sil:false})}catch(e){}
+  try{shot(p,0,G.down?out(0,1,.85,sfx):out(coopRel(h),1.5,.45,sfx),{sil:false})}catch(e){}   // spectating: their gun sounds like your own
 }
 function coopMateHp(hp,mx){
   C.mateHp=hp;C.mateMax=mx||100;
@@ -6837,12 +6849,12 @@ function coopTick(dt){
   if(G.coop==='host'){
     const live=G.enemies.filter(e=>e.hp>0&&e.id!=null);
     C.sendT=Math.min(.3,.1+live.length*.001);   // huge zombie waves: up to 3 updates a second instead of 10, to keep the data small
-    coopSend({t:'s',a:C.ack,h:Math.round(G.heading),hp:Math.ceil(G.hp),mx:G.maxhp,
+    coopSend({t:'s',a:C.ack,h:Math.round(G.down&&G.specH!=null?G.specH:G.heading),hp:Math.ceil(G.hp),mx:G.maxhp,
       w:[G.wave,G.toSpawn,G.miniDue?1:0,G.bossWave?1:0,G.bossSpawned?1:0,G.zBossDue?1:0,G.zMegaDue?1:0,G.zAncDue?1:0],
       wn:G.win?G.win.map(W=>W.broken?1:0):null,
       e:live.map(e=>[e.id,e.type,Math.round(e.angle*10)/10,Math.round(e.dist*100)/100,Math.ceil(e.hp),Math.ceil(e.maxhp),e.mega?1:0,e.tg||0,e.win??-1,e.inside?1:0])});
   }else{
-    coopCollect();const m={t:'g',h:Math.round(G.heading),hp:Math.ceil(G.hp),mx:G.maxhp};
+    coopCollect();const m={t:'g',h:Math.round(G.down&&G.specH!=null?G.specH:G.heading),hp:Math.ceil(G.hp),mx:G.maxhp};
     if(Object.keys(C.pend).length){m.s=++C.seq;m.d={};for(const k in C.pend)m.d[k]=Math.ceil(C.pend[k]*10)/10;C.sent.push({s:m.s,d:m.d});C.pend={}}
     coopSend(m);
   }
@@ -6913,7 +6925,7 @@ function coopRecv(m){
     else if(m.t==='end'&&!G.over){G.coopWhy=m.won?'':`${C.mate||'Your teammate'} fell.`;endGame(!!m.won)}
   }finally{coopFromNet=false}
 }
-const coopMates=()=>G&&G.coop&&coopOn()?` ${C.mate||'Teammate'}: ${G.mateDown?'down, waiting to be revived':`${Math.max(0,Math.ceil(C.mateHp))} of ${C.mateMax} health`}, facing ${clock(coopRel(C.mateH))}.${G.down?` You are down, back up in ${Math.ceil(G.down)} seconds.`:''}`:'';
+const coopMates=()=>G&&G.coop&&coopOn()?` ${C.mate||'Teammate'}: ${G.mateDown?'down, waiting to be revived':`${Math.max(0,Math.ceil(C.mateHp))} of ${C.mateMax} health`}, facing ${clock(coopRel(C.mateH))}.${G.down?` You are down and spectating ${C.mate||'your teammate'}, back up in ${Math.ceil(G.down)} seconds.`:''}`:'';
 
 $('coop-host').onclick=()=>{initAudio();coopHost()};
 $('coop-join').onclick=()=>{initAudio();coopJoin()};
