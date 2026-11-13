@@ -569,7 +569,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-cat="grenades">Grenades</button>
     <button data-cat="perks">Perks</button>
     <button data-cat="armor">Body armor</button>
-    <button data-cat="std">Standard weapons<small>Pistols, submachine guns, rifles, light machine guns, sniper rifles and shotguns</small></button>
+    <button data-cat="std">Standard weapons<small>Pistols, submachine guns, rifles, light machine guns, sniper rifles, shotguns and launchers</small></button>
     <button data-cat="mythic">Legendary<small>Sets of legendary weapons</small></button>
   </div>
   <div class="seg" id="std-sub" role="group" aria-label="Standard weapon type" hidden>
@@ -579,6 +579,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-std="lmg">Light machine guns</button>
     <button data-std="sniper">Sniper rifles</button>
     <button data-std="shotgun">Shotguns</button>
+    <button data-std="launcher">Launchers</button>
   </div>
   <div class="seg" id="leg-sub" role="group" aria-label="Legendary set" hidden>
     <button data-set="mythic">Mythical<small>Rifles, sniper rifles, submachine guns, shotguns, launchers and heavy weapons</small></button>
@@ -1223,7 +1224,7 @@ const PR={
 };
 const SND={hades:{gap:0},pistol:{gap:0,mech:'slide',cas:1},deagle:{gap:0,mech:'slide',cas:1},ak:{gap:.1,cas:1},an94:{gap:.033,cas:1},
   skorpion:{gap:.062,cas:.4},m249:{gap:.075,cas:.5},spas:{gap:0,mech:'pump'},barrett:{gap:0,cas:1},antitank:{gap:0,mech:'bolt'},
-  beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},tetra:{gap:.09},salvo:{gap:0},jet:{gap:0},rivet:{gap:0},vlad:{gap:0},scythe:{gap:0},
+  beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},tetra:{gap:.09},salvo:{gap:0},m79:{gap:0},mgl:{gap:0},xm25:{gap:0},rpg7:{gap:0},javelin:{gap:0},flash:{gap:.12},jet:{gap:0},rivet:{gap:0},vlad:{gap:0},scythe:{gap:0},
   glock:{gap:.035,mech:'slide',cas:.5},gyrojet:{gap:0},p90:{gap:.04,cas:.4},m4:{gap:.075,cas:1},mg42:{gap:.042,cas:.4},m2:{gap:.13,cas:1},aa12:{gap:0,cas:1},bshot:{gap:.11,cas:1},ksg:{gap:0,mech:'pump'},coach:{gap:.018},
   thunder:{gap:0},blackhole:{gap:0},bubble:{gap:0},banshee:{gap:.09},hydra:{gap:0},symbiote:{gap:.045},quasar:{gap:0}};
 function gunDest(pan,bus){const g=ctx.createGain();g.__pri=true;bus=bus||gunBus;
@@ -1553,6 +1554,7 @@ function gunSound(w,n=1,side=-1){
   if(w.id==='jet'){const d=gunDest(0);if(w.sil)d.gain.value=.6;jetShot(d);return}
   if(w.id==='gyrojet'){gyroShot(gunDest(side<0?0:(side?.45:-.45)));return}
   if(w.id==='salvo'){const d=gunDest(0);lanternShot(d);return}
+  if(LNCH.includes(w.id)){lnShot(w,n);return}
   if(w.id==='jackfrost'){const d=gunDest(0);if(w.sil)d.gain.value=.55;glassShot(d);return}
   if(w.id==='tetra'){const d=gunDest(0);for(let i=0;i<n;i++)crystalShot(d,i*(w.gap||SND.tetra.gap),w.barrel);return}
   const s=SND[w.id],pan=side<0?0:(side?.45:-.45),d=gunDest(pan),m=gunDest(pan);
@@ -1634,7 +1636,7 @@ const RSEQ={
   break:[[.05,d=>{RK.clack(d,0,1300,.55);RK.scrape(d,.04,900,600,.1,.1)}],[.25,d=>{RK.click(d,0,4200,.15);RK.click(d,.05,4600,.15)}],[.5,shellIn],[.68,shellIn],[.88,d=>RK.clack(d,0,1100,.65)]],
   bolt:[[.05,d=>{RK.clack(d,0,1500,.45);RK.scrape(d,.06,2500,1600,.12,.12)}],[.22,d=>RK.thud(d,0,.25)],[.55,d=>RK.clack(d,0,1100,.6)],[.8,d=>RK.scrape(d,0,1600,2600,.12,.14)],[.9,d=>RK.clack(d,0,1800,.55)]]
 };
-const RKIND={vlad:'belt',gyrojet:'hand',pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
+const RKIND={m79:'break',mgl:'shells',xm25:'rifle',rpg7:'heavy',javelin:'heavy',flash:'heavy',vlad:'belt',gyrojet:'hand',pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
   glock:'hand',p90:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',hades:'shells',blackhole:'heavy',bubble:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle',rivet:'rifle',quasar:'heavy'};
 function rdest(pan){const g=gunDest(pan,sfx);g.gain.value=.9;return g}
 const fx={
@@ -2060,6 +2062,18 @@ const WPN=[
    traits:'Fully automatic machine pistol. Each trigger pull rips 4 rounds, so it empties its 33-round magazine fast. A sidearm that hits like a submachine gun up close.'},
   {id:'gyrojet',rng:0,name:'MBA Gyrojet',short:'GYROJET',mag:6,dmg:100,cone:12,cd:.5,reload:2.4,shots:1,acc:.85,gyro:true,maxR:70/3.281,price:500,
    traits:'A real 1960s rocket pistol. Each round is a tiny spinning rocket that leaves the barrel slow and speeds up as it flies, so it is weak up close and hits hardest far away: 8 damage at point blank, climbing steadily the farther the rocket flies, to 100 damage at 70 feet, its maximum range, where the rockets burn out. Fires 2 rounds a second. 6 rounds, nearly no recoil, and a hiss instead of a bang, then you hear each rocket whoosh away toward its target.'},
+  {id:'m79',rng:0,name:'M79 grenade launcher',short:'M79',mag:1,dmg:10,cone:14,cd:.4,reload:2.2,shots:1,acc:.85,lnch:'nade',blast:8,splM:.6,spd:22,price:1500,
+   traits:'The Vietnam-era Thumper. A single-shot, break-open 40 millimetre grenade launcher with its famous hollow thoomp. The grenade arcs out with a falling whistle you can follow by ear and explodes where it lands: 10 on a direct hit, and every enemy within 8 feet of the blast takes up to 60 percent of that, less toward the edge. A miss lands just past the enemy, so the blast can still catch it. Break it open and load one grenade after every shot. Takes only its own upgrades, including the real buckshot round that turns it into a giant shotgun.'},
+  {id:'mgl',rng:0,name:'Milkor MGL',short:'MGL',mag:6,dmg:9,cone:14,cd:.5,reload:4.2,shots:1,acc:.85,lnch:'nade',blast:8,splM:.6,spd:22,price:3500,
+   traits:'South African 6-round revolver grenade launcher. Fires as fast as you pull the trigger, 2 grenades a second, and you hear the cylinder click round after every shot. Each grenade hits for 9 and blasts every enemy within 8 feet for up to 60 percent of that. To reload you open the cylinder and load all 6 by hand, and you hear every grenade go in. Takes only its own upgrades.'},
+  {id:'xm25',rng:0,name:'XM25 Punisher',short:'XM25',mag:4,dmg:7,cone:16,cd:.6,reload:2.6,shots:1,acc:1,lnch:'air',blast:10,splM:1,spd:30,price:5000,
+   traits:'Experimental American smart grenade launcher. Its built-in laser rangefinder ranges the nearest enemy you are facing as you fire, with one beep, higher the closer it is, and programs the 25 millimetre round to burst in the air right over it. Airbursts never miss: every enemy within 10 feet of the burst takes the full 7, with no weaker edge. With nothing in your sights it bursts about 100 feet out. 4-round magazine. Takes only its own upgrades.'},
+  {id:'rpg7',rng:0,name:'RPG-7',short:'RPG-7',mag:1,dmg:18,cone:13,cd:.5,reload:2.8,shots:1,acc:.85,lnch:'rocket',blast:6,splM:.5,spd:28,price:4000,
+   traits:'The classic Soviet rocket-propelled grenade launcher. A pop as the booster kicks the rocket out, then its motor ignites with a roaring whoosh you hear fly away toward the target. The stock PG-7V anti-tank warhead hits for 18, and enemies within 6 feet of the blast take up to half that. One rocket, then you load the next warhead into the front of the tube. Its real warheads are its upgrades: tandem anti-tank for armor and bosses, fragmentation for crowds, and thermobaric that sets everything nearby on fire.'},
+  {id:'javelin',rng:0,name:'FGM-148 Javelin',short:'JAVELIN',mag:1,dmg:40,cone:20,cd:.5,reload:3.5,shots:1,acc:1,lnch:'rocket',blast:8,splM:.4,spd:24,charge:2,lock:true,price:10000,
+   traits:'American fire-and-forget anti-tank missile. Press Fire and the seeker locks on to the nearest enemy you are facing: fast beeps that speed up, then a steady tone when it is locked, 2 seconds. Then a soft pop, the motor ignites, and the missile flies to that enemy even if it moves or you turn away. It never misses. Top attack: it climbs and dives down from above, hitting armored and metal enemies, mini bosses and bosses for 1 and a half times, 60. Anything else takes 40, and enemies within 8 feet take up to 40 percent of that. If nothing is in your sights, it will not lock. Takes only its own upgrades.'},
+  {id:'flash',rng:0,name:'M202 FLASH',short:'FLASH',mag:4,dmg:8,cone:14,cd:.45,reload:4.5,shots:1,acc:.85,lnch:'rocket',blast:10,splM:.5,spd:26,price:6000,
+   traits:'American 4-tube incendiary rocket launcher. Each pull fires the next tube, about 2 rockets a second, and every rocket bursts into a fireball: 8 on a direct hit, up to half that to every enemy within 10 feet, and everything in the fireball burns 5 a second for 5 seconds. Reload by clipping in a fresh pack of 4 rockets. Takes only its own upgrades, including Volley fire, which empties all 4 tubes at once.'},
   {id:'p90',rng:14,name:'FN P90',short:'P90',mag:50,dmg:.8,cone:16,cd:.3,reload:2.2,shots:5,acc:.9,price:400,
    traits:'Compact submachine gun with a 50-round top magazine. Fast 5-round bursts and a light, snappy report. Stronger and more accurate than the Skorpion per bullet, with a smaller magazine.'},
   {id:'m4',rng:30,name:'M4A1 carbine',short:'M4A1',mag:30,dmg:1.3,cone:15,cd:.27,reload:1.8,shots:3,acc:.95,price:350,
@@ -2431,10 +2445,36 @@ const ATT=[
   {id:'scyleech',name:'Leeching edge',price:12000,for:'scythe',grp:'special',desc:()=>'The blade drinks from every cut. Every enemy it hits heals you 10 percent of the damage it deals: 7.5 health for one enemy, 75 for ten enemies, on top of the healing from kills.'},
   {id:'scyspirit',name:'Spirit leech',price:25000,for:'scythe',grp:'special',desc:()=>'Special ability. Instead of lifesteal, this scythe becomes a conduit, stealing strength and agility. The life force harvested now raises damage and attack speed. Kills heal you only 10 percent of the enemy\'s full health instead of 20, but every kill makes the scythe 2 percent stronger, with no limit, and swings it 5 percent faster, from 2.7 seconds a circle down to 1 second at the fastest. Every 10 kills you hear how strong it has become. If 15 seconds pass without a scythe kill, the power drains away to normal in about a second and a half. A soft heartbeat warns you 3 seconds before.'},
   {id:'scythirst',name:'Bloodthirsty energy',price:20000,for:'scythe',grp:'special',desc:()=>'Special ability. The blade trails a wave of red energy that doubles its reach: everything within 20 feet takes the hit instead of 10.'},
+  {id:'m79buck',name:'Buckshot round',price:1500,for:'m79',ammo:true,desc:()=>'The real M576 buckshot round. No explosion: the M79 becomes a giant shotgun, firing a blast of 27 pellets that hits every enemy in a wide aim for 6, full damage out to 20 feet, weaker out to 40 and weak beyond. Enemies within 10 feet of the first one hit take some of the blast too.'},
+  {id:'m79hedp',name:'HEDP round',price:2000,for:'m79',ammo:true,desc:()=>'The M433 high explosive dual purpose round. Its shaped charge doubles direct hits on armored and metal enemies, mini bosses and bosses. The blast is unchanged.'},
+  {id:'m79sight',name:'Ladder sight',price:800,for:'m79',desc:()=>'The flip-up leaf sight, marked out in range steps. Raises your hit chance from 85 to 97 percent.'},
+  {id:'m79fast',name:'Fast hands',price:1200,for:'m79',desc:()=>'Break, eject, load, snap shut. Reloads in 1.3 seconds instead of 2.2.'},
+  {id:'mglspeed',name:'Speed loader',price:3000,for:'mgl',desc:()=>'Drops all the grenades into the cylinder at once instead of one at a time. Reloads in 1.8 seconds instead of 4.2, or 2.6 with the extended cylinder.'},
+  {id:'mgltrig1',name:'Hair trigger V1',price:2000,for:'mgl',desc:()=>'Fires about 3 grenades a second instead of 2.'},
+  {id:'mgltrig2',name:'Hair trigger V2',price:4000,for:'mgl',req:'mgltrig1',desc:()=>'Fires 4 grenades a second. Buy V1 first.'},
+  {id:'mglhedp',name:'HEDP rounds',price:3000,for:'mgl',ammo:true,desc:()=>'High explosive dual purpose grenades. Their shaped charge doubles direct hits on armored and metal enemies, mini bosses and bosses. The blast is unchanged.'},
+  {id:'mglcyl',name:'Extended cylinder',price:5000,for:'mgl',desc:()=>'A longer 12-round drum, like the one on the Hawk MM-1. Holds 12 grenades instead of 6, but a reload by hand takes twice as long.'},
+  {id:'xmmag',name:'Extended magazine',price:2500,for:'xm25',desc:()=>'Holds 6 rounds instead of 4.'},
+  {id:'xmfrag',name:'Fragmentation sleeve',price:4000,for:'xm25',desc:()=>'A notched steel sleeve around each round. The airburst reaches every enemy within 15 feet instead of 10.'},
+  {id:'xmtrig',name:'Hair trigger',price:3000,for:'xm25',desc:()=>'Fires about 3 rounds a second instead of 1.7.'},
+  {id:'xmfast',name:'Fast magazine',price:2500,for:'xm25',desc:()=>'Reloads in 1.6 seconds instead of 2.6.'},
+  {id:'rpgtandem',name:'PG-7VR tandem warhead',price:5000,for:'rpg7',ammo:true,desc:()=>'Two shaped charges, one behind the other, built to beat armor. Hits for 30 instead of 18, and double that, 60, on armored and metal enemies, mini bosses and bosses. The blast shrinks to 4 feet.'},
+  {id:'rpgfrag',name:'OG-7V fragmentation warhead',price:3000,for:'rpg7',ammo:true,desc:()=>'An anti-personnel warhead for crowds. Only 10 on a direct hit, but the blast reaches every enemy within 15 feet for up to 80 percent of that.'},
+  {id:'rpgthermo',name:'TBG-7V thermobaric warhead',price:8000,for:'rpg7',ammo:true,desc:()=>'A fuel-air warhead with a huge, deep fireball. 18 on a direct hit, up to 90 percent of that to every enemy within 15 feet, and everything in the fireball burns 8 a second for 5 seconds.'},
+  {id:'rpgscope',name:'PGO-7 scope',price:1500,for:'rpg7',desc:()=>'The real optical sight with its range markings. Raises your hit chance from 85 to 97 percent.'},
+  {id:'rpgfast',name:'Fast hands',price:2000,for:'rpg7',desc:()=>'Loads the next warhead in 1.6 seconds instead of 2.8.'},
+  {id:'jvlock1',name:'Fast lock V1',price:4000,for:'javelin',desc:()=>'A faster seeker. Locks on in 1.2 seconds instead of 2.'},
+  {id:'jvlock2',name:'Fast lock V2',price:8000,for:'javelin',req:'jvlock1',desc:()=>'Locks on in 0.6 seconds. Buy V1 first.'},
+  {id:'jvdirect',name:'Direct attack mode',price:5000,for:'javelin',ammo:true,desc:()=>'The real Javelin\'s second flight mode. The missile flies straight at the target, twice as fast, with no top-attack bonus, but its blast grows to 12 feet, up to 60 percent of a hit. Better against crowds.'},
+  {id:'jvfast',name:'Fast reload',price:4000,for:'javelin',desc:()=>'Clips a fresh missile tube onto the sight in 2 seconds instead of 3.5.'},
+  {id:'flvolley',name:'Volley fire',price:6000,for:'flash',grp:'special',desc:()=>'Special ability. One pull fires every loaded tube at once, up to 4 rockets a fraction of a second apart, each at a different enemy you are facing when there are enough.'},
+  {id:'flhot',name:'Hotter TPA',price:4000,for:'flash',ammo:true,desc:()=>'A hotter load of the real incendiary filler. The fireball grows to 15 feet, and everything in it burns 10 a second for 8 seconds instead of 5 for 5.'},
+  {id:'flfast',name:'Quick clip',price:3000,for:'flash',desc:()=>'Clips in a fresh pack of 4 rockets in 2.5 seconds instead of 4.5.'},
   {id:'akimbo',name:'Akimbo',only:HAND,desc:()=>'A second pistol in your other hand, each with its own magazine. Empty one and it reloads while the other keeps firing. The left gun sounds on your left, the right gun on your right.'}
 ];
 const ATTBY=Object.fromEntries(ATT.map(a=>[a.id,a]));
-const OWNUP=['vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
+const LNCH=['m79','mgl','xm25','rpg7','javelin','flash'];
+const OWNUP=[...LNCH,'vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
 const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||((w.id==='symbiote'||w.id==='hades')&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
@@ -2511,6 +2551,18 @@ function build(w){
     if(am==='fire'){const R=hb?70:50;b.hR=R/3.281;b.hB=band([[8,3],[15,2.5],[23,2],[35,1.5]],R/50);b.hBase=1;b.hW=f=>Math.max(1,3*f/25);b.burn=10}
     else if(am==='hell'){const R=hb?50:35;b.hR=R/3.281;b.hB=band([[15,9],[25,6]],R/35);b.hBase=3;b.hW=f=>4+8*Math.min(1,f/R);b.burn=20}
     else{const R=hb?170:160;b.spread=false;b.slug=true;b.erupt=true;b.cone=14;b.acc=.98;b.hR=R/3.281;b.hB=band([[56,3],[105,2.5],[161,2],[245,1.5]],R/160);b.hBase=1;b.burn=15}}
+  if(LNCH.includes(w.id)){b.blastR=w.blast/3.281;b.lk=w.lnch;
+    if(w.id==='m79'){if(has('m79sight'))b.acc=.97;if(has('m79fast'))b.reload=1.3;b.hedp=has('m79hedp');
+      if(has('m79buck')){b.lnch=null;b.spread=true;b.buckRound=true;b.dmg=6;b.cone=24;b.range=[20/3.281,40/3.281,.3];b.mid=.55}}
+    if(w.id==='mgl'){b.mag=has('mglcyl')?12:6;b.reload=has('mglspeed')?(b.mag>6?2.6:1.8):w.reload*b.mag/6;b.cd=has('mgltrig2')?.25:has('mgltrig1')?.35:w.cd;b.hedp=has('mglhedp')}
+    if(w.id==='xm25'){b.air=true;b.mag=has('xmmag')?6:4;if(has('xmfrag'))b.blastR=15/3.281;if(has('xmtrig'))b.cd=.35;if(has('xmfast'))b.reload=1.6}
+    if(w.id==='rpg7'){if(has('rpgscope'))b.acc=.97;if(has('rpgfast'))b.reload=1.6;
+      if(has('rpgtandem')){b.dmg=30;b.tandem=true;b.blastR=4/3.281}
+      else if(has('rpgfrag')){b.dmg=10;b.blastR=15/3.281;b.splM=.8}
+      else if(has('rpgthermo')){b.thermo=true;b.blastR=15/3.281;b.splM=.9;b.fireDps=8;b.fireT=5}}
+    if(w.id==='javelin'){b.home=true;b.charge=has('jvlock2')?.6:has('jvlock1')?1.2:2;if(has('jvfast'))b.reload=2;
+      if(has('jvdirect')){b.spd=w.spd*2;b.blastR=12/3.281;b.splM=.6}else b.top=true}
+    if(w.id==='flash'){const hot=has('flhot');b.fireDps=hot?10:5;b.fireT=hot?8:5;if(hot)b.blastR=15/3.281;if(has('flfast'))b.reload=2.5;if(has('flvolley')){b.volley=true;b.shots=4}}}
   if(b.akimbo){b.name='Akimbo '+w.name+'s';b.short=w.short+' x2'}
   return b;
 }
@@ -2837,7 +2889,7 @@ function reqText(it){const p=[];it=it||{};if(it.silver)p.push(`${it.silver} silv
 function fillReq(){
   const opt=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o};
   const ws=$('req-w');ws.textContent='';ws.appendChild(opt('','No weapon'));
-  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',mythic:'Legendary weapons'};
+  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',launcher:'Launchers',mythic:'Legendary weapons'};
   Object.keys(WCAT).forEach(c=>{const ids=WCAT[c].filter(i=>!P.owned.includes(i));if(!ids.length)return;const g=document.createElement('optgroup');g.label=CN[c]||c;ids.forEach(i=>g.appendChild(opt(i,WBY[i].name)));ws.appendChild(g)});
   const as=$('req-a');as.textContent='';as.appendChild(opt('','No armor'));ARMOR.filter(a=>!P.armor.own.includes(a.id)).forEach(a=>as.appendChild(opt(a.id,a.name)));
   const gs=$('req-g');gs.textContent='';gs.appendChild(opt('','No grenades'));NTYPES.forEach(k=>gs.appendChild(opt(k,NADE[k].plural[0].toUpperCase()+NADE[k].plural.slice(1))));
@@ -2883,7 +2935,7 @@ function fillFb(){
   const sel=$('fb-topic'),keep=sel.value;sel.textContent='';
   const opt=(v,t,par)=>{const o=document.createElement('option');o.value=v;o.textContent=t;(par||sel).appendChild(o)};
   opt('General','General feedback');
-  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',mythic:'Legendary weapons'};
+  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',launcher:'Launchers',mythic:'Legendary weapons'};
   Object.keys(WCAT).forEach(c=>{const g=document.createElement('optgroup');g.label=CN[c]||c;WCAT[c].forEach(i=>opt('Weapon: '+WBY[i].name,WBY[i].name,g));sel.appendChild(g)});
   const g=document.createElement('optgroup');g.label='Other';
   [['Armor','Armor'],['Grenades','Grenades'],['Enemies and bosses','Enemies and bosses'],['Maps and modes','Maps and modes'],['Sounds','Sounds and audio cues'],['Menus and controls','Menus, controls and VoiceOver'],['Bug','Something is broken (a bug)']].forEach(([v,t])=>opt(v,t,g));
@@ -3094,6 +3146,9 @@ function fire(){
     if(busy(0)){const j=G.jobs.find(j=>j.wi===wi&&j.side===0);if(j&&j.shell&&A[0]>0)G.jobs=G.jobs.filter(x=>x!==j);else return}
     if(A[0]<=0){fx.click();G.cd=.3;reload();return}
   }
+  if(w.charge&&!G.charged&&w.lock){const lt=G.enemies.filter(e=>Math.abs(norm(e.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist)[0];
+    if(!lt){fx.click();G.cd=.3;say('No lock. Nothing in your sights.');return}
+    G.lockE=lt;G.chargeT=w.charge;G.chargeW=wi;G.cd=w.charge+.05;fx.jvLock(w.charge);vib(30);return}
   if(w.charge&&!G.charged){G.chargeT=w.charge;G.chargeW=wi;G.cd=w.charge+.05;jetSpool(w.charge);vib(30);return}
   if(w.rod&&(G.rod||0)>=5){w={...w,dmg:w.dmg*2,sup:true};G.rod=0}
   // Rivet Storm overdrive: 10 percent faster for every 10 nails in a row, additive; a pause, a switch or a reload starts it over
@@ -3117,7 +3172,8 @@ function fire(){
   const gap=w.gap||SND[w.id].gap,acc=w.sure?1:(w.acc||.92)*(G.cover?.65:1);
   const tgt=G.enemies.filter(e=>Math.abs(norm(e.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist);
   let hits=tgt.slice(0,1);
-  const special=w.hydra||w.hole||w.lantern;
+  const special=w.hydra||w.hole||w.lantern||w.lnch;
+  if(w.lnch)launchShell(w,tgt,acc,pr,shots);
   if(w.hydra)launchHydra(w,tgt);
   if(w.hole)launchHole(w,tgt[0]);
   if(w.lantern)launchLantern(w,tgt,acc,pr);
@@ -3466,6 +3522,100 @@ function launchLantern(w,tgt,acc,pr){
       if(now-G.hpT>1500&&!killQuiet()){G.hpT=now;say(`${e.mega?'Mega ':''}${EN[e.type].name}, ${Math.max(1,Math.round(e.hp/e.maxhp*100))} percent.`)}}
     return true});
 }
+/* Real launchers: M79, Milkor MGL, XM25 Punisher, RPG-7, Javelin and M202 FLASH.
+   Each shell flies out to the nearest enemy you are facing (lnFly: a falling whistle for grenades, a roaring rocket
+   motor for rockets, a thin whine for the XM25's airburst round), panned to where it is and fainter the farther it
+   goes. It explodes when it gets there: direct damage to that enemy, and a blast that hits everyone within blastR,
+   weaker toward the edge. A miss lands just past the enemy, so the blast can still catch it. The XM25 bursts in the
+   air over its target and never misses, full damage across the whole burst. The Javelin locks on first (G.lockE) and
+   homes in. Volley fire sends each rocket at a different enemy when it can. */
+const LN_FAR=30;   // metres: with nothing in your sights, a shell lands or bursts about 100 feet ahead
+function launchShell(w,tgt,acc,pr,n=1){
+  for(let i=0;i<n;i++){
+    const e=w.home?(G.lockE&&alive(G.lockE)?G.lockE:tgt[0]||null):tgt.length?tgt[i%tgt.length]:null;
+    const d0=e?e.dist:LN_FAR,del=i*.12,T=.08+d0/w.spd;
+    if(w.air)fx.lnRange(d0,del);
+    const fly=lnFly(e?norm(e.angle-G.heading):0,d0,T,w.air?'air':w.lk,del);
+    const hit=!!e&&(w.home||w.air||Math.random()<acc);
+    let ang=e?e.angle:G.heading,dist=d0,t=T+del;
+    later(dt=>{
+      if(e&&hit&&alive(e)){ang=e.angle;dist=e.dist}
+      fly.pan(norm(ang-G.heading));
+      t-=dt;if(t>0)return false;
+      if(e&&!hit)dist+=1.5+Math.random()*2;
+      lnBlast(w,ang,dist,hit&&e&&alive(e)?e:null,pr);return true})}
+  if(w.home)G.lockE=null;
+}
+function lnBlast(w,ang,dist,e,pr){
+  if(!G||G.over)return;
+  const rel=norm(ang-G.heading),[cx,cy]=xy(ang,dist),m=gunMult(),R=w.blastR;
+  if(w.fireDps)fx.lnFireball(rel,dist,!!w.thermo);else if(R>=12/3.281||w.dmg>=30)fx.heBoom(rel,dist,0);else fx.boom(rel,dist,0);
+  let n=0;
+  if(e&&!w.air){const T=EN[e.type],tough=T.boss||T.mini||T.mat!=='flesh';
+    e.hp-=w.dmg*m*(tough&&w.hedp?2:1)*(tough&&w.tandem?2:1)*(tough&&w.top?1.5:1);fx.impact(rel,dist,e.type,0);n++}
+  G.enemies.forEach(o=>{if(o.hp<=0||(o===e&&!w.air))return;const[x,y]=xy(o.angle,o.dist),dd=Math.hypot(x-cx,y-cy);if(dd>R)return;
+    o.hp-=w.dmg*w.splM*m*(w.air?1:1-.5*dd/R);n++;fx.impact(norm(o.angle-G.heading),o.dist,o.type,.04+dd*.01)});
+  if(w.fireDps)G.enemies.forEach(o=>{if(o.hp<=0)return;const[x,y]=xy(o.angle,o.dist);if(Math.hypot(x-cx,y-cy)>R)return;
+    o.fireT=Math.max(o.fireT||0,w.fireT);o.fireDps=Math.max(o.fireDps||0,w.fireDps);o.fireSrc=w.id;fx.burn(norm(o.angle-G.heading),o.dist,.15)});
+  if(pr&&n)G.pHits++;
+  rdBlast(cx,cy,R*1.6,w.thermo?16:R>=3?13:10,w.fireDps?{dis:.4,c:'255,140,40'}:{dis:.4});
+  G.enemies.filter(o=>o.hp<=0).forEach(o=>{o.hk=false;fx.kill(norm(o.angle-G.heading),o.dist,.1,o.type)});
+  const killed=processDead(w.id);
+  if(G.over||killed||!S.hpcall||killQuiet())return;
+  const now=performance.now();if(now-G.hpT<=1500)return;
+  if(n>1){G.hpT=now;say(`Blast hit ${n} enemies.`)}
+  else if(e&&alive(e)){G.hpT=now;say(`${e.mega?'Mega ':''}${EN[e.type].name}, ${Math.max(1,Math.round(e.hp/e.maxhp*100))} percent.`)}
+}
+/* A launcher shell in flight. kind 'nade': a 40 millimetre grenade, a falling whistle with a wobble as it arcs over
+   and drops. 'rocket': a roaring, hissing rocket motor with a low drone. 'air': the XM25's small round, a thin
+   falling whine. Starts at the barrel, pans to where it is headed, fainter and duller the farther it goes. */
+function lnFly(rel,dist,T,kind,at=0){
+  const t=ctx.currentTime+at,g=ctx.createGain(),f=ctx.createBiquadFilter(),p=ctx.createStereoPanner?ctx.createStereoPanner():null;g.__pri=true;
+  const gEnd=Math.max(.12,1/(1+dist*3.281/45)),v=kind==='rocket'?.7:.55;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.05);g.gain.linearRampToValueAtTime(v*gEnd,t+T);g.gain.linearRampToValueAtTime(0,t+T+.06);
+  f.type='lowpass';f.frequency.setValueAtTime(14000,t);f.frequency.linearRampToValueAtTime(Math.max(1500,14000*Math.pow(.965,dist)),t+T);
+  const pn=r=>Math.max(-1,Math.min(1,Math.sin(r*Math.PI/180)));
+  g.connect(f);if(p){p.pan.setValueAtTime(0,t);p.pan.linearRampToValueAtTime(pn(rel),t+Math.min(T,.3));f.connect(p);p.connect(gunBus)}else f.connect(gunBus);
+  if(kind==='rocket'){noise(g,{dur:T,vol:.8,type:'bandpass',f:1100,f2:650,q:.7,at,attack:.04});noise(g,{dur:T,vol:.4,type:'highpass',f:3800,f2:2400,at,attack:.04});
+    tone(g,{type:'sawtooth',f:96,f2:82,dur:T,vol:.07,at,attack:.05})}
+  else if(kind==='air'){tone(g,{type:'sine',f:2900,f2:1900,dur:T,vol:.12,at,attack:.02});noise(g,{dur:T,vol:.25,type:'bandpass',f:2200,f2:1500,q:2,at,attack:.02})}
+  else{tone(g,{type:'triangle',f:1700,f2:620,dur:T,vol:.2,at,attack:.06});noise(g,{dur:T,vol:.25,type:'bandpass',f:1300,f2:500,q:3,at,attack:.05})}
+  return {pan(r){if(p)try{p.pan.setTargetAtTime(pn(r),ctx.currentTime,.03)}catch(e){}}};
+}
+/* Firing sounds for the real launchers.
+   M79 and MGL: the hollow, tubey THOOMP of a 40 millimetre grenade leaving the barrel (the MGL adds the cylinder
+   clicking round to the next chamber). M79 buckshot: the same thoomp with a sharper shotgun crack on top.
+   XM25: a sharper, smaller pop. RPG-7: a booster pop, then the motor igniting into a roaring whoosh, with the
+   backblast rumbling behind you. Javelin: a soft launch pop, a moment of quiet, then the motor lights. M202 FLASH:
+   a rushing rocket whoosh per tube, a fraction of a second apart in a volley. */
+function lnShot(w,n=1){const d=gunDest(0);
+  const thoomp=(at=0)=>{tone(d,{f:190,f2:55,dur:.22,vol:.9,at,attack:.002});noise(d,{dur:.18,vol:.7,type:'bandpass',f:440,f2:170,q:1.6,at,attack:.002});
+    noise(d,{dur:.05,vol:.3,type:'highpass',f:2500,at,attack:.001});noise(d,{dur:.35,vol:.25,type:'lowpass',f:700,f2:150,at:at+.03,attack:.02})};
+  const motor=(at,big)=>{noise(d,{dur:.55,vol:big?.95:.8,type:'bandpass',f:380,f2:2600,q:.8,at,attack:.03});noise(d,{dur:.6,vol:.45,type:'highpass',f:2600,f2:5200,at:at+.02,attack:.04});
+    if(big)noise(gunDest(0),{dur:.8,vol:.5,type:'lowpass',f:600,f2:90,at,attack:.01})};
+  if(w.id==='m79'||w.id==='mgl'){thoomp();if(w.buckRound){noise(d,{dur:.12,vol:.6,type:'highpass',f:1800,f2:900,attack:.001});tone(d,{f:120,f2:50,dur:.18,vol:.6})}
+    if(w.id==='mgl'){tone(d,{type:'square',f:2300,dur:.012,vol:.14,at:.28});tone(d,{type:'square',f:1900,dur:.014,vol:.16,at:.34})}return}
+  if(w.id==='xm25'){tone(d,{f:300,f2:90,dur:.14,vol:.8,attack:.002});noise(d,{dur:.12,vol:.6,type:'bandpass',f:900,f2:400,q:1.2,attack:.002});noise(d,{dur:.04,vol:.4,type:'highpass',f:3500,attack:.001});return}
+  if(w.id==='rpg7'){tone(d,{f:160,f2:60,dur:.12,vol:.8,attack:.002});noise(d,{dur:.08,vol:.6,type:'lowpass',f:1400,attack:.002});motor(.1,true);return}
+  if(w.id==='javelin'){tone(d,{f:110,f2:60,dur:.15,vol:.55,attack:.003});noise(d,{dur:.12,vol:.4,type:'lowpass',f:900,attack:.004});motor(.35,true);return}
+  for(let i=0;i<n;i++){const at=i*.12;tone(d,{f:140,f2:70,dur:.1,vol:.5,at,attack:.002});motor(at,false)}
+}
+/* Shop and sound check: hear the launcher fire, the shell fly out 40 feet and explode */
+function lnDemo(b,n=1){const dd=12,T=.08+dd/b.spd;
+  for(let i=0;i<n;i++){const del=i*.12;if(b.air)fx.lnRange(dd,del);lnFly(0,dd,T,b.air?'air':b.lk,del);
+    setTimeout(()=>{if(!ctx)return;if(b.fireDps)fx.lnFireball(0,dd,!!b.thermo);else if(b.blastR>=12/3.281||b.dmg>=30)fx.heBoom(0,dd);else fx.boom(0,dd)},(T+del)*1000)}}
+Object.assign(fx,{
+  /* Javelin seeker: square beeps that come faster and faster as it locks, then a steady higher tone: locked */
+  jvLock(len){const d=gunDest(0);let t=0,gap=.24;while(t<len-.32){tone(d,{type:'square',f:880,dur:.04,vol:.09,at:t});t+=gap;gap=Math.max(.05,gap*.8)}
+    tone(d,{type:'square',f:1320,dur:.32,vol:.1,at:Math.max(0,len-.3)})},
+  /* XM25 rangefinder: one short beep as it ranges the target, higher the closer it is */
+  lnRange(dist,at=0){const d=gunDest(0);tone(d,{type:'sine',f:2700-1500*Math.min(1,dist/48),dur:.07,vol:.14,at})},
+  /* incendiary burst: the boom, then a roaring whoomph of flame and crackling sparks. Thermobaric: a deeper, longer
+     fireball with a pressure thump you feel */
+  lnFireball(rel,dist,big){if(big)fx.heBoom(rel,dist,0);else fx.boom(rel,dist,0);const d=out(rel,dist,.8,gunBus);
+    noise(d,{dur:big?1.8:1.2,vol:big?.9:.7,type:'bandpass',f:320,f2:1500,q:.7,at:.03,attack:.07});noise(d,{dur:big?2:1.4,vol:.5,type:'lowpass',f:500,f2:90,at:.05,attack:.05});
+    if(big)tone(d,{f:45,f2:22,dur:.9,vol:.9,at:.02});for(let i=0;i<10;i++)noise(d,{dur:.012,vol:.2,type:'highpass',f:2600,at:.2+Math.random()*(big?1.5:1),attack:.001})}
+});
 /* Black Hole Cannon: orb flies out, drags enemies in and crushes them every second (4 s, 9/s; Dark matter core: 8 s, 20/s, wider, stronger pull), then collapses */
 function launchHole(w,e){
   const[px,py]=e?xy(e.angle,e.dist):xy(G.heading,12.2),ang=(Math.atan2(px,py)*180/Math.PI+360)%360,dd=Math.hypot(px,py);
@@ -4675,7 +4825,7 @@ const RDSZ={zombie:{h:1,w:1,m:1,col:'#86a36f'},zrunner:{h:.97,w:.85,m:.85,col:'#
   yardle:{h:2.2,w:1.8,m:10,col:'#e6b84e'},boss:{h:2.6,w:2,m:14,col:'#6a8a42'},queen:{h:2.3,w:1.8,m:11,col:'#8a48c4'},titan:{h:3,w:2.2,m:25,col:'#b0dcf2'},revenant:{h:2.2,w:1.7,m:12,col:'#60656d',mech:1}};
 const rdSz=t=>RDSZ[t]||RDSZ.zombie;
 // how hard each weapon throws what it kills, in metres a second (heavier zombies move less)
-const RDPOW={vlad:7,scythe:6,ra:1.5,katana:5,katwave:6,qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
+const RDPOW={m79:9,mgl:9,xm25:8,rpg7:14,javelin:16,flash:9,vlad:7,scythe:6,ra:1.5,katana:5,katwave:6,qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
   jet:24,jackfrost:3,tetra:3,boomer:5,kbat:2,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
   last:12,berserk:2,incend:2,fence:1,barbed:1.5};
 const RD={slash:0,cr:0,crT:0,bodies:[],decals:[],flash:[],voices:[],acc:0,muzzle:0,sb:0,kd:0,kdT:0,lsT:0,winT:0,tmp:new Float32Array(33),c:new Float32Array(3)};
@@ -5201,6 +5351,15 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-13-launchers',date:'November 13, 2026',title:'New: real grenade and rocket launchers',items:[
+    'New Launchers section in the Armory, under Standard weapons, with six real launchers. Each one takes only its own upgrades, based on its real ammo and parts.',
+    'M79 grenade launcher, 1,500 silver. The single-shot Thumper. Upgrades: Buckshot round, HEDP round, Ladder sight and Fast hands.',
+    'Milkor MGL, 3,500 silver. A 6-round revolver grenade launcher. Upgrades: Speed loader, Hair trigger V1 and V2, HEDP rounds and Extended cylinder.',
+    'XM25 Punisher, 5,000 silver. A smart launcher whose rounds burst in the air over the target and never miss. A beep tells you the range. Upgrades: Extended magazine, Fragmentation sleeve, Hair trigger and Fast magazine.',
+    'RPG-7, 4,000 silver. Upgrades include its real warheads: tandem anti-tank, fragmentation and thermobaric, plus the PGO-7 scope and Fast hands.',
+    'FGM-148 Javelin, 10,000 silver. Locks on with a seeker tone, then homes in and never misses. Top attack hits armored enemies and bosses harder. Upgrades: Fast lock V1 and V2, Direct attack mode and Fast reload.',
+    'M202 FLASH, 6,000 silver. A 4-tube incendiary rocket launcher that sets everything in the fireball on fire. Upgrades: Volley fire, Hotter TPA and Quick clip.',
+    'You hear every grenade whistle and every rocket roar as it flies to its target, then the explosion where it lands.']},
   {id:'2026-11-13-ancient',date:'November 13, 2026',title:'The Ancient One grows stronger',items:[
     'The Ancient One now moves slower, about 1.3 feet a second instead of 1.6.',
     'The first Ancient One, on wave 50, still has 10,000 health. Every one after that has 2,500 more: 12,500 on wave 100, 15,000 on wave 150, and so on.',
@@ -5858,6 +6017,12 @@ function interSteps(){const T=()=>G.tut,out=[{t:'Welcome to intermediate trainin
 
 /* ----- level 3: Battle scholar ----- */
 const WBEST={
+  m79:'Clumps of enemies at mid range. Aim at the middle of a group: a direct hit is best, but even a near miss blasts everything around it. Reload after every shot, so keep a fast gun to switch to. With the buckshot round, it is a huge shotgun for close crowds.',
+  mgl:'Holding off a crowd that is walking in. Six grenades as fast as you can pull, each one blasting everything within 8 feet. The reload is slow, so start it before they reach you.',
+  xm25:'Enemies you cannot quite hit. The airburst never misses and hits everything within 10 feet of the target at full damage, so it is perfect for packs and fast enemies.',
+  rpg7:'One big hit. The stock warhead is best on single tough enemies. Switch warheads in its upgrades: tandem for bosses, fragmentation for crowds, thermobaric to burn a whole group.',
+  javelin:'Bosses and mini bosses. Face one, press Fire, and hold your aim until the steady lock tone. After that you can turn away and fight something else: the missile finds it on its own and hits armored targets 1 and a half times as hard.',
+  flash:'Setting a crowd on fire. Spread rockets across a group so everything burns, then switch weapons while the fire does the work. With Volley fire, one pull burns up to 4 enemies at once.',
   ra:'Crowds. The beam widens with distance and lights up every enemy inside it, and burning enemies set fire to anyone who comes close, so packed groups burn each other down. Sweep it across a crowd, then let go before it overheats.',
   vlad:'Lines of enemies coming straight at you. Kill the front one and the stake throws its body back into the ones behind, pinning them together so they move at the speed of the slowest. With Stacking stakes, keep putting stakes into a boss and each one hits harder.',
   scythe:'Being surrounded. One swing hits everything within 10 feet on every side, and every kill heals you, so wade into a crowd that has reached you and keep holding Fire.',
@@ -5920,6 +6085,7 @@ function tutWSetup(w){const ty=MAPS[G.map].types[0],S=(r,f)=>tutSpawn(ty,r,f,10)
   if(w.turbine)return[S(180,10),S(165,14),S(0,20)];
   if(w.spread)return w.hades||w.chain?[S(0,25),S(-10,28),S(10,30)]:[S(0,14),S(-8,16),S(8,17)];
   if(w.hydra||w.lantern||w.hole||w.sonic)return[S(-15,35),S(0,38),S(15,35)];
+  if(w.lnch)return[S(0,40),S(-4,42),S(4,43)];
   if(w.gyro)return[S(0,65)];if(w.pierce)return[S(0,40),S(0,55),S(0,70)];
   return[S(0,w.rng&&w.rng<16?25:40)]}
 function tutWDesc(w){return w.kbat?'straight ahead at 12 feet, with a second one standing a few feet to its right, so you can hear the baseball bounce':w.ra?'ahead of you, at 20, 32 and 42 feet, spread across the width of the beam':w.scythe?'all around you, within 8 feet':w.stake?'straight ahead at 30 feet, with a second one 6 feet behind it':w.turbine?'straight behind you and straight ahead':w.pierce&&!w.katana?'in a line straight ahead, at 40, 55 and 70 feet, so you can hear a round punch through more than one':w.spread?'grouped just in front of you, so you can hear the spread hit more than one':w.hydra||w.lantern||w.hole||w.sonic?'spread across the front of you, about 35 feet out':w.boomer?'in front of you, along the boomerang\'s path':`straight ahead, ${ft(G.tut.set[0].dist)} feet`}
@@ -5942,7 +6108,7 @@ function scholarSteps(ids,first){const T=()=>G.tut,out=[];const fresh=ids.filter
 
 /* ----- the weapon picker ----- */
 const TPK={sel:[],cb:null,from:null};
-const TPKG=[['Pistols','pistol'],['Submachine guns','smg'],['Assault rifles','rifle'],['Machine guns','lmg'],['Sniper rifles','sniper'],['Shotguns','shotgun'],['Mythical and legendary weapons','mythic']];
+const TPKG=[['Pistols','pistol'],['Submachine guns','smg'],['Assault rifles','rifle'],['Machine guns','lmg'],['Sniper rifles','sniper'],['Shotguns','shotgun'],['Launchers','launcher'],['Mythical and legendary weapons','mythic']];
 function tpickCount(){const n=TPK.sel.length;$('tpick-n').textContent=n?`Picked ${n} of 4: ${TPK.sel.map(i=>WBY[i].name).join(', ')}.`:'Nothing picked yet. Pick at least 1 weapon, up to 4.';
   document.querySelectorAll('.tpick-s').forEach(s=>s.textContent=n?`${n} of 4 picked`:'Pick at least 1 weapon first')}
 function tpickOpen(cb,from){TPK.cb=cb;TPK.from=from;const box=$('tpick-list');box.textContent='';
@@ -6042,7 +6208,7 @@ function record(){
 $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
-const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],mythic:['jet','jackfrost','tetra','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar']};
+const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin'],mythic:['jet','jackfrost','tetra','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar']};
 const MCAT={rifle:['jet','banshee'],sniper:['jackfrost','tetra'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['blackhole','bubble','hydra','salvo'],heavy:['quasar'],melee:['kbat']};
 const MCATN={rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
@@ -6057,15 +6223,15 @@ const NIGHTN={lantern:'Nightwalker pack lanterns. Hold Fire to shine the Lantern
 const SAMN={blade:'Samurai pack swords. Swing with the Fire button. You must own the Samurai armor before you can buy the Samurai sword.',armor:'Samurai pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Samurai armor has its own special ability, Dark samurai, listed under it.'};
 const SCAVN={throw:'Scavenger pack throwing weapons. Throw them with the Fire button and they come back to you.',armor:'Scavenger pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep.'};
 const setOf=id=>Object.keys(LSET).find(k=>LSET[k].list&&LSET[k].list.includes(id))||'mythic';
-const GUNCATS=['pistol','smg','rifle','lmg','sniper','shotgun'];let curStd='pistol';
+const GUNCATS=['pistol','smg','rifle','lmg','sniper','shotgun','launcher'];let curStd='pistol';
 let curCat='grenades',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade',curNight='gun';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
-const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
+const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,launcher:'Launchers. Real grenade and rocket launchers. Every shell flies out to the nearest enemy you are facing and explodes, hitting everything around it. Each takes only its own upgrades, based on the real ammo and parts.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
   grenades:'Grenades go off around you, so there is no aiming: everything inside the blast radius is hit. They are used up when thrown. In battle, Grenade uses one, and Grenade type cycles frag, cryo, incendiary, jack-in-the-box, event horizon and Fat Man.',
   perks:'Permanent upgrades to your soldier. Toughness and Field medic go up to level 150, Deadeye and Scavenger up to level 50. Every level up to 20 gives the full boost, after that each level gives a smaller one. From level 6 to 50, every level costs 10 percent more than the one before, and past 50 only 3 percent more.'};
 const n1=x=>Math.round(x*10)/10;
-function dmgLine(w){if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
+function dmgLine(w){if(w.lnch)return lnDmgLine(w);if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
   if(w.hydra)return `Damage: 3 rockets of ${w.dmg} each per trigger pull, each splashing enemies within 5 feet for half. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.hole){const b=build(w);return `Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${w.dmg} on collapse to everything within 12 feet, half that to the rest it pulled in. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(false)return ` For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.sonic)return `Damage: ${w.dmg} to every enemy in the cone within ${ft(w.full)} feet, plus a stun, fading to 40 percent at ${ft(w.reach)} feet. ${n1(1/w.cd)} screams per second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.stake)return `Damage: ${w.dmg} per stake to the first enemy, then 15 percent less for each enemy it skewers behind a body it kills. ${n1(1/w.cd)} stakes per second at stock. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.scythe)return `Damage: ${w.dmg} to everything within 10 feet, all the way around you, once every ${SCY_T} seconds. Kills heal you 20 percent of the enemy's full health. For scale, light enemies have 2 to 3 health and bosses about 80.`;
@@ -6078,7 +6244,7 @@ function dmgLine(w){if(w.kbat)return `Damage: ${w.dmg} every time the baseball h
   t+=` ${n1(pulls)} trigger pulls per second, about ${Math.round(w.spread?w.dmg*w.shots*pulls:dps)} damage per second.`;
   if(P.owned.includes(w.id)){const b=build(w);if(Math.abs(b.dmg-w.dmg)>.01||Math.abs(b.cd-w.cd)>.001)t+=` With your attachments: ${n1(b.dmg)} per ${w.spread?'enemy':'bullet'}, ${n1(1/b.cd)} pulls per second.`}
   return t+' For scale, light enemies have 2 to 3 health.'}
-function hearGun(w){initAudio();const b=build(w);if(b.gyro){gunSound(b,1);fx.gyroFly(0,b.maxR,gyroT(b.maxR));return}if(b.charge){jetSpool(b.charge);setTimeout(()=>gunSound(b,1),b.charge*1000);return}if(b.akimbo){gunSound(b,1,0);setTimeout(()=>gunSound(b,1,1),380)}else gunSound(b,b.shots)}
+function hearGun(w){initAudio();const b=build(w);if(b.gyro){gunSound(b,1);fx.gyroFly(0,b.maxR,gyroT(b.maxR));return}if(b.charge){(b.lock?fx.jvLock:jetSpool)(b.charge);setTimeout(()=>{gunSound(b,1);if(b.lnch)lnDemo(b)},b.charge*1000);return}if(b.akimbo){gunSound(b,1,0);setTimeout(()=>gunSound(b,1,1),380)}else{gunSound(b,b.shots);if(b.lnch)lnDemo(b,b.shots)}}
 function mkItem(list,id,title,text,o={}){
   const it=document.createElement('article');it.className='item';it.id=id;
   it.innerHTML=`<h3></h3><p class="meta"></p><p class="tr"></p><div class="${o.hear?'acts':''}"><button class="btn act"></button>${o.hear?'<button class="btn hear">Hear it</button>':''}</div>${o.extra?'<button class="btn att"></button>':''}`;
@@ -6211,6 +6377,17 @@ let curMod='pistol';
 const r1=x=>Math.round(x*10)/10;
 /* attachments screen: the gun's true current power, with every attachment, its mastery and the Deadeye perk counted in */
 const has2=(b,k)=>((P.att[b.id]||{eq:[]}).eq).includes(k);
+function lnStats(b,D,pulls){const o=[],R=ft(b.blastR),pc=x=>Math.round(x*100),tough='armored and metal enemies, mini bosses and bosses';
+  if(b.air)o.push(`Airburst: ${D(b.dmg)} to every enemy within ${R} feet of the burst, which goes off right over the nearest enemy you are facing. Never misses.`);
+  else{o.push(`Damage: ${D(b.dmg)} on a direct hit${b.top?`, ${D(b.dmg*1.5)} on ${tough}, from top attack`:''}${b.tandem||b.hedp?`, double, ${D(b.dmg*2)}, on ${tough}`:''}.`,
+    `Blast: enemies within ${R} feet take up to ${pc(b.splM)} percent of that, half as much at the edge.`)}
+  if(b.fireDps)o.push(`Fire: everything in the blast burns ${b.fireDps} a second for ${b.fireT} seconds.`);
+  if(b.home)o.push(`Homing: locks on in ${n1(b.charge)} seconds, then never misses${b.top?'':', flying straight in direct attack mode'}.`);
+  else if(!b.air)o.push(`Hit chance: ${pc(b.acc)} percent. A miss lands just past the enemy, so the blast can still catch it.`);
+  o.push(b.volley?`Volley fire: one pull fires every loaded rocket, up to ${b.mag}.`:b.mag===1?'One shot, then reload.':`${n1(pulls)} shots per second.`);
+  return o}
+function lnDmgLine(w){const b=build(w);if(!b.lnch)return `Buckshot round on: ${n1(b.dmg)} to every enemy in the blast, full damage out to 20 feet. For scale, light enemies have 2 to 3 health.`;
+  return lnStats(b,x=>n1(x),1/b.cd).join(' ')+' For scale, light enemies have 2 to 3 health.'}
 function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(P.perk.aim||0)/100,D=x=>n1(x*aim),out=[];
   if(b.bubble)return[`Damage: none. It traps enemies instead.`,`Each bubble is ${n1(b.bubR*3.281*2)} feet wide and traps ${b.inter?'every enemy':'up to '+b.bubCap+' enemies'} within ${n1(b.bubR*3.281)} feet of its centre${b.inter?', with no limit. Interdimensional bubble on':''}.`,`Bubbles last ${BUB_T} seconds and reach 50 feet.`,`${b.bubMax} bubbles out at once. One bubble every ${n1(b.cd)} ${b.cd===1?'second':'seconds'}. Never needs reloading.`];
   if(b.ra)return[b.lens?`Damage: ${D(RA_HIT*RA_LENS)} every ${RA_TICK} seconds, Magnifying glass on: a thin beam about 1 foot wide out to ${RA_R} feet, burning through up to ${RA_PEN} enemies in a line at full damage.`:`Damage: ${D(RA_HIT)} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet. The beam widens to about 10 feet at the far end.`,`Fire: everything the light touches burns ${RA_BDPS} a second for ${RA_BURN} seconds, spreads to enemies within ${RA_SPREAD} feet, and bodies keep burning for ${RA_CORPSE} seconds.`,`Runs ${RA_DUR} seconds before it overheats, then cools down for ${RA_COOL} seconds. Never needs reloading.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')];
@@ -6221,7 +6398,8 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   if(b.boomer){out.push(`Damage: ${D(b.dmg)} to every enemy it slices, once on the way out and once on the way back.`,`Flight: ${b.bmPath==='circle'?'a full circle all the way around you':b.bmPath==='narrow'?'a narrow arc just either side of where you face':'a wide loop across the front of you, out on the left and back on the right'}, ${b.bmFt} feet out, about ${n1(b.bmT)} seconds there and back.`,`Slices through ${b.bmCap===Infinity?'every enemy in its path, no limit':'up to '+b.bmCap+' enemies'} per throw.`,'Never needs reloading.',`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:''));return out}
   const pulls=1/b.cd,acc=b.acc||w.acc||.92;
   if(b.turbine){out.push('Intake: everything behind you except bosses is sucked in and killed instantly. Exhaust: everything in front of you is blown away, unharmed. Bosses in front are pushed back slowly.',`Runs ${b.qDur} seconds before it overheats, then cools down for ${b.qCool} seconds. Letting go early cools it as you rest.`,`Quasar propulsion: every 30 enemies sucked in, a laser hits everything in a ${QBEAM*2} degree beam straight ahead for ${D(QLASER)}, bosses included.`);if(b.qBeam)out.push(`Devourer beam: every enemy sucked in fires a laser straight ahead for ${D(QBDMG)}, through up to ${QBPEN} enemies in line, at any range, never missing.`);return out}
-  if(b.charge){out.push(`Damage: ${D(b.dmg)} per round.`);out.push(`${r1(b.charge)} second charge-up before each shot.`)}
+  if(b.lnch)out.push(...lnStats(b,D,pulls));
+  else if(b.charge){out.push(`Damage: ${D(b.dmg)} per round.`);out.push(`${r1(b.charge)} second charge-up before each shot.`)}
   else if(b.lantern)out.push(`Damage: ${D(b.dmg)} on a direct hit, then fire burns ${b.fireDps} per second for 5 seconds on every enemy within ${ft(b.fireR)} feet.`,`${n1(pulls)} shots per second.`);
   else if(b.hydra){out.push(`Damage: ${b.heads} rockets of ${D(b.dmg)} each per trigger pull${b.heads>3?', from Severed heads':''}.`,`Blast: enemies within ${ft(b.splR)} feet of each hit take ${Math.round(b.splM*100)} percent of its damage${b.he?', from High explosive shells':''}.`,`${n1(pulls)} trigger pulls per second.`);
     if(b.acid)out.push(`Corrosive shells: every enemy hit, directly or in the 2 foot blast, is covered in acid, ${HACID} damage a second for 10 seconds.`);
@@ -6240,7 +6418,7 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
     out.push(`${n1(pulls)} trigger pulls per second, about ${Math.round(b.dmg*aim*b.shots*pulls*(b.spread?1:acc))} damage per second${b.akimbo?' from each gun':''}.`)}
   out.push(b.shell?`Magazine: ${b.mag}. Loads one shell at a time, ${b.shell} seconds each, ${r1(b.reload)} seconds from empty. You can fire before it finishes.`:`Magazine: ${b.mag}${b.akimbo?' in each of your two guns':''}. Reload: ${r1(b.reload)} seconds.`);
   if(b.jetHead)out.push('Headshots hit for 10,000.');
-  else if(!b.spread||b.grip)out.push(`Headshots: ${Math.round((b.hs-1)*100)} percent more damage, ${Math.round((b.hsBoss-1)*100)} percent more on bosses.`);
+  else if((!b.spread||b.grip)&&!b.lnch)out.push(`Headshots: ${Math.round((b.hs-1)*100)} percent more damage, ${Math.round((b.hsBoss-1)*100)} percent more on bosses.`);
   if(b.grip)out.push(`Grip: a wider dead-centre zone, and ${Math.round(b.grip*100)} percent of off-centre hits turn into headshots.`);
   if(b.scope)out.push(`Scope: ${Math.round(b.scope*100)} percent of hits past 50 feet turn into headshots.`);
   if(b.ap>1)out.push(`Armor piercing: ${Math.round((b.ap-1)*100)} percent more damage against armored and metal enemies, mini bosses and bosses.`);
@@ -6278,7 +6456,7 @@ function modLabel(a,w){const st=attOf(w.id),p=priceOf(a,w);
 /* shop groups for attachments, in the order they are listed */
 const ATTGRP=[{id:'ammo',name:'Ammo'},{id:'barrel',name:'Barrel and muzzle'},{id:'optic',name:'Sights and grip'},{id:'trigger',name:'Triggers'},
   {id:'mag',name:'Magazines'},{id:'reload',name:'Reload speed'},{id:'special',name:'Special abilities'}];
-const ATTCAT={ap:'ammo',ramjet2:'ammo',ionic:'ammo',jffrag:'ammo',svloaded:'ammo',tover:'ammo',
+const ATTCAT={m79sight:'optic',m79fast:'reload',mglspeed:'reload',mgltrig1:'trigger',mgltrig2:'trigger',mglcyl:'mag',xmmag:'mag',xmfrag:'barrel',xmtrig:'trigger',xmfast:'reload',rpgscope:'optic',rpgfast:'reload',jvlock1:'optic',jvlock2:'optic',jvfast:'reload',flfast:'reload',ap:'ammo',ramjet2:'ammo',ionic:'ammo',jffrag:'ammo',svloaded:'ammo',tover:'ammo',
   barrel:'barrel',jetbarrel2:'barrel',gauss:'barrel',symbarrel1:'barrel',symbarrel2:'barrel',bnbarrel2:'barrel',bnamp:'barrel',silencer:'barrel',symbrake:'barrel',tchoke:'barrel',
   laser:'optic',reflex:'optic',scope:'optic',pscope:'optic',grip:'optic',
   trigger:'trigger',trigger2:'trigger',bump:'trigger',osvtrig:'trigger',rvhot:'ammo',rvsharp:'ammo',rvmag1:'mag',rvmag2:'mag',rvmag3:'mag',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
