@@ -2375,6 +2375,7 @@ const ATT=[
   {id:'svtrig3',name:'Hair trigger V3',price:5000,for:'salvo',req:'svtrig2',desc:()=>'Fires 5 times as fast as stock. A hellstorm of rapid blaze. Buy V2 first.'},
   {id:'extmag',name:'Extended magazine',price:75,not:['rivet'],desc:w=>`50 percent more rounds. ${w.mag} becomes ${Math.round(w.mag*1.5)}.`},
   {id:'extmag2',name:'Extended magazine V2',price:400,not:[...SNIPERS,'rivet'],desc:w=>`Another 50 percent more rounds, stacking with the first extended magazine. With both on, ${w.mag} becomes ${w.mag*2}.`},
+  {id:'inconel',name:'Inconel alloy barrel',price:1800,only:['mg42'],desc:()=>'A barrel made of Inconel, a real superalloy of nickel and chromium with iron, molybdenum and niobium, built for jet engines because it keeps its strength red hot. The MG42 can fire for 10 seconds nonstop before it overheats instead of 6, and cooling takes half as long: the barrel change takes 2 seconds instead of 4, and off the trigger it cools from the limit in 2 and a half seconds instead of 5.'},
   {id:'extbelt',name:'Extended belt',price:1200,only:LMG,desc:w=>w.id==='m2'?`A longer ammo belt. Doubles the belt, ${w.mag} rounds becomes ${w.mag*2}.`:`A longer ammo belt. 50 percent more rounds, ${w.mag} becomes ${Math.round(w.mag*1.5)}.`},
   {id:'jetmag1',name:'Extended magazine',price:1500,for:'jet',desc:()=>'Holds 2 rounds instead of 1.'},
   {id:'jetmag2',name:'Extended magazine V2',price:3000,for:'jet',req:'jetmag1',desc:()=>'Holds 3 rounds. Buy the first extended magazine first.'},
@@ -2547,7 +2548,8 @@ function build(w){
   if(w.id==='ra')b.lens=has('ralens');
   if(w.id==='mjolnir'){b.mjSp=(has('mjswift')?120:60)/3.281;b.chainN=has('mjstorm2')?16:has('mjstorm1')?8:4;b.chainR=(has('mjstorm1')?25:15)/3.281;b.worthy=has('mjworthy');b.mjBack=100}
   if(w.id==='zeus'){b.zCharge=has('zsforge')?1.2:2;b.zCd=has('zsforge')?.75:1.5;b.fork=has('zsfork');b.cloud=has('zscloud');b.cell=has('zscell');b.zTop=500}
-  if(w.id==='p90')b.ap=Math.max(b.ap,1.5);   // 5.7 millimetre rounds: armor piercing built in
+  if(w.id==='p90')b.ap=Math.max(b.ap,1.5);
+  if(w.heatT&&has('inconel')){b.heatT=10;b.heatCool=w.heatCool/2;b.inconel=true}   // 5.7 millimetre rounds: armor piercing built in
   if(w.id==='kbat'){b.kbSp=3*(has('kbfast')?4.4:1);b.kbHead=has('kbpractice')}
   if(w.id==='katana'){b.cd=has('kwhet2')?.6:has('kwhet1')?.8:w.cd;b.katBlade=has('klong')?8:5;b.katR=has('kspirit2')?55:has('kspirit1')?45:35;b.katBoss=has('ktemper')?250:100;
     b.iaido=has('kiaido');b.crescent=has('kcresc');b.bushido=has('kbushido');b.blossom=has('kbloss')}
@@ -3479,8 +3481,8 @@ function spinTick(dt){const w=G.lo[G.w];
 function mgHeat(w){G.heatV=G.heatV||{};G.ovh=G.ovh||{};const id=w.id,h=(G.heatV[id]||0)+w.cd;G.heatV[id]=h;G.heatAt=G.heatAt||{};G.heatAt[id]=performance.now();
   if(h>=w.heatT*.75){G.sizT=G.sizT||{};if(!(G.sizT[id]>performance.now())){G.sizT[id]=performance.now()+400;fx.mgSizzle()}}
   if(h>=w.heatT){G.heatV[id]=0;G.ovh[id]=w.heatCool;fx.mgSwap(w.heatCool);vib(60);rSay(`${w.short} overheated. Changing the barrel.`);hud()}}
-function heatTick(dt){if(G.heatV){const now=performance.now();for(const id in G.heatV){if(G.heatV[id]<=0)continue;const w=WBY[id];if(now-((G.heatAt||{})[id]||0)<w.cd*1000+250)continue;   // still firing: no cooling between bursts
-    G.heatV[id]=Math.max(0,G.heatV[id]-dt*w.heatT/5)}}   // cools from the limit in 5 seconds off the trigger
+function heatTick(dt){if(G.heatV){const now=performance.now();for(const id in G.heatV){if(G.heatV[id]<=0)continue;const w=G.lo.find(x=>x.id===id)||WBY[id];if(now-((G.heatAt||{})[id]||0)<WBY[id].cd*1000+250)continue;   // still firing: no cooling between bursts
+    G.heatV[id]=Math.max(0,G.heatV[id]-dt*w.heatT/(w.inconel?2.5:5))}}   // cools from the limit in 5 seconds off the trigger
   if(G.ovh)for(const id in G.ovh){if(!(G.ovh[id]>0))continue;G.ovh[id]-=dt;if(G.lo[G.w].id===id){G.ovhHudT=(G.ovhHudT||0)-dt;if(G.ovhHudT<=0){G.ovhHudT=.5;hud()}}if(G.ovh[id]<=0){G.ovh[id]=0;if(G.over)continue;fx.qReady();rSay(`${WBY[id].short} barrel changed. Ready.`);hud()}}}
 function divineTick(dt){zeusTick(dt);if(G.over)return;spinTick(dt);heatTick(dt)}
 /* ---------- Dark Quasar Turbine ----------
@@ -5572,6 +5574,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-13-inconel',date:'November 13, 2026',title:'New MG42 attachment: Inconel alloy barrel',items:[
+    'New attachment for the MG42, the Inconel alloy barrel, 1,800 silver, under Barrel and muzzle.',
+    'Inconel is a real superalloy of nickel and chromium, with iron, molybdenum and niobium, made for jet engines because it stays strong red hot.',
+    'With it, the MG42 fires for 10 seconds nonstop before overheating instead of 6.',
+    'Cooling takes half as long: the barrel change takes 2 seconds instead of 4, and off the trigger the barrel cools from the limit in 2 and a half seconds instead of 5.']},
   {id:'2026-11-13-supercell',date:'November 13, 2026',title:'New Zeus\'s Thunderbolt ability: Super cell core',items:[
     'New special ability for Zeus\'s Thunderbolt, Super cell core, 35,000 silver, in its upgrades.',
     'From half power up, the chain lightning reaches 50 feet from the target instead of 15 or 25.',
@@ -6703,6 +6710,8 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   if(b.vent)out.push('Heat vent: blasts nearby enemies when you reload, bigger the more rounds you fired.');
   if(b.pen>1)out.push(`Punches through ${b.pen===Infinity?'every enemy in its line':'up to '+b.pen+' enemies'}${b.exit<Infinity?`, carrying ${ft(b.exit)} feet past each`:''}.`);
   if(b.gyro)out.push(`Rocket rounds: ${D(b.dmg*.08)} damage at point blank, climbing steadily with distance to ${D(b.dmg)} at 70 feet, its maximum range.`);
+  if(b.heatT)out.push(`Barrel heat: overheats after ${b.heatT} seconds of nonstop fire, then the barrel change takes ${n1(b.heatCool)} seconds. Off the trigger it cools from the limit in ${b.inconel?'2 and a half':'5'} seconds.${b.inconel?' Inconel alloy barrel on.':''}`);
+  if(b.spin)out.push(`Spin-up: ${n1(b.spin)} seconds before the first round.`);
   else if(!b.hades)out.push(b.tband?'Never drops below its base damage, at any range.':b.rng&&!(b.pen>1)?`Full damage out to ${ft(b.rng)} feet, weaker beyond.`:b.spread?`Full damage out to ${ft(b.range[0])} feet${b.buck?`, then ${Math.round(b.mid*100)} percent out to ${ft(b.range[1])} feet and ${Math.round(b.range[2]*100)} percent beyond, thanks to buckshot`:''}.`:'No damage falloff at any range.');
   out.push(`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}: attachments ${(L-1)*5} percent stronger.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:''));
   return out}
@@ -6725,7 +6734,7 @@ function modLabel(a,w){const st=attOf(w.id),p=priceOf(a,w);
 const ATTGRP=[{id:'ammo',name:'Ammo'},{id:'barrel',name:'Barrel and muzzle'},{id:'optic',name:'Sights and grip'},{id:'trigger',name:'Triggers'},
   {id:'mag',name:'Magazines'},{id:'reload',name:'Reload speed'},{id:'special',name:'Special abilities'}];
 const ATTCAT={m79sight:'optic',m79fast:'reload',mglspeed:'reload',mgltrig1:'trigger',mgltrig2:'trigger',mglcyl:'mag',xmmag:'mag',xmfrag:'barrel',xmtrig:'trigger',xmfast:'reload',rpgscope:'optic',rpgfast:'reload',jvlock1:'optic',jvlock2:'optic',jvfast:'reload',flfast:'reload',ap:'ammo',ramjet2:'ammo',ionic:'ammo',jffrag:'ammo',svloaded:'ammo',tover:'ammo',
-  barrel:'barrel',jetbarrel2:'barrel',gauss:'barrel',symbarrel1:'barrel',symbarrel2:'barrel',bnbarrel2:'barrel',bnamp:'barrel',silencer:'barrel',symbrake:'barrel',tchoke:'barrel',
+  barrel:'barrel',inconel:'barrel',jetbarrel2:'barrel',gauss:'barrel',symbarrel1:'barrel',symbarrel2:'barrel',bnbarrel2:'barrel',bnamp:'barrel',silencer:'barrel',symbrake:'barrel',tchoke:'barrel',
   laser:'optic',reflex:'optic',scope:'optic',pscope:'optic',grip:'optic',
   trigger:'trigger',trigger2:'trigger',bump:'trigger',osvtrig:'trigger',rvhot:'ammo',rvsharp:'ammo',rvmag1:'mag',rvmag2:'mag',rvmag3:'mag',svtrig1:'trigger',svtrig2:'trigger',svtrig3:'trigger',bntrig:'trigger',bntrig2:'trigger',
   extmag:'mag',extmag2:'mag',extbelt:'mag',jetmag1:'mag',jetmag2:'mag',svmag1:'mag',jfmag1:'mag',jfmag2:'mag',jfmag3:'mag',symmag1:'mag',symmag2:'mag',symmag3:'mag',bnmag1:'mag',bnmag2:'mag',bnmag3:'mag',tdrum:'mag',
