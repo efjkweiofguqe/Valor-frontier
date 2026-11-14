@@ -3108,9 +3108,35 @@ function startWave(){
 /* a pack of regular zombies for the stationary zombie modes: one window, a centre line within 4 degrees of it,
    every zombie within 1.5 degrees of that line and up to 5 feet behind the zombie in front, so they arrive together.
    Their groans are staggered so the pack sounds like a crowd, not one voice. */
-function zPack(n){const wi=Math.floor(Math.random()*G.win.length),a=G.win[wi].a+Math.random()*8-4,d=ZWIN+2+Math.random()*5,out=[];
-  for(let i=0;i<n;i++)out.push({win:wi,a:a+Math.random()*3-1.5,d:d+Math.random()*1.5,cue:.2+i*.3+Math.random()*.3});
+function zPack(n){
+  // packs are drawn to each other: 6 times in 10 a new pack heads for a window where packs are already on the way,
+  // more likely the more zombies are there
+  const busy=G.win.map((W,i)=>G.enemies.filter(e=>e.pk&&e.win===i&&!e.inside&&e.hp>0).length),tot=busy.reduce((a,b)=>a+b,0);
+  let wi=Math.floor(Math.random()*G.win.length);
+  if(tot&&Math.random()<.6){let r=Math.random()*tot;for(let i=0;i<busy.length;i++){r-=busy[i];if(r<0){wi=i;break}}}
+  const a=G.win[wi].a+Math.random()*8-4,d=ZWIN+2+Math.random()*5,pk=G.pkN=(G.pkN||0)+1,out=[];
+  for(let i=0;i<n;i++)out.push({win:wi,pk,a:a+Math.random()*3-1.5,d:d+Math.random()*1.5,cue:.2+i*.3+Math.random()*.3});
   return out}
+/* packs heading for the same window try to merge: a pack behind speeds up (up to a third faster) and drifts
+   sideways onto the line of the pack ahead, which slows a little to let it catch up. Once the gap is under about
+   3 feet the two become one pack, and a merged pack keeps pulling in any pack that comes up behind it. */
+function zPackTick(dt){
+  if(G.mode!=='zombies'||!G.win||G.coop==='guest')return;
+  const P={};
+  for(const e of G.enemies){e.pkS=1;if(!e.pk||e.hp<=0||e.inside||e.rdb||e.pinG)continue;
+    const p=P[e.pk]||(P[e.pk]={id:e.pk,win:e.win,front:1e9,back:0,off:0,m:[]});
+    p.m.push(e);p.front=Math.min(p.front,e.dist);p.back=Math.max(p.back,e.dist);p.off+=norm(e.angle-G.win[e.win].a)}
+  const ps=Object.values(P);ps.forEach(p=>p.off/=p.m.length);
+  for(const p of ps){
+    // the nearest pack ahead of this one at the same window
+    let q=null;for(const o of ps)if(o!==p&&o.win===p.win&&o.front<p.front&&(!q||o.front>q.front))q=o;
+    if(!q)continue;
+    const gap=p.front-q.back,dOff=q.off-p.off;
+    if(gap<=1&&Math.abs(dOff)<2){p.m.forEach(e=>{e.pk=q.id});q.m.push(...p.m);q.back=Math.max(q.back,p.back);p.m=[];continue}   // merged
+    if(gap>1){const b=1+Math.min(.35,gap*.04);p.m.forEach(e=>{e.pkS=b});if(gap<12&&q.front>ZWIN+.3)q.m.forEach(e=>{e.pkS=Math.min(e.pkS,.85)})}
+    const st=Math.sign(dOff)*Math.min(Math.abs(dOff),3*dt);   // drift sideways up to 3 degrees a second
+    if(st)p.m.forEach(e=>{e.angle=(e.angle+st+360)%360})}
+}
 /* bigger battlefields: enemies appear close, mid-range or far off */
 function spawnDist(){const r=Math.random();return r<.45?8+Math.random()*6:r<.8?15+Math.random()*13:30+Math.random()*18}
 /* the Ancient One grows with every one that rises: wave 50 is the first (x1), wave 100 the second (x1.25), and so on.
@@ -3138,7 +3164,7 @@ function spawn(type,mega,at){
     const sd=Math.random()<.5?-1:1,x=sd*(.5+Math.random()*(HALLW-.5)),y=Math.sqrt(Math.max(0,Math.pow((10+Math.random()*10)/3.281,2)-x*x));
     e.angle=(Math.atan2(x,y)*180/Math.PI+360)%360;e.dist=Math.hypot(x,y)}
   else if(zq&&G.zm==='roam'){e.angle=Math.random()*360;e.dist=(70+Math.random()*45)/3.281}   // Jungle scavenger: out of the jungle on any side, 70 to 115 feet away
-  else if(zq&&at){e.win=at.win;e.angle=(at.a+360)%360;e.dist=at.d;e.cue=at.cue}   // one of a pack of regular zombies
+  else if(zq&&at){e.win=at.win;e.angle=(at.a+360)%360;e.dist=at.d;e.cue=at.cue;e.pk=at.pk}   // one of a pack of regular zombies
   else if(zq){const wi=Math.floor(Math.random()*G.win.length);e.win=wi;e.angle=(G.win[wi].a+Math.random()*12-6+360)%360;e.dist=ZWIN+2+Math.random()*7}
   G.enemies.push(e);
   if(type==='zancient'){e.cue=4.5;ancientRoar(out(norm(e.angle-G.heading),e.dist,2,enBus,3),0,1);vib(800);
@@ -4770,7 +4796,7 @@ function stepEnemy(e,dt){
     if(e.hb<=0){e.kind==='bar'?fx.boardBreak(rel,e.dist):fx.shatter(rel,e.dist);vib(40);if(e.mega||(t.boss&&!G.zg)||G.enemies.filter(o=>o.hb>0).length<3)say(`${e.mega?'Mega giant zombie':t.boss?'Giant zombie':e.kind==='bar'?'Barrier':'Window'} broken, ${clock(rel)}, ${ft(e.dist)} feet!`)}
     return}
   const stop=e.type==='revenant'?8:MELEE,chase=G.mode==='zombies'&&G.zm==='hall'?Math.min(2,(Math.cos(e.angle*Math.PI/180)<0?2.4:1)*hallSpeed(G.wave)):1;   // never faster than double speed, even chasing from behind
-  if(e.dist>stop&&!(e.charge>0))e.dist=Math.max(stop,e.dist-(e.pinG?pinSpd(e):t.speed)*S.diff*slow*(e.sm||1)*chase*dt);
+  if(e.dist>stop&&!(e.charge>0))e.dist=Math.max(stop,e.dist-(e.pinG?pinSpd(e):t.speed)*S.diff*slow*(e.sm||1)*(e.pkS||1)*chase*dt);
   if(G.mode==='zombies'&&e.win!=null){const W=G.win[e.win];
     if(e.inside){if(e.dist>ZWIN-.3)e.dist=ZWIN-.3}
     else if(e.dist<=ZWIN){if(W.broken)e.inside=true;else if(e.frozeT>0)e.dist=ZWIN;else{e.dist=ZWIN;W.busy+=t.boss?3:(W.busy>=1?.5:1)}}}
@@ -4848,7 +4874,7 @@ function step(dt){
   }
   // enemies
   if(G.mode==='practice')G.enemies.forEach(e=>{if(e.rdb){rdDowned(e,dt);return}e.cue-=dt;if(e.cue<=0){CRY[e.type](out(norm(e.angle-G.heading),e.dist,1,enBus));e.cue=.9+e.dist*.025}});
-  else G.enemies.forEach(e=>stepEnemy(e,dt));
+  else{zPackTick(dt);G.enemies.forEach(e=>stepEnemy(e,dt))}
   if(G.pins&&G.pins.length)pinStep();
   if(G.statues&&G.statues.length)emTick(dt);
   if(G.mode==='zombies'&&G.win)stepWindows(dt);
@@ -5590,7 +5616,8 @@ const UPDATES=[
     'In Standard, Watch my six and Ragdoll sandbox zombie siege, regular zombies now arrive in tight packs instead of one at a time.',
     'A pack is 3 to 5 zombies on early waves, growing to as many as 8 by wave 15. The whole pack comes to the same window, shoulder to shoulder, within a few feet of each other.',
     'Runners, bloated zombies and giants still come on their own, spread across the windows as before.',
-    'The number of zombies per wave and how fast they come in overall are unchanged, so packs are followed by a longer pause. Horror hallway and Jungle scavenger are unchanged.']},
+    'The number of zombies per wave and how fast they come in overall are unchanged, so packs are followed by a longer pause. Horror hallway and Jungle scavenger are unchanged.',
+    'Packs are drawn to each other. A new pack usually heads for a window where other packs are already coming. A pack behind another at the same window speeds up and moves onto its line, while the one ahead slows a little, until they join into one bigger pack. Big packs keep pulling in the ones behind them.']},
   {id:'2026-11-13-inconel',date:'November 13, 2026',title:'New MG42 attachment: Inconel alloy barrel',items:[
     'New attachment for the MG42, the Inconel alloy barrel, 1,800 silver, under Barrel and muzzle.',
     'Inconel is a real superalloy of nickel and chromium, with iron, molybdenum and niobium, made for jet engines because it stays strong red hot.',
