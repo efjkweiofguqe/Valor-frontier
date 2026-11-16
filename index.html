@@ -892,7 +892,7 @@ $('set-rate').oninput=e=>{S.rate=+e.target.value;saveS()};
 $('set-vol').oninput=e=>{S.vol=+e.target.value;saveS();if(master)master.gain.value=S.vol;applyVol()};
 [['set-gvol','gvol'],['set-evol','evol'],['set-avol','avol'],['set-tvol','tvol'],['set-pvol','pvol']].forEach(([id,k])=>{const el=$(id);el.value=S[k];
   el.oninput=()=>{S[k]=+el.value;saveS();applyVol()};el.onchange=()=>{initAudio();if(k==='gvol')gunSound(build(WBY.ak),1);if(k==='evol')CRY.soldier(out(0,6,1,enBus));if(k==='tvol')say('Voice volume.');if(k==='pvol')[0,.32,.64].forEach(t=>setTimeout(()=>fx.lock(10),t*1000))}});
-function applyVol(){if(!ctx)return;if(gunVol)gunVol.gain.value=S.vol;if(menuBus)setTimeout(menuAmbSync,0);gunBus.gain.value=.42*S.gvol;enBus.gain.value=S.evol;uiBus.gain.value=S.vol*S.pvol*1.2;if(moveBus)moveBus.gain.value=S.vol*1.5;if(G&&!G.paused&&S.amb)ambBus.gain.value=S.avol}
+function applyVol(){if(!ctx)return;if(gunVol)gunVol.gain.value=S.vol;if(menuBus)setTimeout(menuAmbSync,0);gunBus.gain.value=.42*S.gvol;enBus.gain.value=S.evol;if(atkBus)atkBus.gain.value=S.vol*S.evol*2.4;uiBus.gain.value=S.vol*S.pvol*1.2;if(moveBus)moveBus.gain.value=S.vol*1.5;if(G&&!G.paused&&S.amb)ambBus.gain.value=S.avol}
 
 
 
@@ -954,6 +954,8 @@ function initAudio(){
   enDuck=ctx.createGain();enDuck.connect(sfx);ambDuck=ctx.createGain();ambDuck.connect(master);
   enBus=ctx.createGain();enBus.gain.value=S.evol;enBus.connect(enDuck);
   // aiming cues bypass the compressor so gunfire, enemies and ambience can never squash them
+  /* enemies attacking you skip the enemy compressor and go straight to the safety limiter, much louder than the ones still coming */
+  atkBus=ctx.createGain();atkBus.gain.value=S.vol*S.evol*2.4;atkBus.connect(outLim);atkBus.__pri=true;
   uiBus=ctx.createGain();uiBus.gain.value=S.vol*S.pvol*1.2;uiBus.connect(outClip);uiBus.__pri=true;moveBus=ctx.createGain();moveBus.gain.value=S.vol*1.5;moveBus.connect(outClip);moveBus.__pri=true;   // lock-on cues skip the limiter too, only the soft clipper
   ambBus=ctx.createGain();ambBus.gain.value=0;ambBus.connect(ambDuck);
   noiseBuf=ctx.createBuffer(1,ctx.sampleRate*3,ctx.sampleRate);
@@ -995,33 +997,36 @@ function rebuildAudio(){
 }
 ['pointerdown','touchend','keydown','click'].forEach(t=>document.addEventListener(t,wakeAudio,true));
 if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener)navigator.mediaDevices.addEventListener('devicechange',()=>setTimeout(wakeAudio,300));
-let gunBus,verbSend,enBus,uiBus,moveBus,stepDuckAt=0,turnStepAt=0,gunVol,outLim,outClip,enDuck,ambDuck;
+let atkBus,atkDuckAt=0,gunBus,verbSend,enBus,uiBus,moveBus,stepDuckAt=0,turnStepAt=0,gunVol,outLim,outClip,enDuck,ambDuck;
 const GUN_MK=1.5;   // gunfire make-up level on its own path, matched to how loud guns were on the old shared path
 /* soft clipper: straight through below 0.7, then curves smoothly into 1.0, so nothing ever hard clips */
 function softClipCurve(){const n=2048,c=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1,a=Math.abs(x);c[i]=Math.sign(x)*(a<.7?a:.7+.3*Math.tanh((a-.7)/.3))}return c}
 /* Gunfire priority: every shot dips enemy sounds by about 3 decibels and the ambience by about 7, recovering within a
    quarter of a second. Enemies stay clearly audible and placed, but your gunfire always sits on top of the fight. */
 let duckAt=0;
+/* an attack on you pulls every other enemy sound down for a moment so the hit stands out */
+function atkDest(rel,dist,type){if(ctx&&enDuck&&ctx.currentTime>=tdVoiceUntil){const t=ctx.currentTime;if(t-atkDuckAt>.05){atkDuckAt=t;const g=enDuck.gain;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(.4,t,.01);g.setTargetAtTime(1,t+.35,.15)}}
+  return out(rel,dist,1.6,atkBus,zKind(type))}
 function duckForGun(){if(!ctx||!enDuck||!G||G.over)return;if(ctx.currentTime<tdVoiceUntil)return;const t=ctx.currentTime;if(t-duckAt<.03)return;duckAt=t;
   [[enDuck,.7],[ambDuck,.45]].forEach(([n,d])=>{const g=n.gain;g.cancelScheduledValues(t);g.setValueAtTime(g.value,t);g.setTargetAtTime(d,t,.006);g.setTargetAtTime(1,t+.06,.09)})}
 /* z: zombie distance falloff. 0 = the normal enemy curve, 1 = zombies, 2 = giant zombies, 3 = the Ancient One.
    Zombies fall away much more steeply with distance (in feet: full volume within 5 feet, about half at 15,
-   a fifth at 50, a tenth at 100), get more muffled the further off they are, and pick up more echo, so a zombie
+   a seventh at 50, a twentieth at 100), get more muffled the further off they are, and pick up more echo, so a zombie
    100 feet away sounds distant and faint and grows louder and clearer as it closes in. Giants and the Ancient One
    are huge, so they carry further. */
 const ZFALL=[0,12,20,35],zKind=ty=>ty==='zancient'?3:ty==='zgiant'?2:EN[ty]&&EN[ty].z?1:0;
-function zGain(dist,z){const ft=dist*3.281;return Math.max(.05,1/(1+Math.max(0,ft-5)/ZFALL[z]))}
+function zGain(dist,z){const ft=dist*3.281;return Math.max(.025,1/(1+Math.pow(Math.max(0,ft-5)/ZFALL[z],1.35)))}
 let elMul=1;   // set while an elemental sound is being made: its loudness boost (see ELBOOST)
 function out(rel=0,dist=0,vol=1,bus,z=0){
   if(elMul!==1){vol*=elMul;if(!z&&G&&G.mode==='zombies')z=1}   // elemental sounds on zombies fade with distance like their voices, so they stay just above them
   bus=bus||sfx;const g=ctx.createGain();g.gain.value=vol*(z?zGain(dist,z):Math.max(.3,1-dist/70));
   const f=ctx.createBiquadFilter();f.type='lowpass';
   const a=Math.abs(rel);let fc=a>90?1800+(180-a)/90*2400:16000;
-  fc=Math.min(fc,16000*Math.pow(z?(z>1?.955:.94):.965,dist));   // far sounds lose their top end, zombies more so
-  if(z&&verbSend){const ft=dist*3.281,w=ctx.createGain();w.gain.value=vol*S.evol*Math.min(1,Math.max(0,ft-10)/110)*.9;g.connect(w);w.connect(verbSend)}   // distant zombies echo
+  fc=Math.min(fc,16000*Math.pow(z?(z>1?.945:.925):.965,dist));   // far sounds lose their top end, zombies more so
+  if(z&&verbSend){const ft=dist*3.281,w=ctx.createGain();w.gain.value=vol*S.evol*Math.min(1,Math.max(0,ft-30)/150)*.16;g.connect(w);w.connect(verbSend)}   // only a light touch of echo on far zombies, so each one stays in one spot
   if(G&&G.cover&&bus===enBus)fc=Math.min(fc,2600);   // behind cover the fight sounds muffled
   f.frequency.value=fc;g.connect(f);
-  if(ctx.createStereoPanner){const p=ctx.createStereoPanner();p.pan.value=Math.max(-1,Math.min(1,Math.sin(rel*Math.PI/180)));f.connect(p);p.connect(bus)}
+  if(ctx.createStereoPanner){const p=ctx.createStereoPanner();const sp=Math.sin(rel*Math.PI/180);p.pan.value=Math.max(-1,Math.min(1,(z||bus===enBus||bus===atkBus)?Math.sign(sp)*Math.pow(Math.abs(sp),.55):sp));f.connect(p);p.connect(bus)}
   else f.connect(bus);
   return g;
 }
@@ -5323,11 +5328,11 @@ function stepEnemy(e,dt){
   if(e.cue<=0){CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));if(e.slowT>0||e.frozeT>0)fx.frost(rel,e.dist,.1);if(e.shockT>0&&!shockVoices.has(e))fx.shock(rel,e.dist,.1);e.cue=(t.cueGap||(t.boss?1.4:t.z?1.4+Math.random()*1.6:.6))+e.dist*.025}
   if(e.dist<=MELEE||(e.pinG&&pinNear(e))){
     if(!e.engaged){e.engaged=true;say(coopAtkWords(e,t,rel))}
-    if(e.wind>0){e.wind-=dt*slow;if(e.wind<=0){if(atkOk())ATTACK[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));hurtPlayer(t.dmg*(e.dm||1),e)}return}
+    if(e.wind>0){e.wind-=dt*slow;if(e.wind<=0){if(atkOk())ATTACK[e.type](atkDest(rel,e.dist,e.type));hurtPlayer(t.dmg*(e.dm||1),e)}return}
     e.atkT-=dt*slow;
     if(e.atkT<=0){e.atkT=t.atk*(e.am||1);
       if(t.boss){e.wind=.9;fx.windup(rel,e.dist,1);if(!G.told.wind){G.told.wind=1;say(`${t.name} winds up. ${roamOn()?'Back away!':'Take cover!'}`)}}
-      else{if(atkOk())ATTACK[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));const g=G;setTimeout(()=>{if(G===g&&!G.over&&!G.paused&&e.hp>0)hurtPlayer(t.dmg*(e.dm||1),e)},250)}}   // only this game, and only if the attacker is still alive
+      else{if(atkOk())ATTACK[e.type](atkDest(rel,e.dist,e.type));const g=G;setTimeout(()=>{if(G===g&&!G.over&&!G.paused&&e.hp>0)hurtPlayer(t.dmg*(e.dm||1),e)},250)}}   // only this game, and only if the attacker is still alive
   }
 }
 function step(dt){
@@ -6126,6 +6131,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-16-zaudio',date:'November 16, 2026',title:'Clearer zombie sounds',items:[
+    'Much less echo on zombies. Each zombie now sounds like it is in one spot instead of all around you, and a big horde no longer blurs into one loud chorus.',
+    'Stronger left and right for every enemy, so a zombie on your left is clearly on your left.',
+    'Distance is clearer: far zombies are quieter and more muffled, and close ones stay sharp and loud.',
+    'A zombie attacking you is now much louder than the ones still walking toward you, and the others dip for a moment so you can tell exactly where the hit came from.']},
   {id:'2026-11-16-fog',date:'November 16, 2026',title:'New mythical treat: Brain Fog Bites',items:[
     'A new legendary item in the Armory, under Legendary, Mythical weapons, Treats: Brain Fog Bites, 35,000 silver. It is a bag of snacks that reads Brain Fog Bites, with Medical THC 20 percent underneath.',
     'Press Fire to throw a handful of 10 snacks. It lands in a pile at the nearest enemy you are facing, up to 40 feet away, or 40 feet straight ahead if nothing is that close. You hear the bag crinkle, then the snacks scatter where they land.',
