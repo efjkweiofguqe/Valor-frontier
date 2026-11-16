@@ -109,8 +109,11 @@ const NAME=Object.fromEntries([...ITEMS.w,...SECRET,...ITEMS.a,...NADES]);
 
 if(!FB_CONFIG.apiKey){status('Firebase is not set up yet. Add the project config to this page.');throw 0}
 const base='https://www.gstatic.com/firebasejs/10.12.2/';
-const [{initializeApp},A,F]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
-const app=initializeApp(FB_CONFIG,'admin'),auth=A.getAuth(app),db=F.getFirestore(app);
+const [{initializeApp},A,F,AC]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js'),import(base+'firebase-app-check.js')]);
+const app=initializeApp(FB_CONFIG,'admin');
+/* App Check: same invisible check as the game, so this page keeps working once App Check is enforced */
+try{AC.initializeAppCheck(app,{provider:new AC.ReCaptchaEnterpriseProvider('6Lf7vyMuAAAAAHzLyNXKPiPBlSNYC7j_ypJyE2eR'),isTokenAutoRefreshEnabled:true})}catch(e){console.warn('App Check',e)}
+const auth=A.getAuth(app),db=F.getFirestore(app);
 
 A.onAuthStateChanged(auth,u=>{
   const admin=u&&!u.isAnonymous;

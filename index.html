@@ -2776,6 +2776,9 @@ async function initCloud(){
    picks them up automatically when it opens or returns to the main menu. */
 const FB_CONFIG={apiKey:'AIzaSyDXXzj2-7d3ECofdWktK5zDHJl_7HKJs8A',authDomain:'valor-frontier.firebaseapp.com',projectId:'valor-frontier',appId:'1:260608116849:web:00d38a0a8b0a8535c4b3d0'};
 const FBV='10.12.2';
+/* App Check: an invisible reCAPTCHA (Fraud Defense) check that proves requests come from the real game,
+   so scripts can't create fake accounts. Only works on the game's own domain. */
+const APPCHECK_KEY='6Lf7vyMuAAAAAHzLyNXKPiPBlSNYC7j_ypJyE2eR';
 var fbP=null,fbUser=null,giftBusy=false,giftAt=0;
 /* loads Firebase and waits until it knows whether this device is logged in. Does not sign in. */
 function fbBoot(){
@@ -2783,8 +2786,10 @@ function fbBoot(){
   if(!FB_CONFIG.apiKey)return Promise.reject(new Error('nocfg'));
   const base=`https://www.gstatic.com/firebasejs/${FBV}/`;
   fbP=(async()=>{
-    const [app,auth,fs]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
-    const a=app.initializeApp(FB_CONFIG),au=auth.getAuth(a);
+    const [app,auth,fs,ac]=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js'),import(base+'firebase-app-check.js')]);
+    const a=app.initializeApp(FB_CONFIG);
+    try{ac.initializeAppCheck(a,{provider:new ac.ReCaptchaEnterpriseProvider(APPCHECK_KEY),isTokenAutoRefreshEnabled:true})}catch(e){console.warn('App Check',e)}
+    const au=auth.getAuth(a);
     await new Promise(r=>{const off=auth.onAuthStateChanged(au,()=>{off();r()})});
     auth.onAuthStateChanged(au,u=>{fbUser=u});fbUser=au.currentUser;
     return {db:fs.getFirestore(a),fs,auth,au};
@@ -6131,6 +6136,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-16-appcheck',date:'November 16, 2026',title:'Account protection against fake sign-ups',items:[
+    'The game now quietly checks that accounts are created from the real game, not by automated scripts. This blocks bots that were flooding the game with fake accounts.',
+    'Nothing changes for you: there are no puzzles or extra steps, and your account, save and gifts work the same as before.']},
   {id:'2026-11-16-shopcats',date:'November 16, 2026',title:'Armory: every weapon listed under its category',items:[
     'Every category button in the Armory now lists all the weapons inside it, including the newest ones, so nothing is hidden. Under Standard weapons, each type lists its guns too, so you can find the M134 Minigun under Light machine guns.',
     'Under Legendary, Mythical weapons: Rifles now lists the Banshee and the Hypno-rifle. Sniper rifles lists the Jet rifle, Jack Frost, the Tetra-prism sniper and Supernova. Heavy weapons lists the Dark Quasar Turbine and Soul blast.',
