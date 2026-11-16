@@ -84,6 +84,13 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 .hp-low b{color:var(--danger)}
 #b-fire{grid-area:fire;min-height:120px;width:100%;position:relative;overflow:hidden;background:var(--accent);color:var(--accent-ink);border:3px solid var(--accent);border-radius:22px;font-family:var(--display);font-size:52px;touch-action:manipulation}
 #b-fire span{position:relative}
+/* Get Well Soon card: an open card held in your hands at the bottom of the view */
+#gw-card{position:absolute;left:50%;bottom:48px;transform:translateX(-50%);width:min(66%,260px);height:min(34%,124px);display:flex;pointer-events:none;z-index:2;perspective:600px;font-family:Georgia,'Times New Roman',serif}
+#gw-card[hidden]{display:none}
+#gw-card>div{flex:1;background:#fff7f4;border:2px solid #f3a6b8;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.45);color:#c8102e;line-height:1.1;text-align:center;padding:4px}
+#gw-card .gw-l{border-radius:8px 0 0 8px;transform:rotateY(18deg);transform-origin:right center;background:#ffe3ea;font-size:26px;gap:2px}
+#gw-card .gw-r{border-radius:0 8px 8px 0;transform:rotateY(-12deg);transform-origin:left center}
+#gw-card b{font-size:clamp(14px,4.4vw,22px);font-weight:700}#gw-card #gw-n{font-style:italic;font-size:clamp(16px,5vw,26px)}#gw-card .gw-r i{font-style:normal;font-size:18px;margin-top:2px}
 #b-fire{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #b-fire:active{transform:scale(.985)}
 #b-fire:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
@@ -578,6 +585,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-cat="perks">Perks</button>
     <button data-cat="armor">Body armor</button>
     <button data-cat="std">Standard weapons<small>Pistols, submachine guns, rifles, light machine guns, sniper rifles, shotguns and launchers</small></button>
+    <button data-cat="secret" hidden>Gifts<small>Special items from the developer</small></button>
     <button data-cat="mythic">Legendary<small>Sets of legendary weapons</small></button>
   </div>
   <div class="seg" id="std-sub" role="group" aria-label="Standard weapon type" hidden>
@@ -747,7 +755,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <div><span>Silver</span><b id="v-coins">0</b></div>
   </div>
   <div class="arena">
-    <button id="b-fire" class="fire"><canvas id="view" aria-hidden="true" hidden></canvas><canvas id="radar" aria-hidden="true"></canvas><span>Fire</span></button>
+    <button id="b-fire" class="fire"><canvas id="view" aria-hidden="true" hidden></canvas><canvas id="radar" aria-hidden="true"></canvas><div id="gw-card" aria-hidden="true" hidden><div class="gw-l"><i>&#9829;</i><i>&#9829;</i><i>&#9829;</i></div><div class="gw-r"><b id="gw-t">Get Well Soon,</b><b id="gw-n">Stephanie</b><i>&#9829;</i></div></div><span>Fire</span></button>
     <button id="b-left" class="turn">Turn left</button>
     <button id="b-right" class="turn">Turn right</button>
   </div>
@@ -1245,7 +1253,7 @@ const PR={
 };
 const SND={hades:{gap:0},pistol:{gap:0,mech:'slide',cas:1},deagle:{gap:0,mech:'slide',cas:1},ak:{gap:.1,cas:1},an94:{gap:.033,cas:1},
   skorpion:{gap:.062,cas:.4},m249:{gap:.075,cas:.5},spas:{gap:0,mech:'pump'},barrett:{gap:0,cas:1},antitank:{gap:0,mech:'bolt'},
-  beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},tetra:{gap:.09},nova:{gap:0,mech:'bolt'},salvo:{gap:0},m79:{gap:0},mgl:{gap:0},xm25:{gap:0},rpg7:{gap:0},javelin:{gap:0},flash:{gap:.12},jet:{gap:0},rivet:{gap:0},vlad:{gap:0},scythe:{gap:0},
+  beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},tetra:{gap:.09},nova:{gap:0,mech:'bolt'},getwell:{gap:0},salvo:{gap:0},m79:{gap:0},mgl:{gap:0},xm25:{gap:0},rpg7:{gap:0},javelin:{gap:0},flash:{gap:.12},jet:{gap:0},rivet:{gap:0},vlad:{gap:0},scythe:{gap:0},
   glock:{gap:.035,mech:'slide',cas:.5},gyrojet:{gap:0},p90:{gap:.04,cas:.4},m4:{gap:.075,cas:1},mg42:{gap:.042,cas:.4},minigun:{gap:.025,cas:.25},mjolnir:{gap:0},zeus:{gap:0},m2:{gap:.13,cas:1},aa12:{gap:0,cas:1},bshot:{gap:.11,cas:1},ksg:{gap:0,mech:'pump'},coach:{gap:.018},
   thunder:{gap:0},blackhole:{gap:0},bubble:{gap:0},banshee:{gap:.09},hydra:{gap:0},symbiote:{gap:.045},quasar:{gap:0}};
 function gunDest(pan,bus){const g=ctx.createGain();g.__pri=true;bus=bus||gunBus;
@@ -1577,6 +1585,7 @@ function gunSound(w,n=1,side=-1){
   if(w.id==='jet'){const d=gunDest(0);if(w.sil)d.gain.value=.6;jetShot(d);return}
   if(w.id==='gyrojet'){gyroShot(gunDest(side<0?0:(side?.45:-.45)));return}
   if(w.id==='salvo'){const d=gunDest(0);lanternShot(d);return}
+  if(w.heart){heartShot(gunDest(0));return}
   if(LNCH.includes(w.id)){lnShot(w,n);return}
   if(w.id==='jackfrost'){const d=gunDest(0);if(w.sil)d.gain.value=.55;glassShot(d);return}
   if(w.id==='nova'){novaShot(gunDest(0));MECH.bolt(.9,gunDest(0));return}
@@ -1660,7 +1669,10 @@ const RSEQ={
   break:[[.05,d=>{RK.clack(d,0,1300,.55);RK.scrape(d,.04,900,600,.1,.1)}],[.25,d=>{RK.click(d,0,4200,.15);RK.click(d,.05,4600,.15)}],[.5,shellIn],[.68,shellIn],[.88,d=>RK.clack(d,0,1100,.65)]],
   bolt:[[.05,d=>{RK.clack(d,0,1500,.45);RK.scrape(d,.06,2500,1600,.12,.12)}],[.22,d=>RK.thud(d,0,.25)],[.55,d=>RK.clack(d,0,1100,.6)],[.8,d=>RK.scrape(d,0,1600,2600,.12,.14)],[.9,d=>RK.clack(d,0,1800,.55)]]
 };
-const RKIND={nova:'bolt',m79:'break',mgl:'shells',xm25:'rifle',rpg7:'heavy',javelin:'heavy',flash:'heavy',vlad:'belt',gyrojet:'hand',pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
+RSEQ.card=[[.05,d=>{noise(d,{dur:.25,vol:.12,type:'highpass',f:3000,f2:1800,attack:.03});tone(d,{f:180,f2:120,dur:.08,vol:.2})}],
+  [.35,d=>{[784,988,1175].forEach((f,i)=>tone(d,{type:'triangle',f,dur:.18,vol:.07,at:i*.07}))}],[.6,d=>{tone(d,{type:'sine',f:90,f2:60,dur:.1,vol:.35});tone(d,{type:'sine',f:80,f2:55,dur:.12,vol:.3,at:.16})}],
+  [.88,d=>{noise(d,{dur:.22,vol:.12,type:'highpass',f:1800,f2:3200,attack:.02});tone(d,{type:'sine',f:1047,dur:.25,vol:.08,at:.08})}]];
+const RKIND={getwell:'card',nova:'bolt',m79:'break',mgl:'shells',xm25:'rifle',rpg7:'heavy',javelin:'heavy',flash:'heavy',vlad:'belt',gyrojet:'hand',pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
   glock:'hand',p90:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',hades:'shells',blackhole:'heavy',bubble:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle',rivet:'rifle',quasar:'heavy'};
 function rdest(pan){const g=gunDest(pan,sfx);g.gain.value=.9;return g}
 const fx={
@@ -2153,9 +2165,13 @@ const WPN=[
   {id:'zeus',rng:0,name:'Zeus\'s Thunderbolt',short:'THUNDERBOLT',mag:1,dmg:100,cone:15,cd:.3,reload:0,shots:1,zeus:true,price:55000,
    traits:'Mythical bolt of lightning from the king of the gods. Press and hold Fire to charge it: a crackle of electricity rises in pitch as the power builds, a short ping at half power, and after 2 seconds it reaches full power with a bright ring and hurls itself. Let go early to throw it at whatever power it has. It strikes the nearest enemy you are facing, at any distance, with a thunder crack: 100 for a quick tap, rising to 600 at full power. From half power up, lightning also arcs to up to 3 enemies within 15 feet of the target for half damage. At full power it arcs to every enemy within 25 feet of the target and stuns them all, and the target, for 1 and a half seconds. After each throw it takes 1 and a half seconds to forge a new bolt, and two rising notes tell you it is ready. Never needs reloading. Takes only its own upgrades.'},
   {id:'scythe',rng:0,name:'Unquenchable scythe',short:'SCYTHE',mag:1,dmg:75,cone:180,cd:2.7,reload:0,shots:1,scythe:true,needArm:'shadow',price:40000,
-   traits:'Nightwalker pack melee weapon. A huge scythe swung in a full circle around you. Each swing takes 2.7 seconds to go all the way around, starting straight ahead and sweeping right, behind you and left, and you can swing again the moment it finishes. Hold Fire to keep swinging. Everything within 10 feet takes 75 as the blade passes it. Every kill heals you 20 percent of that enemy\'s full health. You hear the blade whoosh in a circle around your head and slice into each enemy it reaches, and Feeding tells you how much health you got back. Never needs reloading. You must own the Darkest Shadow Suit before you can buy it.'}
+   traits:'Nightwalker pack melee weapon. A huge scythe swung in a full circle around you. Each swing takes 2.7 seconds to go all the way around, starting straight ahead and sweeping right, behind you and left, and you can swing again the moment it finishes. Hold Fire to keep swinging. Everything within 10 feet takes 75 as the blade passes it. Every kill heals you 20 percent of that enemy\'s full health. You hear the blade whoosh in a circle around your head and slice into each enemy it reaches, and Feeding tells you how much health you got back. Never needs reloading. You must own the Darkest Shadow Suit before you can buy it.'},
+  {id:'getwell',rng:0,name:'Get Well Soon card',short:'CARD',mag:6,dmg:40,cone:16,cd:.45,reload:1.8,shots:1,acc:.95,heart:true,lnch:'heart',blast:15,splM:.75,spd:16,fling:6,price:0,secret:true,
+   msg:'Get Well Soon, Stephanie',
+   traits:'A secret gift from the developer, never sold in the shop. A get well soon card that unfolds in your hands and reads Get Well Soon, Stephanie. Press Fire and the card sends out a big red heart that floats toward the nearest enemy you are facing with a soft, warm heartbeat. When it lands it bursts with a heartbeat thump and a big pop: 40 damage to the enemy it hits and up to 30 to everyone within 15 feet, and every zombie in the blast that survives is thrown away from it. Bosses barely budge. 6 hearts, then the card folds shut and fills up again in 1.8 seconds.'}
 ];
 const WBY=Object.fromEntries(WPN.map(w=>[w.id,w]));
+const SECRET=WPN.filter(w=>w.secret).map(w=>w.id);
 const MAXW=5,MAXCARRY=4;
 const REWARD=Object.fromEntries(Object.entries(EN).map(([k,v])=>[k,v.reward]));
 
@@ -2517,7 +2533,7 @@ const ATT=[
 ];
 const ATTBY=Object.fromEntries(ATT.map(a=>[a.id,a]));
 const LNCH=['m79','mgl','xm25','rpg7','javelin','flash'];
-const OWNUP=[...LNCH,'vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble','mjolnir','zeus','nova',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
+const OWNUP=[...LNCH,'getwell','vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble','mjolnir','zeus','nova',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
 const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||((w.id==='symbiote'||w.id==='hades')&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
@@ -2599,6 +2615,7 @@ function build(w){
     if(am==='fire'){const R=hb?70:50;b.hR=R/3.281;b.hB=band([[8,3],[15,2.5],[23,2],[35,1.5]],R/50);b.hBase=1;b.hW=f=>Math.max(1,3*f/25);b.burn=10}
     else if(am==='hell'){const R=hb?50:35;b.hR=R/3.281;b.hB=band([[15,9],[25,6]],R/35);b.hBase=3;b.hW=f=>4+8*Math.min(1,f/R);b.burn=20}
     else{const R=hb?170:160;b.spread=false;b.slug=true;b.erupt=true;b.cone=14;b.acc=.98;b.hR=R/3.281;b.hB=band([[56,3],[105,2.5],[161,2],[245,1.5]],R/160);b.hBase=1;b.burn=15}}
+  if(w.heart){b.blastR=w.blast/3.281;b.lk='heart'}
   if(LNCH.includes(w.id)){b.blastR=w.blast/3.281;b.lk=w.lnch;
     if(w.id==='m79'){if(has('m79sight'))b.acc=.97;if(has('m79fast'))b.reload=1.3;b.hedp=has('m79hedp');
       if(has('m79buck')){b.lnch=null;b.spread=true;b.buckRound=true;b.dmg=6;b.cone=24;b.range=[20/3.281,40/3.281,.3];b.mid=.55}}
@@ -3772,6 +3789,7 @@ function launchShell(w,tgt,acc,pr,n=1){
     const e=w.home?(G.lockE&&alive(G.lockE)?G.lockE:tgt[0]||null):tgt.length?tgt[i%tgt.length]:null;
     const d0=e?e.dist:LN_FAR,del=i*.12,T=.08+d0/w.spd;
     if(w.air)fx.lnRange(d0,del);
+    if(w.heart&&rdOn()){const[sx,sz]=xy(G.heading,.7),[tx,tz]=xy(e?e.angle:G.heading,d0);RD.flash.push({heart:1,x:sx,y:1.2,z:sz,vx:(tx-sx)/T,vy:-.5/T,vz:(tz-sz)/T,s:.45,t:-del,T:T+del,c:'230,20,50'})}
     const fly=lnFly(e?norm(e.angle-G.heading):0,d0,T,w.air?'air':w.lk,del);
     const hit=!!e&&(w.home||w.air||Math.random()<acc);
     let ang=e?e.angle:G.heading,dist=d0,t=T+del;
@@ -3786,7 +3804,7 @@ function launchShell(w,tgt,acc,pr,n=1){
 function lnBlast(w,ang,dist,e,pr){
   if(!G||G.over)return;
   const rel=norm(ang-G.heading),[cx,cy]=xy(ang,dist),m=gunMult(),R=w.blastR;
-  if(w.fireDps)fx.lnFireball(rel,dist,!!w.thermo);else if(R>=12/3.281||w.dmg>=30)fx.heBoom(rel,dist,0);else fx.boom(rel,dist,0);
+  if(w.heart)fx.heartBoom(rel,dist,0);else if(w.fireDps)fx.lnFireball(rel,dist,!!w.thermo);else if(R>=12/3.281||w.dmg>=30)fx.heBoom(rel,dist,0);else fx.boom(rel,dist,0);
   let n=0;
   if(e&&!w.air){const T=EN[e.type],tough=T.boss||T.mini||T.mat!=='flesh';
     e.hp-=w.dmg*m*(tough&&w.hedp?2:1)*(tough&&w.tandem?2:1)*(tough&&w.top?1.5:1);fx.impact(rel,dist,e.type,0);n++}
@@ -3795,7 +3813,8 @@ function lnBlast(w,ang,dist,e,pr){
   if(w.fireDps)G.enemies.forEach(o=>{if(o.hp<=0)return;const[x,y]=xy(o.angle,o.dist);if(Math.hypot(x-cx,y-cy)>R)return;
     o.fireT=Math.max(o.fireT||0,w.fireT);o.fireDps=Math.max(o.fireDps||0,w.fireDps);o.fireSrc=w.id;fx.burn(norm(o.angle-G.heading),o.dist,.15)});
   if(pr&&n)G.pHits++;
-  rdBlast(cx,cy,R*1.6,w.thermo?16:R>=3?13:10,w.fireDps?{dis:.4,c:'255,140,40'}:{dis:.4});
+  if(w.heart){heartFling(w,cx,cy,e);heartBurst(cx,cy)}
+  rdBlast(cx,cy,R*1.6,w.heart?20:w.thermo?16:R>=3?13:10,w.heart?{dis:.3,c:'255,40,90',lift:.8}:w.fireDps?{dis:.4,c:'255,140,40'}:{dis:.4});
   G.enemies.filter(o=>o.hp<=0).forEach(o=>{o.hk=false;fx.kill(norm(o.angle-G.heading),o.dist,.1,o.type)});
   const killed=processDead(w.id);
   if(G.over||killed||!S.hpcall||killQuiet())return;
@@ -3816,6 +3835,8 @@ function lnFly(rel,dist,T,kind,at=0){
   if(kind==='rocket'){noise(g,{dur:T,vol:.8,type:'bandpass',f:1100,f2:650,q:.7,at,attack:.04});noise(g,{dur:T,vol:.4,type:'highpass',f:3800,f2:2400,at,attack:.04});
     tone(g,{type:'sawtooth',f:96,f2:82,dur:T,vol:.07,at,attack:.05})}
   else if(kind==='air'){tone(g,{type:'sine',f:2900,f2:1900,dur:T,vol:.12,at,attack:.02});noise(g,{dur:T,vol:.25,type:'bandpass',f:2200,f2:1500,q:2,at,attack:.02})}
+  else if(kind==='heart'){tone(g,{type:'sine',f:520,f2:660,dur:T,vol:.12,at,attack:.05});tone(g,{type:'triangle',f:784,f2:880,dur:T,vol:.05,at,attack:.08});
+    for(let b=0;b<T-.1;b+=.42){tone(g,{type:'sine',f:85,f2:55,dur:.09,vol:.45,at:at+b});tone(g,{type:'sine',f:75,f2:50,dur:.11,vol:.38,at:at+b+.15})}}
   else{tone(g,{type:'triangle',f:1700,f2:620,dur:T,vol:.2,at,attack:.06});noise(g,{dur:T,vol:.25,type:'bandpass',f:1300,f2:500,q:3,at,attack:.05})}
   return {pan(r){if(p)try{p.pan.setTargetAtTime(pn(r),ctx.currentTime,.03)}catch(e){}}};
 }
@@ -3853,6 +3874,27 @@ Object.assign(fx,{
     noise(d,{dur:big?1.8:1.2,vol:big?.9:.7,type:'bandpass',f:320,f2:1500,q:.7,at:.03,attack:.07});noise(d,{dur:big?2:1.4,vol:.5,type:'lowpass',f:500,f2:90,at:.05,attack:.05});
     if(big)tone(d,{f:45,f2:22,dur:.9,vol:.9,at:.02});for(let i=0;i<10;i++)noise(d,{dur:.012,vol:.2,type:'highpass',f:2600,at:.2+Math.random()*(big?1.5:1),attack:.001})}
 });
+/* Get Well Soon card (secret gift item). Fire: a soft paper flick and a sweet rising two-note chime as a heart leaves the card.
+   In flight: a warm hum with soft heartbeats (lnFly kind 'heart'). Landing: a big heartbeat thump, lub-dub, then a big pop
+   and a shower of sparkly chimes. Every non-boss zombie in the blast that survives is thrown fling metres away from it. */
+Object.assign(fx,{
+  heartBoom(rel,dist,at=0){const d=out(rel,dist,1,gunBus);
+    tone(d,{type:'sine',f:95,f2:45,dur:.14,vol:1,at});tone(d,{type:'sine',f:85,f2:40,dur:.18,vol:.9,at:at+.17});
+    noise(d,{dur:.09,vol:.9,type:'bandpass',f:1600,f2:500,q:.8,at:at+.36,attack:.001});tone(d,{type:'sine',f:420,f2:70,dur:.25,vol:.7,at:at+.36,attack:.001});
+    noise(d,{dur:.6,vol:.35,type:'lowpass',f:900,f2:120,at:at+.38,attack:.01});
+    for(let i=0;i<9;i++)tone(d,{type:'triangle',f:[1047,1175,1319,1568,1760][i%5]*(Math.random()<.5?1:2),dur:.12,vol:.07,at:at+.42+Math.random()*.7})}
+});
+function heartShot(d,at=0){noise(d,{dur:.12,vol:.25,type:'highpass',f:2200,f2:4000,at,attack:.01});tone(d,{type:'sine',f:180,f2:90,dur:.12,vol:.4,at});
+  tone(d,{type:'triangle',f:659,dur:.14,vol:.14,at:at+.02});tone(d,{type:'triangle',f:988,dur:.22,vol:.12,at:at+.12})}
+function heartFling(w,cx,cy,hitE){const R=w.blastR*1.3;
+  G.enemies.forEach(o=>{if(o.hp<=0||o.hb>0)return;const op=xy(o.angle,o.dist),g=Math.hypot(op[0]-cx,op[1]-cy);if(g>R)return;
+    const big=EN[o.type].boss||EN[o.type].mini,push=(big?.5:w.fling)*(1-.5*g/R),
+      ux=g>.05?(op[0]-cx)/g:Math.sin(o.angle*Math.PI/180),uy=g>.05?(op[1]-cy)/g:Math.cos(o.angle*Math.PI/180),nx=op[0]+ux*push,ny=op[1]+uy*push;
+    o.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;o.dist=Math.min(50,Math.max(MELEE,Math.hypot(nx,ny)));o.wind=0;if(!big)o.stunT=Math.max(o.stunT||0,.6)})}
+// red hearts bursting out of the blast for sighted players
+function heartBurst(cx,cy){if(!rdOn())return;for(let i=0;i<10;i++){const a=Math.random()*Math.PI*2,v=2+Math.random()*3;
+  RD.flash.push({heart:1,x:cx,y:.9,z:cy,vx:Math.sin(a)*v,vy:3+Math.random()*3,vz:Math.cos(a)*v,g:7,s:.2+Math.random()*.2,t:0,T:1+Math.random()*.5,fade:1,c:Math.random()<.3?'255,90,140':'230,20,50'})}}
+function heartPath(c,x,y,s){c.beginPath();c.moveTo(x,y+s*.45);c.bezierCurveTo(x-s*1.1,y-s*.2,x-s*.55,y-s*1.05,x,y-s*.45);c.bezierCurveTo(x+s*.55,y-s*1.05,x+s*1.1,y-s*.2,x,y+s*.45);c.closePath()}
 /* Supernova: a 900 round, then the star goes supernova around the enemy hit.
    Stock: 250 to every other enemy within 10 feet.
    Chain reaction: every enemy a blast reaches blows up too, 10 feet each, every enemy once per shot, 15 percent weaker each step.
@@ -4244,7 +4286,7 @@ function switchW(){
   if(G.lo.length<2){say('You are only carrying the '+G.lo[0].name+'. Carry more guns from the Armory shop.');return}
   G.w=(G.w+1)%G.lo.length;G.jobs=[];G.chargeT=0;G.cd=.3;fx.reload(.4);const flWas=G.flock;setFlock(false);
   const nw=G.lo[G.w],NA=G.ammo[G.w];let auto='';(nw.akimbo?[0,1]:[0]).forEach(s=>{if(NA[s]<=0){startReload(G.w,s);auto=' Empty, reloading.'}});
-  say(`${nw.name}. ${ammoWords()}.${auto}${flWas?' Fire lock off.':''}`);hud();pauseLabels();
+  say(`${nw.name}. ${nw.msg?`The card unfolds in your hands. It reads: ${nw.msg}. `:''}${ammoWords()}.${auto}${flWas?' Fire lock off.':''}`);hud();pauseLabels();
 }
 function cover(){
   if(!G||G.paused||G.over)return;if(G.down){downNag();return}timeGo();
@@ -5153,7 +5195,7 @@ const RDSZ={zombie:{h:1,w:1,m:1,col:'#86a36f'},zrunner:{h:.97,w:.85,m:.85,col:'#
 const rdSz=t=>RDSZ[t]||RDSZ.zombie;
 // how hard each weapon throws what it kills, in metres a second (heavier zombies move less)
 const RDPOW={m79:9,mgl:9,xm25:8,rpg7:14,javelin:16,flash:9,vlad:7,scythe:6,ra:1.5,katana:5,katwave:6,qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
-  jet:24,jackfrost:3,tetra:3,nova:13,boomer:5,kbat:2,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
+  jet:24,jackfrost:3,tetra:3,nova:13,getwell:18,boomer:5,kbat:2,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
   last:12,berserk:2,incend:2,fence:1,barbed:1.5};
 const RD={slash:0,cr:0,crT:0,bodies:[],decals:[],flash:[],voices:[],acc:0,muzzle:0,sb:0,kd:0,kdT:0,lsT:0,winT:0,tmp:new Float32Array(33),c:new Float32Array(3)};
 const rdOn=()=>!!G;   // ragdoll physics and the picture run in every mode now
@@ -5399,7 +5441,7 @@ function rdStep(dt){
   for(const b of RD.bodies){if(dead<=RD_MAX)break;if(b.dead&&!b.crys&&!b.awake&&!(b.fade>0)){b.fade=2;dead--}}
   for(const b of RD.bodies){if(b.fade>0){b.fade-=dt;if(b.fade<=0)b.gone=1}else if(b.dead&&Math.hypot(b.p[6],b.p[8])>45)b.gone=1}   // thrown right out of the battlefield
   if(RD.bodies.some(b=>b.gone))RD.bodies=RD.bodies.filter(b=>!b.gone);
-  for(const f of RD.flash)f.t+=dt;RD.flash=RD.flash.filter(f=>f.t<f.T);if(RD.muzzle>0)RD.muzzle-=dt;if(RD.slash>0)RD.slash-=dt;
+  for(const f of RD.flash){f.t+=dt;if(f.heart&&f.t>0){f.x+=f.vx*dt;f.y+=f.vy*dt;f.z+=f.vz*dt;if(f.g)f.vy-=f.g*dt;if(f.y<.05){f.y=.05;f.vy=0;f.vx*=.9;f.vz*=.9}}}RD.flash=RD.flash.filter(f=>f.t<f.T);if(RD.muzzle>0)RD.muzzle-=dt;if(RD.slash>0)RD.slash-=dt;
   // crawlers drag themselves along with a wet scrape you can follow
   for(const e of G.enemies){if(!e.crawl||e.rdb||e.hp<=0)continue;e.rdDrag=(e.rdDrag??Math.random())-dt;if(e.rdDrag>0)continue;e.rdDrag=1+Math.random()*.4;
     if(e.dist>MELEE+.1&&!(e.stunT>0)&&!(e.frozeT>0)&&RD.sb<5){RD.sb++;fx.rdDrag(norm(e.angle-G.heading),e.dist,0,EN[e.type].boss)}}
@@ -5541,7 +5583,7 @@ function rdDraw(){
   if(G.win)rdWallDraw(P,F,pal,cz,cx,W,H,X0,Y0);else if(hall)rdHallDraw(cz,cx,F,pal,X0,Y0);
   for(const it of items)if(!it.out)rdFig(it,P,F,pal);
   // explosions
-  for(const f of RD.flash){if(!P(f.x,f.y,f.z,a))continue;const k=f.t/f.T,rr=f.r*(.5+k)*F/a[2];const g2=c.createRadialGradient(a[0],a[1],0,a[0],a[1],Math.max(1,rr));
+  for(const f of RD.flash){if(!P(f.x,f.y,f.z,a))continue;if(f.heart){if(f.t<0)continue;const k=f.t/f.T;heartPath(c,a[0],a[1],Math.max(3,f.s*F/a[2]));c.fillStyle=`rgba(${f.c},${f.fade?Math.min(1,2*(1-k)):1})`;c.fill();continue}const k=f.t/f.T,rr=f.r*(.5+k)*F/a[2];const g2=c.createRadialGradient(a[0],a[1],0,a[0],a[1],Math.max(1,rr));
     g2.addColorStop(0,`rgba(255,250,220,${.9*(1-k)})`);g2.addColorStop(.4,`rgba(${f.c},${.7*(1-k)})`);g2.addColorStop(1,`rgba(${f.c},0)`);c.fillStyle=g2;c.beginPath();c.arc(a[0],a[1],Math.max(1,rr),0,Math.PI*2);c.fill()}
   // Unquenchable scythe: a red arc on the floor following the blade around you
   if(G.scyV&&G.scyV.sw>0){const V=G.scyV;c.strokeStyle='rgba(220,30,50,.8)';c.lineWidth=Math.max(3,W/90);c.beginPath();let pen=false;
@@ -5670,6 +5712,7 @@ function draw(){
 function hud(){
   if(!G)return;const w=G.lo[G.w];
   if(!G.down){$('v-hp').textContent=Math.max(0,Math.ceil(G.hp));$('hud-hp').classList.toggle('hp-low',G.hp<G.maxhp*.3);$('hud-hp').firstElementChild.textContent='Health'}   // while down, the box shows your teammate's health
+  {const gc=$('gw-card');if(gc){gc.hidden=!w.msg;if(w.msg&&gc.dataset.m!==w.msg){gc.dataset.m=w.msg;const i=w.msg.indexOf(',');$('gw-t').textContent=i>0?w.msg.slice(0,i+1):w.msg;$('gw-n').textContent=i>0?w.msg.slice(i+1).trim():''}}}
   $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.mjol?(G.mj?'OUT':'READY'):w.zeus?(G.zCd>0?'FORGE':G.zc?`CHARGE ${Math.round(G.zc.p*100)}%`:'READY'):w.heatT&&G.ovh&&G.ovh[w.id]>0?`BARREL ${Math.ceil(G.ovh[w.id])}`:w.kbat?(G.kbCd>0?`WAIT ${Math.ceil(G.kbCd)}`:(G.kb||[]).length?`BALLS ${(G.kb||[]).length}`:'READY'):w.katana||w.scythe?'BLADE':w.boomer?(G.boom?'OUT':'READY'):w.bubble?`OUT ${(G.bubs||[]).length}/${w.bubMax}`:w.ra?(G.raCool>0?`COOL ${Math.ceil(G.raCool)}`:`HEAT ${Math.round((G.raHeat||0)/RA_DUR*100)}%`):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
   $('v-wave').textContent=G.mode==='practice'?'—':G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'?`${G.wave}`:`${G.wave}/${MAXW}`;$('v-coins').textContent=P.coins;
   const hall=G.mode==='zombies'&&G.zm==='hall';$('v-wave').previousElementSibling.textContent=hall?'Score':'Wave';if(hall)$('v-wave').textContent=hallScore();
@@ -5678,6 +5721,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-15-gifts',date:'November 15, 2026',title:'Gifts section in the Armory',items:[
+    'The developer can now send special gift items that are never sold in the shop.',
+    'If you get one, a new Gifts section appears in the Armory shop, next to Legendary. Carry a gift item into battle like any other gun, or leave it in storage.']},
   {id:'2026-11-14-nova',date:'November 14, 2026',title:'New mythical sniper: Supernova',items:[
     'New mythical heavy sniper rifle, the Supernova, 75,000 silver. Find it in the Armory under Legendary, Mythical weapons, Sniper rifles.',
     'Every round hits for 900 with no falloff at any range. Wherever it lands, the star goes supernova: a huge blast hits every other enemy within 10 feet of the one you hit for 250 and throws them.',
@@ -6227,7 +6273,7 @@ function begin(map){
   initAudio();if((S.mode||'campaign')==='zombies'&&S.zmode==='roam')map='rainforest';
   if(!P.carry.length){fx.click();say('You are not carrying any guns. Open the Armory shop and choose Carry into battle on up to 4 guns.');return}lastMap=map;const mode=S.mode||'campaign';show('game');newGame(map,mode);if(mode!=='practice'){P.stats.games++;saveP()}hud();startAmb(map);
   const bc=$('b-cover');bc.textContent='Take cover';bc.setAttribute('aria-pressed','false');rUi();
-  const lead=MAPS[map].intro+' '+G.lo[0].name+' drawn. ';
+  const lead=MAPS[map].intro+' '+G.lo[0].name+' drawn. '+(G.lo[0].msg?`It unfolds in your hands and reads: ${G.lo[0].msg}. `:'');
   say(lead+(mode==='practice'?'Tutorial/practice. Targets stand still and cannot hurt you. Grenades are free.':mode==='zombies'?(G.zm==='roam'?`Jungle scavenger. You are at Base camp, in the middle of eight clearings joined by trails. Hold and drag on Turn left to walk, and drag sideways on Turn right to turn, holding it there to keep turning, or press Walk to walk forward on your own. Zombies come through the jungle from every side. Supply crates beep from the clearings: walk onto one to collect it. Out now: ${G.rm.first}. Press Surroundings to hear the trails and crates around you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='hall'?`Horror hallway. You walk on your own. Quick footsteps mean the way is clear. You slow down as zombies gather ahead, and stop when it is packed. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()} ahead${zBossWords()}.`:G.zm==='six'?`Watch my six. Two windows, 50 feet out, straight ahead and right behind you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='ragdoll'?`Ragdoll sandbox. Four windows surround you, 50 feet out, at north, east, south and west. Blasts throw zombies around, and you can hear every body land. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:`Zombie siege. Four windows surround you, 50 feet out, at north, east, south and west. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`):mode==='endless'?`Endless survival. Wave 1. ${G.toSpawn} hostiles and a mini boss.`:mode==='bossrush'?'Boss rush. One boss incoming.':`Wave 1. ${G.toSpawn} hostiles and a mini boss.`));
   setTimeout(()=>$('b-fire').focus(),60);
 }
@@ -6604,7 +6650,7 @@ const MCAT={rifle:['jet','banshee'],sniper:['jackfrost','tetra','nova'],smg:['sy
 const MCATN={rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
-const catW=()=>curCat==='mythic'?(curSet==='mythic'?MCAT[curMyth]:curSet==='night'?(curNight==='gun'?['vlad']:curNight==='blade'?['scythe']:curNight==='lantern'?['ra']:[]):curSet==='samurai'?(curSam==='blade'?LSET.samurai.list:[]):curScav==='throw'?LSET[curSet].list:[]).map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
+const catW=()=>curCat==='secret'?SECRET.filter(i=>P.owned.includes(i)).map(i=>WBY[i]):curCat==='mythic'?(curSet==='mythic'?MCAT[curMyth]:curSet==='night'?(curNight==='gun'?['vlad']:curNight==='blade'?['scythe']:curNight==='lantern'?['ra']:[]):curSet==='samurai'?(curSam==='blade'?LSET.samurai.list:[]):curScav==='throw'?LSET[curSet].list:[]).map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
 /* Legendary sets. The Legendary shop section holds sets of weapons: Mythical (split into weapon types, MCAT) and the
    Scavenger pack, empty for now. To add a weapon to the Scavenger pack, put its id in LSET.scav.list. */
 const LSET={mythic:{name:'Mythical'},scav:{name:'Scavenger pack',list:['boomer'],note:'The Scavenger pack. Legendary gear scavenged and rebuilt from scrap: throwing weapons and armor.'},
@@ -6622,7 +6668,7 @@ const CATNOTE={pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine gu
   grenades:'Grenades go off around you, so there is no aiming: everything inside the blast radius is hit. They are used up when thrown. In battle, Grenade uses one, and Grenade type cycles frag, cryo, incendiary, jack-in-the-box, event horizon and Fat Man.',
   perks:'Permanent upgrades to your soldier. Toughness and Field medic go up to level 150, Deadeye and Scavenger up to level 50. Every level up to 20 gives the full boost, after that each level gives a smaller one. From level 6 to 50, every level costs 10 percent more than the one before, and past 50 only 3 percent more.'};
 const n1=x=>Math.round(x*10)/10;
-function dmgLine(w){if(w.lnch)return lnDmgLine(w);if(w.mjol)return `Damage: ${w.dmg} on impact, with lightning leaping to up to 4 more enemies within 15 feet for 60 percent, and 100 to every enemy it smashes flying home. Reaches 80 feet, 60 feet a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.zeus)return `Damage: ${w.dmg} for a quick tap, rising to ${w.dmg+500} at full power after 2 seconds of charge. Arcs from half power, and stuns at full. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
+function dmgLine(w){if(w.heart)return `Damage: ${w.dmg} to the enemy a heart hits, and up to ${Math.round(w.dmg*w.splM)} to everyone within ${w.blast} feet, who are thrown away from it. ${n1(1/w.cd)} hearts per second. For scale, light enemies have 2 to 3 health.`;if(w.lnch)return lnDmgLine(w);if(w.mjol)return `Damage: ${w.dmg} on impact, with lightning leaping to up to 4 more enemies within 15 feet for 60 percent, and 100 to every enemy it smashes flying home. Reaches 80 feet, 60 feet a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.zeus)return `Damage: ${w.dmg} for a quick tap, rising to ${w.dmg+500} at full power after 2 seconds of charge. Arcs from half power, and stuns at full. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
   if(w.hydra)return `Damage: 3 rockets of ${w.dmg} each per trigger pull, each splashing enemies within 5 feet for half. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.hole){const b=build(w);return `Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${w.dmg} on collapse to everything within 12 feet, half that to the rest it pulled in. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(false)return ` For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.sonic)return `Damage: ${w.dmg} to every enemy in the cone within ${ft(w.full)} feet, plus a stun, fading to 40 percent at ${ft(w.reach)} feet. ${n1(1/w.cd)} screams per second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.stake)return `Damage: ${w.dmg} per stake to the first enemy, then 15 percent less for each enemy it skewers behind a body it kills. ${n1(1/w.cd)} stakes per second at stock. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.scythe)return `Damage: ${w.dmg} to everything within 10 feet, all the way around you, once every ${SCY_T} seconds. Kills heal you 20 percent of the enemy's full health. For scale, light enemies have 2 to 3 health and bosses about 80.`;
@@ -6670,8 +6716,9 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
+  {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
   catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra||w.bubble||w.mjol||w.zeus?'':` Magazine ${w.mag}. ${w.shell?`Loads one shell at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
   shopArmors().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
@@ -6688,7 +6735,7 @@ function updateShop(){
   $('shop-coins').textContent=P.coins;$('shop-coins-l').textContent=P.coins===1?'silver coin':'silver coins';
   catW().forEach(w=>{const it=$('it-'+w.id);if(!it)return;const L=shopLabel(w),owned=P.owned.includes(w.id);
     setItem('it-'+w.id,L.meta,L.act,L.aria,!owned&&!L.locked&&P.coins>=w.price,owned);
-    const at=it.querySelector('.att');if(!at)return;at.hidden=!owned;const n=attOf(w.id).eq.length;
+    const at=it.querySelector('.att');if(!at)return;at.hidden=!owned||!!w.secret;const n=attOf(w.id).eq.length;
     at.innerHTML=`Attachments<small>${n?n+' on':'Ammo, barrels, mags and more'}</small>`;at.setAttribute('aria-label',`${w.name} attachments. ${n?n+' on.':'None on.'}`)});
   MARMUP.forEach(u=>{if(!$('mu-'+u.id))return;const a=ARMBY[u.arm],own=!!P.marm[u.id];
     if(!own&&u.req&&!P.marm[u.req]&&P.armor.own.includes(a.id))setItem('mu-'+u.id,`Price ${u.price} silver · Needs ${MUBY[u.req].name} first`,'Locked',`${u.name}, ${u.price} silver. Locked: buy ${MUBY[u.req].name} first`,false,false);
@@ -6713,8 +6760,8 @@ function shopLabel(w){
   if(!owned&&w.needArm&&!P.armor.own.includes(w.needArm)){const a=ARMBY[w.needArm];return{meta:`Price ${w.price} silver · Needs the ${a.name} first`,act:'Locked',aria:`${w.name}, ${w.price} silver. Locked: buy the ${a.name} first`,locked:true}}
   if(!owned)return{meta:`Price ${w.price} silver`,act:`Buy for ${w.price}`,aria:`Buy ${w.name} for ${w.price} silver`};
   const n=attOf(w.id).eq.length,extra=` · Mastery ${mlevel(w.id)}`+(n?` · ${n} attachment${n>1?'s':''}`:'');
-  if(carried)return{meta:(w.price?'Owned':'Starter')+' · Carrying'+extra,act:'Leave in storage',aria:`${w.name} is carried. Leave it in storage`};
-  return{meta:(w.price?'Owned':'Starter')+' · In storage'+extra,act:'Carry into battle',aria:`${w.name} is in storage. Carry it into battle`};
+  if(carried)return{meta:(w.secret?'Gift':w.price?'Owned':'Starter')+' · Carrying'+extra,act:'Leave in storage',aria:`${w.name} is carried. Leave it in storage`};
+  return{meta:(w.secret?'Gift':w.price?'Owned':'Starter')+' · In storage'+extra,act:'Carry into battle',aria:`${w.name} is in storage. Carry it into battle`};
 }
 const broke=(price,what)=>{fx.click();say(`${what} costs ${price} silver. You need ${price-P.coins} more.`)};
 function shopAct(w){

@@ -66,6 +66,7 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <p id="who-n" class="muted" role="status">Loading players…</p>
     <label>Silver<input id="silver" type="number" min="0" max="10000000" step="1" inputmode="numeric" value="0"></label>
     <fieldset><legend>Weapons</legend><div class="grid" id="weps"></div></fieldset>
+    <fieldset><legend>Secret items (never in the shop)</legend><div class="grid" id="secret"></div></fieldset>
     <fieldset><legend>Armor</legend><div class="grid" id="arms"></div></fieldset>
     <fieldset><legend>Grenades</legend><div class="grid" id="nades"></div></fieldset>
     <label>Message to the player (optional)<textarea id="note" maxlength="300"></textarea></label>
@@ -94,14 +95,17 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 <script type="module">
 const FB_CONFIG={apiKey:'AIzaSyDXXzj2-7d3ECofdWktK5zDHJl_7HKJs8A',authDomain:'valor-frontier.firebaseapp.com',projectId:'valor-frontier',appId:'1:260608116849:web:00d38a0a8b0a8535c4b3d0'};
 const ITEMS={"w":[["pistol","Colt 1911"],["ak","AK-47"],["barrett","Barrett .50 cal"],["deagle","Desert Eagle"],["skorpion","Skorpion vz. 61"],["beretta","Beretta 93R"],["an94","AN-94"],["spas","SPAS-12 shotgun"],["svd","Dragunov SVD"],["m249","M249 SAW"],["jackfrost","Jack Frost"],["jet","Jet rifle"],["salvo","Pumpkin Salvo"],["antitank","Boys anti-tank rifle"],["glock","Glock 18"],["gyrojet","MBA Gyrojet"],["m79","M79 grenade launcher"],["mgl","Milkor MGL"],["xm25","XM25 Punisher"],["rpg7","RPG-7"],["javelin","FGM-148 Javelin"],["flash","M202 FLASH"],["p90","FN P90"],["m4","M4A1 carbine"],["m2","M2 Browning"],["mg42","MG42"],["aa12","AA-12 automatic shotgun"],["bshot","Tri-burst shotgun"],["ksg","KSG pump shotgun"],["coach","Double-barrel coach gun"],["thunder","Thunderclap"],["blackhole","Black Hole Cannon"],["banshee","Banshee"],["symbiote","Alien Symbiote"],["hydra","Hydra"],["osv96","OSV-96"],["cheytac","CheyTac M200 Intervention"],["rivet","Rivet Storm"],["quasar","Dark Quasar Turbine"],["hades","Hades Pump Action"],["tetra","Tetra-prism sniper"],["boomer","Razor blade boomerang"],["katana","Samurai sword"],["kbat","Kinetic bat"],["vlad","Vlad the Impaler (Nightwalker)"],["scythe","Unquenchable scythe (Nightwalker)"],["ra","Lantern of Ra (Nightwalker)"]],"a":[["vest","Light vest"],["kevlar","Kevlar armor"],["plate","Ceramic plate carrier"],["jugg","Juggernaut suit"],["berserk","Viking berserker armor"],["barbed","Razorwire Carapace"],["samurai","Samurai armor"],["shadow","Darkest Shadow Suit (Nightwalker)"]]};
+/* Secret items: only you can give these, from here. They never show in the game's shop or in the request list. */
+const SECRET=[["getwell","Get Well Soon card (Stephanie)"]];
 const NADES=[['frag','Frag grenades'],['cryo','Cryo grenades'],['incend','Incendiary grenades'],['jack','Jack-in-the-boxes'],['horizon','Event horizons'],['fatman','Fat Man bombs']];
 const $=id=>document.getElementById(id);
 const status=t=>{$('status').textContent=t};
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 $('weps').innerHTML=ITEMS.w.map(([id,n])=>`<label class="check"><input type="checkbox" name="w" value="${id}">${esc(n)}</label>`).join('');
+$('secret').innerHTML=SECRET.map(([id,n])=>`<label class="check"><input type="checkbox" name="w" value="${id}">${esc(n)}</label>`).join('');
 $('arms').innerHTML=ITEMS.a.map(([id,n])=>`<label class="check"><input type="checkbox" name="a" value="${id}">${esc(n)}</label>`).join('');
 $('nades').innerHTML=NADES.map(([id,n])=>`<label>${n}<input type="number" min="0" max="1000" step="1" inputmode="numeric" value="0" data-n="${id}"></label>`).join('');
-const NAME=Object.fromEntries([...ITEMS.w,...ITEMS.a,...NADES]);
+const NAME=Object.fromEntries([...ITEMS.w,...SECRET,...ITEMS.a,...NADES]);
 
 if(!FB_CONFIG.apiKey){status('Firebase is not set up yet. Add the project config to this page.');throw 0}
 const base='https://www.gstatic.com/firebasejs/10.12.2/';
@@ -170,7 +174,7 @@ $('free-go').onclick=async()=>{
   $('free-go').disabled=false;
 };
 /* ---------- player requests ---------- */
-const WIDS=new Set(ITEMS.w.map(x=>x[0])),AIDS=new Set(ITEMS.a.map(x=>x[0])),NIDS=new Set(NADES.map(x=>x[0]));
+const WIDS=new Set([...ITEMS.w,...SECRET].map(x=>x[0])),AIDS=new Set(ITEMS.a.map(x=>x[0])),NIDS=new Set(NADES.map(x=>x[0]));
 const clean=it=>{it=it||{};const g={};for(const k in it.grenades||{}){const n=Math.max(0,Math.min(1000,parseInt(it.grenades[k])||0));if(NIDS.has(k)&&n)g[k]=n}
   return{silver:Math.max(0,Math.min(10000000,parseInt(it.silver)||0)),weapons:(it.weapons||[]).filter(i=>WIDS.has(i)),armor:(it.armor||[]).filter(i=>AIDS.has(i)),grenades:g}};
 const empty=it=>!it.silver&&!it.weapons.length&&!it.armor.length&&!Object.keys(it.grenades).length;
