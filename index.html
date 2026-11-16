@@ -2379,7 +2379,7 @@ const ATT=[
   {id:'hymag2',name:'Extended magazine V2',price:7000,for:'hypno',grp:'mag',req:'hymag1',desc:()=>'Holds 60 rounds. Buy V1 first.'},
   {id:'hystrip',name:'Quick strip',price:6000,for:'hypno',grp:'reload',desc:()=>'Reloads 40 percent faster: 1.2 seconds instead of 2.'},
   {id:'hycontag',name:'Contagious trance',price:25000,for:'hypno',grp:'special',alt:'hypsp',desc:()=>'Special ability. The trance spreads. Every hit a hypnotized enemy lands has a 15 percent chance to hypnotize the enemy it hits too, as long as it is not a boss, so one hypnotized enemy can turn a whole pack. Cannot be used together with Hive mind.'},
-  {id:'hyhive',name:'Hive mind',price:25000,for:'hypno',grp:'special',alt:'hypsp',desc:()=>'Special ability. Every hypnotized enemy shares one mind. They all gang up on the enemy closest to you, guarding you first, and each one hits 10 percent harder for every other hypnotized enemy alive, up to double damage. Cannot be used together with Contagious trance.'},
+  {id:'hyhive',name:'Hive mind',price:25000,for:'hypno',grp:'special',alt:'hypsp',desc:()=>'Special ability. Every hypnotized enemy shares one mind, and the bigger the hive, the stronger each one gets. For every other hypnotized enemy alive, each one hits 10 percent harder and moves and attacks 5 percent faster, with no limit. They still attack whatever is near them, then hunt the next nearest enemy. Cannot be used together with Contagious trance.'},
   {id:'fmj',name:'FMJ rounds',price:80,ammo:true,not:['rivet','gyrojet',...SHOTS],desc:()=>'Full metal jacket ammo. Slightly more damage per round, plus 20 percent.'},
   {id:'hollow',name:'Hollow point rounds',price:100,ammo:true,only:HOLLOW,desc:()=>'Expanding ammo. Hits 50 percent harder within 25 feet, but fades past that, and beyond 50 feet it does 15 percent less damage than normal. Full metal jacket is better at range.'},
   {id:'inc',name:'Incendiary rounds',price:160,ammo:true,only:HEAVY,desc:()=>'Heavy sniper ammo. Greatly increases damage, plus 60 percent, and every hit bursts into flame, burning all enemies within 16 feet for half damage.'},
@@ -3912,8 +3912,9 @@ function heartFling(w,cx,cy,hitE){const R=w.blastR*1.3;
    It lasts until it dies, carrying over between waves. Bosses cannot be hypnotized; mini bosses can.
    Not in Tutorial/practice (no other enemies to fight) or Co-op (the host owns every enemy).
    Contagious trance: each hit it lands has HYP_SPREAD chance to hypnotize its target too.
-   Hive mind: all of them go for the enemy closest to you, and each hits 10 percent harder per other one alive, up to double. */
-const HYP_CH=.25,HYP_X=3,HYP_REACH=1,HYP_BACK=.25,HYP_SPREAD=.15,HYP_IDLE=2.5;
+   Hive mind: they still fight whatever is nearest, but for every other hypnotized enemy alive each one hits 10 percent harder
+     and moves and attacks 5 percent faster, with no limit. */
+const HIVE_DMG=.1,HIVE_SP=.05,HYP_CH=.25,HYP_X=3,HYP_REACH=1,HYP_BACK=.25,HYP_SPREAD=.15,HYP_IDLE=2.5;
 Object.assign(fx,{
   hypno(rel,dist,at=0){const d=out(rel,dist,1,gunBus);
     for(let i=0;i<6;i++){const up=i%2===0;tone(d,{type:'sine',f:up?420+i*40:760+i*40,f2:up?760+i*40:420+i*40,dur:.11,vol:.32,at:at+i*.1})}
@@ -3937,15 +3938,14 @@ function hypTick(dt){
   if(!G.hyp||!G.hyp.length)return;
   const hw=G.lo.find(x=>x.hypno),hive=!!(hw&&hw.hive),contag=!!(hw&&hw.contag);
   const live=G.enemies.filter(e=>e.hp>0&&!(e.hb>0)&&!e.hz);let died=false;
-  const near=hive&&live.length?live.reduce((a,b)=>b.dist<a.dist?b:a):null;
-  const boost=hive?Math.min(2,1+.1*(G.hyp.length-1)):1;
+  const others=Math.max(0,G.hyp.filter(h=>h.hp>0).length-1),boost=hive?1+HIVE_DMG*others:1,quick=hive?1+HIVE_SP*others:1;
   G.hyp.forEach(h=>{if(h.hp<=0)return;const T=EN[h.type];let[hx,hy]=hypPos(h);
-    if(hive)h.tgt=near&&near.hp>0&&G.enemies.includes(near)?near:null;else if(!h.tgt||!(h.tgt.hp>0)||!G.enemies.includes(h.tgt)){let bd=Infinity;h.tgt=null;
+    if(!h.tgt||!(h.tgt.hp>0)||!G.enemies.includes(h.tgt)){let bd=Infinity;h.tgt=null;
       for(const e of live){const[ex,ey]=hypPos(e),dd=Math.hypot(ex-hx,ey-hy);if(dd<bd){bd=dd;h.tgt=e}}}
-    const sp=T.speed*HYP_X*(h.sm||1)*dt;
+    const sp=T.speed*HYP_X*(h.sm||1)*quick*dt;
     if(h.tgt){const[tx,ty]=hypPos(h.tgt),dx=tx-hx,dy=ty-hy,dd=Math.hypot(dx,dy);
       if(dd>HYP_REACH*.85){const st=Math.min(sp,dd-HYP_REACH*.8);hx+=dx/dd*st;hy+=dy/dd*st;hypSet(h,hx,hy)}
-      h.hcd-=dt;if(dd<=HYP_REACH+.3&&h.hcd<=0){const e=h.tgt,rel=norm(e.angle-G.heading);h.hcd=T.atk*(h.am||1);
+      h.hcd-=dt;if(dd<=HYP_REACH+.3&&h.hcd<=0){const e=h.tgt,rel=norm(e.angle-G.heading);h.hcd=T.atk*(h.am||1)/quick;
         e.hp-=T.dmg*(h.dm||1)*HYP_X*boost;rdShot(e,{id:'hyp'},false);if(atkOk())ATTACK[h.type](out(norm(h.angle-G.heading),h.dist,1,enBus,zKind(h.type)));
         if(e.hp<=0){fx.kill(rel,e.dist,.1,e.type);died=true;h.tgt=null}
         else if(contag&&Math.random()<HYP_SPREAD&&hypOk(e)&&hypnotize(e,.1)){h.tgt=null;
@@ -5797,6 +5797,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-15-hive2',date:'November 15, 2026',title:'Hypno-rifle: stronger Hive mind',items:[
+    'Hive mind no longer has a damage limit. For every other hypnotized enemy alive, each one hits 10 percent harder, with no cap.',
+    'Hive mind also makes them faster as your hive grows: for every other hypnotized enemy alive, each one moves 5 percent faster and attacks 5 percent faster, with no cap.',
+    'Hypnotized enemies with Hive mind no longer all go after the enemy closest to you. They fight the way they do without it: attacking whatever is near them, then hunting the next nearest enemy.']},
   {id:'2026-11-15-hypno',date:'November 15, 2026',title:'New mythical assault rifle: Hypno-rifle',items:[
     'New mythical assault rifle, the Hypno-rifle, 45,000 silver. Find it in the Armory under Legendary, Mythical weapons, Rifles.',
     'Full auto at the AK-47\'s rate of fire, about 10 rounds a second. 30 rounds, 7 damage a round, 2 second reload.',
@@ -5805,7 +5809,7 @@ const UPDATES=[
     'It never attacks you, and your bullets, blasts and grenades pass straight through it. Every kill it makes pays you silver, and shows as Hypnotized enemy kills on the zombies scoreboard.',
     'Mini bosses can be hypnotized. Bosses cannot. Each hypnotized enemy gives a soft two-note chime every few seconds so you can tell where it is, and Status tells you how many are fighting for you. A falling tone means one has died.',
     'Upgrades: Extended magazine V1, 4,000 silver, 45 rounds. Extended magazine V2, 7,000, 60 rounds. Quick strip, 6,000, reloads 40 percent faster.',
-    'Two special abilities, 25,000 silver each, one at a time. Contagious trance: every hit a hypnotized enemy lands has a 15 percent chance to hypnotize the enemy it hits too. Hive mind: every hypnotized enemy attacks the enemy closest to you, and each hits 10 percent harder for every other one alive, up to double.',
+    'Two special abilities, 25,000 silver each, one at a time. Contagious trance: every hit a hypnotized enemy lands has a 15 percent chance to hypnotize the enemy it hits too. Hive mind: for every other hypnotized enemy alive, each one hits 10 percent harder and moves and attacks 5 percent faster, with no limit.',
     'Hypnosis does not work in Tutorial/practice or in Co-op. There the Hypno-rifle fires normal rounds.',
     'New Sound check buttons for an enemy being hypnotized and for a hypnotized enemy nearby.']},
   {id:'2026-11-15-gifts',date:'November 15, 2026',title:'Gifts section in the Armory',items:[
@@ -6573,7 +6577,7 @@ const WBEST={
   aa12:'Clearing a crowd up close. Hold fire for 3 blasts a second. Keep enemies close, since its range is short.',
   jackfrost:'Slowing down dangerous enemies. Each icicle slows a target more, so freeze bosses and fast runners, then finish them. Its blizzard blast on reload freezes everything within 40 feet.',
   jet:'Long lines of enemies and bosses. Every round does 200 and punches through many enemies. Remember the short spool-up before each shot.',
-  hypno:'Big waves of regular enemies. Hold Fire and sweep across a crowd: about one round in four turns an enemy, and every one you turn is a tough, fast bodyguard with triple health that fights for you. Turn a mini boss for a heavy hitter. Against a boss, turn the minions around it and let them go to work. Contagious trance can flip a whole pack; Hive mind keeps them all guarding you.',
+  hypno:'Big waves of regular enemies. Hold Fire and sweep across a crowd: about one round in four turns an enemy, and every one you turn is a tough, fast bodyguard with triple health that fights for you. Turn a mini boss for a heavy hitter. Against a boss, turn the minions around it and let them go to work. Contagious trance can flip a whole pack; Hive mind makes every hypnotized enemy stronger and faster the more you have.',
   nova:'Packed crowds and bosses at any range. Aim at the middle of a group: the supernova hits everything around the enemy you shoot. Singularity implosion drags a spread-out crowd together first, and Chain reaction can wipe out a whole pack that is standing close.',
   tetra:'Long-range fights where you want instant kills. Every crystal has a chance to crystallize the target no matter where you aim, and bosses are locked in crystal for 3 seconds.',
   banshee:'Crowds in front of you. It never misses, hits everything in a wide cone, and stuns within 40 feet, so it stops a rush in its tracks.',
@@ -6917,7 +6921,7 @@ function lnStats(b,D,pulls){const o=[],R=ft(b.blastR),pc=x=>Math.round(x*100),to
 function lnDmgLine(w){const b=build(w);if(!b.lnch)return `Buckshot round on: ${n1(b.dmg)} to every enemy in the blast, full damage out to 20 feet. For scale, light enemies have 2 to 3 health.`;
   return lnStats(b,x=>n1(x),1/b.cd).join(' ')+' For scale, light enemies have 2 to 3 health.'}
 function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(P.perk.aim||0)/100,D=x=>n1(x*aim),out=[];
-  if(b.hypno)return[`Damage: ${D(b.dmg)} per round, about ${n1(1/b.cd)} rounds a second, full auto. Effective range 26 feet; past that, damage and accuracy fall off.`,`Magazine ${b.mag}. Reload ${r1(b.reload)} seconds${b.reload<2?', Quick strip on':''}.`,`Hypnosis: every round that hits has a 25 percent chance to hypnotize the enemy instead of hurting it. Mini bosses can be hypnotized, bosses cannot. Does not work in Tutorial/practice or Co-op.`,`A hypnotized enemy has triple health, attack damage and speed, attacks other enemies until it dies, and is fought back. Your shots pass through it, and its kills pay you silver.`,b.contag?`Contagious trance: each hit a hypnotized enemy lands has a ${HYP_SPREAD*100} percent chance to hypnotize its target too.`:b.hive?`Hive mind: all hypnotized enemies attack the enemy closest to you, and each hits 10 percent harder for every other one alive, up to double.`:`Special ability: none on. Contagious trance or Hive mind, one at a time.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`];
+  if(b.hypno)return[`Damage: ${D(b.dmg)} per round, about ${n1(1/b.cd)} rounds a second, full auto. Effective range 26 feet; past that, damage and accuracy fall off.`,`Magazine ${b.mag}. Reload ${r1(b.reload)} seconds${b.reload<2?', Quick strip on':''}.`,`Hypnosis: every round that hits has a 25 percent chance to hypnotize the enemy instead of hurting it. Mini bosses can be hypnotized, bosses cannot. Does not work in Tutorial/practice or Co-op.`,`A hypnotized enemy has triple health, attack damage and speed, attacks other enemies until it dies, and is fought back. Your shots pass through it, and its kills pay you silver.`,b.contag?`Contagious trance: each hit a hypnotized enemy lands has a ${HYP_SPREAD*100} percent chance to hypnotize its target too.`:b.hive?`Hive mind: for every other hypnotized enemy alive, each one hits 10 percent harder and moves and attacks 5 percent faster, with no limit.`:`Special ability: none on. Contagious trance or Hive mind, one at a time.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`];
   if(b.nova)return[`Damage: ${D(b.dmg)} per round, no falloff at any range.`,b.sing?`Singularity implosion: drags every enemy within 20 feet, bosses included, to the enemy hit for ${SG_T} seconds, then blasts everything within 30 feet outward for ${D(NV_DMG)}.`:b.chainRx?`Chain reaction: ${D(NV_DMG)} to everything within 10 feet, and every enemy reached explodes too, once each, 15 percent weaker each step.`:`Supernova: ${D(NV_DMG)} to every other enemy within 10 feet of the enemy hit.`,`One shot every ${n1(b.cd)} seconds. ${b.mag} rounds, ${n1(b.reload)} second reload.`];
   if(b.bubble)return[`Damage: none. It traps enemies instead.`,`Each bubble is ${n1(b.bubR*3.281*2)} feet wide and traps ${b.inter?'every enemy':'up to '+b.bubCap+' enemies'} within ${n1(b.bubR*3.281)} feet of its centre${b.inter?', with no limit. Interdimensional bubble on':''}.`,`Bubbles last ${BUB_T} seconds and reach 50 feet.`,`${b.bubMax} bubbles out at once. One bubble every ${n1(b.cd)} ${b.cd===1?'second':'seconds'}. Never needs reloading.`];
   if(b.ra)return[b.lens?`Damage: ${D(RA_HIT*RA_LENS)} every ${RA_TICK} seconds, Magnifying glass on: a thin beam about 1 foot wide out to ${RA_R} feet, burning through up to ${RA_PEN} enemies in a line at full damage.`:`Damage: ${D(RA_HIT)} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet. The beam widens to about 10 feet at the far end.`,`Fire: everything the light touches burns ${RA_BDPS} a second for ${RA_BURN} seconds, spreads to enemies within ${RA_SPREAD} feet, and bodies keep burning for ${RA_CORPSE} seconds.`,`Runs ${RA_DUR} seconds before it overheats, then cools down for ${RA_COOL} seconds. Never needs reloading.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`+(aim>1?` Includes your Deadeye perk, ${aimBonus(P.perk.aim)} percent more damage.`:'')];
