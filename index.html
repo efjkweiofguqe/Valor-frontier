@@ -6131,6 +6131,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-16-shopcats',date:'November 16, 2026',title:'Armory: every weapon listed under its category',items:[
+    'Every category button in the Armory now lists all the weapons inside it, including the newest ones, so nothing is hidden. Under Standard weapons, each type lists its guns too, so you can find the M134 Minigun under Light machine guns.',
+    'Under Legendary, Mythical weapons: Rifles now lists the Banshee and the Hypno-rifle. Sniper rifles lists the Jet rifle, Jack Frost, the Tetra-prism sniper and Supernova. Heavy weapons lists the Dark Quasar Turbine and Soul blast.',
+    'The Jet rifle has moved from Rifles to Sniper rifles.']},
   {id:'2026-11-16-zaudio',date:'November 16, 2026',title:'Clearer zombie sounds',items:[
     'Much less echo on zombies. Each zombie now sounds like it is in one spot instead of all around you, and a big horde no longer blurs into one loud chorus.',
     'Stronger left and right for every enemy, so a zombie on your left is clearly on your left.',
@@ -7108,10 +7112,15 @@ $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
 const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet'],smg:['skorpion','p90'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2','minigun'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin'],mythic:['jet','jackfrost','tetra','nova','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar','mjolnir','zeus']};
-const MCAT={rifle:['jet','banshee','hypno'],sniper:['jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['blackhole','bubble','hydra','salvo'],heavy:['quasar','soul'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
+const MCAT={rifle:['banshee','hypno'],sniper:['jet','jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['blackhole','bubble','hydra','salvo'],heavy:['quasar','soul'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
 const MCATN={treat:'Mythical treats. Snacks the enemies cannot resist. Brain Fog Bites leaves them dazed and harmless.',toy:'Mythical toys. Cuddly on the outside, deadly on the inside. Unbearable Buddy fires lasers from its eyes.',rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
+/* the list under each Armory category button is built from the shop's own lists, so a new weapon always shows up in it */
+function catLabels(){const nm=ids=>ids.map(i=>WBY[i]&&WBY[i].name).filter(Boolean).join(', ');
+  document.querySelectorAll('#myth-sub button[data-myth]').forEach(b=>{const L=MCAT[b.dataset.myth];if(!L)return;let sm=b.querySelector('small');if(!sm){sm=document.createElement('small');b.appendChild(sm)}sm.textContent=nm(L)});
+  document.querySelectorAll('#std-sub button[data-std]').forEach(b=>{const L=WCAT[b.dataset.std];if(!L)return;let sm=b.querySelector('small');if(!sm){sm=document.createElement('small');b.appendChild(sm)}sm.textContent=nm(L)})}
+catLabels();
 const catW=()=>curCat==='secret'?SECRET.filter(i=>P.owned.includes(i)).map(i=>WBY[i]):curCat==='mythic'?(curSet==='mythic'?MCAT[curMyth]:curSet==='night'?(curNight==='gun'?['vlad']:curNight==='blade'?['scythe']:curNight==='lantern'?['ra']:[]):curSet==='samurai'?(curSam==='blade'?LSET.samurai.list:[]):curScav==='throw'?LSET[curSet].list:[]).map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
 /* Legendary sets. The Legendary shop section holds sets of weapons: Mythical (split into weapon types, MCAT) and the
    Scavenger pack, empty for now. To add a weapon to the Scavenger pack, put its id in LSET.scav.list. */
