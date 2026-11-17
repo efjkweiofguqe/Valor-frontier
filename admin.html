@@ -90,6 +90,11 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <label>Username to free up<input id="free-n" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></label>
     <button type="button" id="free-go">Free up this username</button>
   </section>
+  <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="spam-h">
+    <h2 id="spam-h">Remove spam accounts</h2>
+    <p class="muted">Finds every player whose username starts with the word tester, then removes their username, player entry, save, requests and feedback. Tap once to see how many it found, then tap again to delete them.</p>
+    <button type="button" id="spam-go">Find spam accounts</button>
+  </section>
 </section>
 </main>
 <script type="module">
@@ -175,6 +180,40 @@ $('free-go').onclick=async()=>{
     $('free-n').value='';loadPlayers();
   }catch(e){status(`Could not free up the username. ${why(e)}`)}
   $('free-go').disabled=false;
+};
+/* ---------- remove spam accounts: every player whose username starts with "tester" ---------- */
+let spamPend=null;
+const isSpam=n=>typeof n==='string'&&n.toLowerCase().startsWith('tester');
+$('spam-go').onclick=async()=>{
+  const btn=$('spam-go');btn.disabled=true;
+  try{
+    if(!spamPend){
+      status('Looking for spam accounts…');
+      const [ps,rs,fs]=await Promise.all([timeout(F.getDocs(F.collection(db,'players'))),timeout(F.getDocs(F.collection(db,'requests'))),timeout(F.getDocs(F.collection(db,'feedback')))]);
+      const players=ps.docs.filter(d=>isSpam(d.data().name)).map(d=>({uid:d.id,name:d.data().name}));
+      const uids=new Set(players.map(p=>p.uid));
+      const reqs=rs.docs.filter(d=>uids.has(d.data().uid)||isSpam(d.data().name)).map(d=>d.id);
+      const fb=fs.docs.filter(d=>uids.has(d.data().uid)||isSpam(d.data().name)).map(d=>d.id);
+      const keep=ps.size-players.length;
+      if(!players.length&&!reqs.length&&!fb.length){status('No spam accounts found. No usernames start with tester.');btn.disabled=false;return}
+      spamPend={players,reqs,fb};
+      btn.textContent=`Delete ${players.length} spam account${players.length===1?'':'s'}`;
+      status(`Found ${players.length} account${players.length===1?'':'s'} starting with tester, with ${reqs.length} request${reqs.length===1?'':'s'} and ${fb.length} feedback message${fb.length===1?'':'s'}. ${keep} other player${keep===1?'':'s'} will be kept. Deleting cannot be undone. Tap Delete spam accounts to continue.`);
+      btn.disabled=false;return;
+    }
+    const {players,reqs,fb}=spamPend;spamPend=null;
+    const refs=[];
+    players.forEach(p=>{refs.push(F.doc(db,'usernames',p.name.toLowerCase()),F.doc(db,'players',p.uid),F.doc(db,'saves',p.uid))});
+    reqs.forEach(id=>refs.push(F.doc(db,'requests',id)));
+    fb.forEach(id=>refs.push(F.doc(db,'feedback',id)));
+    for(let i=0;i<refs.length;i+=400){
+      status(`Deleting… ${Math.min(i+400,refs.length)} of ${refs.length} items.`);
+      const b=F.writeBatch(db);refs.slice(i,i+400).forEach(r=>b.delete(r));await timeout(b.commit(),30000);
+    }
+    status(`Done. Removed ${players.length} spam account${players.length===1?'':'s'}, ${reqs.length} request${reqs.length===1?'':'s'} and ${fb.length} feedback message${fb.length===1?'':'s'}.`);
+    loadPlayers();loadReqs();loadFb();
+  }catch(e){spamPend=null;status(`Could not remove spam accounts. ${why(e)}`)}
+  btn.textContent='Find spam accounts';btn.disabled=false;
 };
 /* ---------- player requests ---------- */
 const WIDS=new Set([...ITEMS.w,...SECRET].map(x=>x[0])),AIDS=new Set(ITEMS.a.map(x=>x[0])),NIDS=new Set(NADES.map(x=>x[0]));
