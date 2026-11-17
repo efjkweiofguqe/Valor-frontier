@@ -3344,7 +3344,7 @@ function fire(){
     G.odN=(G.odN||0)+1;if(G.odN>1&&(G.odN-1)%10===0)G.odB=(G.odB||0)+stepUp;
     const cd=Math.max(.033,w.cd/(1+(G.odB||0)));G.odCd=cd;
     w={...w,cd,odLvl:(G.odB||0)*10,buzz:1/cd>=14?1/cd:0}}
-  const shots=Math.min(w.shots,A[side]);A[side]-=shots;if(w.vent){G.heat=G.heat||{};G.heat[wi]=(G.heat[wi]||0)+shots}G.cd=w.cd;gunSound(w,shots,w.akimbo?side:-1);if(rdOn())RD.muzzle=.07;if(w.heatT)mgHeat(w);
+  const shots=Math.min(w.shots,A[side]);A[side]-=shots;if(w.vent){G.heat=G.heat||{};G.heat[wi]=(G.heat[wi]||0)+shots}G.cd=w.cd;gunSound(w,shots,w.akimbo?side:-1);if(rdOn()){RD.muzzle=.07;rfShot(w,shots)}if(w.heatT)mgHeat(w);
   const pr=G.mode==='practice';if(pr)G.pShots++;
   const gap=w.gap||SND[w.id].gap,acc=w.sure?1:(w.acc||.92)*(G.cover?.65:1);
   const tgt=G.enemies.filter(e=>Math.abs(norm(e.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist);
@@ -5985,6 +5985,218 @@ Object.assign(fx,{
     setTimeout(()=>{fx.rdThud(80,6,8);setTimeout(()=>fx.rdSlap(80,6,5),90);setTimeout(()=>fx.rdThud(85,6.5,3),260)},1100)}
 });
 
+/* ----- held rifles: the AK-47, AN-94 and M4A1 drawn in your hands like the real guns.
+   Each one is drawn from its left side, as you would see it held at your right shoulder: real parts, real colours,
+   and the attachments you have equipped (silencer, extended barrel, reflex sight, grip, longer or drum magazines).
+   Firing kicks the gun back, flashes at the muzzle the way that gun really flashes and throws brass out of the top.
+   Reloading plays the real drill: AK-47 and AN-94 rock the magazine out and in and rack the charging handle;
+   the M4A1 drops its magazine, seats a new one and slaps the bolt catch. Looks only: sounds and timing are unchanged. ----- */
+const RF={kicks:[],brass:[],wid:null,raise:0,lastT:0};
+const RF_IDS={ak:1,an94:1,m4:1};
+function rfShot(w,n){if(!w||!RF_IDS[w.id])return;const now=performance.now(),gap=((w.gap||(SND[w.id]&&SND[w.id].gap))||.1)*1000;
+  for(let i=0;i<n;i++)RF.kicks.push({t:now+i*gap,b:0});if(RF.kicks.length>40)RF.kicks.splice(0,RF.kicks.length-40)}
+const RFC={steel:'#2b2c2f',steelHi:'#4a4c51',steelLo:'#18191b',blue:'#232529',wood:'#8a4a22',woodHi:'#a95f2e',woodLo:'#5e3015',
+  poly:'#1c1d1f',polyHi:'#34363a',polyLo:'#111113',mil:'#2c2f33',milHi:'#45494f',plum:'#2e2427',brass:'#d4a547',brassHi:'#f3cf75',
+  glove:'#3b342c',gloveHi:'#544a3e',gloveLo:'#28231e',sleeve:'#4a5130',sleeveLo:'#363b22'};
+function rfPoly(c,p,f,s,lw){c.beginPath();c.moveTo(p[0],p[1]);for(let i=2;i<p.length;i+=2)c.lineTo(p[i],p[i+1]);c.closePath();if(f){c.fillStyle=f;c.fill()}if(s){c.strokeStyle=s;c.lineWidth=lw||.3;c.stroke()}}
+function rfRR(c,x,y,w,h,r,f,s,lw){r=Math.min(r,w/2,h/2);c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();if(f){c.fillStyle=f;c.fill()}if(s){c.strokeStyle=s;c.lineWidth=lw||.3;c.stroke()}}
+function rfLine(c,pts,col,lw){c.beginPath();c.moveTo(pts[0],pts[1]);for(let i=2;i<pts.length;i+=2)c.lineTo(pts[i],pts[i+1]);c.strokeStyle=col;c.lineWidth=lw;c.stroke()}
+function rfCirc(c,x,y,r,f,s,lw){c.beginPath();c.arc(x,y,r,0,Math.PI*2);if(f){c.fillStyle=f;c.fill()}if(s){c.strokeStyle=s;c.lineWidth=lw||.3;c.stroke()}}
+/* a curved box magazine: front edge from (0,0) down to the toe, back edge from (wd,0) down to the heel */
+function rfMagShape(c,wd,len,curve,col,hi,lo,ribs){
+  const tx=-curve,ty=len,hx=wd-curve*1.05,hy=len+1.2;
+  c.beginPath();c.moveTo(0,0);c.lineTo(wd,0);c.quadraticCurveTo(wd+.3,len*.55,hx,hy);c.lineTo(tx-.3,ty+.2);c.quadraticCurveTo(.3,len*.5,0,0);c.closePath();c.fillStyle=col;c.fill();c.strokeStyle=lo;c.lineWidth=.35;c.stroke();
+  // floorplate and a highlight down the front
+  c.beginPath();c.moveTo(tx-.6,ty-.6);c.lineTo(hx+.4,hy-.4);c.lineTo(hx+.2,hy+.9);c.lineTo(tx-.8,ty+.7);c.closePath();c.fillStyle=lo;c.fill();
+  c.beginPath();c.moveTo(.9,1);c.quadraticCurveTo(1.3,len*.5,tx+.8,ty-1);c.strokeStyle=hi;c.lineWidth=.5;c.stroke();
+  if(ribs)for(let i=0;i<ribs;i++){const t=(i+1)/(ribs+1),y=len*t,x0=-curve*t*t+.8,x1=wd-curve*1.05*t*t-.8;c.beginPath();c.moveTo(x0,y);c.lineTo(x1,y+.6*t);c.strokeStyle=lo;c.lineWidth=.45;c.stroke()}
+  // a round peeking out of the top
+  rfRR(c,wd*.3,-1.1,wd*.55,1.3,.6,RFC.brass)}
+function rfDrum(c,col,hi,lo){
+  rfPoly(c,[0,0,7.5,0,7.8,5,0,5.4],col,lo,.35);rfCirc(c,4.2,14,10,col,lo,.4);rfCirc(c,4.2,14,7.6,null,hi,.45);rfCirc(c,4.2,14,2.4,lo);rfCirc(c,4.2,14,1.2,hi);
+  for(let i=0;i<8;i++){const a=i/8*Math.PI*2;rfLine(c,[4.2+Math.cos(a)*8.4,14+Math.sin(a)*8.4,4.2+Math.cos(a)*9.6,14+Math.sin(a)*9.6],lo,.5)}rfRR(c,2,-1.1,4,1.3,.6,RFC.brass)}
+function rfQuad(c,len,col,hi,lo){
+  c.beginPath();c.moveTo(0,0);c.lineTo(6.6,0);c.lineTo(9.6,4.5);c.lineTo(9,len);c.lineTo(-3.6,len+.6);c.lineTo(-3.2,4.5);c.closePath();c.fillStyle=col;c.fill();c.strokeStyle=lo;c.lineWidth=.35;c.stroke();
+  rfLine(c,[3.2,4.5,2.7,len+.3],lo,.4);rfRR(c,-3.9,len-.5,13.8,1.6,.5,lo);rfLine(c,[-2.4,5.5,-2.6,len-1],hi,.45);rfRR(c,1.5,-1.1,4,1.3,.6,RFC.brass)}
+/* each rifle: its body, where the magazine sits, where your hands go and how the muzzle flashes */
+const RF_GUN={
+  ak:{name:'AK-47',mag:[44.2,5],grip:[66,10.6],trig:[56.6,6.6],fore:[32,1.4],foreBot:4.2,foreTop:-5.3,hgX:[25,39.5],rock:true,ch:[59,-5.9],eject:[57,-5.2],flash:'ak',
+    magDraw(c,k){if(k===2)rfDrum(c,'#2a2a2c','#4a4a4e','#141416');else if(k===1)rfMagShape(c,8,31,11.5,'#2f3033','#55575c','#18191b',5);else rfMagShape(c,8,24.5,8.5,'#2f3033','#55575c','#18191b',4)},
+    body(c,o){const C=RFC,bx=o.bx;
+      // stock: laminated wood with a steel buttplate and a sling loop
+      rfPoly(c,[72.4,-3.7,75,-3.9,100,.6,100,12.6,98.6,12.6,84.5,8.4,75,6.7,72.4,5.6],C.wood,C.woodLo,.4);
+      c.save();c.globalAlpha=.55;for(const[dy,dx]of[[.3,0],[3.2,2],[6.2,1]])rfLine(c,[76+dx,-2.4+dy*.6,98,2.4+dy*1.35],C.woodHi,.35);c.restore();
+      rfPoly(c,[99.2,.4,101.2,.7,101.2,12.9,99.2,12.7],C.steel,C.steelLo,.3);rfCirc(c,94,9.6,1.1,null,C.steelHi,.45);
+      // barrel and the old-style thread cap
+      rfRR(c,bx,-1,46-bx,2,.5,C.steel,C.steelLo,.3);rfLine(c,[bx+1,-.55,44,-.55],C.steelHi,.3);
+      if(!o.sil)rfRR(c,bx-1.4,-1.35,2.4,2.7,.5,C.steelLo);
+      // front sight block with its hooded post and the bayonet lug under it
+      rfPoly(c,[2,-1,8,-1,7,-4,5.6,-4,5.2,-7.6,4,-7.6,3.6,-4,2.6,-3],C.steel,C.steelLo,.3);c.beginPath();c.arc(4.6,-6.2,1.7,Math.PI*1.05,Math.PI*1.95);c.strokeStyle=C.steel;c.lineWidth=.6;c.stroke();
+      rfRR(c,3,1,4.4,1.3,.4,C.steel);
+      // gas block and gas tube
+      rfPoly(c,[12,-1,15.6,-1,15.6,-5,14,-5],C.steel,C.steelLo,.3);rfRR(c,14,-5,11.5,2.6,1.2,C.steel,C.steelLo,.3);rfLine(c,[14.5,-4.3,25,-4.3],C.steelHi,.3);
+      // wooden handguards held by a steel band
+      rfPoly(c,[25,-5.4,38,-5.4,39.2,-4.1,39.2,-2.2,25,-2.2,24.4,-3.6],C.wood,C.woodLo,.35);rfLine(c,[26,-4.6,37.5,-4.6],C.woodHi,.35);
+      rfPoly(c,[25,-1.7,39.6,-1.7,39.6,4.2,34,4.2,32.6,3.5,29,3.5,27.6,4.4,25,4.4],C.wood,C.woodLo,.35);rfLine(c,[26,-.7,39,-.7],C.woodHi,.4);
+      rfRR(c,23.6,-5.8,1.5,10.6,.3,C.steel,C.steelLo,.25);
+      // rear sight block and its tangent leaf
+      rfPoly(c,[38.4,-4.4,44.2,-4.4,44.2,-3.8,42.2,-6.3,40,-6.3],C.steel,C.steelLo,.3);rfLine(c,[40.2,-6.3,45,-6.8],C.steel,.7);
+      // receiver, dust cover and rivets
+      rfPoly(c,[40,-4.2,72.4,-4.2,72.8,-3,72.8,5.1,42,5.1,40,4],C.blue,C.steelLo,.35);
+      rfPoly(c,[44,-4.2,71.8,-4.2,72,-5.3,45,-5.5],C.steel,C.steelLo,.3);rfLine(c,[45.5,-5,71.4,-4.9],C.steelHi,.35);rfCirc(c,71.5,-4.7,.6,C.steelHi);
+      for(const[x,y]of[[47,3],[48.8,3],[63,3.6],[66,3.6],[69.5,1]])rfCirc(c,x,y,.38,C.steelHi);rfLine(c,[47.6,-3.6,47.6,4.6],C.steelLo,.35);rfLine(c,[41,0,71.8,0],'rgba(255,255,255,.06)',.6);
+      // the charging handle on the right side shows over the top, riding back with each shot
+      rfRR(c,o.ch+0,-6.6,3,1.5,.6,C.steelHi,C.steelLo,.3);
+      // trigger guard, trigger, pistol grip
+      rfLine(c,[51.8,5.1,52.4,8.2,59,8.3,60.5,5.1],C.steel,.75);rfLine(c,[56.2,5.1,56.7,7.3],C.steelHi,.65);
+      rfPoly(c,[60.5,5.1,66,5.1,70.6,15,70.1,16.3,65,16.3,63.4,14.6],C.wood,C.woodLo,.35);rfLine(c,[62.6,7,66.4,14.6],C.woodHi,.35)}},
+  an94:{name:'AN-94',mag:[45,5.4],grip:[66.4,10.8],trig:[57,6.8],fore:[31,1.6],foreBot:4.6,foreTop:-5,hgX:[20.5,41],rock:true,ch:[60.5,-5.9],eject:[58,-5.4],flash:'brake',
+    magDraw(c,k){if(k===2)rfQuad(c,22,RFC.plum,'#4e3d42','#171113');else if(k===1)rfMagShape(c,7.6,28,9,RFC.plum,'#4e3d42','#171113',6);else rfMagShape(c,7.6,22.5,6.2,RFC.plum,'#4e3d42','#171113',5)},
+    body(c,o){const C=RFC,bx=o.bx;
+      // folding polymer stock with its hinge block and rubber buttpad
+      rfPoly(c,[72,-3.4,76,-3.9,99,-1.4,99.6,0,99.6,11.6,98.6,12,86,8.1,76,6.4,72,5.6],C.poly,C.polyLo,.4);rfLine(c,[77,-2.6,98.5,-.6],C.polyHi,.4);
+      rfPoly(c,[80,1,94,2.6,94,7.8,86.5,6],C.polyLo);rfRR(c,99,-1.6,1.8,13.8,.5,'#0c0c0d');rfRR(c,71.4,-3.2,2.8,8.6,.5,C.steel,C.steelLo,.3);rfCirc(c,72.8,-1.6,.5,C.steelHi);
+      // barrel and the two-port muzzle brake
+      rfRR(c,bx,-1,44-bx,2,.5,C.steel,C.steelLo,.3);rfLine(c,[bx+1,-.55,42,-.55],C.steelHi,.3);
+      if(!o.sil){rfRR(c,bx-4.8,-2.3,5,4.6,.8,C.steel,C.steelLo,.3);rfRR(c,bx-4,-1.5,1.4,3,.4,'#0b0b0c');rfRR(c,bx-2.2,-1.5,1.4,3,.4,'#0b0b0c')}
+      // front sight on its tall post, bayonet mount below
+      rfPoly(c,[5,-1,9.2,-1,8.4,-3,7.6,-7.4,6.6,-7.4,6,-3],C.steel,C.steelLo,.3);c.beginPath();c.arc(7.1,-6,1.6,Math.PI*1.05,Math.PI*1.95);c.strokeStyle=C.steel;c.lineWidth=.6;c.stroke();rfRR(c,4,1,6.4,1.6,.4,C.steel);
+      rfPoly(c,[12,-1,14.2,-1,14.2,-4.8,12.8,-4.8],C.steel);rfRR(c,13,-4.8,8,2.2,1,C.steel,C.steelLo,.3);
+      // long polymer handguard with cooling slots
+      rfPoly(c,[20.5,-5,40,-5,41,-3.6,41,4.6,22.5,4.6,20.5,3],C.poly,C.polyLo,.35);rfLine(c,[21.5,-4.2,40,-4.2],C.polyHi,.4);
+      for(let i=0;i<4;i++)rfRR(c,23+i*4.3,-1.2,3.2,1.1,.5,'#09090a');for(let i=0;i<3;i++)rfRR(c,25+i*4.3,1.6,3.2,1,.5,'#09090a');
+      // receiver housing with the side optics rail and the rotating drum rear sight
+      rfPoly(c,[41,-4.4,71.2,-4.4,72,-3,72,5.4,43,5.4,41,4],C.poly,C.polyLo,.35);rfLine(c,[42,-3.6,71,-3.6],C.polyHi,.4);
+      rfRR(c,49,-2.4,13,1.4,.3,C.mil);for(let i=0;i<6;i++)rfRR(c,49.6+i*2.1,-2.1,1,.8,.2,C.milHi);
+      rfPoly(c,[60.6,-4.4,64.6,-4.4,63.8,-5.6,61.4,-5.6],C.steel);rfCirc(c,62.6,-6.6,1.9,C.steel,C.steelLo,.3);rfCirc(c,62.6,-6.6,.7,'#09090a');
+      for(const[x,y]of[[46,3.4],[68,3.6]])rfCirc(c,x,y,.4,C.polyHi);
+      rfRR(c,o.ch,-6.4,2.8,1.4,.6,C.steelHi,C.steelLo,.3);
+      rfLine(c,[52,5.4,52.6,8.4,59.2,8.5,60.8,5.4],C.steel,.75);rfLine(c,[56.6,5.4,57.1,7.5],C.steelHi,.65);
+      rfPoly(c,[60.8,5.4,66.2,5.4,70.8,15.2,70.3,16.5,65.2,16.5,63.6,14.8],C.poly,C.polyLo,.35);for(let i=0;i<4;i++)rfLine(c,[62.6+i*.9,8+i*1.9,65.8+i*.9,8+i*1.9],C.polyHi,.35)}},
+  m4:{name:'M4A1',mag:[44.6,6.8],grip:[63.4,10.2],trig:[55.6,5.6],fore:[28.5,.6],foreBot:3.4,foreTop:-3.4,hgX:[16,38.5],rock:false,catch:[51.8,2.6],eject:[56,-4.6],flash:'bird',
+    magDraw(c,k){if(k===2)rfQuad(c,20.5,'#2a2c2f','#4a4e54','#141517');else if(k===1)rfMagShape(c,6.6,24.5,3.6,'#2a2c2f','#4a4e54','#141517',0);else rfMagShape(c,6.6,19,2.6,'#53575c','#7a7f86','#2c2f33',0)},
+    body(c,o){const C=RFC,bx=o.bx;
+      // collapsible stock on its buffer tube
+      rfRR(c,65,-2.4,15,3.4,.8,C.mil,C.steelLo,.3);
+      rfPoly(c,[72,-3.2,89.4,-3.6,90.8,-3.2,90.8,8.8,89.6,9.3,84,5.8,80,4.3,74,1.7,72,1.7],'#1f2124',C.steelLo,.4);rfLine(c,[73,-2.4,89.8,-2.7],C.milHi,.4);
+      rfRR(c,89.8,-3.8,1.8,13.4,.5,'#121314');rfLine(c,[76,2.6,80,3.9],C.milHi,.5);
+      // barrel, birdcage flash hider, A-frame front sight with bayonet lug and sling swivel
+      rfRR(c,bx,-.9,42-bx,1.8,.4,C.steel,C.steelLo,.3);rfLine(c,[bx+.8,-.5,40,-.5],C.steelHi,.3);
+      if(!o.sil){rfRR(c,bx-3.6,-1.5,3.8,3,.4,C.steel,C.steelLo,.3);for(let i=0;i<3;i++)rfLine(c,[bx-3.1+i*1.1,-1.1,bx-3.1+i*1.1,.2],'#0b0b0c',.45)}
+      rfPoly(c,[11,-.9,15,-.9,15,-2.4,14.4,-2.4,13.6,-8.8,12.4,-8.8,11.6,-2.4,11,-2.4],C.steel,C.steelLo,.3);rfPoly(c,[12.3,-3.2,13.7,-3.2,13.3,-6.2,12.7,-6.2],'#0b0b0c');rfLine(c,[13,-8.8,13,-9.8],C.steel,.55);
+      rfRR(c,11.5,.9,2.6,1.6,.3,C.steel);c.beginPath();c.arc(13,3.6,1.1,0,Math.PI*2);c.strokeStyle=C.steel;c.lineWidth=.45;c.stroke();
+      // round ribbed handguard and delta ring
+      rfRR(c,15.2,-3,1.2,6,.4,C.steel);rfRR(c,16,-3.4,22.6,6.8,1.6,'#25272a',C.steelLo,.3);for(let x=17.2;x<38;x+=1.85)rfLine(c,[x,-2.8,x,2.8],'#141517',.55);rfLine(c,[16.6,-2.2,38,-2.2],C.milHi,.35);
+      rfPoly(c,[38.4,-4,41,-4.6,41,4.6,38.4,4],C.mil,C.steelLo,.3);
+      // flat-top upper with its Picatinny rail, folded rear sight and charging handle
+      rfPoly(c,[41,-3.6,64.6,-3.6,64.6,1.2,41,1.2],'#2d3034',C.steelLo,.35);rfLine(c,[42,-2.6,64,-2.6],C.milHi,.35);
+      rfRR(c,41.4,-5,22.8,1.4,.2,'#232528');for(let x=42;x<63.6;x+=1.6)rfRR(c,x,-5.5,.9,.6,.1,'#232528');
+      rfPoly(c,[59.8,-5,63.4,-5,63.4,-6.3,61,-6.3],C.mil);rfRR(c,63.6+o.ch,-4.5,2.8,1.3,.3,C.milHi,C.steelLo,.3);
+      // lower receiver: flared magwell, takedown pins, selector and bolt catch
+      rfPoly(c,[43.6,1.2,66,1.2,66,4.4,52.4,4.4,51.4,7,44.2,7,43.4,4.2],'#292b2f',C.steelLo,.35);rfLine(c,[44.4,2,65.4,2],C.milHi,.3);
+      rfCirc(c,45,2.6,.5,C.milHi);rfCirc(c,63.6,2.4,.5,C.milHi);rfLine(c,[60.4,2.4,62.2,1.6],C.milHi,.6);rfRR(c,51.2-o.cp,1.3,1.8,2.6,.35,'#3d4046',C.steelLo,.25);
+      rfLine(c,[52.4,4.4,52.9,7.1,58.6,7.1,59,4.4],C.steel,.7);rfLine(c,[55.2,4.4,55.7,6.3],C.steelHi,.6);
+      rfPoly(c,[59,4.4,63.8,4.4,67.4,14.6,66.8,15.5,62.4,15.5,61.6,14,60.6,9.8,61.4,8.6,60.4,8],'#1d1f22',C.steelLo,.35);rfLine(c,[61.6,5.4,65.4,13.8],C.milHi,.35)}}
+};
+/* hands and sleeves */
+function rfFist(c,x,y,rot,front){c.save();c.translate(x,y);c.rotate(rot);
+  rfRR(c,-3.4,-4.4,7.2,8.8,2.6,RFC.glove,RFC.gloveLo,.35);
+  if(front)for(let i=0;i<3;i++)rfRR(c,-4.3,-3.2+i*2.55,4,2.2,1.05,RFC.gloveHi,RFC.gloveLo,.3);
+  rfRR(c,-1.2,-6,5.4,2.2,1.1,RFC.gloveHi,RFC.gloveLo,.3);rfRR(c,1.6,-2.6,1.6,4.6,.8,RFC.gloveLo);c.restore()}
+function rfSupport(c,x,top,bot){   // left hand cradling the handguard: palm under it, thumb along this side, fingertips over the top
+  c.beginPath();c.ellipse(x,bot+1.2,4.6,2.8,0,0,Math.PI*2);c.fillStyle=RFC.glove;c.fill();c.strokeStyle=RFC.gloveLo;c.lineWidth=.35;c.stroke();
+  for(let i=0;i<4;i++)rfCirc(c,x-3.3+i*2.1,top+.2,1.05,RFC.gloveHi,RFC.gloveLo,.3);
+  c.save();c.translate(x-1.5,(top+bot)/2+.6);c.rotate(-.12);rfRR(c,0,-1.15,6.6,2.3,1.1,RFC.gloveHi,RFC.gloveLo,.3);c.restore()}
+function rfSleeve(c,x0,y0,x1,y1,w){c.lineCap='round';c.strokeStyle=RFC.sleeveLo;c.lineWidth=w*1.08;c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();
+  c.strokeStyle=RFC.sleeve;c.lineWidth=w*.92;c.stroke();c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=w*.25;c.beginPath();const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy)||1;c.moveTo(x0+dx/L*w*.4,y0+dy/L*w*.4);c.lineTo(x0+dx/L*w*.55,y0+dy/L*w*.55);c.stroke()}
+/* muzzle flashes, drawn pointing out of the muzzle along the barrel */
+function rfFlash(c,x,kind,sil,k){const r=Math.random;c.save();c.translate(x,0);c.globalCompositeOperation='lighter';
+  if(sil){const g=c.createRadialGradient(-1.5,0,0,-1.5,0,4);g.addColorStop(0,`rgba(255,230,180,${.35*k})`);g.addColorStop(1,'rgba(255,200,120,0)');c.fillStyle=g;c.beginPath();c.arc(-1.5,0,4,0,Math.PI*2);c.fill();c.restore();return}
+  const core=(rx,ry,cx)=>{const g=c.createRadialGradient(cx,0,0,cx,0,rx);g.addColorStop(0,`rgba(255,255,230,${k})`);g.addColorStop(.35,`rgba(255,200,90,${.85*k})`);g.addColorStop(1,'rgba(255,120,30,0)');c.fillStyle=g;c.beginPath();c.ellipse(cx,0,rx,ry,0,0,Math.PI*2);c.fill()};
+  const spike=(a,len,w)=>{c.save();c.rotate(a);const g=c.createLinearGradient(0,0,-len,0);g.addColorStop(0,`rgba(255,240,190,${k})`);g.addColorStop(1,'rgba(255,140,40,0)');c.fillStyle=g;c.beginPath();c.moveTo(0,-w);c.lineTo(-len,0);c.lineTo(0,w);c.closePath();c.fill();c.restore()};
+  if(kind==='ak'){core(9+r()*4,5+r()*2,-5);for(const a of[0,.75,-.75,1.5,-1.5])spike(a+(r()-.5)*.25,(a?6:12)+r()*5,1.6)}
+  else if(kind==='bird'){core(5+r()*2,3,-2.5);for(const a of[0,-1.1,-1.6,-2.1])spike(a+(r()-.5)*.15,(a?4.5:7)+r()*3,.9)}
+  else{core(4,3,-2);for(const a of[1.57,-1.57])for(const dx of[-3.3,-1.5]){c.save();c.translate(dx,0);spike(a+(r()-.5)*.2,6+r()*3,1.3);c.restore()}spike(0,5+r()*2,1)}
+  c.restore()}
+const rfE=t=>t<=0?0:t>=1?1:t*t*(3-2*t),rfL=(a,b,t)=>a+(b-a)*rfE(t),rfSeg=(f,a,b)=>(f-a)/(b-a);
+function rfDraw(c,W,H,X0,Y0){
+  const w=G&&G.lo&&G.lo[G.w];if(!w||!RF_IDS[w.id]||G.down){RF.wid=null;return false}
+  const S0=RF_GUN[w.id],now=performance.now(),dt=Math.min(.05,Math.max(0,(now-(RF.lastT||now))/1000));RF.lastT=now;
+  if(RF.wid!==w.id){RF.wid=w.id;RF.raise=now;RF.kicks.length=0}
+  const eq=(P.att[w.id]||{eq:[]}).eq,has=k=>eq.includes(k),mk=has('extmag2')?2:has('extmag')?1:0;
+  const o={sil:!!w.sil,ext:w.barrel?7:0,grip:has('grip'),reflex:has('reflex'),ch:0,cp:0};o.bx=-o.ext;
+  // recoil from each round of the burst, and brass for each one
+  let kick=0,flash=0;for(const s of RF.kicks){const d=now-s.t;if(d<0)continue;kick+=d<30?d/30:Math.max(0,1-(d-30)/170);if(d<45)flash=Math.max(flash,1-d/45);if(!s.b){s.b=1;s.eject=1}}
+  RF.kicks=RF.kicks.filter(s=>now-s.t<400);kick=Math.min(1.5,kick);
+  // reload progress
+  const job=G.jobs&&G.jobs.find(j=>j.wi===G.w),fr=job&&job.total>0?Math.max(0,Math.min(1,1-job.left/job.total)):-1;
+  let tilt=0,mag={dx:0,dy:0,rot:0,a:1,on:true},lh=null,rh=null,jolt=0;
+  const M=S0.mag,fore=o.grip?[S0.fore[0]+.5,S0.foreBot+4]:S0.fore,off=[M[0]-6,M[1]+90];
+  if(fr>=0){
+    tilt=fr<.12?rfE(fr/.12):fr<.86?1:1-rfE(rfSeg(fr,.86,1));
+    const grab=[M[0]+3,M[1]+9];
+    if(fr<.12)lh=[rfL(fore[0],grab[0],fr/.12),rfL(fore[1],grab[1],fr/.12)];
+    else if(fr<.38){const t=rfSeg(fr,.12,.38);
+      if(S0.rock){const t1=Math.min(1,t/.45);mag.rot=.5*rfE(t1);if(t>.45){const t2=(t-.45)/.55;mag.dy=60*t2*t2;mag.dx=-8*t2;mag.a=1-t2}lh=t<.45?[grab[0]-2*t1,grab[1]+1.5*t1]:[rfL(grab[0]-2,off[0],(t-.45)/.55),rfL(grab[1]+1.5,off[1],(t-.45)/.55)]}
+      else{mag.dy=70*t*t;mag.a=1-t*t;lh=[rfL(grab[0],off[0],t),rfL(grab[1],off[1],t)]}}
+    else if(fr<.64){const t=rfSeg(fr,.38,.64),near=[M[0]-1,M[1]+(S0.rock?14:16)];
+      // a fresh magazine comes up from your belt and goes in: hooked and rocked back on the AK and AN-94, pushed straight up on the M4A1
+      if(t<.5){const u=t/.5;mag.dx=rfL(off[0]-M[0],near[0]-M[0],u);mag.dy=rfL(off[1]-M[1],near[1]-M[1],u);mag.rot=S0.rock?.5:0}
+      else{const u=(t-.5)/.5;mag.dx=rfL(near[0]-M[0],0,u);mag.dy=rfL(near[1]-M[1],0,Math.min(1,u*1.3));mag.rot=S0.rock?.5*(1-rfE(Math.max(0,(u-.35)/.65))):0;if(u>.9)jolt=(1-u)*10}
+      lh=[M[0]+3+mag.dx,M[1]+9+mag.dy]}
+    else{if(fr<.7)jolt=Math.max(jolt,(.7-fr)/.06*.6);
+      if(S0.rock){lh=[rfL(M[0]+3,fore[0],rfSeg(fr,.64,.76)),rfL(M[1]+9,fore[1],rfSeg(fr,.64,.76))];
+        // right hand leaves the grip, reaches over and racks the charging handle
+        const g=S0.grip,h=S0.ch;
+        if(fr<.72)rh=[rfL(g[0],h[0]+1.5,rfSeg(fr,.64,.72)),rfL(g[1],h[1]-1,rfSeg(fr,.64,.72))];
+        else if(fr<.79){const t=rfSeg(fr,.72,.79);o.ch=8*rfE(t);rh=[h[0]+1.5+o.ch,h[1]-1]}
+        else if(fr<.81){o.ch=8*(1-rfSeg(fr,.79,.81));rh=[h[0]+9.5,h[1]-1.5];jolt=Math.max(jolt,1)}
+        else rh=[rfL(h[0]+9.5,g[0],rfSeg(fr,.81,.9)),rfL(h[1]-1.5,g[1],rfSeg(fr,.81,.9))];if(fr>=.9)rh=null}
+      else{const b=S0.catch;
+        // left thumb slaps the bolt catch and the bolt slams home
+        if(fr<.72)lh=[rfL(M[0]+3,b[0]+1,rfSeg(fr,.64,.72)),rfL(M[1]+9,b[1]+2.4,rfSeg(fr,.64,.72))];
+        else if(fr<.76){o.cp=.7;lh=[b[0]+.4,b[1]+2.4];jolt=Math.max(jolt,fr<.74?1:0)}
+        else lh=[rfL(b[0]+1,fore[0],rfSeg(fr,.76,.88)),rfL(b[1]+2.4,fore[1],rfSeg(fr,.76,.88))];if(fr>=.88)lh=null}}}
+  if(!o.ch&&(w.id==='ak'||w.id==='an94'))o.ch=Math.min(1,kick)*7;   // the AK's bolt carrier and handle fly back with every round
+  o.ch+=S0.ch?S0.ch[0]:0;
+  // placement: muzzle just right of and below your sights, gun angled back toward your right shoulder
+  const th=.5,co=Math.cos(th),si=Math.sin(th),gx=S0.grip[0]*co-S0.grip[1]*si,gy=S0.grip[0]*si+S0.grip[1]*co;
+  const S=Math.min(W*.42/gx,H*.34/gy),rs=Math.min(1,(now-RF.raise)/300),sway=Math.sin(now/950),bob=Math.sin(now/470);
+  // your right hand sits low on the right, the muzzle reaches in toward the middle, just below your sights
+  let tx=W*.88-gx*S+sway*S*.8,ty=H*.9-gy*S+bob*S*.5+(1-rfE(rs))*H*.6;
+  c.save();c.translate(tx,ty);c.rotate(th);c.scale(S,S);
+  // recoil pushes the gun back into your shoulder and lifts the muzzle; reloading tilts it up so you can see the magazine well
+  const piv=S0.grip;c.translate(kick*2.6+jolt*.5,0);c.translate(piv[0],piv[1]);c.rotate(-kick*.06-tilt*.32+jolt*.012);c.translate(-piv[0],-piv[1]);c.translate(-tilt*2,-tilt*3);
+  const m=c.getTransform(),toS=(x,y)=>[m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f];
+  // sleeves first, so the gun and gloves sit over them
+  c.save();c.setTransform(1,0,0,1,0,0);const sw=9*S;
+  const lw0=lh||fore,rw0=rh||S0.grip,lW=toS(lw0[0]+2,lw0[1]+4.5),rW=toS(rw0[0]+3,rw0[1]+5);
+  rfSleeve(c,lW[0],lW[1],X0-W*.08,H+sw*2.2,sw);rfSleeve(c,rW[0],rW[1],W+sw,H+sw*1.2,sw*1.1);c.restore();
+  // magazine (drawn under the receiver so it seats into the magwell)
+  if(mag.a>.02){c.save();c.globalAlpha=mag.a;c.translate(M[0]+mag.dx,M[1]+mag.dy);c.rotate(mag.rot);S0.magDraw(c,mk);c.restore()}
+  // left hand on a fresh magazine during the reload sits behind the gun body only while it is down at the magwell
+  S0.body(c,o);
+  // attachments: silencer, vertical grip, red dot sight
+  if(o.sil){rfRR(c,o.bx-15.5,-2.5,16,5,1.4,'#202124',RFC.steelLo,.35);for(let x=o.bx-14;x<o.bx;x+=3.2)rfLine(c,[x,-2.3,x,2.3],'#2e3034',.4);rfLine(c,[o.bx-15,-1.6,o.bx-.5,-1.6],RFC.polyHi,.4)}
+  if(o.grip){const gx=fore[0]-1.6,gy=S0.foreBot;rfRR(c,gx-.5,gy-.6,4.2,1.4,.3,RFC.mil);rfRR(c,gx,gy,3.2,8,1.2,'#1d1f22',RFC.steelLo,.35);for(let i=0;i<3;i++)rfLine(c,[gx+.4,gy+2+i*1.9,gx+2.8,gy+2+i*1.9],RFC.milHi,.35)}
+  if(o.reflex){if(w.id==='m4'){rfPoly(c,[48.4,-5.4,55.2,-5.4,54.2,-6.6,49.4,-6.6],RFC.mil);rfRR(c,47,-10.4,9.6,4,1.6,'#1b1c1e',RFC.steelLo,.35);rfCirc(c,51.8,-8.4,1,'#2b2d30');rfRR(c,46.6,-10.6,1.2,4.4,.4,'#111')}
+    else{rfPoly(c,[49.5,-2.4,58,-2.4,58,-5.6,56,-7.2,51.4,-7.2,49.5,-5.6],RFC.mil,RFC.steelLo,.3);rfRR(c,47.6,-11.4,10,4,1.6,'#1b1c1e',RFC.steelLo,.35);rfCirc(c,52.6,-9.4,1,'#2b2d30');rfRR(c,47.2,-11.6,1.2,4.4,.4,'#111')}
+    c.save();c.globalCompositeOperation='lighter';rfCirc(c,w.id==='m4'?56.4:57.4,w.id==='m4'?-8.4:-9.4,.55,'rgba(255,60,50,.9)');c.restore()}
+  // gloves
+  if(!rh){rfFist(c,S0.grip[0],S0.grip[1],-.45,true);c.lineCap='round';rfLine(c,[S0.grip[0]-2.6,S0.grip[1]-3.6,S0.trig[0],S0.trig[1]],RFC.gloveHi,1.7)}
+  else rfFist(c,rh[0],rh[1],.2,true);
+  if(!lh){if(o.grip)rfFist(c,fore[0]+.1,fore[1]-.2,-.05,true);else rfSupport(c,fore[0],S0.foreTop,S0.foreBot)}
+  else rfFist(c,lh[0],lh[1],-.3,true);
+  // muzzle flash
+  const tip=o.bx-(o.sil?15.5:S0.flash==='brake'?4.8:S0.flash==='bird'?3.6:1.4);
+  if(flash>0)rfFlash(c,tip,S0.flash,o.sil,flash);
+  // spawn brass from the ejection port, in screen space
+  for(const s of RF.kicks)if(s.eject){s.eject=0;const p=toS(S0.eject[0],S0.eject[1]);RF.brass.push({x:p[0],y:p[1],vx:W*(.35+Math.random()*.3),vy:-H*(.5+Math.random()*.35),r:Math.random()*6,vr:(Math.random()-.5)*30,t:0})}
+  c.restore();
+  // brass flying out to the right and tumbling away
+  c.save();for(const b of RF.brass){b.t+=dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=H*3.2*dt;b.r+=b.vr*dt;c.save();c.translate(b.x,b.y);c.rotate(b.r);rfRR(c,-1.2*S,-.42*S,2.4*S,.84*S,.3*S,RFC.brass);rfRR(c,-1.2*S,-.42*S,.5*S,.84*S,.2*S,RFC.brassHi);c.restore()}
+  RF.brass=RF.brass.filter(b=>b.t<1.2&&b.y<H+40&&b.x<W+40);if(RF.brass.length>30)RF.brass.splice(0,RF.brass.length-30);c.restore();
+  return true}
 /* ----- the picture: a simple first-person view from where you stand ----- */
 const vcv=$('view'),v2=vcv.getContext('2d');
 const RDPAL={rainforest:['#16301f','#6e9b6b','#26361d','#4e4a36'],alien:['#170c2e','#5b3778','#241733','#3b3152'],tundra:['#7fa6c0','#e3edf3','#b4c4ce','#7f8b94'],
@@ -6072,10 +6284,11 @@ function rdDraw(){
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   tdDraw(c,W,H,X0,Y0,P);   // Unbearable Buddy held in both hands, with its eye lasers
+  const rfOn=rfDraw(c,W,H,X0,Y0);   // AK-47, AN-94 and M4A1 held in your hands
   // sights and muzzle flash
   const lock=!!G.lockE;c.strokeStyle=lock?'#ff5a4a':'rgba(255,255,255,.7)';c.lineWidth=Math.max(1.5,W/220);const cs=Math.max(6,W/40);
   c.beginPath();c.moveTo(X0-cs,Y0);c.lineTo(X0-cs*.35,Y0);c.moveTo(X0+cs*.35,Y0);c.lineTo(X0+cs,Y0);c.moveTo(X0,Y0-cs);c.lineTo(X0,Y0-cs*.35);c.moveTo(X0,Y0+cs*.35);c.lineTo(X0,Y0+cs);c.stroke();
-  if(RD.muzzle>0){const mx=X0+W*.12,my=H*.92,mr=W*.07*(.6+Math.random()*.6),g3=c.createRadialGradient(mx,my,0,mx,my,mr);g3.addColorStop(0,'rgba(255,255,220,.95)');g3.addColorStop(.5,'rgba(255,190,70,.6)');g3.addColorStop(1,'rgba(255,140,40,0)');
+  if(RD.muzzle>0&&!rfOn){const mx=X0+W*.12,my=H*.92,mr=W*.07*(.6+Math.random()*.6),g3=c.createRadialGradient(mx,my,0,mx,my,mr);g3.addColorStop(0,'rgba(255,255,220,.95)');g3.addColorStop(.5,'rgba(255,190,70,.6)');g3.addColorStop(1,'rgba(255,140,40,0)');
     c.fillStyle=g3;c.beginPath();c.arc(mx,my,mr,0,Math.PI*2);c.fill()}
 }
 const RD_CAP=150,RD_CAPB=100,FOG_A=6,FOG_B=14;   // metres: fog starts about 20 feet out, hides everything past about 46 feet
@@ -6176,6 +6389,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-17-rifles',date:'November 17, 2026',title:'Assault rifles now visible in your hands',items:[
+    'For sighted players: the AK-47, AN-94 and M4A1 carbine are now drawn in your hands in the battle view, modelled on the real guns. The AK-47 has its wooden stock and handguards and curved steel magazine, the AN-94 its black polymer body, two-port muzzle brake and plum magazine, and the M4A1 its ribbed handguard, flat-top rail and grey magazine.',
+    'Each gun kicks back when it fires, once for every round of the burst, flashes at the muzzle the way that rifle really does, and throws brass out of the top. The AK-47 and AN-94 charging handles ride back with each shot.',
+    'Reloads play the real drill: the AK-47 and AN-94 rock the old magazine out, rock a new one in and rack the charging handle; the M4A1 drops its magazine, pushes in a fresh one and slaps the bolt catch.',
+    'Attachments show on the gun: silencer, extended barrel, reflex sight and grip. Extended magazines are longer, and Extended magazine V2 becomes a drum on the AK-47 and a four-column magazine on the AN-94 and M4A1.',
+    'This only changes what you see. Sounds, damage and reload times are exactly the same.']},
   {id:'2026-11-16-appcheck',date:'November 16, 2026',title:'Account protection against fake sign-ups',items:[
     'The game now quietly checks that accounts are created from the real game, not by automated scripts. This blocks bots that were flooding the game with fake accounts.',
     'Nothing changes for you: there are no puzzles or extra steps, and your account, save and gifts work the same as before.']},
