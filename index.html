@@ -6827,13 +6827,13 @@ const RF_SNIP={
       rfPoly(c,[86,5.4,91,5.4,94.4,14.6,93.8,15.6,89.4,15.6,88.4,14],'#4a2a16','#24140a',.35)}}
 };
 Object.assign(RF_GUN,RF_SNIP);
-function rfSnipMag(c,S0,ext){const L=S0.magL[ext?1:0];if(S0.magTop){c.save();c.translate(0,-L);rfBoxMag(c,S0.magW,L,'#30332e','#4d514a','#161816');c.restore()}else rfBoxMag(c,S0.magW,L,'#25272a','#44474d','#121314')}
+function rfSnipMag(c,S0,ext){if(S0.magDraw)return S0.magDraw(c,ext);const L=S0.magL[ext?1:0];if(S0.magTop){c.save();c.translate(0,-L);rfBoxMag(c,S0.magW,L,'#30332e','#4d514a','#161816');c.restore()}else rfBoxMag(c,S0.magW,L,'#25272a','#44474d','#121314')}
 function rfDrawSnip(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
   const C=RFC,n=(G.ammo&&G.ammo[G.w]&&G.ammo[G.w][0]!=null)?G.ammo[G.w][0]:1;
-  o.xr=S0.xr;o.bf=S0.bf;o.scope=has('scope')||has('pscope');o.pscope=has('pscope');o.ch=S0.ch?S0.ch[0]:0;o.boltUp=0;o.boltBack=0;
+  o.xr=S0.xr;o.bf=S0.bf;o.scope=has('scope')||has('pscope');o.pscope=has('pscope');o.ch=S0.ch?S0.ch[0]:0;o.boltUp=0;o.boltBack=0;o.laser=has('laser');o.reflex=has('reflex');
   const ext=has('extmag')||has('extmag2');let jolt=0,tilt=0,lh=null,rh=null;
   // semi-autos: the Barrett barrel and the charging handles ride back with each shot
-  o.recoil=w.id==='barrett'?Math.min(1,kick)*4:0;if(w.id==='svd'||w.id==='osv96'||w.id==='barrett')o.ch+=Math.min(1,kick)*(w.id==='svd'?7:5);
+  o.recoil=w.id==='barrett'?Math.min(1,kick)*4:0;if(w.id==='svd'||w.id==='osv96'||w.id==='barrett'||w.id==='skorpion')o.ch+=Math.min(1,kick)*(w.id==='svd'?7:5);
   let newShot=false;for(const s of RF.kicks)if(s.eject){newShot=true}
   if(newShot&&S0.action==='bolt')RF.boltT=now+140;
   const fore=S0.foreFist?[S0.foreFist[0],S0.foreFist[1]]:o.grip?rfProj(S0,S0.gripAt[0]+1.6,S0.gripAt[1]+4):rfProj(S0,S0.fore[0],S0.fore[1]);
@@ -6889,8 +6889,8 @@ function rfDrawSnip(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
   if(!lh){if(S0.foreFist)rfFist(c,S0.foreFist[0],S0.foreFist[1],S0.foreFist[2],true);else if(o.grip)rfFist(c,fore[0]+.1,fore[1]-.2,-.05,true);else{const t=rfProj(S0,S0.fore[0],S0.foreTop),b=rfProj(S0,S0.fore[0],S0.foreBot);rfSupport(c,fore[0],t[1],b[1])}}
   else rfFist(c,lh[0],lh[1],-.3,true);
   // brass: semi-autos throw it on every shot, bolt guns when the bolt comes back
-  const bl=(w.id==='svd'?3:5.2)*S;
-  for(const s of RF.kicks)if(s.eject){s.eject=0;if(S0.action!=='bolt'){const p=toS(S0.eject[0],S0.eject[1]);RF.brass.push({x:p[0],y:p[1],vx:W*(.3+Math.random()*.25),vy:-H*(.45+Math.random()*.3),r:Math.random()*6,vr:(Math.random()-.5)*20,t:0,s:bl})}
+  const bl=(S0.brassL||(w.id==='svd'?3:5.2))*S;
+  for(const s of RF.kicks)if(s.eject){s.eject=0;if(S0.action!=='bolt'){const p=toS(S0.eject[0],S0.eject[1]),dn=S0.ejDown;RF.brass.push({x:p[0],y:p[1],vx:dn?W*.04:W*(.3+Math.random()*.25),vy:dn?H*.06:-H*(.45+Math.random()*.3),r:Math.random()*6,vr:(Math.random()-.5)*20,t:0,s:bl})}
     if(S0.flash==='brake50'&&!o.sil){const mz=toS(o.bx-S0.tip,0);rfPuff(mz[0],mz[1],S*4,8,0,-S*6,true)}}
   if(boltEject&&!RF.boltEj){RF.boltEj=1;const p=toS(S0.eject[0]+7,S0.eject[1]);RF.brass.push({x:p[0],y:p[1],vx:W*(.3+Math.random()*.2),vy:-H*(.5+Math.random()*.25),r:0,vr:12,t:0,s:bl})}
   if(!boltEject)RF.boltEj=0;
@@ -7193,6 +7193,46 @@ function rfDrawPistol(c,W,H,X0,Y0,w,S0,now,dt,o,has){
   if(ak){S=rfPistolOne(c,W,H,X0,Y0,w,S0,now,dt,{...o},has,0,true,true);rfPistolOne(c,W,H,X0,Y0,w,S0,now,dt,o,has,1,true,false)}
   else S=rfPistolOne(c,W,H,X0,Y0,w,S0,now,dt,o,has,1,false,false);
   rfBrassDraw(c,W,H,S,dt);rfFx(c,W,H,X0,Y0,dt);return true}
+/* ----- held submachine guns: Skorpion vz. 61 and FN P90, drawn like the real guns.
+   Skorpion: short barrel, cocking knobs on top that fly back with every shot, brass straight up out of the top,
+   wire stock and its big drum. P90: the bullpup body with its two thumbholes, the clear top magazine with the rounds
+   lying crosswise inside it, the ring sight, and brass dropping out of the bottom of the butt.
+   Uses the same drill as the sniper rifles (magazine out, new one in, charging handle). Looks only. ----- */
+Object.assign(RF_IDS,{skorpion:1,p90:1});
+Object.assign(RF_GUN,{
+  skorpion:{snip:1,xr:0,bf:1,th:.48,kk:.5,sc:.82,grip:[42.6,9.6],gripRot:-.2,trig:[30,5.8],foreFist:[13.4,13,-.15],
+    mag:[13.6,3],magL:[16,20],magDraw(c,ext){const r=ext?10:8.2;rfRR(c,0,0,6.4,4,.6,'#1c1d20');rfCirc(c,3.2,r+3,r,'#25272a','#0f1012',.4);rfCirc(c,3.2,r+3,r*.7,null,'#3a3d42',.45);rfCirc(c,3.2,r+3,r*.22,'#33363b');
+      for(let i=0;i<8;i++){const a=i/8*Math.PI*2;rfLine(c,[3.2+Math.cos(a)*r*.78,r+3+Math.sin(a)*r*.78,3.2+Math.cos(a)*r*.92,r+3+Math.sin(a)*r*.92],'#121314',.45)}rfRR(c,1.6,-1,3.2,1.2,.5,RFC.brass)},
+    action:'ch',ch:[29,-4.2],eject:[34,-3.4],brassL:1.8,flash:'bird',tip:1.2,silL:14,silR:1.9,
+    body(c,o){const C=RFC,bk='#24262a',lo='#101113',hi='#44474d';
+      // unfolded wire stock with its curved butt plate
+      c.lineCap='round';rfLine(c,[46,-2,78,-1.2],'#3a3d42',.9);rfLine(c,[46,2.4,78,6.4],'#3a3d42',.9);rfLine(c,[60,-1.6,62,4.2],'#3a3d42',.6);
+      c.beginPath();c.moveTo(77.4,-2);c.quadraticCurveTo(80.6,2.4,77.4,7.4);c.strokeStyle='#2c2e32';c.lineWidth=1.6;c.stroke();
+      const bx=o.bx;rfRR(c,bx,-1,8-bx,2,.5,C.steel,C.steelLo,.3);if(!o.sil)rfRR(c,bx-.8,-1.2,1.4,2.4,.4,C.steelLo);else rfSil(c,bx,14,1.9);
+      // receiver with the front sight ears, cocking knob riding on top, ejection port in the top
+      rfRR(c,6,-3,40.4,6,1.4,bk,lo,.4);rfLine(c,[7,-2.2,45.6,-2.2],hi,.4);rfPoly(c,[6.6,-3,9.4,-3,9,-5,7,-5],bk);rfRR(c,40,-4,3,1,.3,bk);
+      rfRR(c,22,-3.3,12,.9,.3,'#0b0b0c');rfCirc(c,o.ch+1.2,-3.8,1,C.steelHi,C.steelLo,.3);
+      if(o.laser){rfRR(c,1,1.4,6,2,.5,'#1b1c1e',lo,.3);rfCirc(c,1.2,2.4,.5,'#ff3b30')}
+      if(o.reflex)rfDot(c,24,-3);
+      // trigger guard, selector, brown grip panels
+      rfLine(c,[24.6,3,25,7.6,33.6,7.8,35,3],bk,.8);rfLine(c,[29.6,3,30,6],C.steelHi,.6);rfRR(c,35,1,3,1.2,.4,hi);
+      rfPoly(c,[36,3,44.4,3,47,14.4,46,15.6,40.6,15.6,39,13.8],'#4a2a18','#22130a',.35);for(let i=0;i<5;i++)rfLine(c,[38.6+i*.5,6+i*1.8,44.2+i*.5,6+i*1.8],'#331c0f',.4);o.flashFn&&o.flashFn()}},
+  p90:{snip:1,xr:0,bf:1,th:.48,kk:.5,sc:.62,anc:[.74,.86],grip:[42.4,9.6],gripRot:-.05,trig:[33.2,6.4],foreFist:[14.8,8.4,-.1],
+    mag:[18,-4],magL:[3.8,3.8],magTop:1,magDraw(c,ext){const L=ext?60:52;c.save();c.translate(0,-3.8);
+      // clear smoky magazine: you can see the rounds lying crosswise inside
+      rfRR(c,0,0,L,3.8,1.2,'rgba(70,72,74,.75)','#1a1b1c',.35);for(let x=1.6;x<L-1;x+=1.15){rfRR(c,x,.7,.8,2.4,.3,'rgba(212,165,71,.85)')}rfRR(c,0,0,L,1,.4,'rgba(255,255,255,.12)');rfRR(c,L-3,-.6,3,5,.6,'#1f2023');c.restore()},
+    action:'ch',ch:[16,1.6],eject:[74,12],ejDown:1,brassL:1.7,flash:'bird',tip:2.6,silL:14,silR:1.9,
+    body(c,o){const C=RFC,bk='#1f2023',lo='#0d0d0e',hi='#3d3f43';const bx=o.bx;
+      rfRR(c,bx-2.6,-1.2,7+(-bx),2.4,.5,C.steel,C.steelLo,.3);if(!o.sil)for(let i=0;i<3;i++)rfRR(c,bx-2+i*.9,-.9,.5,1.8,.2,'#0b0b0c');else rfSil(c,bx-2.6,14,1.9);
+      // the bullpup body with the front loop for your support hand and the rear thumbhole grip
+      c.beginPath();c.moveTo(4,-1.6);c.lineTo(8,-4);c.lineTo(80,-4);c.lineTo(84,-1);c.lineTo(84,12);c.lineTo(82,13.4);c.lineTo(58,13.4);c.lineTo(52,14.6);c.lineTo(38,15.4);c.lineTo(35,12);c.lineTo(24,12);c.lineTo(20,13.6);c.lineTo(9,13);c.lineTo(5,6);c.closePath();
+      c.moveTo(11,4.4);c.lineTo(21,4.4);c.lineTo(21,10);c.lineTo(12.6,10.4);c.closePath();c.moveTo(37,5);c.lineTo(48,5);c.lineTo(50,12.4);c.lineTo(39.6,13);c.closePath();
+      c.fillStyle=bk;c.fill('evenodd');c.strokeStyle=lo;c.lineWidth=.4;c.stroke();rfLine(c,[9,-3,80,-3],hi,.45);rfLine(c,[56,6,82,6],lo,.4);rfRR(c,82.6,-1,1.6,13.6,.6,'#0b0b0c');
+      rfLine(c,[33.4,4.4,33.8,7.6],C.steelHi,.6);rfRR(c,o.ch-1,1.2,3,1.4,.5,hi);
+      // ring sight up front (it glows when you fit the red dot)
+      rfPoly(c,[8,-4,18,-4,17,-9,10,-9],bk,lo,.35);rfCirc(c,13.4,-6.6,1.6,o.reflex?'rgba(255,70,50,.75)':'#0f1418');
+      if(o.laser){rfRR(c,6,-.4,6,2,.5,'#1b1c1e',lo,.3);rfCirc(c,6.2,.6,.5,'#ff3b30')}o.flashFn&&o.flashFn()}}
+});
 /* ----- the picture: a simple first-person view from where you stand ----- */
 const vcv=$('view'),v2=vcv.getContext('2d');
 const RDPAL={rainforest:['#16301f','#6e9b6b','#26361d','#4e4a36'],alien:['#170c2e','#5b3778','#241733','#3b3152'],tundra:['#7fa6c0','#e3edf3','#b4c4ce','#7f8b94'],
@@ -7280,7 +7320,7 @@ function rdDraw(){
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   tdDraw(c,W,H,X0,Y0,P);   // Unbearable Buddy held in both hands, with its eye lasers
-  const rfOn=rfDraw(c,W,H,X0,Y0);   // rifles, machine guns, launchers, snipers, shotguns and pistols held in your hands
+  const rfOn=rfDraw(c,W,H,X0,Y0);   // rifles, machine guns, launchers, snipers, shotguns, pistols and SMGs held in your hands
   // sights and muzzle flash
   const lock=!!G.lockE;c.strokeStyle=lock?'#ff5a4a':'rgba(255,255,255,.7)';c.lineWidth=Math.max(1.5,W/220);const cs=Math.max(6,W/40);
   c.beginPath();c.moveTo(X0-cs,Y0);c.lineTo(X0-cs*.35,Y0);c.moveTo(X0+cs*.35,Y0);c.lineTo(X0+cs,Y0);c.moveTo(X0,Y0-cs);c.lineTo(X0,Y0-cs*.35);c.moveTo(X0,Y0+cs*.35);c.lineTo(X0,Y0+cs);c.stroke();
@@ -7385,6 +7425,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-smgs',date:'November 18, 2026',title:'Submachine guns now visible in your hands',items:[
+    'For sighted players: the Skorpion vz. 61 and FN P90 are now drawn in the battle view, modelled on the real guns.',
+    'Skorpion: short barrel, the cocking knob on top that flies back with every shot, brass flipping straight up out of the top, brown grip panels, the wire stock and its big round drum, which your left hand holds. Extended magazines make the drum bigger.',
+    'FN P90: the bullpup body with its two thumbholes, the ring sight up front and the clear top magazine with the rounds lying crosswise inside it. Brass drops out of the bottom of the stock. Reloads lift the magazine off the top and lay a new one on.',
+    'Laser, red dot (on the P90 the ring sight glows red), silencer and extended magazines show on the guns. This only changes what you see: sounds, damage and reload times are exactly the same.']},
   {id:'2026-11-18-pistols',date:'November 18, 2026',title:'Pistols now visible in your hands',items:[
     'For sighted players: the Colt 1911, Desert Eagle, Beretta 93R, Glock 18 and MBA Gyrojet are now drawn in the battle view, modelled on the real pistols and held in both hands.',
     'Colt 1911: blued steel with walnut grips, a hammer, beavertail and thumb safety. Desert Eagle: big matte silver gun with its fixed polygonal barrel and top rail. Beretta 93R: the ported compensator, big trigger guard, folding front grip that your left hand holds, and its long 20-round magazine. Glock 18: the boxy black slide, textured grip, full-auto selector and its long 33-round magazine sticking out of the grip.',
