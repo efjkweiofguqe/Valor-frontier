@@ -2600,6 +2600,12 @@ const OWNUP=[...LNCH,'getwell','vlad','scythe','ra','kbat','katana','boomer','te
 const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||((w.id==='symbiote'||w.id==='hades')&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
+/* Cosmetic weapon skins: no attachment slot, no effect on stats. The first one listed is the free default. */
+const SKINS={minigun:[{id:'chrome',name:'Chrome',price:0,desc:'Mirror-polished chrome. Every part of the Minigun shines, and a gleam sweeps along the barrels as they spin up.'},
+  {id:'gold',name:'Gold',price:100,desc:'Polished gold from barrels to grips, with the same shine and spinning gleam. Looks only: no effect on damage or anything else.'}]};
+function skinSt(){if(!P.skin||typeof P.skin!=='object')P.skin={own:{},on:{}};P.skin.own=P.skin.own||{};P.skin.on=P.skin.on||{};return P.skin}
+function skinOwned(w,id){return id==='chrome'||(skinSt().own[w]||[]).includes(id)}
+function skinOn(w){const st=skinSt(),on=st.on[w];return on&&skinOwned(w,on)?on:(SKINS[w]?SKINS[w][0].id:'')}
 /* Heavy Bubble Blaster: reach, lifetime and stock capacity of a bubble */
 const BUB_R=50/3.281,BUB_T=60,BUB_CAP=10;
 function build(w){
@@ -2704,7 +2710,7 @@ function build(w){
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
 const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,fatman:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
-  stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',ts:0};
+  stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',skin:{own:{},on:{}},ts:0};
 const P0=JSON.stringify(P);   // a brand new save, used when logging in or out
 function resetP(){Object.keys(P).forEach(k=>delete P[k]);Object.assign(P,JSON.parse(P0))}
 const num=(v,d=0)=>typeof v==='number'&&isFinite(v)?v:d;
@@ -2729,6 +2735,8 @@ function loadP(s){
   ['bestZ6','bestZH','bestZR','bestZF'].forEach(b=>{P[b]={};if(s[b]&&typeof s[b]==='object')for(const k in s[b])if(zKeyOk(k))P[b][k]=Math.max(0,num(s[b][k])|0)});
   if(s.stats&&typeof s.stats==='object')for(const k in P.stats)P.stats[k]=Math.max(0,Math.floor(num(s.stats[k])));
   if(typeof s.player==='string'&&/^[A-Za-z0-9_]{3,16}$/.test(s.player))P.player=s.player;
+  P.skin={own:{},on:{}};if(s.skin&&typeof s.skin==='object'){const so=s.skin.own||{},sn=s.skin.on||{};for(const k in SKINS){const ids=SKINS[k].map(x=>x.id);
+    const own=Array.isArray(so[k])?so[k].filter(i=>ids.includes(i)&&i!=='chrome'):[];if(own.length)P.skin.own[k]=[...new Set(own)];if(typeof sn[k]==='string'&&own.includes(sn[k]))P.skin.on[k]=sn[k]}}
   P.carry=['pistol','ak','barrett'];if(Array.isArray(s.carry)){const c=s.carry.filter(i=>P.owned.includes(i)).slice(0,MAXCARRY);P.carry=c}
 }
 try{loadP(JSON.parse(localStorage.getItem('vf-progress')||'{}'))}catch(e){}
@@ -6243,6 +6251,14 @@ function rfAmmoBox(c,x,y,w,h){rfRR(c,x,y,w,h,.9,'#4b4f33','#2a2c1c',.35);rfRR(c,
 function rfAmmoCan(c,x,y,w,h){rfRR(c,x,y,w,h,.6,'#4a5133','#262a19',.35);rfRR(c,x-.3,y-.6,w+.6,2.8,.5,'#566040','#262a19',.3);
   rfRR(c,x+w*.36,y-1.7,w*.28,1.1,.4,'#262a19');rfRR(c,x+w-2.6,y+1.2,2,3.2,.4,'#3b4128');
   rfLine(c,[x+.8,y+h*.3,x+w-.8,y+h*.3],'#3e4429',.35);c.fillStyle='#d8c867';c.font=`bold ${(h*.15).toFixed(2)}px sans-serif`;c.fillText('CAL .50',x+1.2,y+h*.58);c.font=`${(h*.11).toFixed(2)}px sans-serif`;c.fillText('M2A1  105 CTGS',x+1.2,y+h*.78)}
+/* polished metal finishes for the Minigun: Chrome (default) and the Gold skin */
+const RF_SKIN={chrome:{d:'#2e333a',m:'#8e98a3',l:'#d9e0e7',w:'#ffffff',glow:'235,245,255'},gold:{d:'#4a2f06',m:'#b8862a',l:'#f2cf6b',w:'#fff4c8',glow:'255,236,170'}};
+function rfMix(a,b,t){const p=x=>[1,3,5].map(i=>parseInt(x.substr(i,2),16)),A=p(a),B=p(b);return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`}
+function rfMetal(c,x,y,w,h,r,P,vert){const g=vert?c.createLinearGradient(x,0,x+w,0):c.createLinearGradient(0,y,0,y+h);
+  g.addColorStop(0,P.m);g.addColorStop(.18,P.l);g.addColorStop(.3,P.w);g.addColorStop(.45,P.m);g.addColorStop(.68,P.d);g.addColorStop(.85,P.m);g.addColorStop(1,P.d);
+  rfRR(c,x,y,w,h,r,g,P.d,.25)}
+function rfStreaks(c,x,y,w,h,P,t){c.save();c.beginPath();c.rect(x,y,w,h);c.clip();c.globalCompositeOperation='lighter';
+  for(const[off,wd,al]of[[.2,1.2,.55],[.55,.6,.4],[.8,.4,.3]]){const sx=x+w*off;c.beginPath();c.moveTo(sx,y);c.lineTo(sx+wd,y);c.lineTo(sx+wd-3,y+h);c.lineTo(sx-3,y+h);c.closePath();c.fillStyle=`rgba(${P.glow},${al})`;c.fill()}c.restore()}
 const RF_LMG={
   m249:{belt:1,xr:44,bf:.8,th:.5,kk:.55,grip:[74.8,10.8],trig:[66.6,7.2],fore:[30,1.6],foreTop:1.1,foreBot:5.2,gripAt:[29,5.2],
     coverH:[46,-3.6],coverR:[66.4,-5],feed:[51.4,-2.6],beltC:[50.5,2.5],box:{x:47.6,y:7.6,w:13,h:11,w2:15.6,h2:15},
@@ -6339,28 +6355,34 @@ const RF_LMG={
       rfCover(c,o,97,-5,()=>{rfPoly(c,[96.6,-5,117.2,-5,117.2,-6.4,97.6,-6.6],'#363834',C.steelLo,.35);rfRR(c,114.6,-7.2,2.2,1,.3,'#55584f');if(o.reflex)rfDot(c,107,-6.5)})}},
   minigun:{belt:1,gat:1,xr:56,bf:.7,th:.45,sc:1.3,anc:[.86,.92],kk:.25,grip:[83.4,3],gripRot:.05,spade:1,foreFist:[60.4,-11.4,1.57],lsh:[.5,1.2],
     chuteA:[67.6,5],chuteC:[64,24],chuteB:[86,56],eject:[66,7],brassL:2.2,flash:'gat',tip:0,tiltMax:.2,
-    body(c,o){const C=RFC;
+    body(c,o){const C=RFC,P=RF_SKIN[o.skin]||RF_SKIN.chrome;
       // flexible feed chute down to the ammo pack on your back
       c.save();c.globalAlpha=o.chute.a;c.translate(o.chute.dx,o.chute.dy);const pp=rfPath([...this.chuteB,...this.chuteC,...this.chuteA]);
       for(let s=pp.len-.6,i=0;s>0;s-=1.5,i++){const a=pp.at(s),b=pp.at(s+.8),ang=Math.atan2(b[1]-a[1],b[0]-a[0]);c.save();c.translate(a[0],a[1]);c.rotate(ang);rfRR(c,-.8,-1.9,1.6,3.8,.4,i%2?'#3a3d33':'#2b2d25','#1a1b16',.25);c.restore()}
-      rfRR(c,this.chuteA[0]-2.4,this.chuteA[1]-1.2,4.8,2.4,.5,'#4a4d44',C.steelLo,.3);c.restore();
-      // spade grips with the red fire button
-      rfRR(c,74,-3.4,8.6,1.2,.4,C.steel);rfRR(c,74,2.8,8.6,1.2,.4,C.steel);rfRR(c,82,-4.2,2.8,11.6,1.2,'#1d1f22',C.steelLo,.3);rfRR(c,81.6,-5,1.8,1.2,.4,'#b3261e');
-      // housing and rotor, drive motor underneath, feeder/delinker on this side, carry handle on top
-      rfRR(c,56,-4.4,18,8.8,1.6,'#25272b',C.steelLo,.35);rfLine(c,[57,-3.2,73,-3.2],C.milHi,.4);for(const x of[60,66.5,72])rfLine(c,[x,-4.2,x,4.2],'#141517',.45);
-      rfRR(c,56.6,3.6,7,3.4,1.2,'#1c1d20',C.steelLo,.3);rfRR(c,63.4,4,1.2,2.6,.4,C.steelHi);
-      rfRR(c,64.4,-1.6,7.6,6.6,.6,'#303338',C.steelLo,.3);rfCirc(c,68.2,1.6,1.2,'#1a1b1d');rfLine(c,[65,-.6,71.4,-.6],C.milHi,.3);
-      rfRR(c,56.6,-6.6,1.6,2.4,.3,C.steel);rfRR(c,62.4,-6.6,1.6,2.4,.3,C.steel);rfRR(c,55.8,-10,9,2.2,1,'#1d1f22',C.steelLo,.3);
+      rfMetal(c,this.chuteA[0]-2.4,this.chuteA[1]-1.2,4.8,2.4,.5,P);c.restore();
+      // polished spade grips with the red fire button
+      rfMetal(c,74,-3.4,8.6,1.2,.4,P);rfMetal(c,74,2.8,8.6,1.2,.4,P);rfMetal(c,82,-4.2,2.8,11.6,1.2,P,true);rfRR(c,81.6,-5,1.8,1.2,.4,'#c4281f');
+      // housing and rotor, drive motor underneath, feeder on this side, carry handle on top: all mirror-polished
+      rfMetal(c,56,-4.4,18,8.8,1.6,P);for(const x of[60,66.5,72])rfLine(c,[x,-4.2,x,4.2],P.d,.4);
+      rfMetal(c,56.6,3.6,7,3.4,1.2,P);rfMetal(c,63.4,4,1.2,2.6,.4,P,true);
+      rfMetal(c,64.4,-1.6,7.6,6.6,.6,P);rfCirc(c,68.2,1.6,1.2,P.d);rfCirc(c,67.8,1.2,.4,P.w);
+      rfMetal(c,56.6,-6.6,1.6,2.4,.3,P,true);rfMetal(c,62.4,-6.6,1.6,2.4,.3,P,true);rfMetal(c,55.8,-10,9,2.2,1,P);
       if(o.reflex)rfDot(c,70,-4.4);
-      // six barrels turning in their clamps; far barrels darker than near ones
+      rfStreaks(c,56,-4.4,18,8.8,P,o.t);
+      // six barrels turning in their clamps; far barrels darker than near ones, a gleam sweeps along them as they spin
       rfFront(c,o,()=>{const r=2.3,br=.55,list=[];
         const passes=o.spinV>14?[0,.35,.7]:[0];
         for(const pz of passes){for(let k=0;k<6;k++){const a=o.spin+pz+k*Math.PI/3;list.push({y:-r*Math.cos(a),z:Math.sin(a),al:passes.length>1?.45:1})}}
         list.sort((p,q)=>p.z-q.z);
-        rfRR(c,52,-3.2,4.4,6.4,.8,'#202226');
-        for(const b of list){const t=(b.z+1)/2,col=`rgb(${Math.round(20+t*55)},${Math.round(21+t*57)},${Math.round(23+t*61)})`;c.globalAlpha=b.al;rfRR(c,0,b.y-br,53,br*2,br,col);if(b.z>.3)rfLine(c,[.6,b.y-br*.4,52,b.y-br*.4],'rgba(255,255,255,.12)',.25)}
+        rfMetal(c,52,-3.2,4.4,6.4,.8,P);
+        for(const b of list){const t=(b.z+1)/2;c.globalAlpha=b.al;
+          const g=c.createLinearGradient(0,b.y-br,0,b.y+br);g.addColorStop(0,rfMix(P.d,P.m,t));g.addColorStop(.3,rfMix(P.m,P.w,t));g.addColorStop(.55,rfMix(P.d,P.l,t));g.addColorStop(1,P.d);
+          rfRR(c,0,b.y-br,53,br*2,br,g);if(b.z>.2)rfLine(c,[.6,b.y-br*.45,52,b.y-br*.45],`rgba(255,255,255,${.25+.5*b.z})`,.22)}
         c.globalAlpha=1;
-        for(const cx of[1.6,24]){rfRR(c,cx,-3.6,3,7.2,.9,'#2a2c30',C.steelLo,.35);for(let k=0;k<6;k++){const a=o.spin+k*Math.PI/3;if(Math.sin(a)>0)rfCirc(c,cx+1.5,-r*Math.cos(a),.35,'#55585e')}}
+        if(o.spinV>.5){const k=Math.min(1,o.spinV/30),period=Math.max(260,900-o.spinV*16),u=(o.t%period)/period,x=-8+u*68;
+          c.save();c.globalCompositeOperation='lighter';const g=c.createLinearGradient(x-6,0,x+6,0);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.5,`rgba(${P.glow},${.75*k})`);g.addColorStop(1,'rgba(255,255,255,0)');
+          c.fillStyle=g;c.beginPath();c.rect(0,-r-br,53,(r+br)*2);c.fill();c.restore()}
+        for(const cx of[1.6,24]){rfMetal(c,cx,-3.6,3,7.2,.9,P);for(let k=0;k<6;k++){const a=o.spin+k*Math.PI/3;if(Math.sin(a)>0)rfCirc(c,cx+1.5,-r*Math.cos(a),.35,P.w)}}
         o.flashFn&&o.flashFn()})}}
 };
 Object.assign(RF_GUN,RF_LMG);
@@ -6379,7 +6401,7 @@ function rfDrawBelt(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
   if(Math.abs(RF.beltPh-RF.beltShow)>6)RF.beltShow=RF.beltPh-6;
   o.beltOff=RF.beltShow;o.beltN=(G.ammo&&G.ammo[G.w]&&G.ammo[G.w][0]!=null)?G.ammo[G.w][0]:(w.mag||100);
   o.heat=S0.heat?Math.min(1,((G.heatV&&G.heatV[w.id])||0)/(w.heatT||6)):0;
-  if(S0.gat){const su=G.spinUp||0;o.spinV=su*42;RF.spinPh+=o.spinV*dt;o.spin=RF.spinPh}
+  if(S0.gat){const su=G.spinUp||0;o.spinV=su*42;RF.spinPh+=o.spinV*dt;o.spin=RF.spinPh;o.t=now;o.skin=(typeof skinOn==='function'?skinOn(w.id):'chrome')}
   o.bumpK=o.bump?Math.min(1,kick)*1.8:0;
   const pt=(a,b,t)=>[rfL(a[0],b[0],t),rfL(a[1],b[1],t)];
   const fore=S0.foreFist?[S0.foreFist[0],S0.foreFist[1]]:o.grip?rfProj(S0,S0.gripAt[0]+1.6,S0.gripAt[1]+4):rfProj(S0,S0.fore[0],S0.fore[1]);
@@ -7425,6 +7447,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-minigun-skins',date:'November 18, 2026',title:'Chrome Minigun and a new Gold skin',items:[
+    'The M134 Minigun now has a polished chrome finish. Every part shines with bright highlight streaks, and when the barrels spin up a gleam sweeps along them.',
+    'New Skins section in the Minigun\'s attachments menu, at the bottom of the list. Chrome is the free default. The Gold skin costs 100 silver and turns the whole Minigun polished gold, with the same shine and spinning gleam.',
+    'Skins are looks only. They do not use an attachment slot and do not change any stats. Once you own Gold you can switch between Chrome and Gold any time, and the game tells you which skin is equipped.']},
   {id:'2026-11-18-smgs',date:'November 18, 2026',title:'Submachine guns now visible in your hands',items:[
     'For sighted players: the Skorpion vz. 61 and FN P90 are now drawn in the battle view, modelled on the real guns.',
     'Skorpion: short barrel, the cocking knob on top that flies back with every shot, brass flipping straight up out of the top, brown grip panels, the wire stock and its big round drum, which your left hand holds. Extended magazines make the drum bigger.',
@@ -8761,14 +8787,32 @@ function buildMods(){
     it.innerHTML=`<h4></h4><p class="meta"></p><p class="tr"></p><button class="btn act"></button>`;
     it.querySelector('h4').textContent=a.name;it.querySelector('.tr').textContent=a.desc(w)+(a.ammo?' One ammo type at a time.':'');
     it.querySelector('.act').onclick=()=>modAct(a);list.appendChild(it)})});
+  // Skins: looks only, they never take an attachment slot
+  if(SKINS[w.id]){const h=document.createElement('h3');h.className='grp';h.textContent=`Skins (${SKINS[w.id].length})`;list.appendChild(h);
+    const note=document.createElement('p');note.className='tr';note.textContent='Looks only. Skins do not use an attachment slot and do not change any stats.';list.appendChild(note);
+    SKINS[w.id].forEach(k=>{const it=document.createElement('article');it.className='item';it.id='sk-'+k.id;
+      it.innerHTML=`<h4></h4><p class="meta"></p><p class="tr"></p><button class="btn act"></button>`;
+      it.querySelector('h4').textContent=k.name+' skin';it.querySelector('.tr').textContent=k.desc;
+      it.querySelector('.act').onclick=()=>skinAct(k);list.appendChild(it)})}
   updateMods();
 }
+function skinLabel(k,w){if(skinOn(w.id)===k.id)return{meta:'Owned · Equipped',act:'Equipped',aria:`${k.name} skin, equipped`,pressed:true};
+  if(skinOwned(w.id,k.id))return{meta:k.price?'Owned':'Default · Owned',act:'Equip',aria:`Equip ${k.name} skin`,pressed:false};
+  return{meta:`Price ${k.price} silver · Looks only`,act:`Buy for ${k.price}`,aria:`Buy ${k.name} skin for ${k.price} silver. Looks only`,pressed:false}}
+function skinAct(k){initAudio();const w=WBY[curMod],st=skinSt();
+  if(!skinOwned(w.id,k.id)){if(P.coins<k.price){fx.click();say(`${k.name} skin costs ${k.price} silver. You need ${k.price-P.coins} more.`);return}
+    P.coins-=k.price;st.own[w.id]=[...new Set([...(st.own[w.id]||[]),k.id])];st.on[w.id]=k.id;fx.buy();say(`Bought the ${k.name} skin. ${k.name} skin equipped. ${P.coins} silver left.`)}
+  else if(skinOn(w.id)===k.id){fx.click();say(`${k.name} skin is already equipped.`);return}
+  else{st.on[w.id]=k.id;fx.reload(.3);say(`${k.name} skin equipped.`)}
+  saveP();updateMods()}
 function updateMods(){
   const w=WBY[curMod];$('mods-coins').textContent=P.coins;renderStats(w);
   ATT.filter(a=>attOK(a,w)).forEach(a=>{const it=$('m-'+a.id),L=modLabel(a,w),st=attOf(w.id);
     it.classList.toggle('owned',st.eq.includes(a.id));it.querySelector('.meta').textContent=L.meta;
     const b=it.querySelector('.act');b.textContent=L.act;b.setAttribute('aria-label',L.aria);
     b.classList.toggle('primary',!st.own.includes(a.id)&&P.coins>=priceOf(a,w))});
+  (SKINS[w.id]||[]).forEach(k=>{const it=$('sk-'+k.id);if(!it)return;const L=skinLabel(k,w);it.classList.toggle('owned',L.pressed);it.querySelector('.meta').textContent=L.meta;
+    const b=it.querySelector('.act');b.textContent=L.act;b.setAttribute('aria-label',L.aria);b.setAttribute('aria-pressed',L.pressed?'true':'false');b.classList.toggle('primary',!skinOwned(w.id,k.id)&&P.coins>=k.price)});
 }
 function equip(st,a){let r='';
   if(a.ammo){st.eq.filter(x=>x!==a.id&&ATTBY[x].ammo).forEach(x=>r=ATTBY[x].name);st.eq=st.eq.filter(x=>!ATTBY[x].ammo)}
