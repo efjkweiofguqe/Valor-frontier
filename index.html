@@ -6110,14 +6110,19 @@ function rfSupport(c,x,top,bot){   // left hand cradling the handguard: palm und
 function rfSleeve(c,x0,y0,x1,y1,w){c.lineCap='round';c.strokeStyle=RFC.sleeveLo;c.lineWidth=w*1.08;c.beginPath();c.moveTo(x0,y0);c.lineTo(x1,y1);c.stroke();
   c.strokeStyle=RFC.sleeve;c.lineWidth=w*.92;c.stroke();c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=w*.25;c.beginPath();const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy)||1;c.moveTo(x0+dx/L*w*.4,y0+dy/L*w*.4);c.lineTo(x0+dx/L*w*.55,y0+dy/L*w*.55);c.stroke()}
 /* muzzle flashes, drawn pointing out of the muzzle along the barrel */
-function rfFlash(c,x,kind,sil,k){const r=Math.random;c.save();c.translate(x,0);c.globalCompositeOperation='lighter';
+function rfFlash(c,x,kind,sil,k,y){const r=Math.random;c.save();c.translate(x,y||0);c.globalCompositeOperation='lighter';
   if(sil){const g=c.createRadialGradient(-1.5,0,0,-1.5,0,4);g.addColorStop(0,`rgba(255,230,180,${.35*k})`);g.addColorStop(1,'rgba(255,200,120,0)');c.fillStyle=g;c.beginPath();c.arc(-1.5,0,4,0,Math.PI*2);c.fill();c.restore();return}
   const core=(rx,ry,cx)=>{const g=c.createRadialGradient(cx,0,0,cx,0,rx);g.addColorStop(0,`rgba(255,255,230,${k})`);g.addColorStop(.35,`rgba(255,200,90,${.85*k})`);g.addColorStop(1,'rgba(255,120,30,0)');c.fillStyle=g;c.beginPath();c.ellipse(cx,0,rx,ry,0,0,Math.PI*2);c.fill()};
   const spike=(a,len,w)=>{c.save();c.rotate(a);const g=c.createLinearGradient(0,0,-len,0);g.addColorStop(0,`rgba(255,240,190,${k})`);g.addColorStop(1,'rgba(255,140,40,0)');c.fillStyle=g;c.beginPath();c.moveTo(0,-w);c.lineTo(-len,0);c.lineTo(0,w);c.closePath();c.fill();c.restore()};
   if(kind==='ak'){core(9+r()*4,5+r()*2,-5);for(const a of[0,.75,-.75,1.5,-1.5])spike(a+(r()-.5)*.25,(a?6:12)+r()*5,1.6)}
   else if(kind==='bird'){core(5+r()*2,3,-2.5);for(const a of[0,-1.1,-1.6,-2.1])spike(a+(r()-.5)*.15,(a?4.5:7)+r()*3,.9)}
+  else if(kind==='mg42'){core(8+r()*4,4.5+r()*2,-4);for(const a of[0,.5,-.5,2.4,-2.4])spike(a+(r()-.5)*.3,(a?5:11)+r()*5,1.5)}
+  else if(kind==='big'){core(16+r()*6,8+r()*3,-8);for(const a of[0,.7,-.7,1.45,-1.45])spike(a+(r()-.5)*.25,(a?9:20)+r()*7,2.6)}
+  else if(kind==='gat'){core(7+r()*3,4+r()*1.5,-3.5);for(const a of[0,.9,-.9])spike(a+(r()-.5)*.4,(a?4:8)+r()*4,1.3)}
   else{core(4,3,-2);for(const a of[1.57,-1.57])for(const dx of[-3.3,-1.5]){c.save();c.translate(dx,0);spike(a+(r()-.5)*.2,6+r()*3,1.3);c.restore()}spike(0,5+r()*2,1)}
   c.restore()}
+function rfBrassDraw(c,W,H,S,dt){c.save();for(const b of RF.brass){b.t+=dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=H*3.2*dt;b.r+=b.vr*dt;const L=b.s||2.4*S;c.save();c.translate(b.x,b.y);c.rotate(b.r);rfRR(c,-L/2,-L*.175,L,L*.35,L*.12,RFC.brass);rfRR(c,-L/2,-L*.175,L*.2,L*.35,L*.08,RFC.brassHi);c.restore()}
+  RF.brass=RF.brass.filter(b=>b.t<1.2&&b.y<H+40&&b.x<W+40);if(RF.brass.length>60)RF.brass.splice(0,RF.brass.length-60);c.restore()}
 const rfE=t=>t<=0?0:t>=1?1:t*t*(3-2*t),rfL=(a,b,t)=>a+(b-a)*rfE(t),rfSeg=(f,a,b)=>(f-a)/(b-a);
 function rfDraw(c,W,H,X0,Y0){
   const w=G&&G.lo&&G.lo[G.w];if(!w||!RF_IDS[w.id]||G.down){RF.wid=null;return false}
@@ -6127,9 +6132,10 @@ function rfDraw(c,W,H,X0,Y0){
   const o={sil:!!w.sil,ext:w.barrel?7:0,grip:has('grip'),reflex:has('reflex'),ch:0,cp:0};o.bx=-o.ext;
   // recoil from each round of the burst, and brass for each one
   let kick=0,flash=0;for(const s of RF.kicks){const d=now-s.t;if(d<0)continue;kick+=d<30?d/30:Math.max(0,1-(d-30)/170);if(d<45)flash=Math.max(flash,1-d/45);if(!s.b){s.b=1;s.eject=1}}
-  RF.kicks=RF.kicks.filter(s=>now-s.t<400);kick=Math.min(1.5,kick);
+  RF.kicks=RF.kicks.filter(s=>now-s.t<400||s.eject);kick=Math.min(1.5,kick);
   // reload progress
   const job=G.jobs&&G.jobs.find(j=>j.wi===G.w),fr=job&&job.total>0?Math.max(0,Math.min(1,1-job.left/job.total)):-1;
+  if(S0.belt)return rfDrawBelt(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
   let tilt=0,mag={dx:0,dy:0,rot:0,a:1,on:true},lh=null,rh=null,jolt=0;
   const M=S0.mag,fore=o.grip?[S0.fore[0]+.5,S0.foreBot+4]:S0.fore,off=[M[0]-6,M[1]+90];
   if(fr>=0){
@@ -6193,9 +6199,258 @@ function rfDraw(c,W,H,X0,Y0){
   // spawn brass from the ejection port, in screen space
   for(const s of RF.kicks)if(s.eject){s.eject=0;const p=toS(S0.eject[0],S0.eject[1]);RF.brass.push({x:p[0],y:p[1],vx:W*(.35+Math.random()*.3),vy:-H*(.5+Math.random()*.35),r:Math.random()*6,vr:(Math.random()-.5)*30,t:0})}
   c.restore();
-  // brass flying out to the right and tumbling away
-  c.save();for(const b of RF.brass){b.t+=dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=H*3.2*dt;b.r+=b.vr*dt;c.save();c.translate(b.x,b.y);c.rotate(b.r);rfRR(c,-1.2*S,-.42*S,2.4*S,.84*S,.3*S,RFC.brass);rfRR(c,-1.2*S,-.42*S,.5*S,.84*S,.2*S,RFC.brassHi);c.restore()}
-  RF.brass=RF.brass.filter(b=>b.t<1.2&&b.y<H+40&&b.x<W+40);if(RF.brass.length>30)RF.brass.splice(0,RF.brass.length-30);c.restore();
+  rfBrassDraw(c,W,H,S,dt);
+  return true}
+/* ----- held machine guns: the M249 SAW, MG42, M2 Browning and M134 Minigun drawn like the real guns.
+   Same left-side view as the rifles, with a little perspective so the long barrels reach away from you.
+   The ammo belt is drawn round by round and feeds into the gun as you fire, and it runs short as the belt runs low.
+   Belt reloads play the real drill: lift the feed cover, swap the ammo box (or belt), lay the new belt on the tray,
+   slam the cover and rack the charging handle (the M2 is racked twice, as real crews do).
+   The MG42's barrel glows through its jacket holes as it heats and is swapped out when it overheats.
+   The Minigun's six barrels spin with the motor, and its reload swaps the feed chute from your ammo pack.
+   Looks only: sounds and timing are unchanged. ----- */
+Object.assign(RF_IDS,{m249:1,mg42:1,m2:1,minigun:1});
+Object.assign(RF,{beltPh:0,beltShow:0,spinPh:0});
+function rfPath(p){const pts=[];for(let i=0;i<=30;i++){const t=1-i/30,u=1-t;pts.push([u*u*p[0]+2*u*t*p[2]+t*t*p[4],u*u*p[1]+2*u*t*p[3]+t*t*p[5]])}
+  const L=[0];for(let i=1;i<pts.length;i++)L.push(L[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+  return{len:L[L.length-1],at(s){if(s<=0)return pts[0];for(let i=1;i<pts.length;i++)if(L[i]>=s){const f=(s-L[i-1])/(L[i]-L[i-1]||1);return[pts[i-1][0]+(pts[i][0]-pts[i-1][0])*f,pts[i-1][1]+(pts[i][1]-pts[i-1][1])*f]}return pts[pts.length-1]}}}
+/* one belted round, lying parallel to the barrel: copper bullet toward the muzzle, brass case, steel link */
+function rfRound(c,x,y,cs){const l=cs.l,d=cs.d,bl=l*.3;
+  rfRR(c,x-l*.12,y-d*.72,l*.4,d*1.44,d*.25,'#36373a');
+  rfRR(c,x-l/2+bl,y-d/2,l-bl,d,d*.2,RFC.brass);rfLine(c,[x-l/2+bl+d*.2,y-d*.2,x+l/2-d*.2,y-d*.2],RFC.brassHi,d*.18);
+  c.beginPath();c.moveTo(x-l/2+bl,y-d*.42);c.quadraticCurveTo(x-l/2+bl*.2,y-d*.36,x-l/2,y);c.quadraticCurveTo(x-l/2+bl*.2,y+d*.36,x-l/2+bl,y+d*.42);c.closePath();c.fillStyle='#b8743a';c.fill();
+  if(cs.ap){c.beginPath();c.moveTo(x-l/2+bl*.45,y-d*.3);c.quadraticCurveTo(x-l/2+bl*.1,y-d*.2,x-l/2,y);c.quadraticCurveTo(x-l/2+bl*.1,y+d*.2,x-l/2+bl*.45,y+d*.3);c.closePath();c.fillStyle='#161616';c.fill()}
+  rfRR(c,x+l*.02,y-d*.62,l*.08,d*1.24,d*.1,'#4a4c50');rfRR(c,x+l*.18,y-d*.62,l*.08,d*1.24,d*.1,'#4a4c50')}
+function rfBelt(c,p,n,off,cs){if(n<=0)return;const pp=rfPath(p),f=((off%1)+1)%1,pitch=cs.pitch,m=Math.min(n,Math.ceil(pp.len/pitch)+1);
+  for(let i=m-1;i>=0;i--){const s=(i+1-f)*pitch-pitch*.5;if(s<0||s>pp.len)continue;const q=pp.at(s);rfRound(c,q[0],q[1],cs)}}
+/* the far end of a long gun is drawn smaller, so the barrel reaches away from you */
+function rfFront(c,o,fn){c.save();c.translate(o.xr,0);c.scale(o.bf,(1+o.bf)/2);c.translate(-o.xr,0);fn();c.restore()}
+function rfProj(S0,x,y){return x<S0.xr?[S0.xr+(x-S0.xr)*S0.bf,y*(1+S0.bf)/2]:[x,y]}
+function rfDot(c,cx,base){rfPoly(c,[cx-3,base,cx+3,base,cx+2,base-1.4,cx-2,base-1.4],RFC.mil);rfRR(c,cx-4.8,base-5.6,9.6,4.2,1.6,'#1b1c1e',RFC.steelLo,.35);
+  rfCirc(c,cx,base-3.5,1,'#2b2d30');rfRR(c,cx-5.2,base-5.8,1.2,4.6,.4,'#111');c.save();c.globalCompositeOperation='lighter';rfCirc(c,cx+4.5,base-3.5,.55,'rgba(255,60,50,.9)');c.restore()}
+function rfSil(c,bx,len,r){rfRR(c,bx-len,-r,len+.4,r*2,r*.55,'#202124',RFC.steelLo,.35);for(let x=bx-len+1.5;x<bx;x+=3.2)rfLine(c,[x,-r+.2,x,r-.2],'#2e3034',.4);rfLine(c,[bx-len+.5,-r*.62,bx-.5,-r*.62],RFC.polyHi,.4)}
+function rfVGrip(c,gx,gy){rfRR(c,gx-.5,gy-.6,4.2,1.4,.3,RFC.mil);rfRR(c,gx,gy,3.2,8,1.2,'#1d1f22',RFC.steelLo,.35);for(let i=0;i<3;i++)rfLine(c,[gx+.4,gy+2+i*1.9,gx+2.8,gy+2+i*1.9],RFC.milHi,.35)}
+function rfCover(c,o,hx,hy,fn){c.save();c.translate(hx,hy);c.rotate(o.cover);c.translate(-hx,-hy);fn();c.restore()}
+/* M249 200-round plastic ammo box, and the M2A1 .50 calibre ammo can */
+function rfAmmoBox(c,x,y,w,h){rfRR(c,x,y,w,h,.9,'#4b4f33','#2a2c1c',.35);rfRR(c,x-.2,y-.2,w+.4,2,.6,'#565b3b','#2a2c1c',.3);
+  for(let xx=x+1.6;xx<x+w-1;xx+=1.9)rfLine(c,[xx,y+3,xx,y+h-1.2],'#5d6242',.45);rfRR(c,x+w*.42,y+.4,2.4,2.2,.4,'#2f3121');rfLine(c,[x+.8,y+h-.8,x+w-.8,y+h-.8],'#353823',.5)}
+function rfAmmoCan(c,x,y,w,h){rfRR(c,x,y,w,h,.6,'#4a5133','#262a19',.35);rfRR(c,x-.3,y-.6,w+.6,2.8,.5,'#566040','#262a19',.3);
+  rfRR(c,x+w*.36,y-1.7,w*.28,1.1,.4,'#262a19');rfRR(c,x+w-2.6,y+1.2,2,3.2,.4,'#3b4128');
+  rfLine(c,[x+.8,y+h*.3,x+w-.8,y+h*.3],'#3e4429',.35);c.fillStyle='#d8c867';c.font=`bold ${(h*.15).toFixed(2)}px sans-serif`;c.fillText('CAL .50',x+1.2,y+h*.58);c.font=`${(h*.11).toFixed(2)}px sans-serif`;c.fillText('M2A1  105 CTGS',x+1.2,y+h*.78)}
+const RF_LMG={
+  m249:{belt:1,xr:44,bf:.8,th:.5,kk:.55,grip:[74.8,10.8],trig:[66.6,7.2],fore:[30,1.6],foreTop:1.1,foreBot:5.2,gripAt:[29,5.2],
+    coverH:[46,-3.6],coverR:[66.4,-5],feed:[51.4,-2.6],beltC:[50.5,2.5],box:{x:47.6,y:7.6,w:13,h:11,w2:15.6,h2:15},
+    cs:{l:5.7,d:1,pitch:1.25},ch:[57.5,-7],charges:1,rack:8,eject:[60,7.6],brassL:2,flash:'bird',tip:4.2,silL:16,silR:2.6,tiltMax:.55,
+    body(c,o){const C=RFC,bx=o.bx;
+      // fixed polymer stock with its hydraulic buffer; the bump stock version slides and bounces on every shot
+      c.save();if(o.bump)c.translate(o.bumpK,0);
+      rfPoly(c,[76,-3,80,-3.3,100,-1.6,101,-1.2,101,10.2,100,10.7,92,7.9,86,6.5,80,6.3,76,5.4],C.poly,C.polyLo,.4);rfLine(c,[80,-2.4,99.6,-.9],C.polyHi,.4);
+      rfPoly(c,[82,.8,95,1.6,95,6.6,88,5.6,82,4.8],C.polyLo);rfRR(c,100.2,-1.6,1.6,12.6,.5,'#0c0c0d');
+      if(o.bump){for(let x=79.6;x<92;x+=2.2)rfLine(c,[x,-2.5,x,5.4],'#0a0a0b',.4);rfLine(c,[78,-2.8,98,-1.3],'#4b4e54',.5)}
+      c.restore();if(o.bump)rfRR(c,75.4,-2.4,6,6.8,.6,C.mil,C.steelLo,.3);
+      rfFront(c,o,()=>{
+        rfRR(c,bx,-1.1,46-bx,2.2,.5,C.steel,C.steelLo,.3);rfLine(c,[bx+1,-.6,44,-.6],C.steelHi,.3);
+        if(!o.sil){rfRR(c,bx-4.2,-1.5,4.4,3,.5,C.steel,C.steelLo,.3);for(let i=0;i<3;i++)rfLine(c,[bx-3.6+i*1.2,-1.1,bx-3.6+i*1.2,.4],'#0b0b0c',.45)}
+        else rfSil(c,bx,16,2.6);
+        // gas block with the front sight, gas cylinder under the barrel and the bipod folded forward
+        rfRR(c,5.5,-1.6,5,4.6,.6,C.steel,C.steelLo,.3);rfPoly(c,[6.4,-1.6,9.6,-1.6,9,-3.2,8.4,-6.6,7.6,-6.6,7,-3.2],C.steel,C.steelLo,.3);
+        rfRR(c,8,1.1,22,2.4,1,C.steel,C.steelLo,.3);rfLine(c,[9,1.6,29,1.6],C.steelHi,.3);
+        rfRR(c,8.6,2.8,3.2,2.2,.5,C.mil);c.lineCap='round';rfLine(c,[10,4.4,-4,5.3],C.mil,1);rfLine(c,[10.6,4.9,-3,6],C.milHi,.7);rfRR(c,-5.4,4.6,2.2,1.8,.4,C.mil);
+        // folding carrying handle on the barrel
+        rfRR(c,28.4,-2,1.4,1,.3,C.steel);rfRR(c,35,-2,1.4,1,.3,C.steel);rfLine(c,[29.1,-1.6,30,-5,35.4,-5,35.7,-1.6],C.mil,.9);rfRR(c,30.2,-6,5.4,1.6,.7,'#1d1f22');
+        // ribbed lower handguard and the heat shield over the barrel
+        rfRR(c,20,1.1,22,4.2,1,C.poly,C.polyLo,.3);for(let i=0;i<3;i++)rfLine(c,[21,2.3+i,41,2.3+i],'#0b0b0c',.35);
+        rfRR(c,37,-2.6,7.5,1.6,.4,C.steel,C.steelLo,.25);for(let x=38;x<44;x+=1.4)rfCirc(c,x,-1.8,.3,'#0b0b0c');
+        if(o.grip)rfVGrip(c,29,5.2);
+        o.flashFn&&o.flashFn()});
+      // tall stamped receiver with the side magazine well (the SAW also takes rifle magazines)
+      rfPoly(c,[44,-3.6,76.4,-3.6,76.4,5.6,62,5.6,59.6,7.6,48.4,7.6,47,5.6,44,5.6],'#2a2c2f',C.steelLo,.35);rfLine(c,[45,-2.6,76,-2.6],C.milHi,.3);
+      rfRR(c,49.4,3.6,8.4,3,.4,'#1f2124',C.steelLo,.25);rfLine(c,[50,5,57.2,5],C.milHi,.25);for(const x of[45.6,61,74.4])rfCirc(c,x,4.4,.35,C.milHi);
+      rfRR(c,47,-4.2,18.6,.9,.2,'#3d4046');   // feed tray under the cover
+      rfPoly(c,[67.6,-3.6,71.6,-3.6,71,-5.6,68.6,-5.8],C.steel,C.steelLo,.3);rfRR(c,68.8,-6.6,1.6,1.2,.3,C.steel);
+      rfLine(c,[62,5.6,62.6,9,71.6,9,72.4,5.6],C.steel,.8);rfLine(c,[66,5.6,66.5,8],C.steelHi,.7);
+      rfPoly(c,[71.8,5.6,77,5.6,80.8,15.6,80.2,16.6,75.6,16.6,74.6,15],C.poly,C.polyLo,.35);rfLine(c,[73.6,7,77.6,15],C.polyHi,.35);
+      rfRR(c,o.ch,-7.3,3,1.5,.6,C.milHi,C.steelLo,.3);
+      rfBeltAndBox(c,o,this);
+      rfCover(c,o,46,-3.6,()=>{rfPoly(c,[45.6,-3.6,67.2,-3.6,67.2,-5,66,-5.6,46.6,-5.6],'#2f3236',C.steelLo,.35);rfLine(c,[47,-4.6,66,-4.6],C.milHi,.3);
+        rfRR(c,52,-6.5,13,.9,.15,'#232528');for(let x=52.5;x<64.6;x+=1.5)rfRR(c,x,-6.9,.8,.5,.1,'#232528');rfRR(c,64.8,-5.4,2,1,.3,'#3d4046');
+        if(o.reflex)rfDot(c,58.4,-6.5)})}},
+  mg42:{belt:1,xr:48,bf:.75,th:.5,kk:.45,grip:[77.6,11],trig:[70.2,7.8],fore:[34,0],foreTop:-3.2,foreBot:3.2,gripAt:[33,3.2],heat:1,
+    coverH:[50,-3.4],coverR:[66,-5],feed:[53.6,-1.8],beltP0:[70,56],beltC:[43,18],box:null,
+    cs:{l:8,d:1.25,pitch:1.45},ch:[63,-6.9],charges:1,rack:9,eject:[58,5.6],brassL:2.8,flash:'mg42',tip:4.8,silL:18,silR:3.2,tiltMax:.5,
+    body(c,o){const C=RFC,bx=o.bx;
+      // bakelite stock with a steel buttplate
+      rfPoly(c,[80,-3,84,-3.3,111,-.9,112.2,-.2,112.2,12.2,111,12.6,99,8.8,88,5.9,84,4.6,80,4],'#3a2116','#1c0f09',.4);rfLine(c,[85,-2.2,111,0],'#5a3524',.4);
+      rfRR(c,111.6,-1,1.6,13.8,.4,C.steel,C.steelLo,.3);rfCirc(c,104,8.4,1,null,C.steelHi,.45);
+      rfFront(c,o,()=>{
+        if(bx<0)rfRR(c,bx,-1.2,-bx+1,2.4,.5,C.steel,C.steelLo,.3);
+        if(!o.sil)rfPoly(c,[bx-4.8,-1.5,bx-.4,-2.7,bx+.6,-2.7,bx+.6,2.7,bx-.4,2.7,bx-4.8,1.5],C.steel,C.steelLo,.3);else rfSil(c,bx,18,3.2);
+        // perforated barrel jacket: you see the barrel through the holes, and it glows as it heats
+        rfPoly(c,[0,-2.4,3,-3.2,48,-3.2,48,3.2,3,3.2,0,2.4],C.steel,C.steelLo,.35);rfLine(c,[3,-2.6,47.6,-2.6],C.steelHi,.35);
+        const holes=()=>{c.beginPath();for(let x=5;x<45;x+=3.4){c.ellipse(x,-1.15,1.25,.85,0,0,Math.PI*2);c.moveTo(x+1.7+1.25,1.25);c.ellipse(x+1.7,1.25,1.25,.85,0,0,Math.PI*2)}};
+        holes();c.fillStyle='#070707';c.fill();
+        if(o.barrelIn){c.save();holes();c.clip();rfRR(c,0,-1.3,48,2.6,.6,o.inconel?'#9a9da3':'#3c3e42');rfLine(c,[0,-.6,48,-.6],o.inconel?'#d4d7dc':'#5a5d62',.4);
+          if(o.heat>.02){c.globalCompositeOperation='lighter';c.fillStyle=`rgba(255,${Math.round(150-110*o.heat)},20,${Math.min(1,o.heat*1.1)})`;c.fillRect(0,-1.4,48,2.8)}c.restore()}
+        // folding front sight, bipod folded back under the jacket, tangent rear sight
+        rfPoly(c,[2.6,-3.2,4.6,-3.2,4,-6.8,3.2,-6.8],C.steel,C.steelLo,.3);
+        rfRR(c,5,3.2,3,1.8,.4,C.steel);c.lineCap='round';rfLine(c,[6.5,4.6,28,5.6],C.steel,1);rfLine(c,[7,5.2,29,6.3],C.steelHi,.6);rfRR(c,27.4,4.8,2.8,1.8,.4,C.steel);
+        rfPoly(c,[41,-3.2,47,-3.2,46,-4.6,42,-4.8],C.steel);rfLine(c,[42,-4.8,47.6,-5.4],C.steel,.6);
+        if(o.grip)rfVGrip(c,33,3.2);
+        o.flashFn&&o.flashFn()});
+      // stamped receiver, belt opening on the left, steel trigger frame with bakelite grip panels
+      rfPoly(c,[48,-3.4,80.4,-3.4,80.4,4,76,4,76,6,64,6,64,4,48,4],'#2a2b2e',C.steelLo,.35);rfLine(c,[49,-2.4,80,-2.4],C.steelHi,.3);
+      for(const x of[52,58,72,78])rfCirc(c,x,2.6,.35,C.steelHi);rfRR(c,50.8,-2.9,6.8,2.6,.3,'#0b0b0c');
+      rfLine(c,[66,6,66.4,9.6,74,9.6,74.4,6],C.steel,.8);rfLine(c,[69.6,6,70.1,8.6],C.steelHi,.7);
+      rfPoly(c,[74.4,6,79,6,82.6,15.8,82,16.8,77.6,16.8,76.6,15.2],C.steel,C.steelLo,.35);rfPoly(c,[75.6,7,78.4,7,81.4,15.2,78,15.6],'#3a2116','#1c0f09',.3);
+      rfRR(c,o.ch,-7.2,3,1.5,.6,C.steelHi,C.steelLo,.3);
+      rfBeltAndBox(c,o,this);
+      rfCover(c,o,50,-3.4,()=>{rfPoly(c,[49.6,-3.4,67,-3.4,67,-4.6,66,-5.4,51,-5.4,49.6,-4.4],'#303236',C.steelLo,.35);rfRR(c,65.2,-5.3,1.6,1,.3,'#45484d');rfLine(c,[52,-4.6,64,-4.6],C.steelHi,.3);
+        if(o.reflex)rfDot(c,58,-5.4)})}},
+  m2:{belt:1,xr:86,bf:.42,th:.36,sc:1.5,anc:[.8,.93],kk:.8,grip:[133.6,3.4],gripRot:.08,spade:1,foreFist:[132.4,.6,.08],lsh:[.66,1.2],sway:.4,
+    coverH:[97,-5],coverR:[116,-6.6],feed:[99.6,-2.6],beltC:[99,3],box:{x:98,y:10.6,w:15.5,h:13,w2:17.5,h2:17,can:1},
+    cs:{l:11.5,d:1.7,pitch:2.15,ap:1},ch:[109,-8.2],charges:2,rack:10,eject:[112,7.4],brassL:4.2,flash:'big',tip:2.8,silL:24,silR:4.2,tiltMax:0,
+    body(c,o){const C=RFC,bx=o.bx,mt='#3d4034';
+      // the gun sits on its tripod in front of you: pintle and cradle, with the traverse and elevation screw behind
+      rfRR(c,101.4,8,3.6,44,.8,mt,C.steelLo,.3);c.lineCap='round';rfLine(c,[119,6.6,123,34],mt,1.6);rfRR(c,117,13,8,2.4,.6,mt);rfRR(c,94.6,6.4,18,2.8,.6,mt,C.steelLo,.3);
+      rfFront(c,o,()=>{
+        rfPoly(c,[bx,-1.5,86,-2,86,2,bx,1.5],C.steel,C.steelLo,.35);rfLine(c,[bx+1,-.9,85,-1.2],C.steelHi,.35);
+        if(!o.sil)rfRR(c,bx-2.6,-1.9,2.8,3.8,.5,C.steelLo);else rfSil(c,bx,24,4.2);
+        // barrel-change carrying handle
+        rfRR(c,77,-2.4,3,4.8,.5,C.steel,C.steelLo,.3);rfLine(c,[78.5,-2.4,77.5,-7.4],C.steel,1.1);rfRR(c,71,-8.6,8,2,.8,'#3b2a1e');
+        o.flashFn&&o.flashFn()});
+      // perforated barrel support, front sight, big box receiver with riveted side plates
+      rfRR(c,86,-3.4,10,6.8,.6,C.steel,C.steelLo,.35);for(let x=87.4;x<95;x+=2.2)for(const y of[-1.8,0,1.8])rfCirc(c,x,y,.55,'#0b0b0c');
+      rfPoly(c,[96,-5,124.4,-5,124.4,6.6,96,6.6],'#2f312e',C.steelLo,.4);rfLine(c,[97,-4,124,-4],'#4d5049',.35);
+      for(let x=101;x<123;x+=3.4)for(const y of[-2.6,4.6])rfCirc(c,x,y,.38,'#55584f');rfRR(c,97.4,-4.4,5.8,3.4,.3,'#0a0a0a');
+      rfPoly(c,[95.4,-5,97.6,-5,97,-8.6,96,-8.6],C.steel);
+      // rear leaf sight, retracting slide handle, back plate, spade grips and the butterfly trigger
+      rfPoly(c,[117,-5,121,-5,120,-6.4,118,-6.4],C.steel);rfLine(c,[118.6,-6.4,119.6,-11.4],C.steel,.7);rfRR(c,118.8,-10,1.6,.9,.2,C.steelHi);
+      rfRR(c,o.ch,-8.8,3.6,1.9,.8,C.steelHi,C.steelLo,.3);
+      rfRR(c,124,-5.6,2.6,12.8,.6,C.steel,C.steelLo,.3);rfRR(c,126,-1,7,2.2,.5,C.steel);
+      rfRR(c,133.2,-3.8,3,10,1.3,'#1c130d');rfRR(c,132,-3.4,3,10,1.3,'#2c1e14','#140d08',.3);
+      rfPoly(c,[127.6,-2.6,130.2,-3.8,130.8,-1.6,128.2,-.9],'#4a4c51');
+      rfBeltAndBox(c,o,this);
+      rfCover(c,o,97,-5,()=>{rfPoly(c,[96.6,-5,117.2,-5,117.2,-6.4,97.6,-6.6],'#363834',C.steelLo,.35);rfRR(c,114.6,-7.2,2.2,1,.3,'#55584f');if(o.reflex)rfDot(c,107,-6.5)})}},
+  minigun:{belt:1,gat:1,xr:56,bf:.7,th:.45,sc:1.3,anc:[.86,.92],kk:.25,grip:[83.4,3],gripRot:.05,spade:1,foreFist:[60.4,-11.4,1.57],lsh:[.5,1.2],
+    chuteA:[67.6,5],chuteC:[64,24],chuteB:[86,56],eject:[66,7],brassL:2.2,flash:'gat',tip:0,tiltMax:.2,
+    body(c,o){const C=RFC;
+      // flexible feed chute down to the ammo pack on your back
+      c.save();c.globalAlpha=o.chute.a;c.translate(o.chute.dx,o.chute.dy);const pp=rfPath([...this.chuteB,...this.chuteC,...this.chuteA]);
+      for(let s=pp.len-.6,i=0;s>0;s-=1.5,i++){const a=pp.at(s),b=pp.at(s+.8),ang=Math.atan2(b[1]-a[1],b[0]-a[0]);c.save();c.translate(a[0],a[1]);c.rotate(ang);rfRR(c,-.8,-1.9,1.6,3.8,.4,i%2?'#3a3d33':'#2b2d25','#1a1b16',.25);c.restore()}
+      rfRR(c,this.chuteA[0]-2.4,this.chuteA[1]-1.2,4.8,2.4,.5,'#4a4d44',C.steelLo,.3);c.restore();
+      // spade grips with the red fire button
+      rfRR(c,74,-3.4,8.6,1.2,.4,C.steel);rfRR(c,74,2.8,8.6,1.2,.4,C.steel);rfRR(c,82,-4.2,2.8,11.6,1.2,'#1d1f22',C.steelLo,.3);rfRR(c,81.6,-5,1.8,1.2,.4,'#b3261e');
+      // housing and rotor, drive motor underneath, feeder/delinker on this side, carry handle on top
+      rfRR(c,56,-4.4,18,8.8,1.6,'#25272b',C.steelLo,.35);rfLine(c,[57,-3.2,73,-3.2],C.milHi,.4);for(const x of[60,66.5,72])rfLine(c,[x,-4.2,x,4.2],'#141517',.45);
+      rfRR(c,56.6,3.6,7,3.4,1.2,'#1c1d20',C.steelLo,.3);rfRR(c,63.4,4,1.2,2.6,.4,C.steelHi);
+      rfRR(c,64.4,-1.6,7.6,6.6,.6,'#303338',C.steelLo,.3);rfCirc(c,68.2,1.6,1.2,'#1a1b1d');rfLine(c,[65,-.6,71.4,-.6],C.milHi,.3);
+      rfRR(c,56.6,-6.6,1.6,2.4,.3,C.steel);rfRR(c,62.4,-6.6,1.6,2.4,.3,C.steel);rfRR(c,55.8,-10,9,2.2,1,'#1d1f22',C.steelLo,.3);
+      if(o.reflex)rfDot(c,70,-4.4);
+      // six barrels turning in their clamps; far barrels darker than near ones
+      rfFront(c,o,()=>{const r=2.3,br=.55,list=[];
+        const passes=o.spinV>14?[0,.35,.7]:[0];
+        for(const pz of passes){for(let k=0;k<6;k++){const a=o.spin+pz+k*Math.PI/3;list.push({y:-r*Math.cos(a),z:Math.sin(a),al:passes.length>1?.45:1})}}
+        list.sort((p,q)=>p.z-q.z);
+        rfRR(c,52,-3.2,4.4,6.4,.8,'#202226');
+        for(const b of list){const t=(b.z+1)/2,col=`rgb(${Math.round(20+t*55)},${Math.round(21+t*57)},${Math.round(23+t*61)})`;c.globalAlpha=b.al;rfRR(c,0,b.y-br,53,br*2,br,col);if(b.z>.3)rfLine(c,[.6,b.y-br*.4,52,b.y-br*.4],'rgba(255,255,255,.12)',.25)}
+        c.globalAlpha=1;
+        for(const cx of[1.6,24]){rfRR(c,cx,-3.6,3,7.2,.9,'#2a2c30',C.steelLo,.35);for(let k=0;k<6;k++){const a=o.spin+k*Math.PI/3;if(Math.sin(a)>0)rfCirc(c,cx+1.5,-r*Math.cos(a),.35,'#55585e')}}
+        o.flashFn&&o.flashFn()})}}
+};
+Object.assign(RF_GUN,RF_LMG);
+function rfBeltAndBox(c,o,S0){const B=S0.box;
+  let bw=0,bh=0,top=null;
+  if(B){bw=o.big?B.w2:B.w;bh=o.big?B.h2:B.h;top=[B.x+bw*.5,B.y+.6]}
+  const P0=B?top:S0.beltP0;
+  if(B&&o.box.a>.02){c.save();c.globalAlpha=o.box.a;c.translate(o.box.dx,o.box.dy);(B.can?rfAmmoCan:rfAmmoBox)(c,B.x,B.y,bw,bh);c.restore()}
+  if(o.belt==='fed')rfBelt(c,[...P0,...S0.beltC,...S0.feed],o.beltN,o.beltOff,S0.cs);
+  else if(o.belt==='lay'&&o.layP)rfBelt(c,[...P0,(P0[0]+o.layP[0])/2-6,(P0[1]+o.layP[1])/2+2,...o.layP],60,0,S0.cs)}
+function rfDrawBelt(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
+  const C=RFC;o.xr=S0.xr;o.bf=S0.bf;o.cover=0;o.belt='fed';o.box={dx:0,dy:0,a:1};o.chute={dx:0,dy:0,a:1};o.ch=S0.ch?S0.ch[0]:0;
+  o.bump=has('bump');o.big=has('extbelt');o.inconel=has('inconel');o.barrelIn=true;
+  // each round fired pulls the belt one link into the gun
+  let fed=0;for(const s of RF.kicks)if(s.eject)fed++;RF.beltPh+=fed;RF.beltShow+=(RF.beltPh-RF.beltShow)*Math.min(1,dt*28);
+  if(Math.abs(RF.beltPh-RF.beltShow)>6)RF.beltShow=RF.beltPh-6;
+  o.beltOff=RF.beltShow;o.beltN=(G.ammo&&G.ammo[G.w]&&G.ammo[G.w][0]!=null)?G.ammo[G.w][0]:(w.mag||100);
+  o.heat=S0.heat?Math.min(1,((G.heatV&&G.heatV[w.id])||0)/(w.heatT||6)):0;
+  if(S0.gat){const su=G.spinUp||0;o.spinV=su*42;RF.spinPh+=o.spinV*dt;o.spin=RF.spinPh}
+  o.bumpK=o.bump?Math.min(1,kick)*1.8:0;
+  const pt=(a,b,t)=>[rfL(a[0],b[0],t),rfL(a[1],b[1],t)];
+  const fore=S0.foreFist?[S0.foreFist[0],S0.foreFist[1]]:o.grip?rfProj(S0,S0.gripAt[0]+1.6,S0.gripAt[1]+4):rfProj(S0,S0.fore[0],S0.fore[1]);
+  let tilt=0,lh=null,rh=null,jolt=0,rod=null;
+  if(fr>=0&&!S0.gat){
+    const hc=S0.coverH,OPEN=-1.15,rotC=(p,a)=>{const dx=p[0]-hc[0],dy=p[1]-hc[1],cs=Math.cos(a),sn=Math.sin(a);return[hc[0]+dx*cs-dy*sn,hc[1]+dx*sn+dy*cs]};
+    tilt=S0.tiltMax*(fr<.08?rfE(fr/.08):fr<.93?1:1-rfE(rfSeg(fr,.93,1)));
+    // lift the feed cover
+    o.cover=fr<.08?0:fr<.18?OPEN*rfE(rfSeg(fr,.08,.18)):fr<.74?OPEN:fr<.78?OPEN*(1-Math.pow(rfSeg(fr,.74,.78),2)):0;
+    if(fr>=.78&&fr<.8)jolt=Math.max(jolt,1);
+    const B=S0.box,bw=B?(o.big?B.w2:B.w):0,bt=B?[B.x+bw*.5,B.y+1]:[S0.feed[0]-8,S0.feed[1]+14],off=[bt[0]-4,bt[1]+85],fd=S0.feed;
+    if(fr>=.2&&fr<.6)o.belt='none';
+    if(fr<.08)lh=pt(fore,S0.coverR,fr/.08);
+    else if(fr<.18)lh=rotC(S0.coverR,o.cover);
+    else if(fr<.24)lh=pt(rotC(S0.coverR,OPEN),bt,rfSeg(fr,.18,.24));
+    // pull the old box (or belt) away, bring up a fresh one
+    else if(fr<.4){const t=rfSeg(fr,.24,.4);lh=pt(bt,off,t);if(B){o.box.dx=(off[0]-bt[0])*rfE(t);o.box.dy=(off[1]-bt[1])*rfE(t)}}
+    else if(fr<.56){const t=rfSeg(fr,.4,.56);lh=pt(off,bt,t);if(B){o.box.dx=(off[0]-bt[0])*(1-rfE(t));o.box.dy=(off[1]-bt[1])*(1-rfE(t))}}
+    else if(fr<.6){lh=bt;if(fr<.58&&B)jolt=Math.max(jolt,1)}
+    // lay the first rounds on the feed tray
+    else if(fr<.7){lh=pt(bt,fd,rfSeg(fr,.6,.7));o.belt='lay';o.layP=lh}
+    else if(fr<.74)lh=pt(fd,rotC(S0.coverR,OPEN),rfSeg(fr,.7,.74));
+    else if(fr<.78)lh=rotC(S0.coverR,o.cover);
+    else if(fr<.88)lh=pt(S0.coverR,fore,rfSeg(fr,.78,.88));
+    // rack the charging handle (twice on the M2)
+    const g=S0.grip,h=S0.ch,N=S0.charges,R=S0.rack,hp=[h[0]+1.5,h[1]-.4];
+    if(fr>=.8&&fr<.83)rh=pt(g,hp,rfSeg(fr,.8,.83));
+    else if(fr>=.83&&fr<.93){const u=Math.min(.999,rfSeg(fr,.83,.93))*N,k=u%1;const d=k<.6?R*rfE(k/.6):R*(1-rfE(Math.min(1,(k-.6)/.15)));o.ch=h[0]+d;if(k>.6&&k<.78)jolt=Math.max(jolt,.8);rh=[hp[0]+d,hp[1]]}
+    else if(fr>=.93&&fr<.98)rh=pt(hp,g,rfSeg(fr,.93,.98))}
+  else if(fr>=0&&S0.gat){
+    // Minigun: unlatch the feed chute from your ammo pack and hook up a full one
+    tilt=S0.tiltMax*(fr<.08?rfE(fr/.08):fr<.9?1:1-rfE(rfSeg(fr,.9,1)));
+    const cp=[S0.chuteA[0],S0.chuteA[1]+1],off=[cp[0]-2,cp[1]+85];
+    if(fr<.1)lh=pt(fore,cp,fr/.1);
+    else if(fr<.18)lh=cp;
+    else if(fr<.38){const t=rfSeg(fr,.18,.38);lh=pt(cp,off,t);o.chute.dy=85*rfE(t);o.chute.dx=-2*rfE(t)}
+    else if(fr<.56){const t=rfSeg(fr,.38,.56);lh=pt(off,cp,t);o.chute.dy=85*(1-rfE(t));o.chute.dx=-2*(1-rfE(t))}
+    else if(fr<.62){lh=cp;if(fr<.58)jolt=1}
+    else if(fr<.78)lh=pt(cp,fore,rfSeg(fr,.62,.78))}
+  // MG42 barrel change: the hot barrel comes out glowing, a cool one goes in
+  const ovh=S0.heat&&G.ovh?(G.ovh[w.id]||0):0;
+  if(fr<0&&ovh>0){const f=Math.max(0,Math.min(1,1-ovh/(w.heatCool||4))),out=t=>({x:48+12*t,y:-2-24*t*t,rot:-.75*t}),dn=[52,80];
+    o.barrelIn=f<.15||f>.85;
+    if(f<.15)lh=pt(fore,[47,-3],f/.15);
+    else if(f<.45){const t=rfSeg(f,.15,.45);rod={...out(t),hot:1,a:t<.75?1:1-(t-.75)/.25};lh=[rod.x,rod.y]}
+    else if(f<.6){const t=rfSeg(f,.45,.6),e=out(1);lh=t<.5?pt([e.x,e.y],dn,t*2):pt(dn,[e.x,e.y],t*2-1)}
+    else if(f<.85){const t=1-rfSeg(f,.6,.85);rod={...out(t),hot:0,a:1};lh=[rod.x,rod.y]}
+    else lh=pt([47,-3],fore,rfSeg(f,.85,1))}
+  // placement: same spot as the rifles, measured from where the far end of the barrel lands
+  const th=S0.th||.5,co=Math.cos(th),si=Math.sin(th),mp=S0.xr*(1-S0.bf),gx=S0.grip[0]*co-S0.grip[1]*si,gy=S0.grip[0]*si+S0.grip[1]*co;
+  const gxe=(S0.grip[0]-mp)*co-S0.grip[1]*si,gye=(S0.grip[0]-mp)*si+S0.grip[1]*co;
+  const S=Math.min(W*.42/gxe,H*.34/gye)*(S0.sc||1),rs=Math.min(1,(now-RF.raise)/300),sw0=S0.sway==null?1:S0.sway,sway=Math.sin(now/950)*sw0,bob=Math.sin(now/470)*sw0;
+  let jx=0,jy=0;if(S0.gat&&flash>0){jx=(Math.random()-.5)*.8;jy=(Math.random()-.5)*.8}
+  const an=S0.anc||[.88,.9];let tx=W*an[0]-gx*S+sway*S*.8,ty=H*an[1]-gy*S+bob*S*.5+(1-rfE(rs))*H*.6;
+  c.save();c.translate(tx,ty);c.rotate(th);c.scale(S,S);
+  const kk=S0.kk||1,piv=S0.grip;c.translate(kick*2.6*kk+jolt*.5+jx,jy);c.translate(piv[0],piv[1]);c.rotate(-kick*.05*kk-tilt*.32+jolt*.01);c.translate(-piv[0],-piv[1]);c.translate(-tilt*2,-tilt*3);
+  const m=c.getTransform(),toS=(x,y)=>[m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f];
+  // sleeves
+  c.save();c.setTransform(1,0,0,1,0,0);const sw=9*S,ls=S0.lsh||[X0/W-.08,1.15];
+  const lw0=lh||fore,rw0=rh||S0.grip,lW=toS(lw0[0]+2,lw0[1]+4.5),rW=toS(rw0[0]+3,rw0[1]+5);
+  rfSleeve(c,lW[0],lW[1],W*ls[0],H*ls[1]+sw,sw);rfSleeve(c,rW[0],rW[1],W+sw,H+sw*1.2,sw*1.1);c.restore();
+  // the gun, with its muzzle flash drawn inside the barrel's perspective
+  o.flashFn=flash>0?()=>{const y=S0.gat?-2.3:0,x=S0.gat?0:o.bx-(o.sil?S0.silL:S0.tip);rfFlash(c,x,S0.flash,o.sil&&!S0.gat,flash,y)}:null;
+  S0.body(c,o);
+  if(rod){c.save();c.globalAlpha=rod.a;c.translate(rod.x,rod.y);c.rotate(rod.rot);const L=36;
+    rfRR(c,-L,-1.3,L,2.6,.6,rod.hot?'#e8611c':(o.inconel?'#9a9da3':'#4a4c51'),RFC.steelLo,.3);rfRR(c,-2,-1.8,3,3.6,.5,C.steel);
+    if(rod.hot){c.globalCompositeOperation='lighter';rfRR(c,-L-.6,-2,L+.6,4,1.2,'rgba(255,120,30,.35)')}c.restore()}
+  // gloves
+  if(!rh){rfFist(c,S0.grip[0],S0.grip[1],S0.gripRot==null?-.45:S0.gripRot,true);if(!S0.spade){c.lineCap='round';rfLine(c,[S0.grip[0]-2.6,S0.grip[1]-3.6,S0.trig[0],S0.trig[1]],RFC.gloveHi,1.7)}}
+  else rfFist(c,rh[0],rh[1],.2,true);
+  if(!lh){if(S0.foreFist)rfFist(c,S0.foreFist[0],S0.foreFist[1],S0.foreFist[2],true);else if(o.grip)rfFist(c,fore[0]+.1,fore[1]-.2,-.05,true);else{const t=rfProj(S0,S0.fore[0],S0.foreTop),b=rfProj(S0,S0.fore[0],S0.foreBot);rfSupport(c,fore[0],t[1],b[1])}}
+  else rfFist(c,lh[0],lh[1],-.3,true);
+  // brass (and links) drop out of the bottom of the gun
+  const bl=(S0.brassL||2.4)*S;
+  for(const s of RF.kicks)if(s.eject){s.eject=0;const p=toS(S0.eject[0],S0.eject[1]);RF.brass.push({x:p[0],y:p[1],vx:W*(.03+Math.random()*.12),vy:H*(.02+Math.random()*.12),r:Math.random()*6,vr:(Math.random()-.5)*24,t:0,s:bl})}
+  c.restore();
+  rfBrassDraw(c,W,H,S,dt);
   return true}
 /* ----- the picture: a simple first-person view from where you stand ----- */
 const vcv=$('view'),v2=vcv.getContext('2d');
@@ -6284,7 +6539,7 @@ function rdDraw(){
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   tdDraw(c,W,H,X0,Y0,P);   // Unbearable Buddy held in both hands, with its eye lasers
-  const rfOn=rfDraw(c,W,H,X0,Y0);   // AK-47, AN-94 and M4A1 held in your hands
+  const rfOn=rfDraw(c,W,H,X0,Y0);   // assault rifles and machine guns held in your hands
   // sights and muzzle flash
   const lock=!!G.lockE;c.strokeStyle=lock?'#ff5a4a':'rgba(255,255,255,.7)';c.lineWidth=Math.max(1.5,W/220);const cs=Math.max(6,W/40);
   c.beginPath();c.moveTo(X0-cs,Y0);c.lineTo(X0-cs*.35,Y0);c.moveTo(X0+cs*.35,Y0);c.lineTo(X0+cs,Y0);c.moveTo(X0,Y0-cs);c.lineTo(X0,Y0-cs*.35);c.moveTo(X0,Y0+cs*.35);c.lineTo(X0,Y0+cs);c.stroke();
@@ -6389,6 +6644,14 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-lmgs',date:'November 18, 2026',title:'Machine guns now visible in your hands',items:[
+    'For sighted players: the M249 SAW, MG42, M2 Browning and M134 Minigun are now drawn in the battle view, modelled on the real guns. The M249 has its 200-round ammo box, carrying handle and folded bipod; the MG42 its holed barrel jacket, bakelite stock and hanging belt; the M2 sits on its tripod with spade grips and a CAL .50 ammo can; the Minigun has six barrels, a drive motor and a feed chute to your ammo pack.',
+    'The ammo belt is drawn round by round. It feeds into the gun as you fire and gets shorter as the belt runs low. Brass drops out of the bottom of the gun.',
+    'Belt reloads play the real drill: lift the feed cover, swap the ammo box or belt, lay the new belt on the tray, slam the cover and rack the charging handle. The M2 is racked twice, just like real crews do. The Minigun swaps its feed chute instead.',
+    'The MG42 barrel glows orange through its jacket as it heats, and when it overheats you see the hot barrel pulled out and a cool one put in. The Inconel alloy barrel shows silver.',
+    'The Minigun barrels spin up and blur when you hold Fire, and slow down when you let go.',
+    'Attachments show on the gun: silencer, reflex sight, grip, a bigger ammo box or can with the Extended belt, and the M249 Bump stock slides back and forth as it fires.',
+    'This only changes what you see. Sounds, damage and reload times are exactly the same.']},
   {id:'2026-11-17-rifles',date:'November 17, 2026',title:'Assault rifles now visible in your hands',items:[
     'For sighted players: the AK-47, AN-94 and M4A1 carbine are now drawn in your hands in the battle view, modelled on the real guns. The AK-47 has its wooden stock and handguards and curved steel magazine, the AN-94 its black polymer body, two-port muzzle brake and plum magazine, and the M4A1 its ribbed handguard, flat-top rail and grey magazine.',
     'Each gun kicks back when it fires, once for every round of the burst, flashes at the muzzle the way that rifle really does, and throws brass out of the top. The AK-47 and AN-94 charging handles ride back with each shot.',
