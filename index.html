@@ -6128,7 +6128,7 @@ function rfDraw(c,W,H,X0,Y0){
   const w=G&&G.lo&&G.lo[G.w];if(!w||!RF_IDS[w.id]||G.down){RF.wid=null;return false}
   const S0=RF_GUN[w.id],now=performance.now(),dt=Math.min(.05,Math.max(0,(now-(RF.lastT||now))/1000));RF.lastT=now;
   if(RF.wid!==w.id){RF.wid=w.id;RF.raise=now;RF.kicks.length=0}
-  const eq=(P.att[w.id]||{eq:[]}).eq,has=k=>eq.includes(k),mk=has('extmag2')?2:has('extmag')?1:0;
+  const eq=(P.att[w.id]||{eq:[]}).eq,has=k=>eq.includes(k),mk=has('extmag2')?2:(has('extmag')||has('xmmag'))?1:0;
   const o={sil:!!w.sil,ext:w.barrel?7:0,grip:has('grip'),reflex:has('reflex'),ch:0,cp:0};o.bx=-o.ext;
   // recoil from each round of the burst, and brass for each one
   let kick=0,flash=0;for(const s of RF.kicks){const d=now-s.t;if(d<0)continue;kick+=d<30?d/30:Math.max(0,1-(d-30)/170);if(d<45)flash=Math.max(flash,1-d/45);if(!s.b){s.b=1;s.eject=1}}
@@ -6136,6 +6136,8 @@ function rfDraw(c,W,H,X0,Y0){
   // reload progress
   const job=G.jobs&&G.jobs.find(j=>j.wi===G.w),fr=job&&job.total>0?Math.max(0,Math.min(1,1-job.left/job.total)):-1;
   if(S0.belt)return rfDrawBelt(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
+  if(S0.lnch)return rfDrawLaunch(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
+  o.rng=flash;
   let tilt=0,mag={dx:0,dy:0,rot:0,a:1,on:true},lh=null,rh=null,jolt=0;
   const M=S0.mag,fore=o.grip?[S0.fore[0]+.5,S0.foreBot+4]:S0.fore,off=[M[0]-6,M[1]+90];
   if(fr>=0){
@@ -6167,9 +6169,9 @@ function rfDraw(c,W,H,X0,Y0){
   o.ch+=S0.ch?S0.ch[0]:0;
   // placement: muzzle just right of and below your sights, gun angled back toward your right shoulder
   const th=.5,co=Math.cos(th),si=Math.sin(th),gx=S0.grip[0]*co-S0.grip[1]*si,gy=S0.grip[0]*si+S0.grip[1]*co;
-  const S=Math.min(W*.42/gx,H*.34/gy),rs=Math.min(1,(now-RF.raise)/300),sway=Math.sin(now/950),bob=Math.sin(now/470);
+  const S=Math.min(W*.42/gx,H*.34/gy)*(S0.sc||1),rs=Math.min(1,(now-RF.raise)/300),sway=Math.sin(now/950),bob=Math.sin(now/470);
   // your right hand sits low on the right, the muzzle reaches in toward the middle, just below your sights
-  let tx=W*.88-gx*S+sway*S*.8,ty=H*.9-gy*S+bob*S*.5+(1-rfE(rs))*H*.6;
+  const an=S0.anc||[.88,.9];let tx=W*an[0]-gx*S+sway*S*.8,ty=H*an[1]-gy*S+bob*S*.5+(1-rfE(rs))*H*.6;
   c.save();c.translate(tx,ty);c.rotate(th);c.scale(S,S);
   // recoil pushes the gun back into your shoulder and lifts the muzzle; reloading tilts it up so you can see the magazine well
   const piv=S0.grip;c.translate(kick*2.6+jolt*.5,0);c.translate(piv[0],piv[1]);c.rotate(-kick*.06-tilt*.32+jolt*.012);c.translate(-piv[0],-piv[1]);c.translate(-tilt*2,-tilt*3);
@@ -6452,6 +6454,249 @@ function rfDrawBelt(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
   c.restore();
   rfBrassDraw(c,W,H,S,dt);
   return true}
+/* ----- held explosive launchers: M79, Milkor MGL, XM25 Punisher, RPG-7, FGM-148 Javelin and M202 FLASH,
+   drawn like the real weapons. Each launch kicks, throws smoke (and backblast from the rockets), and you see the
+   grenade or rocket leave toward your sights. Reloads play the real drill: the M79 breaks open, ejects its case and
+   takes a fresh 40 mm round; the MGL swings open, dumps its empties and is loaded round by round (or all at once with
+   the speed loader) while the cylinder turns; the XM25 swaps its box magazine behind the grip; the RPG-7 takes a new
+   warhead in the front of the tube (it changes shape with the warhead you have equipped); the Javelin's sight unit
+   is moved onto a fresh missile tube; the M202 takes a new 4-rocket clip. Looks only: sounds and timing are unchanged. ----- */
+Object.assign(RF_IDS,{xm25:1,m79:1,mgl:1,rpg7:1,javelin:1,flash:1});
+Object.assign(RF,{smoke:[],proj:[],cylPh:0,cylShow:0,lockFlash:-1e9});
+/* XM25 is a bullpup rifle, so it uses the rifle drill: box magazine behind the grip, slap the bolt release */
+RF_GUN.xm25={sc:.62,anc:[.7,.84],mag:[54.6,6.2],grip:[43.2,10.8],trig:[35.8,7.4],fore:[21,1.2],foreBot:5.6,foreTop:-4.4,hgX:[10,30],rock:false,catch:[50.4,3.2],eject:[64,-5.4],flash:'bird',
+  magDraw(c,k){const L=k?13.4:9.2;rfRR(c,0,0,8.6,L,.9,'#2b2b29','#141414',.35);rfRR(c,-.4,L-1,9.4,1.8,.6,'#161616');rfRR(c,6.6,1.6,1.1,L-3.6,.4,'#4a4a44');
+    for(let y=2;y<L-2;y+=2.4)rfLine(c,[1.2,y,5.6,y],'#3b3b37',.35);rfRR(c,1.4,-1.6,5.4,1.8,.8,RFC.brass);rfRR(c,.6,-1.6,1.2,1.8,.4,'#55595e')},
+  body(c,o){const C=RFC,bx=o.bx,bd='#3e3d38',bdHi='#5a5850',bdLo='#1f1f1c';
+    // muzzle brake and short 25 mm barrel
+    rfRR(c,bx,-1.7,12-bx,3.4,.6,C.steel,C.steelLo,.3);rfRR(c,bx-4.2,-2.3,4.6,4.6,.8,C.steel,C.steelLo,.3);rfRR(c,bx-3.2,-1.4,1.1,2.8,.4,'#0b0b0c');rfRR(c,bx-1.6,-1.4,1.1,2.8,.4,'#0b0b0c');
+    // angular handguard and the long bullpup body, butt pad at the back
+    rfPoly(c,[8,-4.4,30,-4.4,30,5.6,12,5.6,8,3],bd,bdLo,.35);rfLine(c,[9,-3.4,29.6,-3.4],bdHi,.4);for(let i=0;i<3;i++)rfRR(c,13+i*5,-1,3.4,1.4,.6,bdLo);
+    rfPoly(c,[30,-5,82,-5,84,-3,84,9.6,80,11.2,66,6,30,6],bd,bdLo,.4);rfLine(c,[31,-4,83,-4],bdHi,.4);rfPoly(c,[66,6.6,79.6,10.6,82.6,9.4,82.6,1,66,1],bdLo);
+    rfRR(c,82.6,-5.4,2.2,17,.6,'#121212');rfRR(c,53.6,5.6,10.4,1.6,.4,bdLo);
+    // pistol grip, long trigger guard
+    rfPoly(c,[38,6,43,6,46.6,15.6,46,16.6,41.6,16.6,40.6,15],'#262624',bdLo,.35);rfLine(c,[39.6,7,43.4,14.6],bdHi,.35);
+    rfLine(c,[31,6,31.6,9.2,40,9.4,41,6],bd,.8);rfLine(c,[35.4,6,35.8,8.2],C.steelHi,.65);rfRR(c,50.4-o.cp,2.4,1.8,2.4,.35,'#55534a',bdLo,.25);
+    // the fire control unit on top: laser rangefinder and day/thermal sight, with its little display
+    rfPoly(c,[16,-5,50,-5,52,-7,52,-15,18,-15,14,-12,14,-7],'#262624',bdLo,.4);rfLine(c,[17,-14,51,-14],'#45443e',.4);
+    rfCirc(c,16.6,-10,2.6,'#0e1216','#2c2c28',.4);rfCirc(c,16,-10.6,.8,'rgba(120,170,220,.55)');rfCirc(c,21.4,-12.6,1,'#0e1216');
+    rfRR(c,52,-13.8,4.2,6.2,1.4,'#121212');rfRR(c,31,-13.2,13,5.4,.7,'#1b1d1c');rfRR(c,33,-12.4,6.4,3.2,.4,o.rng>0?`rgba(80,255,140,${.4+.6*o.rng})`:'#11301e');
+    for(let i=0;i<3;i++)rfCirc(c,41.4+i*1.4,-10.8,.45,'#3a3a35')}};
+/* 40 mm grenade: aluminium case, olive body and the ogive colour of the round you have loaded */
+function rfNade(c,x,y,kind){const r=2.5;rfRR(c,x+8,-r+y,4.4,r*2,.5,'#b9bcc0','#6c6f73',.3);rfRR(c,x+11.6,-r-.3+y,.8,r*2+.6,.3,'#9a9da1');
+  rfRR(c,x+4,-r+y,4.2,r*2,.3,kind==='buck'?'#1d1d1d':'#4b5134','#22261a',.3);
+  c.beginPath();c.moveTo(x+4.2,y-r);c.quadraticCurveTo(x,y-r*.9,x-.2,y);c.quadraticCurveTo(x,y+r*.9,x+4.2,y+r);c.closePath();c.fillStyle=kind==='buck'?'#2a2a2a':kind==='hedp'?'#4b5134':'#b8963a';c.fill();
+  if(kind==='hedp')rfRR(c,x+1.6,y-r*.8,.8,r*1.6,.2,'#d8c867');if(kind!=='buck')rfLine(c,[x+5.4,y-r+.3,x+5.4,y+r-.3],'#d8c867',.35)}
+/* RPG-7 warheads, front of the rocket at x (negative is further out of the tube) */
+function rfWarhead(c,x,kind){const C=RFC,ol='#566038',olLo='#2c311c';
+  rfRR(c,x-10,-1.95,10.6,3.9,.5,'#3f4530',olLo,.3);for(let i=0;i<4;i++)rfLine(c,[x-8.6+i*2,-1.6,x-8.6+i*2,1.6],'#2a2e1f',.35);
+  if(kind==='frag'){rfRR(c,x-30,-2.5,20.4,5,1.2,'#4f5233',olLo,.3);rfRR(c,x-22,-2.6,1.4,5.2,.3,'#1c1c1c');c.beginPath();c.ellipse(x-30,0,2.6,2.5,0,Math.PI/2,Math.PI*1.5);c.fillStyle='#4f5233';c.fill();return}
+  if(kind==='thermo'){rfPoly(c,[x-10,-1.95,x-13,-5.2,x-28,-5.2,x-28,5.2,x-13,5.2,x-10,1.95],'#4d5536',olLo,.35);c.beginPath();c.ellipse(x-28,0,5.4,5.2,0,Math.PI/2,Math.PI*1.5);c.fillStyle='#4d5536';c.fill();c.strokeStyle=olLo;c.lineWidth=.3;c.stroke();
+    rfRR(c,x-22,-5.3,1.6,10.6,.3,'#1c1c1c');rfLine(c,[x-26,-4,x-14,-4],'#6b7349',.45);return}
+  if(kind==='tandem'){rfLine(c,[x-46,0,x-34,0],'#2b2b2b',.9);rfRR(c,x-52,-1.5,7.4,3,1.2,ol,olLo,.3);rfCirc(c,x-52.2,0,.6,'#111');
+    rfPoly(c,[x-10,-1.95,x-13,-5.2,x-24,-5.2,x-36,-1.4,x-36,1.4,x-24,5.2,x-13,5.2,x-10,1.95],ol,olLo,.35);rfRR(c,x-20,-5.3,1.2,10.6,.3,'#1c1c1c');rfLine(c,[x-23,-4.1,x-13.6,-4.1],'#76804d',.45);return}
+  rfPoly(c,[x-10,-1.95,x-12,-4.25,x-20,-4.25,x-30,-1.25,x-36,-.55,x-36,.55,x-30,1.25,x-20,4.25,x-12,4.25,x-10,1.95],ol,olLo,.35);
+  rfRR(c,x-37.6,-.65,1.8,1.3,.4,'#111');rfRR(c,x-18,-4.35,1.2,8.7,.3,'#1c1c1c');rfLine(c,[x-19,-3.3,x-12.6,-3.3],'#76804d',.45)}
+const RF_LNCH={
+  m79:{lnch:1,th:.5,kk:1.4,grip:[61,5.6],gripRot:-.75,trig:[54.4,6.4],fore:[33,2],foreTop:2.7,foreBot:5.6,tiltMax:.35,hinge:[44.6,3.4],tip:[-1,0],flash:'pop',proj:'nade',
+    body(c,o){const C=RFC,wd=C.wood,wdLo=C.woodLo,wdHi=C.woodHi;
+      // wooden stock with its rubber recoil pad
+      rfPoly(c,[56,-2.4,60,-2.8,89,-.2,89,10.4,86,10.8,74,6.4,66,5.4,62,8.4,58,8.6,56,4.8],wd,wdLo,.4);c.save();c.globalAlpha=.55;rfLine(c,[61,-1.8,88,.6],wdHi,.35);rfLine(c,[66,1,88,3.8],wdHi,.35);c.restore();
+      rfRR(c,88.6,-.6,2,11.4,.5,'#121212');rfCirc(c,80,8.6,.9,null,C.steelHi,.4);
+      // the barrel group tips down on its hinge when you break it open
+      c.save();c.translate(...this.hinge);c.rotate(o.brk);c.translate(-this.hinge[0],-this.hinge[1]);
+      rfRR(c,0,-2.75,44.8,5.5,.8,'#30332e','#171816',.35);rfLine(c,[1,-1.9,44,-1.9],'#4b4f48',.4);rfRR(c,-.7,-3,1.6,6,.4,'#262824');
+      rfPoly(c,[1.2,-2.75,3.4,-2.75,2.8,-4.9,2,-4.9],'#262824');
+      rfPoly(c,[22,2.75,42.8,2.75,42.8,5.4,24,5.8,22,4.8],wd,wdLo,.35);rfLine(c,[23,3.6,42,3.6],wdHi,.35);
+      if(o.rnd&&o.brk<-.05){rfRR(c,43.4,-2.6,1.6,5.2,.3,'#b9bcc0','#6c6f73',.3)}
+      if(o.inRound){c.save();c.beginPath();c.rect(44.6,-12,40,24);c.clip();rfNade(c,o.inRound.nx,0,o.ammo);c.restore()}
+      c.restore();
+      // receiver with the barrel latch on top, leaf sight, trigger
+      rfPoly(c,[44.4,-3.2,56.4,-3.2,56.4,4.6,44.4,4.6],'#2a2c2a','#151615',.35);rfLine(c,[45,-2.2,56,-2.2],'#474a46',.35);rfRR(c,51+o.latch,-4.3,4,1.2,.4,'#3e413d');
+      if(o.ladder){c.lineCap='round';rfLine(c,[45.2,-3.2,45.8,-11.6],'#3e413d',.6);rfLine(c,[48.4,-3.2,49,-11.6],'#3e413d',.6);for(const y of[-5.2,-7.2,-9.2,-11.2])rfLine(c,[45.5,y,48.8,y],'#3e413d',.45);rfRR(c,46.6,-12,1.2,.8,.2,'#3e413d')}
+      else rfPoly(c,[44.6,-3.2,49.2,-3.2,49.2,-3.9,44.6,-3.9],'#3e413d');
+      rfLine(c,[51,4.6,51.4,7.6,57,7.6,58,4.6],C.steel,.8);rfLine(c,[54.2,4.6,54.6,6.8],C.steelHi,.7)},
+    reload(fr,o,P,job){const h=this.hinge,rot=(p,a)=>{const dx=p[0]-h[0],dy=p[1]-h[1],cs=Math.cos(a),sn=Math.sin(a);return[h[0]+dx*cs-dy*sn,h[1]+dx*sn+dy*cs]},OPEN=-.55;
+      P.tilt=this.tiltMax*(fr<.1?rfE(fr/.1):fr<.9?1:1-rfE(rfSeg(fr,.9,1)));
+      o.brk=fr<.1?0:fr<.2?OPEN*rfE(rfSeg(fr,.1,.2)):fr<.72?OPEN:fr<.78?OPEN*(1-Math.pow(rfSeg(fr,.72,.78),2)):0;o.latch=fr>.08&&fr<.2?1.2:0;
+      if(fr>=.78&&fr<.82)P.jolt=1;o.rnd=fr<.24||fr>=.62;
+      if(fr>=.24&&!job._ej){job._ej=1;P.ejectCase=rot([45,0],OPEN)}
+      const fore=rot(P.fore,o.brk),br=rot([48,1],OPEN),off=[40,80];
+      if(fr<.3)P.lh=fore;
+      else if(fr<.46){const t=rfSeg(fr,.3,.46);P.lh=t<.5?[rfL(fore[0],off[0],t*2),rfL(fore[1],off[1],t*2)]:[rfL(off[0],br[0]+10,t*2-1),rfL(off[1],br[1],t*2-1)]}
+      else if(fr<.62){const t=rfSeg(fr,.46,.62);o.inRound={nx:rfL(46,32.2,t)};P.lh=rot([o.inRound.nx+13.4,2.6],OPEN)}
+      else if(fr<.72)P.lh=[rfL(br[0],fore[0],rfSeg(fr,.62,.72)),rfL(br[1],fore[1],rfSeg(fr,.62,.72))];
+      else P.lh=null;
+      if(fr<.3&&fr>=.1)P.lh=rot(P.fore,o.brk);if(fr<.1)P.lh=null}},
+  mgl:{lnch:1,th:.5,kk:1,grip:[65,10.6],gripRot:-.42,trig:[59.4,7.4],foreFist:[16.2,8.6,-.08],tiltMax:.3,tip:[-.8,0],flash:'pop',proj:'nade',
+    body(c,o){const C=RFC,e=o.ext,bk='#2a2c2f',bkLo='#151618';
+      // telescoping stock on its buffer tube
+      rfRR(c,68+e,-2.4,18,3.4,.8,C.mil,bkLo,.3);rfPoly(c,[76+e,-3.2,90+e,-3.6,91.4+e,-3.2,91.4+e,8.6,90+e,9.2,84+e,5.6,78+e,3.4,76+e,1.4],'#1f2124',bkLo,.4);rfRR(c,90.6+e,-3.8,1.8,13.4,.5,'#121314');
+      // rear frame with pistol grip and trigger
+      rfPoly(c,[59+e,-8.6,68.4+e,-8.6,68.4+e,4,66+e,6,59+e,6],bk,bkLo,.35);
+      rfPoly(c,[61+e,6,66+e,6,69.6+e,15.6,69+e,16.6,64.6+e,16.6,63.6+e,15],'#1d1f22',bkLo,.35);rfLine(c,[56.4+e,6,56.8+e,8.8,62.6+e,8.8,63+e,6],C.steel,.75);rfLine(c,[59.6+e,6,60+e,8],C.steelHi,.6);
+      // the front group swings open on its hinge to load
+      c.save();c.translate(61+e,6);c.rotate(o.open);c.translate(-61-e,-6);
+      rfRR(c,0,-2.9,37,5.8,.8,bk,bkLo,.35);rfLine(c,[1,-2,36,-2],C.milHi,.35);rfRR(c,-.8,-3.2,1.8,6.4,.5,'#1f2023');
+      rfRR(c,14,2.9,4.4,10.6,1.6,'#1d1f22',bkLo,.35);for(let i=0;i<3;i++)rfLine(c,[14.6,6+i*2.2,17.8,6+i*2.2],C.milHi,.35);
+      // the big revolving cylinder: its chambers turn a sixth of a circle after every shot
+      const cx0=37,cx1=59+e,cy=.8,R=7.6;rfRR(c,cx0,cy-R,cx1-cx0,R*2,3,'#2e3034',bkLo,.4);
+      for(let k=0;k<6;k++){const a=o.cyl+k*Math.PI/3,z=Math.sin(a);if(z<=0)continue;const yy=cy-R*.82*Math.cos(a);rfRR(c,cx0+1.4,yy-1.3*z,cx1-cx0-2.8,2.6*z,1.2*z,`rgba(14,15,17,${.5+.4*z})`);rfLine(c,[cx0+2,yy-1.3*z-.3,cx1-2,yy-1.3*z-.3],`rgba(255,255,255,${.12*z})`,.35)}
+      rfRR(c,cx0-1.2,cy-R-.4,2.4,R*2+.8,.6,'#25272a',bkLo,.3);rfCirc(c,cx0,cy,1.6,'#3a3d42');
+      // top strap with its rail, iron sight and the Armson reflex sight
+      rfRR(c,4,-4.6,cx1-4+2,1.8,.3,'#232528');for(let x=5;x<cx1;x+=1.6)rfRR(c,x,-5.1,.9,.6,.1,'#232528');rfRR(c,cx0-1,-8.4,cx1-cx0+3,3.8,.6,bk,bkLo,.3);
+      rfPoly(c,[4.6,-5,7,-5,6.4,-7.4,5.4,-7.4],bk);
+      rfRR(c,44,-14.4,9.4,6,.9,'#1b1c1e',bkLo,.35);rfRR(c,44.6,-13.6,2,4.2,.4,'rgba(255,170,60,.35)');rfPoly(c,[45,-8.4,52,-8.4,51,-8.6,46,-8.6],C.mil);
+      if(o.load){for(const r of o.load)rfNade(c,r.x,r.y,'he')}
+      c.restore()},
+    reload(fr,o,P,job,n,w){const e=o.ext,pv=[61+e,6],rot=(p,a)=>{const dx=p[0]-pv[0],dy=p[1]-pv[1],cs=Math.cos(a),sn=Math.sin(a);return[pv[0]+dx*cs-dy*sn,pv[1]+dx*sn+dy*cs]},OPEN=-.3;
+      P.tilt=this.tiltMax*(fr<.08?rfE(fr/.08):fr<.92?1:1-rfE(rfSeg(fr,.92,1)));
+      o.open=fr<.08?0:fr<.16?OPEN*rfE(rfSeg(fr,.08,.16)):fr<.88?OPEN:fr<.92?OPEN*(1-Math.pow(rfSeg(fr,.88,.92),2)):0;if(fr>=.92&&fr<.95)P.jolt=1;
+      if(fr>=.18&&!job._ej){job._ej=1;P.empties=[];const k=w.mag||6;for(let i=0;i<Math.min(k,12);i++)P.empties.push(rot([59.4+e,-4+i%6*1.6],OPEN))}
+      const ff=rot(this.foreFist,o.open),back=rot([cx1Of(e)+2,1],OPEN),off=[back[0]-6,back[1]+80];
+      if(fr<.26){P.lh=null;return}
+      const spd=o.speedLoad,N=spd?1:Math.min(w.mag||6,12);
+      if(fr<.84){const u=rfSeg(fr,.26,.84)*N,k=Math.floor(u),t=u-k;
+        // each trip: down to your pouch, back up with a grenade (or the speed loader), push it in, the cylinder turns
+        if(t<.45){const s=t/.45;P.lh=s<.5?[rfL(ff[0],off[0],s*2),rfL(ff[1],off[1],s*2)]:[rfL(off[0],back[0]+6,s*2-1),rfL(off[1],back[1],s*2-1)];if(k>0&&s<.5)P.lh=[rfL(back[0],off[0],s*2),rfL(back[1],off[1],s*2)]}
+        else if(t<.8){const s=rfSeg(t,.45,.8);P.lh=[rfL(back[0]+6,back[0]+1,s),back[1]];const nx=cx1Of(e)+rfL(4,-10,s);o.load=[{x:nx,y:spd?-2.4:.8}];if(spd)o.load.push({x:nx,y:3.8})}
+        else{P.lh=[back[0]+1,back[1]];o.cylAdd=(k+rfSeg(t,.8,1))*Math.PI/3}
+        o.cylAdd=o.cylAdd||(k*Math.PI/3);return}
+      o.cylAdd=N*Math.PI/3+rfE(rfSeg(fr,.84,.9))*Math.PI*2;
+      P.lh=[rfL(back[0],ff[0],rfSeg(fr,.84,.9)),rfL(back[1],ff[1],rfSeg(fr,.84,.9))];if(fr>=.9)P.lh=null}},
+  rpg7:{lnch:1,th:.42,kk:.8,grip:[46.2,9],gripRot:-.3,trig:[42,5.4],fore:[26,0],foreTop:-2.3,foreBot:2.3,tiltMax:.3,tip:[-1,0],back:[95,0],flash:'rocket',proj:'rocket',
+    body(c,o){const C=RFC,tb='#2c2f2c',tbLo='#151715',wd='#8a4a22';
+      rfRR(c,0,-2.2,80.4,4.4,.6,tb,tbLo,.35);rfPoly(c,[80,-2.2,91.6,-3.6,95,-3.9,95,3.9,91.6,3.6,80,2.2],tb,tbLo,.35);rfRR(c,94,-4,1.4,8,.4,'#1e201e');rfLine(c,[1,-1.4,80,-1.4],'#4a4e4a',.35);
+      // the two wooden heat guards
+      for(const[x0,x1]of[[20,40],[52,70]]){rfRR(c,x0,-3,x1-x0,6,1.4,wd,C.woodLo,.35);rfLine(c,[x0+1,-1.8,x1-1,-1.8],C.woodHi,.4);rfLine(c,[x0+1,1.4,x1-1,1.4],'#6e3b1a',.35)}
+      rfPoly(c,[5,-2.2,7.4,-2.2,7,-6.6,6,-6.6],tb);rfRR(c,5.2,-7.4,2.6,1,.3,tb);rfPoly(c,[42,-2.2,46,-2.2,45.4,-4.6,42.6,-4.6],tb);
+      // trigger housing and bakelite pistol grip
+      rfRR(c,38,2.2,10,2.4,.4,C.steel,C.steelLo,.3);rfPoly(c,[43,4.4,47.6,4.4,51,13.8,50.4,14.8,46,14.8,45,13.2],'#2a1a12','#140c08',.35);
+      rfLine(c,[38.6,4.4,39,7.4,44,7.4,44.6,4.4],C.steel,.7);rfLine(c,[41.6,4.4,42,6.4],C.steelHi,.6);rfCirc(c,72,3.6,.9,null,C.steelHi,.4);
+      // PGO-7 optical sight on the left-side mount
+      if(o.scope){rfRR(c,43,-4.8,7,2.8,.4,C.steel);rfRR(c,36,-10,18.6,4.8,1.8,'#1f2120','#0e0f0e',.35);rfRR(c,33.6,-10.6,3,6,1.2,'#1f2120');rfCirc(c,33.8,-7.6,1.6,'rgba(110,170,210,.35)');
+        rfRR(c,54.2,-10.4,4.2,5.6,1.4,'#0f0f0f');rfCirc(c,45,-11.4,1.3,'#2a2c2a');rfRR(c,44.4,-11.8,1.2,1.4,.3,'#3c3f3c')}
+      if(o.wh)rfWarhead(c,o.wx,o.whKind)},
+    reload(fr,o,P){P.tilt=this.tiltMax*(fr<.1?rfE(fr/.1):fr<.9?1:1-rfE(rfSeg(fr,.9,1)));const fore=P.fore,off=[-10,75];
+      // fetch a warhead, slide it into the front of the tube, twist it to seat it
+      if(fr<.12){P.lh=[rfL(fore[0],fore[0]-4,fr/.12),fore[1]];o.wh=false}
+      else if(fr<.42){const t=rfSeg(fr,.12,.42);if(t<.45){P.lh=[rfL(fore[0],off[0],t/.45),rfL(fore[1],off[1],t/.45)];o.wh=false}else{const s=(t-.45)/.55;o.wh=true;o.wx=rfL(-60,-30,s);P.lh=[o.wx-20,rfL(off[1],4.6,s)];o.wy=0}}
+      else if(fr<.7){const t=rfSeg(fr,.42,.7);o.wh=true;o.wx=rfL(-30,0,t);P.lh=[o.wx-20,4.6]}
+      else if(fr<.78){o.wh=true;o.wx=0;P.lh=[-20,4.6];if(fr<.72)P.jolt=.6}
+      else if(fr<.9){o.wh=true;o.wx=0;P.lh=[rfL(-20,fore[0],rfSeg(fr,.78,.9)),rfL(4.6,fore[1],rfSeg(fr,.78,.9))]}
+      else{o.wh=true;o.wx=0;P.lh=null}}},
+  javelin:{lnch:1,th:.4,kk:.4,grip:[76.4,9.6],gripRot:.06,foreFist:[60.4,9.6,.06],spade:1,tiltMax:.15,tip:[-.5,0],back:[101,0],flash:'jav',proj:'missile',sc:1.3,anc:[.86,.9],
+    body(c,o){const C=RFC,ol='#59603f',olLo='#2f331f',dk='#3b3f2c';
+      // missile launch tube (dropped away and replaced during a reload)
+      c.save();c.translate(o.tube.dx,o.tube.dy);c.globalAlpha=o.tube.a;
+      rfRR(c,0,-5.2,100,10.4,2,ol,olLo,.4);rfLine(c,[2,-3.8,98,-3.8],'#727a52',.5);for(const x of[18,40,62,84])rfLine(c,[x,-5,x,5],'#454b30',.45);
+      rfRR(c,96.6,-5.6,4,11.2,1.2,dk,olLo,.35);rfRR(c,8,-5.2,2.4,10.4,.3,'#8a6a2a');
+      if(o.loaded){rfRR(c,-.8,-5.6,4,11.2,1.2,dk,olLo,.35);rfCirc(c,1.2,0,1.2,'#2c2f21')}else{c.beginPath();c.ellipse(0,0,1.4,5,0,0,Math.PI*2);c.fillStyle='#0b0b0b';c.fill();rfRR(c,-.2,-5.4,1.6,10.8,.6,null,'#2c2f21',.5)}
+      c.fillStyle='#c9c39a';c.font='1.7px sans-serif';c.fillText('GUIDED MISSILE  SURFACE ATTACK  M98A1',16,1.6);
+      rfRR(c,84,4,10,4.4,1.6,'#3c4030',olLo,.3);rfLine(c,[6,5.4,92,5.4],'#2d3020',.6);c.restore();
+      // command launch unit: sight window, eyepiece, status light and its two handles
+      rfPoly(c,[52,-12,80,-12,82,-10,82,3,52,3,50,-1],'#4a5034',olLo,.4);rfLine(c,[53,-11,80.6,-11],'#666e48',.45);
+      rfRR(c,45.4,-11.6,6.4,8.4,1.4,'#3a3f2a',olLo,.35);c.beginPath();c.ellipse(45.6,-7.4,1.2,3.2,0,0,Math.PI*2);c.fillStyle='#14212b';c.fill();rfCirc(c,45.4,-8.6,.6,'rgba(140,190,230,.6)');
+      rfRR(c,82,-10.2,4.4,6.2,1.6,'#141414');rfRR(c,60,-9.6,14,5.6,.8,'#3d4229');for(let i=0;i<4;i++)rfRR(c,61+i*3.2,-3.4,2.2,1.4,.4,'#2a2e1f');
+      rfCirc(c,77.6,-2,.75,o.led?'#4cff6e':'#1d3a22');
+      rfRR(c,58.6,2.6,3.8,10.6,1.3,'#2c2f24',olLo,.3);rfRR(c,74.6,2.6,3.8,10.6,1.3,'#2c2f24',olLo,.3);rfRR(c,74.2,2.8,1.4,2,.4,'#7a1e18')},
+    reload(fr,o,P){P.tilt=this.tiltMax*(fr<.08?rfE(fr/.08):fr<.9?1:1-rfE(rfSeg(fr,.9,1)));const ff=this.foreFist,lt=[64,6.6],off=[60,95];
+      // unlatch the sight unit from the spent tube, let the tube drop, lock it onto a fresh missile
+      if(fr<.1){P.lh=[rfL(ff[0],lt[0],fr/.1),rfL(ff[1],lt[1],fr/.1)];o.loaded=false}
+      else if(fr<.3){const t=rfSeg(fr,.1,.3);o.tube.dy=95*t*t;o.tube.dx=-3*t;o.tube.a=1-t*.4;o.loaded=false;P.lh=[lt[0],rfL(lt[1],lt[1]+30,t)]}
+      else if(fr<.42){o.tube.a=0;P.lh=[rfL(lt[0],off[0],rfSeg(fr,.3,.42)),rfL(lt[1]+30,off[1],rfSeg(fr,.3,.42))]}
+      else if(fr<.58){const t=rfSeg(fr,.42,.58);o.loaded=true;o.tube.a=1;o.tube.dy=95*(1-rfE(t));o.tube.dx=-3*(1-rfE(t));P.lh=[lt[0],lt[1]+o.tube.dy]}
+      else if(fr<.64){o.loaded=true;P.lh=lt;if(fr<.6)P.jolt=1}
+      else if(fr<.8){o.loaded=true;P.lh=[rfL(lt[0],ff[0],rfSeg(fr,.64,.8)),rfL(lt[1],ff[1],rfSeg(fr,.64,.8))]}
+      else o.loaded=true}},
+  flash:{lnch:1,th:.42,kk:.9,grip:[46.2,12.2],gripRot:-.32,trig:[41.4,9],fore:[20,1],foreTop:4.4,foreBot:6.4,tiltMax:.2,tip:[-.5,0],back:[88,0],flash:'rocket',proj:'rocket4',
+    body(c,o){const C=RFC,ol='#565c3d',olLo='#2d311f',dk='#3a3f2a';
+      // four-tube launcher box with its end frames, carrying handle and folding sight
+      rfRR(c,0,-6.4,88,12.8,1.2,ol,olLo,.4);rfLine(c,[2,-.1,86,-.1],olLo,.5);rfLine(c,[2,-4.8,86,-4.8],'#70785090',.5);rfLine(c,[2,1.4,86,1.4],'#70785090',.5);
+      rfRR(c,-.4,-6.9,3.2,13.8,.6,dk,olLo,.35);rfRR(c,85.2,-6.9,3.2,13.8,.6,dk,olLo,.35);
+      c.fillStyle='#d8c867';c.font='bold 1.9px sans-serif';c.fillText('M202A1  66MM  INCENDIARY',10,4.4);
+      rfRR(c,31,-7.8,1.4,1.6,.3,dk);rfRR(c,45,-7.8,1.4,1.6,.3,dk);rfRR(c,30,-9.6,17,1.8,.8,'#2b2e22',olLo,.3);
+      rfRR(c,24.6,-8.4,8.4,2.2,.4,dk);rfRR(c,25,-14.6,8,6.2,.8,'#2b2e22',olLo,.35);rfRR(c,25.8,-13.8,2.4,4.4,.4,'rgba(255,170,60,.3)');
+      // trigger housing, pistol grip, folding shoulder rest; the clip of 4 rockets slides in at the back
+      rfRR(c,37,6.4,12,2.8,.5,dk,olLo,.3);rfPoly(c,[42.6,9.2,47,9.2,50.4,17.6,49.8,18.6,45.6,18.6,44.6,17],'#24271c',olLo,.35);
+      rfLine(c,[37.6,9.2,38,11.8,43.6,11.8,44,9.2],C.steel,.7);rfLine(c,[41,9.2,41.4,11],C.steelHi,.6);
+      rfPoly(c,[68,6.4,80,6.4,80,10,72,10],dk,olLo,.3);
+      if(o.clip){c.save();c.translate(o.clip.dx,o.clip.dy);rfRR(c,88,-6,8,12,.8,'#4a5034',olLo,.35);for(const y of[-3.1,3.1])rfCirc(c,92,y,2,'#2c2f21');c.restore()}},
+    reload(fr,o,P){P.tilt=this.tiltMax*(fr<.08?rfE(fr/.08):fr<.92?1:1-rfE(rfSeg(fr,.92,1)));const fore=P.fore,rear=[90,2],off=[70,85];
+      // pull the empty clip out of the back, push a fresh clip of 4 rockets in
+      if(fr<.14)P.lh=[rfL(fore[0],rear[0],fr/.14),rfL(fore[1],rear[1],fr/.14)];
+      else if(fr<.36){const t=rfSeg(fr,.14,.36);o.clip={dx:12*t,dy:80*t*t};P.lh=[rear[0]+o.clip.dx,rear[1]+o.clip.dy]}
+      else if(fr<.6){const t=rfSeg(fr,.36,.6);o.clip={dx:rfL(12,8,t),dy:rfL(80,0,t)};P.lh=[rear[0]+o.clip.dx,rear[1]+o.clip.dy]}
+      else if(fr<.72){const t=rfSeg(fr,.6,.72);o.clip={dx:rfL(8,0,t),dy:0};P.lh=[rear[0]+o.clip.dx,rear[1]];if(t>.85)P.jolt=1}
+      else if(fr<.86)P.lh=[rfL(rear[0],fore[0],rfSeg(fr,.72,.86)),rfL(rear[1],fore[1],rfSeg(fr,.72,.86))]}}
+};
+function cx1Of(e){return 59+e}
+Object.assign(RF_GUN,RF_LNCH);
+/* smoke puffs and the grenade or rocket you just fired, in screen space */
+function rfPuff(x,y,r,n,vx,vy,dark){for(let i=0;i<n;i++)RF.smoke.push({x:x+(Math.random()-.5)*r,y:y+(Math.random()-.5)*r,vx:vx+(Math.random()-.5)*r*2,vy:vy+(Math.random()-.5)*r*2-r*.6,r:r*(.5+Math.random()*.5),gr:r*1.6,t:0,life:.9+Math.random()*.8,d:dark?1:0})}
+function rfFx(c,W,H,X0,Y0,dt){
+  for(const p of RF.smoke){p.t+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=1-1.6*dt;p.vy*=1-1.6*dt;p.r+=p.gr*dt}
+  RF.smoke=RF.smoke.filter(p=>p.t<p.life);if(RF.smoke.length>120)RF.smoke.splice(0,RF.smoke.length-120);
+  for(const p of RF.smoke){const a=(1-p.t/p.life)*.5,g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);const col=p.d?'70,66,60':'190,188,180';g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.beginPath();c.arc(p.x,p.y,p.r,0,Math.PI*2);c.fill()}
+  const now=performance.now();
+  for(const q of RF.proj){const t=(now-q.t0)/q.dur;if(t<0||t>1)continue;const e=1-Math.pow(1-t,2);let tx=X0+q.ox,ty=Y0+q.oy;
+    const x=q.x+(tx-q.x)*e,y=q.y+(ty-q.y)*e-(q.arc||0)*Math.sin(Math.PI*t),s=q.s*(1-t*.85);
+    if(q.kind==='nade'){rfCirc(c,x,y,s*.9,'#3b3f2c');rfCirc(c,x-s*.3,y-s*.3,s*.3,'#b8963a')}
+    else{const ang=Math.atan2(ty-q.y,tx-q.x);c.save();c.translate(x,y);c.rotate(ang);
+      c.globalCompositeOperation='lighter';const g=c.createRadialGradient(-s*1.6,0,0,-s*1.6,0,s*2.4);g.addColorStop(0,'rgba(255,240,180,.95)');g.addColorStop(.4,'rgba(255,150,40,.7)');g.addColorStop(1,'rgba(255,90,20,0)');c.fillStyle=g;c.beginPath();c.arc(-s*1.6,0,s*2.4,0,Math.PI*2);c.fill();
+      c.globalCompositeOperation='source-over';rfRR(c,-s,-s*.35,s*2.4,s*.7,s*.3,q.kind==='missile'?'#59603f':'#3f4530');c.restore();
+      if(Math.random()<.7)RF.smoke.push({x,y,vx:(Math.random()-.5)*20,vy:(Math.random()-.5)*20,r:s*.8,gr:s*2,t:0,life:.7,d:0})}}
+  RF.proj=RF.proj.filter(q=>now-q.t0<q.dur)}
+function rfDrawLaunch(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
+  const C=RFC,n=(G.ammo&&G.ammo[G.w]&&G.ammo[G.w][0]!=null)?G.ammo[G.w][0]:1;
+  o.brk=0;o.latch=0;o.rnd=n>0;o.open=0;o.cyl=0;o.ext=has('mglcyl')?22:0;o.speedLoad=has('mglspeed');o.ladder=has('m79sight');o.scope=has('rpgscope');
+  o.ammo=has('m79buck')?'buck':has('m79hedp')?'hedp':'he';o.whKind=has('rpgtandem')?'tandem':has('rpgthermo')?'thermo':has('rpgfrag')?'frag':'std';
+  o.wh=n>0;o.wx=0;o.tube={dx:0,dy:0,a:1};o.loaded=n>0;o.clip=null;
+  // the MGL cylinder turns a sixth of a circle per shot
+  let fired=0;for(const s of RF.kicks)if(s.eject)fired++;RF.cylPh+=fired;RF.cylShow+=(RF.cylPh-RF.cylShow)*Math.min(1,dt*18);o.cyl=RF.cylShow*Math.PI/3;
+  // Javelin seeker: blinking while it hunts, steady once locked
+  let lockP=-1;if(w.id==='javelin'&&G.chargeT>0&&G.chargeW===G.w){lockP=Math.max(0,Math.min(1,1-G.chargeT/(w.charge||2)));RF.lockFlash=now}
+  o.led=lockP>=0?(lockP>.98||Math.floor(now/(220-170*lockP))%2===0):(w.id==='javelin'&&now-RF.lockFlash<400);
+  const fore=S0.foreFist?[S0.foreFist[0],S0.foreFist[1]]:S0.fore;
+  const P={tilt:0,lh:null,rh:null,jolt:0,fore};
+  if(fr>=0&&S0.reload){const job=G.jobs.find(j=>j.wi===G.w);o.cylAdd=0;S0.reload(fr,o,P,job,n,w);o.cyl+=o.cylAdd||0}
+  // placement, as with the other guns
+  const th=S0.th||.5,co=Math.cos(th),si=Math.sin(th),gx=S0.grip[0]*co-S0.grip[1]*si,gy=S0.grip[0]*si+S0.grip[1]*co;
+  const S=Math.min(W*.42/gx,H*.34/gy)*(S0.sc||1),rs=Math.min(1,(now-RF.raise)/300),sway=Math.sin(now/950),bob=Math.sin(now/470);
+  const an=S0.anc||[.88,.9];let tx=W*an[0]-gx*S+sway*S*.8,ty=H*an[1]-gy*S+bob*S*.5+(1-rfE(rs))*H*.6;
+  c.save();c.translate(tx,ty);c.rotate(th);c.scale(S,S);
+  const kk=S0.kk||1,piv=S0.grip;c.translate(kick*2.6*kk+P.jolt*.5,0);c.translate(piv[0],piv[1]);c.rotate(-kick*.07*kk-P.tilt*.32+P.jolt*.012);c.translate(-piv[0],-piv[1]);c.translate(-P.tilt*2,-P.tilt*3);
+  const m=c.getTransform(),toS=(x,y)=>[m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f];
+  c.save();c.setTransform(1,0,0,1,0,0);const sw=9*S,ls=S0.lsh||[X0/W-.08,1.15];
+  const lw0=P.lh||fore,rw0=P.rh||S0.grip,lW=toS(lw0[0]+2,lw0[1]+4.5),rW=toS(rw0[0]+3,rw0[1]+5);
+  rfSleeve(c,lW[0],lW[1],W*ls[0],H*ls[1]+sw,sw);rfSleeve(c,rW[0],rW[1],W+sw,H+sw*1.2,sw*1.1);c.restore();
+  S0.body(c,o);
+  // gloves
+  if(!P.rh){rfFist(c,S0.grip[0],S0.grip[1],S0.gripRot==null?-.45:S0.gripRot,true);if(!S0.spade&&S0.trig){c.lineCap='round';rfLine(c,[S0.grip[0]-2.6,S0.grip[1]-3.6,S0.trig[0],S0.trig[1]],RFC.gloveHi,1.7)}}
+  else rfFist(c,P.rh[0],P.rh[1],.2,true);
+  if(!P.lh){if(S0.foreFist){const ff=w.id==='mgl'&&o.open?(()=>{const e=o.ext,pv=[61+e,6],dx=S0.foreFist[0]-pv[0],dy=S0.foreFist[1]-pv[1],cs=Math.cos(o.open),sn=Math.sin(o.open);return[pv[0]+dx*cs-dy*sn,pv[1]+dx*sn+dy*cs]})():S0.foreFist;rfFist(c,ff[0],ff[1],S0.foreFist[2]+(o.open||0),true)}
+    else{const fp=w.id==='m79'&&o.brk?(()=>{const h=S0.hinge,dx=fore[0]-h[0],dy=fore[1]-h[1],cs=Math.cos(o.brk),sn=Math.sin(o.brk);return[h[0]+dx*cs-dy*sn,h[1]+dx*sn+dy*cs]})():fore;rfSupport(c,fp[0],S0.foreTop+(fp[1]-fore[1]),S0.foreBot+(fp[1]-fore[1]))}}
+  else rfFist(c,P.lh[0],P.lh[1],-.3,true);
+  // muzzle flash and what leaves the launcher
+  let tipY=S0.tip[1];if(w.id==='flash'){const k=(4-n-1+4)%4;tipY=[-3.1,3.1,-3.1,3.1][k]}
+  if(flash>0)rfFlash(c,S0.tip[0],S0.flash==='pop'||S0.flash==='jav'?'bird':'ak',false,flash*(S0.flash==='jav'?.5:1),tipY);
+  for(const s of RF.kicks)if(s.eject){s.eject=0;const mz=toS(S0.tip[0],tipY);
+    rfPuff(mz[0],mz[1],S*(S0.flash==='rocket'?5:3),S0.flash==='rocket'?10:5,-S*20,-S*8);
+    if(S0.back){const bk=toS(S0.back[0],tipY);rfPuff(bk[0],bk[1],S*7,14,S*60,S*10,true)}
+    const kind=S0.proj,base={t0:now,x:mz[0],y:mz[1],s:S*(kind==='nade'?2.4:3),kind:kind==='rocket4'?'rocket':kind};
+    if(kind==='nade')RF.proj.push({...base,dur:420,ox:0,oy:-H*.04,arc:H*.12});
+    else if(kind==='missile')RF.proj.push({...base,dur:700,ox:W*.02,oy:-H*.5,arc:0});
+    else RF.proj.push({...base,dur:320,ox:0,oy:0,arc:0})}
+  // spent cases from a break-open or revolver reload
+  if(P.ejectCase){const p=toS(...P.ejectCase);RF.brass.push({x:p[0],y:p[1],vx:W*.25,vy:-H*.45,r:0,vr:8,t:0,s:4.4*S})}
+  if(P.empties)for(const e of P.empties){const p=toS(...e);RF.brass.push({x:p[0],y:p[1],vx:W*(.02+Math.random()*.06),vy:H*(.02+Math.random()*.1),r:Math.random(),vr:(Math.random()-.5)*10,t:0,s:4.4*S})}
+  c.restore();
+  rfBrassDraw(c,W,H,S,dt);rfFx(c,W,H,X0,Y0,dt);
+  // Javelin seeker brackets closing in around your sights
+  if(w.id==='javelin'&&(lockP>=0||now-RF.lockFlash<400)){const p=lockP<0?1:lockP,sz=W*(.3-.2*rfE(p)),on=p>.98||Math.floor(now/(220-170*p))%2===0;
+    if(on){c.save();c.strokeStyle='#4cff6e';c.lineWidth=2;const L=sz*.3;for(const[sx,sy]of[[-1,-1],[1,-1],[1,1],[-1,1]]){c.beginPath();c.moveTo(X0+sx*sz/2,Y0+sy*sz/2-sy*L);c.lineTo(X0+sx*sz/2,Y0+sy*sz/2);c.lineTo(X0+sx*sz/2-sx*L,Y0+sy*sz/2);c.stroke()}
+      if(p>.98){c.fillStyle='#4cff6e';c.font=`bold ${Math.round(W*.04)}px sans-serif`;c.textAlign='center';c.fillText('LOCK',X0,Y0+sz/2+W*.05);c.textAlign='left'}c.restore()}}
+  return true}
 /* ----- the picture: a simple first-person view from where you stand ----- */
 const vcv=$('view'),v2=vcv.getContext('2d');
 const RDPAL={rainforest:['#16301f','#6e9b6b','#26361d','#4e4a36'],alien:['#170c2e','#5b3778','#241733','#3b3152'],tundra:['#7fa6c0','#e3edf3','#b4c4ce','#7f8b94'],
@@ -6539,7 +6784,7 @@ function rdDraw(){
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   tdDraw(c,W,H,X0,Y0,P);   // Unbearable Buddy held in both hands, with its eye lasers
-  const rfOn=rfDraw(c,W,H,X0,Y0);   // assault rifles and machine guns held in your hands
+  const rfOn=rfDraw(c,W,H,X0,Y0);   // assault rifles, machine guns and launchers held in your hands
   // sights and muzzle flash
   const lock=!!G.lockE;c.strokeStyle=lock?'#ff5a4a':'rgba(255,255,255,.7)';c.lineWidth=Math.max(1.5,W/220);const cs=Math.max(6,W/40);
   c.beginPath();c.moveTo(X0-cs,Y0);c.lineTo(X0-cs*.35,Y0);c.moveTo(X0+cs*.35,Y0);c.lineTo(X0+cs,Y0);c.moveTo(X0,Y0-cs);c.lineTo(X0,Y0-cs*.35);c.moveTo(X0,Y0+cs*.35);c.lineTo(X0,Y0+cs);c.stroke();
@@ -6644,6 +6889,16 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-launchers',date:'November 18, 2026',title:'Launchers now visible in your hands',items:[
+    'For sighted players: the M79, Milkor MGL, XM25 Punisher, RPG-7, Javelin and M202 FLASH are now drawn in the battle view, modelled on the real weapons.',
+    'M79: wooden stock and forend, fat 40 millimetre barrel. To reload it breaks open, flips out the empty case and takes a new grenade, and the grenade colour matches the round you have equipped. The Ladder sight stands up on top.',
+    'Milkor MGL: the big 6-round cylinder turns a sixth of a turn after every shot. To reload it swings open, the empties drop out and each grenade is pushed in by hand, or all at once with the Speed loader. The Extended cylinder makes it longer.',
+    'XM25: a bullpup with the big fire control unit and rangefinder on top. Its little display lights up when you fire, and the magazine sits behind the grip and is swapped there. The Extended magazine is longer.',
+    'RPG-7: wooden heat guards, flared back end and the warhead in the front of the tube. The warhead looks like the real one you have equipped: standard, tandem with its long probe, slim fragmentation or the fat thermobaric. You see it leave when you fire, then a new one goes in. The PGO-7 scope sits on the side.',
+    'Javelin: the missile tube with its sight unit and two handles. While it locks on, green brackets close in around your sights and say LOCK. After the shot the front cap is gone, and the reload drops the spent tube and clips the sight onto a fresh one.',
+    'M202 FLASH: the 4-tube box launcher, firing from each tube in turn, and the reload swaps the 4-rocket clip at the back.',
+    'Every launch now has smoke, backblast from the rockets, and you see the grenade or rocket fly off toward your sights.',
+    'This only changes what you see. Sounds, damage and reload times are exactly the same.']},
   {id:'2026-11-18-lmgs',date:'November 18, 2026',title:'Machine guns now visible in your hands',items:[
     'For sighted players: the M249 SAW, MG42, M2 Browning and M134 Minigun are now drawn in the battle view, modelled on the real guns. The M249 has its 200-round ammo box, carrying handle and folded bipod; the MG42 its holed barrel jacket, bakelite stock and hanging belt; the M2 sits on its tripod with spade grips and a CAL .50 ammo can; the Minigun has six barrels, a drive motor and a feed chute to your ammo pack.',
     'The ammo belt is drawn round by round. It feeds into the gun as you fire and gets shorter as the belt runs low. Brass drops out of the bottom of the gun.',
