@@ -2153,8 +2153,8 @@ const WPN=[
    traits:'American fire-and-forget anti-tank missile. Press Fire and the seeker locks on to the nearest enemy you are facing: fast beeps that speed up, then a steady tone when it is locked, 2 seconds. Then a soft pop, the motor ignites, and the missile flies to that enemy even if it moves or you turn away. It never misses. Top attack: it climbs and dives down from above, hitting armored and metal enemies, mini bosses and bosses for 1 and a half times, 60. Anything else takes 40, and enemies within 12 feet take up to 40 percent of that. If nothing is in your sights, it will not lock. Takes only its own upgrades.'},
   {id:'flash',rng:0,name:'M202 FLASH',short:'FLASH',mag:4,dmg:8,cone:14,cd:.45,reload:4.5,shots:1,acc:.85,lnch:'rocket',blast:10,splM:.5,spd:26,price:6000,
    traits:'American 4-tube incendiary rocket launcher. Each pull fires the next tube, about 2 rockets a second, and every rocket bursts into a fireball: 8 on a direct hit, up to half that to every enemy within 10 feet, and everything in the fireball burns 5 a second for 5 seconds. Reload by clipping in a fresh pack of 4 rockets. Takes only its own upgrades, including Volley fire, which empties all 4 tubes at once.'},
-  {id:'p90',rng:14,name:'FN P90',short:'P90',mag:50,dmg:.8,cone:16,cd:.3,reload:2.2,shots:5,acc:.9,price:400,
-   traits:'Compact submachine gun with a 50-round top magazine and a high-pitched, buzzing report. Fast 5-round bursts. Its small, fast 5.7 millimetre rounds were designed to defeat body armor, so it has armor piercing built in: 50 percent more damage against armored enemies, metal enemies, mini bosses and bosses. Stronger and more accurate than the Skorpion per bullet, with a smaller magazine.'},
+  {id:'p90',rng:14,name:'FN P90',short:'P90',mag:50,dmg:.8,cone:16,cd:.06,reload:2.2,shots:1,acc:.9,price:400,
+   traits:'Fully automatic compact submachine gun with a 50-round top magazine and a high-pitched, buzzing report. Hold Fire and it sprays about 15 rounds a second, emptying the magazine in just over 3 seconds; tap Fire for single shots. Its small, fast 5.7 millimetre rounds were designed to defeat body armor, so it has armor piercing built in: 50 percent more damage against armored enemies, metal enemies, mini bosses and bosses. Stronger and more accurate than the Skorpion per bullet, with a smaller magazine.'},
   {id:'m4',rng:30,name:'M4A1 carbine',short:'M4A1',mag:30,dmg:1.3,cone:15,cd:.27,reload:1.8,shots:3,acc:.95,price:350,
    traits:'Accurate, quick-firing carbine. 3-round bursts that land almost every time. Sits between the AK-47 and the AN-94.'},
   {id:'m2',rng:30,name:'M2 Browning',short:'M2 .50',mag:300,dmg:6,cone:15,cd:1.0,reload:6.0,shots:3,acc:.88,price:1500,
@@ -7447,6 +7447,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-p90-auto',date:'November 18, 2026',title:'FN P90 is now fully automatic',items:[
+    'The P90 no longer fires 5-round bursts. Hold Fire and it sprays a steady stream of about 15 rounds a second, like the real gun, until you let go or the 50-round magazine runs dry. Tap Fire for single shots.',
+    'Damage per bullet, armor piercing, magazine size and reload time are unchanged.']},
   {id:'2026-11-18-minigun-skins',date:'November 18, 2026',title:'Chrome Minigun and a new Gold skin',items:[
     'The M134 Minigun now has a polished chrome finish. Every part shines with bright highlight streaks, and when the barrels spin up a gleam sweeps along them.',
     'New Skins section in the Minigun\'s attachments menu, at the bottom of the list. Chrome is the free default. The Gold skin costs 100 silver and turns the whole Minigun polished gold, with the same shine and spinning gleam.',
