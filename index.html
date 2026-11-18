@@ -6122,7 +6122,7 @@ function rfFlash(c,x,kind,sil,k,y){const r=Math.random;c.save();c.translate(x,y|
   else if(kind==='gat'){core(7+r()*3,4+r()*1.5,-3.5);for(const a of[0,.9,-.9])spike(a+(r()-.5)*.4,(a?4:8)+r()*4,1.3)}
   else{core(4,3,-2);for(const a of[1.57,-1.57])for(const dx of[-3.3,-1.5]){c.save();c.translate(dx,0);spike(a+(r()-.5)*.2,6+r()*3,1.3);c.restore()}spike(0,5+r()*2,1)}
   c.restore()}
-function rfBrassDraw(c,W,H,S,dt){c.save();for(const b of RF.brass){b.t+=dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=H*3.2*dt;b.r+=b.vr*dt;const L=b.s||2.4*S;c.save();c.translate(b.x,b.y);c.rotate(b.r);rfRR(c,-L/2,-L*.175,L,L*.35,L*.12,RFC.brass);rfRR(c,-L/2,-L*.175,L*.2,L*.35,L*.08,RFC.brassHi);c.restore()}
+function rfBrassDraw(c,W,H,S,dt){c.save();for(const b of RF.brass){b.t+=dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vy+=H*3.2*dt;b.r+=b.vr*dt;const L=b.s||2.4*S;c.save();c.translate(b.x,b.y);c.rotate(b.r);rfRR(c,-L/2,-L*.175,L,L*.35,L*.12,b.col||RFC.brass);rfRR(c,-L/2,-L*.175,L*.2,L*.35,L*.08,b.colHi||RFC.brassHi);c.restore()}
   RF.brass=RF.brass.filter(b=>b.t<1.2&&b.y<H+40&&b.x<W+40);if(RF.brass.length>60)RF.brass.splice(0,RF.brass.length-60);c.restore()}
 const rfE=t=>t<=0?0:t>=1?1:t*t*(3-2*t),rfL=(a,b,t)=>a+(b-a)*rfE(t),rfSeg=(f,a,b)=>(f-a)/(b-a);
 function rfDraw(c,W,H,X0,Y0){
@@ -6137,6 +6137,7 @@ function rfDraw(c,W,H,X0,Y0){
   // reload progress
   const job=G.jobs&&G.jobs.find(j=>j.wi===G.w),fr=job&&job.total>0?Math.max(0,Math.min(1,1-job.left/job.total)):-1;
   if(S0.belt)return rfDrawBelt(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
+  if(S0.shot)return rfDrawShot(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
   if(S0.snip)return rfDrawSnip(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
   if(S0.lnch)return rfDrawLaunch(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
   o.rng=flash;
@@ -6895,6 +6896,159 @@ function rfDrawSnip(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
   c.restore();
   rfBrassDraw(c,W,H,S,dt);rfFx(c,W,H,X0,Y0,dt);
   return true}
+/* ----- held shotguns: SPAS-12, AA-12, KSG and the double-barrel coach gun, drawn like the real guns.
+   SPAS-12 and KSG: after every blast your left hand racks the pump and the empty shell flies out (out of the bottom on
+   the KSG). The AA-12's charging handle rides back with each shot. The coach gun's two hammers fall when it fires.
+   Reloads: SPAS-12 shells pushed one at a time into the loading port; KSG the same, flipping the tube selector halfway;
+   AA-12 swaps its drum and racks the handle; the coach gun breaks open, flips out both hulls, takes two new shells,
+   snaps shut and you thumb both hammers back. Looks only: sounds and timing are unchanged. ----- */
+Object.assign(RF_IDS,{spas:1,aa12:1,ksg:1,coach:1});
+Object.assign(RF,{pumpT:-1e9});
+function rfShell(c,x,y,s){s=s||1;rfRR(c,x,y-.95*s,4.6*s,1.9*s,.5*s,'#a5262a','#5c1214',.25);rfLine(c,[x+.4*s,y-.45*s,x+4.2*s,y-.45*s],'#d0484c',.3*s);rfRR(c,x+4.4*s,y-1.05*s,1.4*s,2.1*s,.3*s,RFC.brass,'#7a5c1e',.25)}
+const RF_SHOT={
+  spas:{shot:1,th:.48,kk:1.1,grip:[73.4,10.8],gripRot:-.4,trig:[67.8,7.4],pumpX:32,foreTop:.6,foreBot:5.6,pump:'pump',port:[64,6],eject:[64,-3.6],tip:-.4,
+    body(c,o){const C=RFC,bk='#232528',bkLo='#101113',hi='#3e4146';
+      // folding steel stock with the famous hook under the butt
+      c.lineCap='round';rfLine(c,[76,-2.4,97,-.8],'#2c2e31',1.6);rfLine(c,[76,3.6,96,8.4],'#2c2e31',1.6);rfRR(c,96,-1.8,2.6,12.6,.8,'#151617');
+      c.beginPath();c.moveTo(97,10.6);c.quadraticCurveTo(96,14.4,90.6,13.6);c.strokeStyle='#2c2e31';c.lineWidth=1.3;c.stroke();rfCirc(c,77,0,.7,'#3e4146');
+      // barrel with the ventilated heat shield on top, magazine tube underneath
+      rfRR(c,o.bx,-1.25,55-o.bx,2.5,.5,C.steel,C.steelLo,.3);rfCirc(c,o.bx+1.6,-1.7,.5,'#c9c9c9');
+      rfRR(c,4,-3.6,36,2.4,.6,bk,bkLo,.3);for(let x=6;x<38;x+=2.6)rfCirc(c,x,-2.4,.55,'#09090a');
+      rfRR(c,6,1.5,49,3,1.2,'#2a2c2f',bkLo,.3);rfRR(c,4.6,1.3,2,3.4,.6,'#3a3d42');
+      if(o.sil)rfSil(c,o.bx,16,2.4);
+      // the ribbed pump slides back and forward
+      c.save();c.translate(o.pump*7,0);rfRR(c,22,.4,20,5.4,1.6,'#1d1f22',bkLo,.35);for(let x=24;x<41;x+=1.8)rfLine(c,[x,1,x,5.2],'#0c0c0d',.45);c.restore();
+      if(o.laser)rfRR(c,8,4.6,8,2.4,.6,'#1b1c1e',bkLo,.3),rfCirc(c,8.2,5.8,.6,'#ff3b30');
+      // alloy receiver with its loading port, rear sight and stamping
+      rfPoly(c,[54,-3.6,76,-3.6,76,4.6,70.6,4.6,69.6,6.2,58,6.2,56,4.6,54,4.6],bk,bkLo,.4);rfLine(c,[55,-2.6,75,-2.6],hi,.35);rfPoly(c,[72,-3.6,75,-3.6,74.6,-5,72.4,-5],bk);
+      c.fillStyle='#8a8d92';c.font='1.6px sans-serif';c.fillText('SPAS-12',58,1.2);rfRR(c,59,4.8,9,1.2,.4,'#0b0b0c');
+      rfLine(c,[62.4,6.2,62.8,9.4,70,9.4,70.6,6.2],C.steel,.75);rfLine(c,[67.4,6.2,67.8,8.4],C.steelHi,.6);
+      rfPoly(c,[70.6,4.6,75.4,4.6,79,15.6,78.4,16.6,74,16.6,73,15],'#1b1c1e',bkLo,.35);rfLine(c,[72.4,6,76,15],hi,.35);
+      if(o.grip)rfVGrip(c,o.pump*7+30,5.8)}},
+  aa12:{shot:1,th:.48,kk:.8,grip:[69.4,10.8],gripRot:-.42,trig:[63.8,7.4],foreX:22,foreTop:-2.6,foreBot:2.6,pump:'auto',mag:[50.4,4.4],ch:[38.6,-4.4],eject:[54,-5],tip:-.4,
+    body(c,o){const C=RFC,bk='#222427',bkLo='#0f1012',hi='#3c3f44';
+      rfPoly(c,[78,-5,82,-5.4,95,-3,96,-2,96,10,94.6,10.6,86,6.6,80,5,78,4.4],bk,bkLo,.4);rfLine(c,[82,-4.4,95,-2.4],hi,.4);rfRR(c,95.4,-2.6,2.2,13.6,.7,'#0c0c0d');
+      // barrel with flash hider inside a perforated shroud
+      rfRR(c,o.bx,-1.3,36-o.bx,2.6,.5,C.steel,C.steelLo,.3);if(!o.sil)rfRR(c,o.bx-3,-1.7,3.2,3.4,.5,C.steelLo);else rfSil(c,o.bx,16,2.4);
+      rfRR(c,6,-2.8,28,5.6,1.2,bk,bkLo,.35);for(let x=8;x<32;x+=3)for(const y of[-1.2,1.2])rfCirc(c,x+(y>0?1.5:0),y,.65,'#09090a');rfPoly(c,[7,-2.8,8.4,-2.8,8,-5.4,7.4,-5.4],bk);
+      if(o.laser)rfRR(c,10,2.6,8,2.4,.6,'#1b1c1e',bkLo,.3),rfCirc(c,10.2,3.8,.6,'#ff3b30');
+      if(o.grip)rfVGrip(c,20,2.8);
+      // tall receiver with the integrated carrying handle, charging handle slot on this side
+      rfPoly(c,[34,-4,38,-6.2,78,-6.2,78,4.4,58,4.4,57,6,49,6,48,4.4,34,4.4],'#26282b',bkLo,.4);rfLine(c,[38,-5.2,77,-5.2],hi,.4);
+      rfRR(c,40,-8.6,1.6,2.4,.3,bk);rfRR(c,70,-8.6,1.6,2.4,.3,bk);rfRR(c,39,-10.6,34,2.2,1,'#1b1c1e',bkLo,.3);rfPoly(c,[70.6,-10.6,72.6,-10.6,72.2,-12.4,71,-12.4],bk);
+      rfRR(c,38,-4.8,16,1.2,.3,'#0b0b0c');rfRR(c,o.ch,-5.4,2.4,2.4,.5,C.steelHi,C.steelLo,.3);
+      rfLine(c,[58,4.4,58.4,9.4,66,9.4,66.6,4.4],C.steel,.75);rfLine(c,[63.4,4.4,63.8,8.4],C.steelHi,.6);
+      rfPoly(c,[66.6,4.4,71.4,4.4,75,15.6,74.4,16.6,70,16.6,69,15],'#1b1c1e',bkLo,.35)}},
+  ksg:{shot:1,th:.5,kk:1.1,sc:.54,anc:[.74,.86],grip:[33.2,10.2],gripRot:-.42,trig:[28,6.6],pumpX:14,foreTop:1,foreBot:6.6,pump:'pump',port:[50,6],eject:[52,6],ejDown:1,tip:-.4,
+    body(c,o){const C=RFC,bk='#1d1f22',bkLo='#0d0e0f',hi='#383b40';
+      // bullpup body with the full-length top rail, loading and ejection port underneath, tube selector
+      rfPoly(c,[26,-3.4,80,-3.4,84,-2,84,10,82,11.4,70,8,58,8,58,4.4,26,4.4],bk,bkLo,.4);rfLine(c,[27,-2.4,83,-1.2],hi,.4);rfRR(c,82.6,-2.6,2.4,14.4,.8,'#0b0b0c');
+      rfRail(c,3,80,-3.4);rfRR(c,44,4.4,14,1.6,.4,'#09090a');rfRR(c,60+(o.sel?2:0),6.6,1.6,1.4,.3,'#4a4d52');
+      rfRR(c,o.bx,-1.2,27-o.bx,2.4,.5,C.steel,C.steelLo,.3);if(o.sil)rfSil(c,o.bx,16,2.4);
+      rfRR(c,2,1.4,42,3,1.2,'#2a2c2f',bkLo,.3);rfRR(c,1,1.2,2,3.4,.6,'#3a3d42');rfLine(c,[3,3.6,43,3.6],'#141517',.4);
+      c.save();c.translate(o.pump*6,0);rfRR(c,6,1,15,5.6,1.6,'#25272b',bkLo,.35);for(let x=7.6;x<20;x+=1.8)rfLine(c,[x,1.6,x,6],'#0c0c0d',.45);if(o.grip)rfVGrip(c,12,6.4);c.restore();
+      if(o.laser)rfRR(c,22,4.4,6,2.2,.6,'#1b1c1e',bkLo,.3),rfCirc(c,22.2,5.5,.6,'#ff3b30');
+      rfLine(c,[24,4.4,24.4,8.6,31.6,8.6,32,4.4],C.steel,.75);rfLine(c,[27.6,4.4,28,7.4],C.steelHi,.6);
+      rfPoly(c,[30.4,4.4,35.4,4.4,39,14.6,38.4,15.6,34,15.6,33,14],'#17181a',bkLo,.35);rfLine(c,[32.2,5.6,36,14],hi,.35)}},
+  coach:{shot:1,th:.5,kk:1.4,grip:[68.6,5.8],gripRot:-.75,trig:[62.6,6.6],foreX:42,foreTop:1.6,foreBot:4.2,pump:'break',hinge:[52,3],tip:-.4,
+    body(c,o){const C=RFC,wd=C.wood,wdLo=C.woodLo,wdHi=C.woodHi,ch='#4d4f52',chLo='#262729';
+      // straight English stock with a steel butt plate
+      rfPoly(c,[64,-2.4,68,-2.6,102,1,102,11,99,11.4,86,7,72,5.2,68,6.8,64,5],wd,wdLo,.4);c.save();c.globalAlpha=.5;rfLine(c,[69,-1.6,101,2],wdHi,.35);rfLine(c,[74,1.8,100,5.6],wdHi,.35);c.restore();rfRR(c,101.4,.6,1.6,10.8,.4,C.steel);
+      // the barrels and forend tip down on the hinge when you break it open
+      c.save();c.translate(...this.hinge);c.rotate(o.brk);c.translate(-this.hinge[0],-this.hinge[1]);
+      rfRR(c,o.bx,-1.8,52.4-o.bx,3.6,.8,'#2b2c2e','#141516',.35);rfLine(c,[o.bx+1,-1.4,52,-1.4],'#4a4c50',.4);rfRR(c,o.bx+.4,-2.4,52-o.bx,.8,.3,'#1d1e20');rfCirc(c,o.bx+1.4,-2.6,.5,'#d6d0b8');
+      if(o.sil)rfSil(c,o.bx,16,2.6);
+      rfPoly(c,[34,1.8,50.6,1.8,50.6,4.2,36,4.4,34,3.4],wd,wdLo,.35);rfLine(c,[35,2.6,50,2.6],wdHi,.35);
+      if(o.shellsIn)for(const s of o.shellsIn)rfShell(c,s.x,s.y,.9);
+      c.restore();
+      // boxlock action, top lever, two exposed hammers and twin triggers
+      rfPoly(c,[51.6,-2.6,64.4,-2.6,64.4,5,51.6,5],ch,chLo,.4);for(let i=0;i<3;i++)rfLine(c,[53+i*3,-.6,55+i*3,3.2],'#6b6e72',.3);
+      rfRR(c,59+o.lever,-3.6,5,1.2,.4,ch);
+      for(const dz of[0,.6]){c.save();c.translate(61.6+dz,-1.6);c.rotate(-.9*o.ham);rfPoly(c,[-.6,0,.8,0,.6,-3,1.8,-4.4,1.4,-4.8,-.2,-3.6],dz?'#3b3d40':ch,chLo,.25);c.restore()}
+      rfLine(c,[58,5,58.4,8.6,65,8.6,65.6,5],C.steel,.7);rfLine(c,[61,5,61.4,7.4],C.steelHi,.55);rfLine(c,[63,5,63.4,7.4],C.steelHi,.55)}}
+};
+Object.assign(RF_GUN,RF_SHOT);
+function rfDrawShot(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
+  const n=(G.ammo&&G.ammo[G.w]&&G.ammo[G.w][0]!=null)?G.ammo[G.w][0]:1,pt=(a,b,t)=>[rfL(a[0],b[0],t),rfL(a[1],b[1],t)];
+  o.pump=0;o.brk=0;o.lever=0;o.ham=n>0?1:0;o.laser=has('laser');o.sel=false;o.shellsIn=null;o.ch=S0.ch?S0.ch[0]:0;
+  const ext=has('extmag')||has('extmag2');let jolt=0,tilt=0,lh=null,rh=null,ejectNow=0,hulls=0;
+  let newShot=false;for(const s of RF.kicks)if(s.eject)newShot=true;
+  if(newShot&&S0.pump==='pump')RF.pumpT=now+110;
+  if(S0.pump==='auto')o.ch+=Math.min(1,kick)*10;
+  const fx=S0.pumpX!=null?S0.pumpX:S0.foreX,foreBase=[fx,(S0.foreTop+S0.foreBot)/2];
+  // racking the pump: back (the empty shell flies out), then forward
+  const pumpCycle=b=>{if(b<.45){o.pump=rfE(b/.45);if(b>.32&&!RF.pumpEj){RF.pumpEj=1;ejectNow=1}}else if(b<.9){o.pump=1-rfE(rfSeg(b,.45,.9));if(b>.85)jolt=.5}else o.pump=0};
+  if(fr>=0){const job=G.jobs.find(j=>j.wi===G.w);if(job&&job._k==null){job._k=Math.max(1,Math.min(12,(w.mag||8)-n));job._empty=n===0;RF.pumpEj=0}
+    tilt=fr<.08?rfE(fr/.08):fr<.92?1:1-rfE(rfSeg(fr,.92,1));tilt*=S0.pump==='break'?.6:.45;
+    if(S0.pump==='pump'){
+      // push shells into the loading port one at a time; the KSG flips to its second tube halfway
+      const k=job?job._k:4,end=job&&job._empty?.82:.94,port=S0.port,off=[port[0]-10,port[1]+80];
+      if(fr<.06)lh=pt([fx,foreBase[1]],port,fr/.06);
+      else if(fr<end){const u=rfSeg(fr,.06,end)*k,i=Math.floor(u),t=u-i;
+        if(t<.6){const s=t/.6;lh=s<.5?pt(port,off,s*2):pt(off,[port[0]+6,port[1]+1.4],s*2-1);if(s>=.5){o.shellsIn=[{x:lh[0]-5,y:lh[1]-1}]}}
+        else{const s=rfSeg(t,.6,1);lh=[rfL(port[0]+6,port[0]-1,s),port[1]+1.4-s];o.shellsIn=[{x:lh[0]-5.5,y:lh[1]-1}];if(s>.85)jolt=.3}
+        if(w.id==='ksg')o.sel=u>k/2}
+      else if(job&&job._empty&&fr<.94){lh=[fx+o.pump*6,foreBase[1]];pumpCycle(rfSeg(fr,.82,.94))}
+      if(w.id==='ksg'&&fr>=end)o.sel=true}
+    else if(S0.pump==='auto'){
+      // drop the drum, seat a fresh one, rack the charging handle on this side
+      const M=S0.mag,grab=[M[0]+4,M[1]+10],off=[M[0]-6,M[1]+90];o.magDy=0;o.magA=1;
+      if(fr<.12)lh=pt([fx,0],grab,fr/.12);
+      else if(fr<.36){const t=rfSeg(fr,.12,.36);o.magDy=70*t*t;o.magA=1-t*t;lh=pt(grab,off,t)}
+      else if(fr<.62){const t=rfSeg(fr,.36,.62);o.magDy=rfL(off[1]-grab[1],0,t);lh=[grab[0],grab[1]+o.magDy];if(t>.9)jolt=1}
+      else if(fr<.7)lh=pt(grab,[S0.ch[0]+1,S0.ch[1]+1],rfSeg(fr,.62,.7));
+      else if(fr<.8){const d=10*rfE(rfSeg(fr,.7,.8));o.ch=S0.ch[0]+d;lh=[S0.ch[0]+1+d,S0.ch[1]+1]}
+      else if(fr<.83){o.ch=S0.ch[0];lh=[S0.ch[0]+11,S0.ch[1]+1];jolt=1}
+      else if(fr<.92)lh=pt([S0.ch[0]+11,S0.ch[1]+1],[fx,0],rfSeg(fr,.83,.92))}
+    else{
+      // break open, flip out the hulls, two fresh shells, snap shut, thumb the hammers back
+      const h=S0.hinge,rot=(p,a)=>{const dx=p[0]-h[0],dy=p[1]-h[1],cs=Math.cos(a),sn=Math.sin(a);return[h[0]+dx*cs-dy*sn,h[1]+dx*sn+dy*cs]},OPEN=-.5;
+      o.brk=fr<.08?0:fr<.2?OPEN*rfE(rfSeg(fr,.08,.2)):fr<.7?OPEN:fr<.76?OPEN*(1-Math.pow(rfSeg(fr,.7,.76),2)):0;o.lever=fr>.04&&fr<.2?1.6:0;if(fr>=.76&&fr<.79)jolt=1;
+      if(fr>=.22&&job&&!job._ej){job._ej=1;hulls=1}
+      const fore=rot([fx,foreBase[1]],o.brk),br=rot([56,0],OPEN),off=[46,85];
+      if(fr<.3)lh=null;
+      else if(fr<.46){const t=rfSeg(fr,.3,.46);lh=t<.5?pt(rot([fx,foreBase[1]],OPEN),off,t*2):pt(off,[br[0]+8,br[1]],t*2-1)}
+      else if(fr<.62){const t=rfSeg(fr,.46,.62),bx=rfL(57,46.6,t);o.shellsIn=[{x:bx,y:-.9},{x:bx,y:1.1}];lh=rot([bx+7,1.8],OPEN)}
+      else if(fr<.7)lh=pt(br,rot([fx,foreBase[1]],OPEN),rfSeg(fr,.62,.7));
+      o.ham=fr<.8?0:fr<.9?rfE(rfSeg(fr,.8,.9)):1;
+      if(fr>=.78&&fr<.92){const g=S0.grip,hm=[62,-4.6];rh=fr<.82?pt(g,hm,rfSeg(fr,.78,.82)):fr<.88?[hm[0]+1.4*rfSeg(fr,.82,.88),hm[1]]:pt([hm[0]+1.4,hm[1]],g,rfSeg(fr,.88,.92))}}}
+  else if(S0.pump==='pump'){const b=(now-RF.pumpT)/Math.min(650,Math.max(380,(w.cd||1)*600));if(b>=0&&b<1)pumpCycle(b)}
+  if(fr<0&&!(now-RF.pumpT>=0&&now-RF.pumpT<700))RF.pumpEj=0;
+  if(S0.pump==='break'&&fr<0&&n<=0)o.ham=0;
+  // placement
+  const th=S0.th||.5,co=Math.cos(th),si=Math.sin(th),gx=S0.grip[0]*co-S0.grip[1]*si,gy=S0.grip[0]*si+S0.grip[1]*co;
+  const S=Math.min(W*.42/gx,H*.34/gy)*(S0.sc||1),rs=Math.min(1,(now-RF.raise)/300),sway=Math.sin(now/950),bob=Math.sin(now/470);
+  const an=S0.anc||[.88,.9];let tx=W*an[0]-gx*S+sway*S*.8,ty=H*an[1]-gy*S+bob*S*.5+(1-rfE(rs))*H*.6;
+  c.save();c.translate(tx,ty);c.rotate(th);c.scale(S,S);
+  const kk=S0.kk||1,piv=S0.grip;c.translate(kick*2.6*kk+jolt*.5,0);c.translate(piv[0],piv[1]);c.rotate(-kick*.07*kk-tilt*.32+jolt*.012);c.translate(-piv[0],-piv[1]);c.translate(-tilt*2,-tilt*3);
+  const m=c.getTransform(),toS=(x,y)=>[m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f];
+  const pumpDx=o.pump*(w.id==='ksg'?6:7),gripOn=o.grip&&S0.pump!=='break';
+  let fore=S0.pump==='pump'?[fx+pumpDx,foreBase[1]]:foreBase;if(gripOn)fore=S0.pump==='pump'?[(w.id==='ksg'?13.6:31.6)+pumpDx,(w.id==='ksg'?10.4:9.8)]:[21.6,6.8];
+  if(S0.pump==='break'&&o.brk){const h=S0.hinge,dx=fore[0]-h[0],dy=fore[1]-h[1],cs=Math.cos(o.brk),sn=Math.sin(o.brk);fore=[h[0]+dx*cs-dy*sn,h[1]+dx*sn+dy*cs]}
+  c.save();c.setTransform(1,0,0,1,0,0);const sw=9*S,ls=[X0/W-.08,1.15];
+  const lw0=lh||fore,rw0=rh||S0.grip,lW=toS(lw0[0]+2,lw0[1]+4.5),rW=toS(rw0[0]+3,rw0[1]+5);
+  rfSleeve(c,lW[0],lW[1],W*ls[0],H*ls[1]+sw,sw);rfSleeve(c,rW[0],rW[1],W+sw,H+sw*1.2,sw*1.1);c.restore();
+  o.bx=-(w.barrel?7:0);
+  // AA-12 drum magazine: 20 shells, bigger with the extended magazines
+  if(S0.mag){const M=S0.mag,r=has('extmag2')?12:ext?10.5:9;c.save();c.globalAlpha=o.magA==null?1:o.magA;c.translate(M[0],M[1]+(o.magDy||0));
+    rfRR(c,0,0,8,4.4,.6,'#1c1d20');rfCirc(c,4,r+3.4,r,'#1f2124','#0d0e0f',.4);rfCirc(c,4,r+3.4,r*.72,null,'#34373c',.45);rfCirc(c,4,r+3.4,r*.25,'#2d3034');rfRR(c,1.4,-1.2,5.2,1.6,.6,'#a5262a');c.restore()}
+  S0.body(c,o);
+  if(lh&&o.shellsIn&&S0.pump==='pump')for(const s of o.shellsIn)rfShell(c,s.x,s.y);
+  // gloves
+  if(!rh){rfFist(c,S0.grip[0],S0.grip[1],S0.gripRot==null?-.45:S0.gripRot,true);c.lineCap='round';rfLine(c,[S0.grip[0]-2.6,S0.grip[1]-3.6,S0.trig[0],S0.trig[1]],RFC.gloveHi,1.7)}
+  else rfFist(c,rh[0],rh[1],.2,true);
+  if(!lh){if(gripOn)rfFist(c,fore[0],fore[1],-.05,true);else{const dy=fore[1]-foreBase[1];rfSupport(c,fore[0],S0.foreTop+dy,S0.foreBot+dy)}}
+  else rfFist(c,lh[0],lh[1],-.3,true);
+  if(flash>0)rfFlash(c,o.bx-(o.sil?16:0)+S0.tip,'ak',o.sil,flash,0);
+  // empty hulls: red plastic with brass heads
+  const hs=(L)=>({col:'#a5262a',colHi:RFC.brass,s:L*S});
+  for(const s of RF.kicks)if(s.eject){s.eject=0;const mz=toS(o.bx,0);rfPuff(mz[0],mz[1],S*3,4,0,-S*4);
+    if(S0.pump==='auto'){const p=toS(...S0.eject);RF.brass.push({x:p[0],y:p[1],vx:W*(.3+Math.random()*.2),vy:-H*(.4+Math.random()*.3),r:Math.random()*6,vr:(Math.random()-.5)*20,t:0,...hs(5.8)})}}
+  if(ejectNow){const p=toS(...S0.eject);RF.brass.push(S0.ejDown?{x:p[0],y:p[1],vx:W*.05,vy:H*.08,r:0,vr:6,t:0,...hs(5.8)}:{x:p[0],y:p[1],vx:W*(.3+Math.random()*.15),vy:-H*(.45+Math.random()*.2),r:0,vr:14,t:0,...hs(5.8)})}
+  if(hulls)for(const dy of[-1,1]){const p=toS(56,dy);RF.brass.push({x:p[0],y:p[1],vx:W*(.18+Math.random()*.1),vy:-H*(.4+Math.random()*.15),r:0,vr:10,t:0,...hs(5.8)})}
+  c.restore();
+  rfBrassDraw(c,W,H,S,dt);rfFx(c,W,H,X0,Y0,dt);
+  return true}
 /* ----- the picture: a simple first-person view from where you stand ----- */
 const vcv=$('view'),v2=vcv.getContext('2d');
 const RDPAL={rainforest:['#16301f','#6e9b6b','#26361d','#4e4a36'],alien:['#170c2e','#5b3778','#241733','#3b3152'],tundra:['#7fa6c0','#e3edf3','#b4c4ce','#7f8b94'],
@@ -6982,7 +7136,7 @@ function rdDraw(){
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   tdDraw(c,W,H,X0,Y0,P);   // Unbearable Buddy held in both hands, with its eye lasers
-  const rfOn=rfDraw(c,W,H,X0,Y0);   // assault rifles, machine guns, launchers and sniper rifles held in your hands
+  const rfOn=rfDraw(c,W,H,X0,Y0);   // assault rifles, machine guns, launchers, sniper rifles and shotguns held in your hands
   // sights and muzzle flash
   const lock=!!G.lockE;c.strokeStyle=lock?'#ff5a4a':'rgba(255,255,255,.7)';c.lineWidth=Math.max(1.5,W/220);const cs=Math.max(6,W/40);
   c.beginPath();c.moveTo(X0-cs,Y0);c.lineTo(X0-cs*.35,Y0);c.moveTo(X0+cs*.35,Y0);c.lineTo(X0+cs,Y0);c.moveTo(X0,Y0-cs);c.lineTo(X0,Y0-cs*.35);c.moveTo(X0,Y0+cs*.35);c.lineTo(X0,Y0+cs);c.stroke();
@@ -7087,6 +7241,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-shotguns',date:'November 18, 2026',title:'Shotguns now visible in your hands',items:[
+    'For sighted players: the SPAS-12, AA-12, KSG and double-barrel coach gun are now drawn in the battle view, modelled on the real shotguns.',
+    'SPAS-12: the holed heat shield over the barrel, a ribbed pump and the folding stock with its famous hook under the butt. After every blast your hand racks the pump and the red shell flies out. Reloads push shells one at a time into the loading port, then rack it if it was empty.',
+    'AA-12: the perforated barrel shroud, a tall body with its built-in carrying handle and the big 20-shell drum. The charging handle on the side slams back with every shot, and reloads swap the drum and rack the handle. Extended magazines make the drum bigger.',
+    'KSG: the short bullpup with its full-length top rail, ribbed pump and magazine tube under the barrel. It pumps after every blast with the shell dropping out of the bottom, and you see the tube selector flip halfway through a reload.',
+    'Coach gun: a wooden stock and forend, side-by-side barrels with a brass bead and two exposed hammers that fall when it fires. Reloads break it open, flip out both empty hulls, drop in two new shells, snap it shut and thumb both hammers back.',
+    'Grip, laser, silencer and extended barrel show on the guns. This only changes what you see: sounds, damage and reload times are exactly the same.']},
   {id:'2026-11-18-snipers',date:'November 18, 2026',title:'Sniper rifles now visible in your hands',items:[
     'For sighted players: the Barrett .50 cal, Dragunov SVD, OSV-96, CheyTac M200 Intervention and Boys anti-tank rifle are now drawn in the battle view, modelled on the real rifles.',
     'Barrett: its big arrowhead muzzle brake, a long receiver with cooling holes and a folded bipod. Its barrel slides back into the receiver with every shot, just like the real M82.',
