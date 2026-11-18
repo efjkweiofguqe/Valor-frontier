@@ -2462,7 +2462,7 @@ const ATT=[
   {id:'inc',name:'Incendiary rounds',price:160,ammo:true,only:HEAVY,desc:()=>'Heavy sniper ammo. Greatly increases damage, plus 60 percent, and every hit bursts into flame, burning all enemies within 16 feet for half damage.'},
   {id:'ap',name:'Armor piercing rounds',price:250,only:APGUNS,desc:w=>'Hardened penetrator ammo. 50 percent more damage against armored enemies, metal enemies, mini bosses and bosses. Stacks with full metal jacket or incendiary rounds. '+(w.id==='m249'?'Each bullet also punches through up to 8 enemies in line with no damage lost to distance, but it only carries about 13 feet past each enemy before it runs out of speed.':PEN[w.id]?`Rounds punch through up to ${PEN[w.id][1]} enemies in line instead of ${PEN[w.id][0]}.`:'')},
   {id:'ramjet',name:'Ramjet rounds V1',price:3500,ammo:true,for:'jet',desc:()=>'Ramjet-boosted ammo. Raises the damage per round from 20 to 40, the charge-up drops from 0.7 to 0.5 seconds, and the round punches through 20 enemies instead of 10.'},
-  {id:'ramjet2',name:'Ramjet rounds V2',price:7000,for:'jet',req:'ramjet',desc:()=>'Twin-stage ramjet ammo. Raises the damage per round to 60, and the charge-up drops to 0.35 seconds. With both on, the round punches through every enemy in its line of fire, no limit, and every headshot hits for 10,000 damage. Buy V1 first.'},
+  {id:'ramjet2',name:'Ramjet rounds V2',price:7000,for:'jet',req:'ramjet',desc:()=>'Twin-stage ramjet ammo. Raises the damage per round to 60, and the charge-up drops to 0.35 seconds. With both on, the round punches through every enemy in its line of fire, no limit, and every headshot hits for 3.4 times the round\'s damage, bosses included. Buy V1 first.'},
   {id:'ionic',name:'Ionic plasma jet rounds',price:9000,for:'jet',req:'ramjet2',desc:()=>'Ionized plasma ammo, the third ramjet stage. Raises the damage per round to 100. Buy Ramjet rounds V2 first.'},
   {id:'buck',name:'Buckshot',price:200,ammo:true,only:SHOTS,desc:()=>'Heavier lead pellets. Every blast hits 30 percent harder, and the pellets hold their power much better with distance: about 80 percent of full damage in the middle of the range instead of 55, and 60 percent at the far end instead of 25, or 70 with an extended barrel. It does not reach any farther. Slugs still hit harder and carry farther, but buckshot keeps the wide blast that hits every enemy in front of you.'},
   {id:'slug',name:'Slugs',price:300,ammo:true,only:SHOTS,desc:w=>'One heavy solid round instead of a spread of pellets. Each blast becomes a single shot at one enemy that hits 2 and a half times as hard, keeps full damage out to about 70 feet instead of 23, and can land headshots. You lose the area blast, and the aim narrows like a rifle.'},
@@ -3326,6 +3326,9 @@ function turn(deg){
    as wide as the flame is at that distance. Volcanic slugs hit only that one enemy. */
 function hMult(w,d){for(const[r,m] of w.hB)if(d<r)return m;return w.hBase}
 /* Gyrojet: 8 percent of full damage at the muzzle (8 of 100), climbing evenly to full damage at 70 feet, its maximum range */
+/* Jet rifle with both Ramjet rounds: headshots hit for 3.4 times a round's damage, bosses too. The old flat 10,000 was
+   about 3.4 times the old fully upgraded round of about 2,965, so this keeps the same proportion at the new damage. */
+const JET_HS=3.4;
 const gyroM=dist=>.08+.92*Math.min(1,dist*3.281/70);
 const gyroT=dist=>.15+dist*.025;   // seconds a rocket takes to reach an enemy this far away, in metres
 function hadesHits(w,tgt){const inR=tgt.filter(e=>e.dist<=w.hR);if(!inR.length)return[];const c=inR[0];if(w.slug)return[c];
@@ -3419,7 +3422,7 @@ function fire(){
     let dmg=0,sfo=1;const rounds=[];
     if(w.spread){const r=w.range;dmg=w.dmg*shots*(w.hades?hMult(w,e.dist):w.tband?tMult(w,e.dist):e.dist<r[0]?1:e.dist<r[1]?(w.mid||.55):r[2])*(G.cover?.65:1)*hm;for(let i=0;i<shots;i++)rounds.push(i)}
     else if(w.sonic){sfo=e.dist<=w.full?1:Math.max(.4,1-.6*(e.dist-w.full)/(w.reach-w.full));dmg=w.dmg*hm*sfo*(G.cover?.65:1)*shots;for(let i=0;i<shots;i++)rounds.push(i)}
-    else for(let i=0;i<shots;i++){if(w.sure||(w.stake&&hi>0)||Math.random()<acc*am2){dmg+=head&&w.jetHead?Math.max(10000,w.dmg*hm):w.dmg*hm*fm*hpm*(w.stake?stakeK(w,e,hi):1)*(w.sym?G.symMult||1:1)*(w.hades?hMult(w,e.dist):1)*(w.gyro?gyroM(e.dist):1);rounds.push(i)}else if(!missAt)missAt=[rel,e.dist,i*gap+fly]}
+    else for(let i=0;i<shots;i++){if(w.sure||(w.stake&&hi>0)||Math.random()<acc*am2){dmg+=head&&w.jetHead?w.dmg*Math.max(JET_HS,hm):w.dmg*hm*fm*hpm*(w.stake?stakeK(w,e,hi):1)*(w.sym?G.symMult||1:1)*(w.hades?hMult(w,e.dist):1)*(w.gyro?gyroM(e.dist):1);rounds.push(i)}else if(!missAt)missAt=[rel,e.dist,i*gap+fly]}
     if(w.rivet&&w.magR&&e===hits[0])e.rvShot=(e.rvShot||0)+shots-rounds.length;   // rvShot: nails that missed it, returned on a close kill
     if(w.hypno&&dmg&&hypRoll(w,e,rel,fly)){anyHit=true;return}   // Hypno-rifle: this round hypnotizes instead of hurting
     if(!dmg)return;
@@ -7832,7 +7835,8 @@ const UPDATES=[
     'The Jet rifle now does 20 damage per round instead of 200.',
     'Ammo upgrades now set the damage per round: Ramjet rounds V1, 40. Ramjet rounds V2, 60. Ionic plasma jet rounds, 100.',
     'Extended barrel V1 and V2 still add 15 percent each, now on the whole round, ammo included. The Kinetic Gauss barrel now adds 50 percent damage instead of 1000.',
-    'Nothing else changed: charge-up, piercing, magazines, reloads, the 10,000 damage headshots with both Ramjet rounds, and Heat vent are the same.']},
+    'Headshots with both Ramjet rounds on no longer hit for a flat 10,000. They now hit for 3.4 times the round\'s damage, bosses included, the same proportion as before: about 200 with Ionic plasma rounds, and about 674 fully upgraded.',
+    'Nothing else changed: charge-up, piercing, magazines, reloads and Heat vent are the same.']},
   {id:'2026-11-18-medusa',date:'November 18, 2026',title:'New mythical relic: Medusa\'s Head',items:[
     'New in the Armory, under Legendary, Mythical weapons, in the new Relics section: Medusa\'s Head, 65,000 silver.',
     'It has no ammo. It runs on souls. Every enemy you kill with any other weapon, grenade or ability adds 1 soul, with no limit, and your souls last the whole match. Kills made by the head itself give no souls. A chime and a callout tell you when you have enough souls for the next level.',
@@ -9149,7 +9153,7 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   else{out.push(b.spread?`Damage: ${D(b.dmg)} to every enemy in the blast${b.shots>1?`, ${b.shots} blasts per trigger pull`:''}.`:`Damage: ${D(b.dmg)} per ${b.slug?'slug':b.crystal?'crystal':b.gyro?'rocket at full power':'bullet'}${b.shots>1?`, ${b.shots} ${b.crystal?'crystals':'bullets'} per trigger pull`:''}.`);
     out.push(`${n1(pulls)} trigger pulls per second, about ${Math.round(b.dmg*aim*b.shots*pulls*(b.spread?1:acc))} damage per second${b.akimbo?' from each gun':''}.`)}
   out.push(b.shell?`${b.id==='zeliska'?'Cylinder':'Magazine'}: ${b.mag}. Loads one ${b.id==='zeliska'?'round':'shell'} at a time, ${b.shell} seconds each, ${r1(b.reload)} seconds from empty. You can fire before it finishes.`:`Magazine: ${b.mag}${b.akimbo?' in each of your two guns':''}. Reload: ${r1(b.reload)} seconds.`);
-  if(b.jetHead)out.push('Headshots hit for 10,000.');
+  if(b.jetHead)out.push(`Headshots hit for ${n1(Math.max(JET_HS,b.hs)*b.dmg)}, 3.4 times a round, bosses included.`);
   else if((!b.spread||b.grip)&&!b.lnch)out.push(`Headshots: ${Math.round((b.hs-1)*100)} percent more damage, ${Math.round((b.hsBoss-1)*100)} percent more on bosses.`);
   if(b.grip)out.push(`Grip: a wider dead-centre zone, and ${Math.round(b.grip*100)} percent of off-centre hits turn into headshots.`);
   if(b.scope)out.push(`Scope: ${Math.round(b.scope*100)} percent of hits past 50 feet turn into headshots.`);
