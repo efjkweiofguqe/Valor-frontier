@@ -6118,6 +6118,7 @@ function rfFlash(c,x,kind,sil,k,y){const r=Math.random;c.save();c.translate(x,y|
   else if(kind==='bird'){core(5+r()*2,3,-2.5);for(const a of[0,-1.1,-1.6,-2.1])spike(a+(r()-.5)*.15,(a?4.5:7)+r()*3,.9)}
   else if(kind==='mg42'){core(8+r()*4,4.5+r()*2,-4);for(const a of[0,.5,-.5,2.4,-2.4])spike(a+(r()-.5)*.3,(a?5:11)+r()*5,1.5)}
   else if(kind==='big'){core(16+r()*6,8+r()*3,-8);for(const a of[0,.7,-.7,1.45,-1.45])spike(a+(r()-.5)*.25,(a?9:20)+r()*7,2.6)}
+  else if(kind==='brake50'){core(7+r()*3,5,-3);for(const a of[1.57,-1.57])for(const dx of[-6,-2.5]){c.save();c.translate(dx,0);spike(a+(r()-.5)*.25,10+r()*5,2.2);c.restore()}spike(0,7+r()*3,1.6)}
   else if(kind==='gat'){core(7+r()*3,4+r()*1.5,-3.5);for(const a of[0,.9,-.9])spike(a+(r()-.5)*.4,(a?4:8)+r()*4,1.3)}
   else{core(4,3,-2);for(const a of[1.57,-1.57])for(const dx of[-3.3,-1.5]){c.save();c.translate(dx,0);spike(a+(r()-.5)*.2,6+r()*3,1.3);c.restore()}spike(0,5+r()*2,1)}
   c.restore()}
@@ -6136,6 +6137,7 @@ function rfDraw(c,W,H,X0,Y0){
   // reload progress
   const job=G.jobs&&G.jobs.find(j=>j.wi===G.w),fr=job&&job.total>0?Math.max(0,Math.min(1,1-job.left/job.total)):-1;
   if(S0.belt)return rfDrawBelt(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
+  if(S0.snip)return rfDrawSnip(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
   if(S0.lnch)return rfDrawLaunch(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has);
   o.rng=flash;
   let tilt=0,mag={dx:0,dy:0,rot:0,a:1,on:true},lh=null,rh=null,jolt=0;
@@ -6697,6 +6699,202 @@ function rfDrawLaunch(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
     if(on){c.save();c.strokeStyle='#4cff6e';c.lineWidth=2;const L=sz*.3;for(const[sx,sy]of[[-1,-1],[1,-1],[1,1],[-1,1]]){c.beginPath();c.moveTo(X0+sx*sz/2,Y0+sy*sz/2-sy*L);c.lineTo(X0+sx*sz/2,Y0+sy*sz/2);c.lineTo(X0+sx*sz/2-sx*L,Y0+sy*sz/2);c.stroke()}
       if(p>.98){c.fillStyle='#4cff6e';c.font=`bold ${Math.round(W*.04)}px sans-serif`;c.textAlign='center';c.fillText('LOCK',X0,Y0+sz/2+W*.05);c.textAlign='left'}c.restore()}}
   return true}
+/* ----- held sniper rifles: Barrett M82A1, Dragunov SVD, OSV-96, CheyTac M200 Intervention and the Boys anti-tank rifle,
+   drawn like the real rifles. Iron sights until you fit a scope: the Sniper scope mounts each rifle's real optic
+   (Leupold on the Barrett, PSO-1 side mount on the SVD, POS 13x60 on the OSV-96, Nightforce on the CheyTac, a No. 32
+   style scope on the Boys), the Precision scope a big high-power tactical scope. Semi-autos kick and throw brass
+   (the Barrett's barrel slides back into the receiver with every shot, the SVD's charging handle rides back);
+   the CheyTac and Boys are bolt actions, so after every shot your hand works the bolt and the case flies out.
+   Reloads: magazine out, new one in (rocked in on the SVD, dropped in from the top on the Boys), then the charging
+   handle or the bolt. Looks only: sounds and timing are unchanged. ----- */
+Object.assign(RF_IDS,{barrett:1,svd:1,osv96:1,cheytac:1,antitank:1});
+Object.assign(RF,{boltT:-1e9});
+function rfBoxMag(c,w,L,col,hi,lo){rfRR(c,0,0,w,L,.7,col,lo,.35);rfRR(c,-.3,L-1,w+.6,1.6,.5,lo);rfLine(c,[.9,1,.9,L-1.4],hi,.45);for(let y=2.4;y<L-2;y+=2.2)rfLine(c,[1.6,y,w-1.2,y],lo,.3);rfRR(c,w*.25,-1.2,w*.5,1.4,.6,RFC.brass)}
+/* a rifle scope: objective bell at x0, eyepiece at x1, axis at y */
+function rfScopeDraw(c,x0,x1,y,obj,tube,col){col=col||'#1a1b1d';const lo='#0c0c0d',hi='#3a3c40';
+  rfPoly(c,[x0,y-obj,x0+obj*2.2,y-obj,x0+obj*3.4,y-tube,x1-6,y-tube,x1-4,y-tube*1.5,x1,y-tube*1.6,x1,y+tube*1.6,x1-4,y+tube*1.5,x1-6,y+tube,x0+obj*3.4,y+tube,x0+obj*2.2,y+obj,x0,y+obj],col,lo,.35);
+  rfLine(c,[x0+.6,y-obj+.6,x1-1,y-tube*1.4],hi,.4);const tx=(x0+x1)/2+1;rfRR(c,tx-1.6,y-tube-2.6,3.2,2.6,.5,col,lo,.3);rfCirc(c,tx,y+.2,1.6,col,lo,.3);
+  c.beginPath();c.ellipse(x0,y,.7,obj*.9,0,0,Math.PI*2);c.fillStyle='rgba(110,170,220,.5)';c.fill()}
+function rfRings(c,xs,yTop,yScope,col){for(const x of xs){rfRR(c,x-1.3,yScope,2.6,yTop-yScope,.4,col||'#202124')}}
+function rfRail(c,x0,x1,y){rfRR(c,x0,y-1.3,x1-x0,1.3,.2,'#232528');for(let x=x0+.5;x<x1-.6;x+=1.6)rfRR(c,x,y-1.8,.9,.6,.1,'#232528')}
+const RF_SNIP={
+  barrett:{snip:1,xr:50,bf:.6,th:.48,kk:1.5,grip:[83.4,10.8],trig:[77.4,7.4],fore:[42,0],foreTop:-3.6,foreBot:2.4,gripAt:[44,2.4],
+    mag:[64.4,6.4],magW:9,magL:[10,14],action:'ch',ch:[66,-5.6],rack:9,eject:[70,-3.8],flash:'brake50',tip:9,silL:24,silR:3.6,
+    scopeAt:{x0:52,x1:86,y:-10.6,ring:[60,78],rail:-5,obj:2.8,tube:1.5},body(c,o){const C=RFC,bk='#232528',bkLo='#111214',hi='#3d4045';
+      // butt stock with its thick recoil pad and folded rear monopod
+      rfPoly(c,[100,-3.6,119,-3.6,120.4,-2.6,120.4,9.2,118.6,10,108,7.2,104,6.4,100,6.4],bk,bkLo,.4);rfLine(c,[101,-2.6,119.4,-2.6],hi,.4);rfRR(c,119.4,-4,3.4,14.6,1,'#0d0d0e');
+      c.lineCap='round';rfLine(c,[110,7.6,116,7.8],'#3a3d42',.9);rfPoly(c,[104,-6,114,-6,114,-3.6,104,-3.6],'#1b1c1e');
+      // the barrel and its big arrowhead brake slide back into the receiver with every shot
+      rfFront(c,o,()=>{c.save();c.translate(o.recoil,0);const bx=o.bx;
+        rfRR(c,bx,-1.5,50-bx,3,.6,C.steel,C.steelLo,.3);for(const y of[-.6,.6])rfLine(c,[bx+2,y,36,y],'#1c1d1f',.3);
+        if(!o.sil){rfPoly(c,[bx-9,-2.2,bx-2,-3.4,bx+.4,-3.4,bx+.4,3.4,bx-2,3.4,bx-9,2.2],C.steel,C.steelLo,.35);rfPoly(c,[bx-7,-1.6,bx-4.4,-2.6,bx-4.4,2.6,bx-7,1.6],'#0b0b0c');rfRR(c,bx-3.4,-2.6,2,5.2,.4,'#0b0b0c')}else rfSil(c,bx,24,3.6);
+        o.flashFn&&o.flashFn();c.restore();
+        // bipod folded forward under the barrel
+        rfRR(c,36,2,4,2.2,.5,bk);rfLine(c,[38,3.8,14,4.8],'#2b2d31',1);rfLine(c,[38.6,4.4,15,5.6],hi,.6);rfRR(c,12,4,3,2,.5,'#2b2d31');
+        if(o.grip)rfVGrip(c,44,2.4)});
+      // long upper receiver with the cooling holes over the barrel, carrying handle, rail
+      rfPoly(c,[36,-3.6,100,-3.6,104,-2.6,104,2.4,36,2.4],'#26282b',bkLo,.4);rfLine(c,[37,-2.6,103,-2.6],hi,.4);
+      for(let x=38.5;x<57;x+=4.6)rfRR(c,x,-2,3.2,2.8,.9,'#0b0b0c');
+      rfRail(c,50,92,-3.6);
+      if(!o.scope){rfPoly(c,[50,-5,52.6,-5,52.2,-8,51,-8],bk);rfPoly(c,[88,-5,92,-5,91.4,-7.4,88.6,-7.4],bk)}
+      rfRR(c,o.ch,-6.2,3.2,1.6,.6,C.steelHi,C.steelLo,.3);
+      // lower receiver: magazine well, trigger, pistol grip
+      rfPoly(c,[60,2.4,100,2.4,100,5.6,86,6.4,76,6.4,75,7.6,63.4,7.6,62.4,6],'#202225',bkLo,.35);rfLine(c,[61,3.4,99,3.4],hi,.3);
+      for(const x of[61.6,97])rfCirc(c,x,4.4,.5,hi);
+      rfLine(c,[74.6,6.4,75,9.8,82.6,9.8,83,6.4],C.steel,.75);rfLine(c,[77.4,6.4,77.8,8.6],C.steelHi,.6);
+      rfPoly(c,[80.4,6.4,85.6,6.4,89.2,16,88.6,17,84.2,17,83.2,15.4],'#1b1c1e',bkLo,.35);rfLine(c,[82,7.4,86,15.4],hi,.35)}},
+  svd:{snip:1,xr:55,bf:.7,th:.5,kk:1,grip:[86.4,9.6],gripRot:-.15,trig:[71.2,6.4],fore:[46,.6],foreTop:-3.6,foreBot:3.8,gripAt:[45,3.8],
+    mag:[58.4,4.6],magW:7.4,magL:[14,18],rock:true,action:'ch',ch:[72,-5.6],rack:8,eject:[68,-4.6],flash:'ak',tip:6,silL:18,silR:2.4,
+    scopeAt:{x0:55,x1:83,y:-10.8,side:1,obj:2.4,tube:1.2},body(c,o){const C=RFC,wd='#7a3f1e',wdLo='#4e260f',wdHi='#9c5630';
+      // the skeleton thumbhole stock with its cheek rest
+      c.beginPath();c.moveTo(80,-3.6);c.lineTo(84,-3.8);c.lineTo(120,-1);c.lineTo(121,0);c.lineTo(121,12.6);c.lineTo(119.6,13);c.lineTo(104,9.4);c.lineTo(96,8.8);c.lineTo(90,13.4);c.lineTo(86,13.6);c.lineTo(84,8.6);c.lineTo(80,4.4);c.closePath();
+      c.moveTo(88,0);c.lineTo(88.6,6.4);c.lineTo(92,7.6);c.lineTo(103,5);c.lineTo(100,.6);c.closePath();c.fillStyle=wd;c.fill('evenodd');c.strokeStyle=wdLo;c.lineWidth=.4;c.stroke();
+      rfPoly(c,[98,-3,112,-2.2,112,-1,98,-1.6],'#2a1a10');rfLine(c,[85,-2.6,119,-.2],wdHi,.4);rfRR(c,119.8,-.6,1.8,13.8,.5,'#141414');
+      rfFront(c,o,()=>{const bx=o.bx;
+        rfRR(c,bx,-1,57-bx,2,.5,C.steel,C.steelLo,.3);
+        if(!o.sil){rfRR(c,bx-6,-1.3,6.4,2.6,.5,C.steel,C.steelLo,.3);for(let i=0;i<4;i++)rfRR(c,bx-5.2+i*1.3,-1,.6,1.2,.2,'#0b0b0c')}else rfSil(c,bx,18,2.4);
+        rfPoly(c,[5,-1,9.4,-1,8.6,-3,8,-6.4,7,-6.4,6.4,-3],C.steel,C.steelLo,.3);rfRR(c,5.4,1,4,1.4,.4,C.steel);
+        rfPoly(c,[22,-1,26,-1,26,-4.4,23.4,-4.4],C.steel);rfRR(c,25,-4.4,14,2.2,1,C.steel,C.steelLo,.3);
+        // two-piece wooden handguard with its cooling slots
+        rfPoly(c,[38,-4.6,55,-4.6,55,-1.4,38,-1.4,37,-3],wd,wdLo,.35);rfPoly(c,[38,-1.2,55,-1.2,55,3.8,40,3.8,38,2.4],wd,wdLo,.35);rfLine(c,[39,-3.8,54,-3.8],wdHi,.35);
+        for(let i=0;i<3;i++){rfRR(c,40+i*5,-3.6,3,1,.4,'#1a0e07');rfRR(c,41+i*5,.4,3,1,.4,'#1a0e07')}rfRR(c,37,-5,1.4,9.2,.3,C.steel);
+        if(o.grip)rfVGrip(c,45,3.8)});
+      // AK-style receiver with the side scope rail, dust cover, charging handle
+      rfPoly(c,[55,-4,80,-4,80.4,-3,80.4,4.4,57,4.4,55,3.4],'#232529',C.steelLo,.35);rfPoly(c,[57,-4,79.6,-4,79.8,-5.1,58,-5.3],C.steel,C.steelLo,.3);rfLine(c,[58.4,-4.8,79.4,-4.7],C.steelHi,.35);
+      rfRR(c,60,-2.6,13,1.4,.3,C.mil);for(const x of[60.6,66.4,79])rfCirc(c,x,2.8,.35,C.steelHi);
+      if(!o.scope){rfPoly(c,[55.6,-4,59.6,-4,59.2,-6,56.4,-6.2],C.steel)}
+      rfRR(c,o.ch,-6.4,2.8,1.4,.6,C.steelHi,C.steelLo,.3);
+      rfLine(c,[66.4,4.4,67,7.6,74.6,7.8,75.4,4.4],C.steel,.75);rfLine(c,[70.8,4.4,71.3,6.8],C.steelHi,.6)}},
+  osv96:{snip:1,xr:66,bf:.5,th:.46,kk:1.4,grip:[93.4,10.6],trig:[86.6,7.4],fore:[46,.4],foreTop:-3.4,foreBot:3.4,gripAt:[44,3.4],
+    mag:[74.4,4.8],magW:8.4,magL:[10,14],action:'ch',ch:[80,-5.4],rack:9,eject:[84,-4],flash:'brake50',tip:10,silL:26,silR:3.8,
+    scopeAt:{x0:68,x1:100,y:-10,ring:[76,93],rail:-4.4,obj:3,tube:1.5},body(c,o){const C=RFC,bk='#1f2124',bkLo='#0f1011',hi='#3c3f44';
+      rfPoly(c,[102,-3.6,106,-3.8,132,-2,133,-1,133,11,131,11.6,118,8,108,6.6,102,6],bk,bkLo,.4);rfLine(c,[106,-2.8,131,-1.2],hi,.4);rfRR(c,131.8,-2.4,3,14.4,.9,'#0c0c0d');rfPoly(c,[110,-5,124,-4.2,124,-2.6,110,-3.4],'#18191b');
+      rfFront(c,o,()=>{const bx=o.bx;
+        rfRR(c,bx,-1.7,66-bx,3.4,.7,C.steel,C.steelLo,.3);
+        if(!o.sil){rfRR(c,bx-10,-3,10.4,6,1.2,C.steel,C.steelLo,.35);for(let i=0;i<4;i++)for(const y of[-1.4,1.4])rfCirc(c,bx-8.6+i*2.3,y,.7,'#0b0b0c')}else rfSil(c,bx,26,3.8);
+        // tubular handguard full of holes, bipod folded forward, carrying handle
+        rfRR(c,30,-3.4,32,6.8,1.6,bk,bkLo,.35);for(let x=32.6;x<60;x+=3.2){rfCirc(c,x,-1.2,.85,'#09090a');rfCirc(c,x+1.6,1.4,.85,'#09090a')}rfLine(c,[31,-2.6,61,-2.6],hi,.4);
+        rfRR(c,32,3.2,3.6,2,.5,bk);rfLine(c,[33.6,4.6,10,5.6],'#2b2d31',1);rfLine(c,[34.2,5.2,11,6.4],hi,.6);
+        rfRR(c,54,-5,1.6,1.6,.3,bk);rfRR(c,62.6,-5,1.6,1.6,.3,bk);rfRR(c,53.4,-8.8,11.4,2.2,1,'#18191b',bkLo,.3);
+        if(o.grip)rfVGrip(c,44,3.4)});
+      // the folding hinge where the rifle breaks in half to carry
+      rfRR(c,64,-4.4,4,9.6,.8,'#2a2c30',bkLo,.35);rfCirc(c,66,2.4,1.5,'#3a3d42',bkLo,.3);rfCirc(c,66,2.4,.5,'#0b0b0c');
+      rfPoly(c,[68,-4,102,-4,102,4.8,93,4.8,92,6.4,83.4,6.4,82.4,4.8,68,4.8],'#25272b',bkLo,.4);rfLine(c,[69,-3,101,-3],hi,.35);rfRail(c,72,98,-4);
+      if(!o.scope){rfPoly(c,[72,-5.4,74.6,-5.4,74.2,-8,73,-8],bk);rfPoly(c,[94,-5.4,98,-5.4,97.4,-7.6,94.6,-7.6],bk)}
+      rfRR(c,o.ch,-6.6,3,1.5,.6,C.steelHi,C.steelLo,.3);
+      rfLine(c,[83,6.4,83.4,9.6,90.6,9.6,91,6.4],C.steel,.75);rfLine(c,[86.2,6.4,86.6,8.6],C.steelHi,.6);
+      rfPoly(c,[90.4,4.8,95.4,4.8,99,15,98.4,16,94,16,93,14.4],'#18191b',bkLo,.35)}},
+  cheytac:{snip:1,xr:70,bf:.55,th:.46,kk:1.5,grip:[87.4,10.4],trig:[80.8,7.2],fore:[50,.4],foreTop:-4,foreBot:3.6,gripAt:[48,3.6],
+    mag:[74.6,3.6],magW:8.4,magL:[11,15],action:'bolt',bolt:[90,-1.2],eject:[86,-4.4],flash:'brake50',tip:8,silL:26,silR:3.8,
+    scopeAt:{x0:62,x1:100,y:-10.6,ring:[72,92],rail:-4,obj:3.6,tube:1.7},body(c,o){const C=RFC,bk='#1e2023',bkLo='#0e0f10',hi='#3c3f44';
+      // collapsible skeleton stock: top bar, cheek riser, butt plate and the bottom strut, with a rear monopod
+      rfRR(c,96,-3.2,30,2.2,.6,bk,bkLo,.35);rfRR(c,104,-6,11,2.8,.8,'#17181a',bkLo,.3);rfRR(c,124,-3.6,3.6,15.6,1,'#0c0c0d');
+      c.lineCap='round';rfLine(c,[98,3.4,124,10],bk,1.8);rfLine(c,[98,0,98,3.6],bk,1.8);rfLine(c,[118,9,118.6,14],'#2b2d31',.9);
+      rfFront(c,o,()=>{const bx=o.bx;
+        rfRR(c,bx,-1.7,70-bx,3.4,.7,C.steel,C.steelLo,.3);for(const y of[-.7,.7])rfLine(c,[bx+2,y,32,y],'#1c1d1f',.35);
+        if(!o.sil){rfRR(c,bx-8,-2.6,8.4,5.2,1,C.steel,C.steelLo,.35);for(let i=0;i<3;i++)rfRR(c,bx-7+i*2.4,-1.8,1.2,3.6,.4,'#0b0b0c')}else rfSil(c,bx,26,3.8);
+        // free-floating forend with cutouts, carrying handle on top, bipod under the front
+        rfPoly(c,[32,-4,70,-4,70,3.6,34,3.6,32,2],bk,bkLo,.4);for(let x=36;x<66;x+=6.2)rfRR(c,x,-2,4.4,3,.8,'#09090a');rfLine(c,[33,-3,69,-3],hi,.4);
+        rfRR(c,38,-5.6,1.6,1.6,.3,bk);rfRR(c,49.4,-5.6,1.6,1.6,.3,bk);rfRR(c,37.4,-9.4,14.2,2.4,1,'#17181a',bkLo,.3);
+        rfRR(c,33,3.4,3.6,2,.5,bk);rfLine(c,[34.6,4.8,12,6],'#2b2d31',1);rfLine(c,[35.2,5.4,13,6.8],hi,.6);
+        if(o.grip)rfVGrip(c,48,3.6)});
+      // receiver and rail, the bolt (it lifts and slides back when you work it)
+      rfPoly(c,[70,-4,96,-4,96,3.6,70,3.6],'#25272b',bkLo,.4);rfLine(c,[71,-3,95,-3],hi,.35);rfRail(c,70,94,-4);
+      c.save();c.translate(o.boltBack*7,0);rfRR(c,88,-2.6,9,2.6,1,'#4a4d52',bkLo,.3);
+      const up=o.boltUp,kx=91,ky=-1.4-up*4.6;c.lineCap='round';rfLine(c,[kx-1,-1.2,kx,ky],'#5a5d62',.9);rfCirc(c,kx,ky,1.3,'#2a2c30',bkLo,.3);c.restore();
+      rfPoly(c,[70,3.6,96,3.6,96,5.4,84,5.4,83,6.4,74,6.4,73,5.4,70,5.4],'#202225',bkLo,.35);
+      rfLine(c,[77.6,5.4,78,9.4,85.2,9.4,85.6,5.4],C.steel,.75);rfLine(c,[80.4,5.4,80.8,8],C.steelHi,.6);
+      rfPoly(c,[84.4,5.4,89.4,5.4,93,15.4,92.4,16.4,88,16.4,87,14.8],'#17181a',bkLo,.35);rfLine(c,[86,6.4,90,14.8],hi,.35)}},
+  antitank:{snip:1,xr:64,bf:.5,th:.45,kk:1.7,grip:[89.6,10.2],gripRot:-.3,trig:[84.6,6.8],foreFist:[110.6,9.4,-.1],
+    mag:[71,-2.8],magW:8.6,magL:[11,15],magTop:1,action:'bolt',bolt:[92,-1],eject:[90,-3.4],flash:'brake50',tip:8,silL:26,silR:3.8,
+    scopeAt:{x0:68,x1:92,y:-9.4,side:1,obj:2.4,tube:1.3},body(c,o){const C=RFC,st='#2d302c',stLo='#151715',hi='#4a4e48';
+      // padded butt with cheek piece and the rear grip your left hand holds
+      rfPoly(c,[96,-2.8,112,-2.4,120,-2.2,124,-1,124,10,122,10.6,112,6,100,3],st,stLo,.4);rfRR(c,103,-5,12,2.6,1.2,'#3b2a1d');rfRR(c,122.6,-1.6,3.6,12.6,1.4,'#2a1d14');
+      rfRR(c,108.8,5,3.6,9.6,1.3,'#4a2a16','#24140a',.35);
+      rfFront(c,o,()=>{const bx=o.bx;
+        rfRR(c,bx,-1.6,64-bx,3.2,.6,C.steel,C.steelLo,.3);
+        if(!o.sil){rfRR(c,bx-8,-3,8.4,6,1.4,C.steel,C.steelLo,.35);for(let i=0;i<3;i++)for(const y of[-1.4,1.4])rfCirc(c,bx-6.6+i*2.4,y,.75,'#0b0b0c')}else rfSil(c,bx,26,3.8);
+        // T-shaped bipod near the front of the receiver, and the offset front sight on this side
+        rfRR(c,48,1.4,4,2.4,.5,st);rfLine(c,[50,3.6,44,12],st,1.1);rfRR(c,40,11.4,9,1.6,.6,st);
+        rfRR(c,57,-1.6,3,1,.3,st);rfPoly(c,[57.4,-2.6,59.6,-2.6,59.2,-5.6,58,-5.6],st)});
+      // tubular receiver, the bolt, rear aperture sight on this side, trigger and wooden pistol grip
+      rfRR(c,64,-2.8,32,5.6,1.2,'#33362f',stLo,.4);rfLine(c,[65,-1.8,95,-1.8],hi,.4);
+      if(!o.scope){rfRR(c,80,-4.2,3,1.4,.3,st);rfCirc(c,81.5,-5.6,1.1,null,st,.5)}
+      c.save();c.translate(o.boltBack*7,0);rfRR(c,90,-2,7,2.4,1,'#55594f',stLo,.3);const up=o.boltUp,kx=93,ky=-1-up*4.4;c.lineCap='round';rfLine(c,[kx-1,-1,kx,ky],'#62665b',.9);rfCirc(c,kx,ky,1.2,'#3b3e36',stLo,.3);c.restore();
+      rfRR(c,80,2.8,12,2.6,.5,st);rfLine(c,[81.6,5.4,82,8.4,87.4,8.4,87.8,5.4],C.steel,.7);rfLine(c,[84.4,5.4,84.8,7.6],C.steelHi,.6);
+      rfPoly(c,[86,5.4,91,5.4,94.4,14.6,93.8,15.6,89.4,15.6,88.4,14],'#4a2a16','#24140a',.35)}}
+};
+Object.assign(RF_GUN,RF_SNIP);
+function rfSnipMag(c,S0,ext){const L=S0.magL[ext?1:0];if(S0.magTop){c.save();c.translate(0,-L);rfBoxMag(c,S0.magW,L,'#30332e','#4d514a','#161816');c.restore()}else rfBoxMag(c,S0.magW,L,'#25272a','#44474d','#121314')}
+function rfDrawSnip(c,W,H,X0,Y0,w,S0,now,dt,kick,flash,fr,o,has){
+  const C=RFC,n=(G.ammo&&G.ammo[G.w]&&G.ammo[G.w][0]!=null)?G.ammo[G.w][0]:1;
+  o.xr=S0.xr;o.bf=S0.bf;o.scope=has('scope')||has('pscope');o.pscope=has('pscope');o.ch=S0.ch?S0.ch[0]:0;o.boltUp=0;o.boltBack=0;
+  const ext=has('extmag')||has('extmag2');let jolt=0,tilt=0,lh=null,rh=null;
+  // semi-autos: the Barrett barrel and the charging handles ride back with each shot
+  o.recoil=w.id==='barrett'?Math.min(1,kick)*4:0;if(w.id==='svd'||w.id==='osv96'||w.id==='barrett')o.ch+=Math.min(1,kick)*(w.id==='svd'?7:5);
+  let newShot=false;for(const s of RF.kicks)if(s.eject){newShot=true}
+  if(newShot&&S0.action==='bolt')RF.boltT=now+140;
+  const fore=S0.foreFist?[S0.foreFist[0],S0.foreFist[1]]:o.grip?rfProj(S0,S0.gripAt[0]+1.6,S0.gripAt[1]+4):rfProj(S0,S0.fore[0],S0.fore[1]);
+  const M=S0.mag,mag={dx:0,dy:0,rot:0,a:1},pt=(a,b,t)=>[rfL(a[0],b[0],t),rfL(a[1],b[1],t)];
+  // working the bolt: lift, pull back (the case flies out), push forward, close
+  let boltEject=false;const bp=S0.bolt;
+  const boltCycle=b=>{const g=S0.grip,kn=[bp[0]+1,bp[1]-1.6];
+    if(b<.2)rh=pt(g,kn,b/.2);else if(b<.35){o.boltUp=rfE(rfSeg(b,.2,.35));rh=[kn[0],kn[1]-o.boltUp*4.4]}
+    else if(b<.55){o.boltUp=1;o.boltBack=rfE(rfSeg(b,.35,.55));rh=[kn[0]+o.boltBack*7,kn[1]-4.4];if(b>.5)boltEject=true}
+    else if(b<.7){o.boltUp=1;o.boltBack=1-rfE(rfSeg(b,.55,.7));rh=[kn[0]+o.boltBack*7,kn[1]-4.4]}
+    else if(b<.8){o.boltUp=1-rfE(rfSeg(b,.7,.8));rh=[kn[0],kn[1]-o.boltUp*4.4];if(b>.78)jolt=.6}
+    else rh=pt(kn,g,rfSeg(b,.8,1))};
+  if(fr>=0){
+    tilt=fr<.12?rfE(fr/.12):fr<.88?1:1-rfE(rfSeg(fr,.88,1));
+    const top=!!S0.magTop,L=S0.magL[ext?1:0],grab=top?[M[0]+4,M[1]-L-1.5]:[M[0]+4,M[1]+8],off=top?[M[0]-10,M[1]-L-34]:[M[0]-6,M[1]+90];
+    if(fr<.12)lh=pt(fore,grab,fr/.12);
+    else if(fr<.38){const t=rfSeg(fr,.12,.38);
+      if(top){const lift=Math.min(1,t/.4);mag.dy=-10*rfE(lift);if(t>.4){const u=(t-.4)/.6;mag.dx=-10*u;mag.dy=-10+50*u*u;mag.a=1-u}lh=t<.4?[grab[0],grab[1]+mag.dy]:pt([grab[0],grab[1]-10],off,(t-.4)/.6)}
+      else if(S0.rock){const t1=Math.min(1,t/.45);mag.rot=.45*rfE(t1);if(t>.45){const u=(t-.45)/.55;mag.dy=60*u*u;mag.dx=-8*u;mag.a=1-u}lh=t<.45?grab:pt(grab,off,(t-.45)/.55)}
+      else{mag.dy=70*t*t;mag.a=1-t*t;lh=pt(grab,off,t)}}
+    else if(fr<.64){const t=rfSeg(fr,.38,.64),near=top?[0,-12]:[-1,S0.rock?13:15];
+      if(t<.5){const u=t/.5;mag.dx=rfL(off[0]-grab[0],near[0],u);mag.dy=rfL(off[1]-grab[1],near[1],u);mag.rot=S0.rock?.45:0}
+      else{const u=(t-.5)/.5;mag.dx=rfL(near[0],0,u);mag.dy=rfL(near[1],0,Math.min(1,u*1.3));mag.rot=S0.rock?.45*(1-rfE(Math.max(0,(u-.35)/.65))):0;if(u>.9)jolt=1}
+      lh=[grab[0]+mag.dx,grab[1]+mag.dy]}
+    else{lh=fr<.74?pt(grab,fore,rfSeg(fr,.64,.74)):null;
+      if(S0.action==='bolt'&&fr<.92)boltCycle(rfSeg(fr,.64,.92));
+      else if(S0.action==='ch'&&fr<.92){const g=S0.grip,h=S0.ch,hp=[h[0]+1.5,h[1]-.6],u=rfSeg(fr,.64,.92);
+        if(u<.3)rh=pt(g,hp,u/.3);else if(u<.55){const d=9*rfE(rfSeg(u,.3,.55));o.ch=h[0]+d;rh=[hp[0]+d,hp[1]]}else if(u<.62){o.ch=h[0]+9*(1-rfSeg(u,.55,.62));rh=[hp[0]+9,hp[1]];jolt=1}else rh=pt([hp[0]+9,hp[1]],g,rfSeg(u,.62,1))}}}
+  else if(S0.action==='bolt'&&n>0){const dur=Math.min(900,Math.max(450,(w.cd||1.2)*700)),b=(now-RF.boltT)/dur;if(b>=0&&b<1)boltCycle(b)}
+  // placement
+  const th=S0.th||.5,co=Math.cos(th),si=Math.sin(th),mp=S0.xr*(1-S0.bf),gx=S0.grip[0]*co-S0.grip[1]*si,gy=S0.grip[0]*si+S0.grip[1]*co;
+  const gxe=(S0.grip[0]-mp)*co-S0.grip[1]*si,gye=(S0.grip[0]-mp)*si+S0.grip[1]*co;
+  const S=Math.min(W*.42/gxe,H*.34/gye)*(S0.sc||1),rs=Math.min(1,(now-RF.raise)/300),sway=Math.sin(now/950),bob=Math.sin(now/470);
+  const an=S0.anc||[.88,.9];let tx=W*an[0]-gx*S+sway*S*.8,ty=H*an[1]-gy*S+bob*S*.5+(1-rfE(rs))*H*.6;
+  c.save();c.translate(tx,ty);c.rotate(th);c.scale(S,S);
+  const kk=S0.kk||1,piv=S0.grip;c.translate(kick*2.6*kk+jolt*.5,0);c.translate(piv[0],piv[1]);c.rotate(-kick*.06*kk-tilt*.3+jolt*.012);c.translate(-piv[0],-piv[1]);c.translate(-tilt*2,-tilt*3);
+  const m=c.getTransform(),toS=(x,y)=>[m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f];
+  c.save();c.setTransform(1,0,0,1,0,0);const sw=9*S,ls=S0.lsh||[S0.foreFist?.62:X0/W-.08,1.15];
+  const lw0=lh||fore,rw0=rh||S0.grip,lW=toS(lw0[0]+2,lw0[1]+4.5),rW=toS(rw0[0]+3,rw0[1]+5);
+  rfSleeve(c,lW[0],lW[1],W*ls[0],H*ls[1]+sw,sw);rfSleeve(c,rW[0],rW[1],W+sw,H+sw*1.2,sw*1.1);c.restore();
+  o.flashFn=flash>0?()=>{rfFlash(c,o.bx-(o.sil?S0.silL:S0.tip),S0.flash,o.sil,flash,0)}:null;
+  // magazine under (or on top of) the receiver
+  const showMag=fr>=0||n>0||true;if(showMag&&mag.a>.02){c.save();c.globalAlpha=mag.a;c.translate(M[0]+mag.dx,M[1]+mag.dy);c.rotate(mag.rot);rfSnipMag(c,S0,ext);c.restore()}
+  S0.body(c,o);
+  // scope: each rifle's real optic with the Sniper scope, a big tactical scope with the Precision scope
+  if(o.scope){const sa=S0.scopeAt,big=o.pscope,obj=sa.obj*(big?1.35:1),tube=sa.tube*(big?1.12:1),x0=sa.x0-(big?4:0),x1=sa.x1+(big?2:0);
+    if(sa.side){const mx=(x0+x1)/2;rfPoly(c,[mx-5,-2.4,mx+4,-2.4,mx+3,sa.y+tube,mx-4,sa.y+tube],'#26282b',C.steelLo,.35);rfScopeDraw(c,x0,x1,sa.y,obj,tube,w.id==='svd'?'#1f2120':'#202321');
+      if(w.id==='svd'&&!big){rfRR(c,x1-.6,sa.y-2.2,4,4.4,1.2,'#141414');rfRR(c,mx+3,sa.y+tube,3,2.4,.5,'#2a2c2a')}}
+    else{rfRings(c,sa.ring,sa.rail-1.3,sa.y+tube,'#202124');rfScopeDraw(c,x0,x1,sa.y,obj,tube)}}
+  // gloves
+  if(!rh){rfFist(c,S0.grip[0],S0.grip[1],S0.gripRot==null?-.45:S0.gripRot,true);c.lineCap='round';rfLine(c,[S0.grip[0]-2.6,S0.grip[1]-3.6,S0.trig[0],S0.trig[1]],RFC.gloveHi,1.7)}
+  else rfFist(c,rh[0],rh[1],.2,true);
+  if(!lh){if(S0.foreFist)rfFist(c,S0.foreFist[0],S0.foreFist[1],S0.foreFist[2],true);else if(o.grip)rfFist(c,fore[0]+.1,fore[1]-.2,-.05,true);else{const t=rfProj(S0,S0.fore[0],S0.foreTop),b=rfProj(S0,S0.fore[0],S0.foreBot);rfSupport(c,fore[0],t[1],b[1])}}
+  else rfFist(c,lh[0],lh[1],-.3,true);
+  // brass: semi-autos throw it on every shot, bolt guns when the bolt comes back
+  const bl=(w.id==='svd'?3:5.2)*S;
+  for(const s of RF.kicks)if(s.eject){s.eject=0;if(S0.action!=='bolt'){const p=toS(S0.eject[0],S0.eject[1]);RF.brass.push({x:p[0],y:p[1],vx:W*(.3+Math.random()*.25),vy:-H*(.45+Math.random()*.3),r:Math.random()*6,vr:(Math.random()-.5)*20,t:0,s:bl})}
+    if(S0.flash==='brake50'&&!o.sil){const mz=toS(o.bx-S0.tip,0);rfPuff(mz[0],mz[1],S*4,8,0,-S*6,true)}}
+  if(boltEject&&!RF.boltEj){RF.boltEj=1;const p=toS(S0.eject[0]+7,S0.eject[1]);RF.brass.push({x:p[0],y:p[1],vx:W*(.3+Math.random()*.2),vy:-H*(.5+Math.random()*.25),r:0,vr:12,t:0,s:bl})}
+  if(!boltEject)RF.boltEj=0;
+  c.restore();
+  rfBrassDraw(c,W,H,S,dt);rfFx(c,W,H,X0,Y0,dt);
+  return true}
 /* ----- the picture: a simple first-person view from where you stand ----- */
 const vcv=$('view'),v2=vcv.getContext('2d');
 const RDPAL={rainforest:['#16301f','#6e9b6b','#26361d','#4e4a36'],alien:['#170c2e','#5b3778','#241733','#3b3152'],tundra:['#7fa6c0','#e3edf3','#b4c4ce','#7f8b94'],
@@ -6784,7 +6982,7 @@ function rdDraw(){
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   tdDraw(c,W,H,X0,Y0,P);   // Unbearable Buddy held in both hands, with its eye lasers
-  const rfOn=rfDraw(c,W,H,X0,Y0);   // assault rifles, machine guns and launchers held in your hands
+  const rfOn=rfDraw(c,W,H,X0,Y0);   // assault rifles, machine guns, launchers and sniper rifles held in your hands
   // sights and muzzle flash
   const lock=!!G.lockE;c.strokeStyle=lock?'#ff5a4a':'rgba(255,255,255,.7)';c.lineWidth=Math.max(1.5,W/220);const cs=Math.max(6,W/40);
   c.beginPath();c.moveTo(X0-cs,Y0);c.lineTo(X0-cs*.35,Y0);c.moveTo(X0+cs*.35,Y0);c.lineTo(X0+cs,Y0);c.moveTo(X0,Y0-cs);c.lineTo(X0,Y0-cs*.35);c.moveTo(X0,Y0+cs*.35);c.lineTo(X0,Y0+cs);c.stroke();
@@ -6889,6 +7087,15 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-snipers',date:'November 18, 2026',title:'Sniper rifles now visible in your hands',items:[
+    'For sighted players: the Barrett .50 cal, Dragunov SVD, OSV-96, CheyTac M200 Intervention and Boys anti-tank rifle are now drawn in the battle view, modelled on the real rifles.',
+    'Barrett: its big arrowhead muzzle brake, a long receiver with cooling holes and a folded bipod. Its barrel slides back into the receiver with every shot, just like the real M82.',
+    'Dragunov: the wooden skeleton stock with its thumbhole, a wooden handguard with cooling slots, a slotted flash hider and a slightly curved 10-round magazine that rocks in and out like an AK magazine.',
+    'OSV-96: a big ported muzzle brake, a tube handguard full of holes, a carrying handle and the hinge where the rifle folds in half.',
+    'CheyTac: a fluted barrel, a skeleton stock with a cheek riser and an open forend. It is bolt action, so after every shot your hand lifts the bolt, pulls it back, the case flies out, and you push it home.',
+    'Boys anti-tank rifle: a long thin barrel with a pepper-box brake, a T-shaped bipod, sights offset to the side and the magazine sticking up out of the top. Your left hand holds the grip under the stock. It is bolt action too, and reloads drop the magazine in from the top.',
+    'Iron sights until you fit a scope. The Sniper scope mounts the rifle\'s real optic, like the PSO-1 on the side of the Dragunov, and the Precision scope shows a bigger high-power scope. Silencer, grip and extended magazines show too.',
+    'Big .50 calibre muzzle brakes blast flame and dust out of the sides. This only changes what you see: sounds, damage and reload times are exactly the same.']},
   {id:'2026-11-18-launchers',date:'November 18, 2026',title:'Launchers now visible in your hands',items:[
     'For sighted players: the M79, Milkor MGL, XM25 Punisher, RPG-7, Javelin and M202 FLASH are now drawn in the battle view, modelled on the real weapons.',
     'M79: wooden stock and forend, fat 40 millimetre barrel. To reload it breaks open, flips out the empty case and takes a new grenade, and the grenade colour matches the round you have equipped. The Ladder sight stands up on top.',
