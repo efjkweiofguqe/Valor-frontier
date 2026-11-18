@@ -617,7 +617,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-std="hightech">High tech weapons</button>
   </div>
   <div class="seg" id="leg-sub" role="group" aria-label="Legendary set" hidden>
-    <button data-set="mythic">Mythical<small>Rifles, sniper rifles, submachine guns, shotguns, launchers and heavy weapons</small></button>
+    <button data-set="mythic">Mythical<small>Rifles, sniper rifles, submachine guns, shotguns, AOE weapons, launchers and heavy weapons</small></button>
     <button data-set="scav">Scavenger pack<small>Throwing weapons and armor</small></button>
     <button data-set="samurai">Samurai pack<small>Swords and armor</small></button>
     <button data-set="night">Nightwalker pack<small>Machine guns, scythes, lanterns and armor</small></button>
@@ -642,9 +642,9 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-myth="sniper">Sniper rifles<small>Jack Frost, Tetra-prism sniper</small></button>
     <button data-myth="smg">Submachine guns<small>Alien Symbiote, Rivet Storm</small></button>
     <button data-myth="shotgun">Shotguns<small>Thunderclap, Hades Pump Action</small></button>
-    <button data-myth="launcher">Launchers<small>Black Hole Cannon, Hydra, Pumpkin Salvo</small></button>
+    <button data-myth="aoe">AOE weapons<small>Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa's Head</small></button>
+    <button data-myth="launcher">Launchers<small>Heavy Bubble Blaster</small></button>
     <button data-myth="heavy">Heavy weapons<small>Dark Quasar Turbine</small></button>
-    <button data-myth="relic">Relics<small>Medusa's Head</small></button>
     <button data-myth="melee">Melee weapons<small>Kinetic bat</small></button>
     <button data-myth="divine">Divine weapons<small>Mjölnir, Zeus's Thunderbolt</small></button>
     <button data-myth="toy">Toys<small>Unbearable Buddy</small></button>
@@ -7997,6 +7997,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-mythaoe',date:'November 18, 2026',title:'New AOE weapons section for mythical weapons',items:[
+    'Under Legendary, Mythical weapons, there is a new AOE weapons section, short for area of effect, just like the one under Standard weapons.',
+    'It holds the Black Hole Cannon, the Hydra, the Pumpkin Salvo, the Soul blast and Medusa\'s Head.',
+    'The Heavy Bubble Blaster stays in Launchers and the Dark Quasar Turbine stays in Heavy weapons. The Relics section is gone, since Medusa\'s Head moved to AOE weapons.']},
   {id:'2026-11-18-flame',date:'November 18, 2026',title:'Five real flamethrowers',items:[
     'New in the Armory under Standard weapons, AOE weapons: five real flamethrowers. Hold Fire to pour out a stream of burning fuel. Everything in the stream takes damage and catches fire, and burning enemies set fire to anyone within 2 feet of them.',
     'The ammo counter is seconds of fuel. When the tank runs dry it sputters out and swaps itself for a fresh one.',
@@ -9118,8 +9122,8 @@ $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
 const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet','zeliska'],smg:['skorpion','mac10','p90','mp5','tommy','vector'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2','minigun'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin','m2flame','fw41','xm42','arcflame','pulsefire'],hightech:['gaussr'],mythic:['jet','jackfrost','tetra','nova','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar','mjolnir','zeus','medusa']};
-const MCAT={pistol:['micro'],rifle:['banshee','hypno'],sniper:['jet','jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['blackhole','bubble','hydra','salvo'],heavy:['quasar','soul'],relic:['medusa'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
-const MCATN={relic:'Mythical relics. Remains of legendary monsters that still hold their power. Medusa\'s Head turns enemies to stone with her gaze, powered by the souls of the enemies you kill.',pistol:'Mythical pistols. Tiny guns with enormous consequences. Micro Catastrophe fits in your palm and levels a 50 foot area.',treat:'Mythical treats. Snacks the enemies cannot resist. Brain Fog Bites leaves them dazed and harmless.',toy:'Mythical toys. Cuddly on the outside, deadly on the inside. Unbearable Buddy fires lasers from its eyes.',rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
+const MCAT={pistol:['micro'],rifle:['banshee','hypno'],sniper:['jet','jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],launcher:['bubble'],aoe:['blackhole','hydra','salvo','soul','medusa'],heavy:['quasar'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
+const MCATN={aoe:'Mythical AOE weapons. Area of effect weapons that hit everything in a whole area at once: explosions, black holes, shockwaves and Medusa\'s petrifying gaze.',pistol:'Mythical pistols. Tiny guns with enormous consequences. Micro Catastrophe fits in your palm and levels a 50 foot area.',treat:'Mythical treats. Snacks the enemies cannot resist. Brain Fog Bites leaves them dazed and harmless.',toy:'Mythical toys. Cuddly on the outside, deadly on the inside. Unbearable Buddy fires lasers from its eyes.',rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',launcher:'Mythical launchers. Rockets, orbs and lanterns that explode or pull where they land.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
 /* the list under each Armory category button is built from the shop's own lists, so a new weapon always shows up in it */
