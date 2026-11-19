@@ -2087,6 +2087,7 @@ const ARMOR=[
 /* Wearables: worn on top of armor, by slot. Up to 2 rings and 1 piece of eyewear (monocle, glasses) at once */
 const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'}},WEAR=[
   {id:'monocle',name:'Monocle',slot:'eye',price:5000,desc:'A polished glass monocle on a fine chain. Adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, on every gun that can headshot, and stacks with the Grip and Sniper scope. On the Tetra-prism sniper it raises each crystal\'s headshot chance by 5 percent. Shotguns still need a Grip to headshot at all. Eyewear: wear one piece of eyewear at a time, alongside your rings.'},
+  {id:'goggles',name:'Binocular goggles',slot:'eye',price:3500,desc:'Helmet-mounted binocular goggles that flip down over both eyes. Submachine guns reach 20 percent farther before their damage starts to fall off, and every other weapon reaches 10 percent farther. Eyewear: wear one piece of eyewear at a time, so not with the Monocle, alongside your rings.'},
   {id:'ringblack',slot:'ring',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match. Works with any armor.'},
   {id:'ringblue',slot:'ring',name:'Blue ring',price:20000,myth:true,desc:'A cool blue ring that steadies your hands. Every gun reloads 20 percent faster, including guns that load one shell at a time. Stacks with the Quick hands perk and reload attachments.'},
   {id:'ringred',slot:'ring',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'},
@@ -2770,7 +2771,9 @@ function build(w){
     if(w.id==='javelin'){b.home=true;b.charge=has('jvlock2')?.6:has('jvlock1')?1.2:2;if(has('jvfast'))b.reload=2;
       if(has('jvdirect')){b.spd=w.spd*2;b.blastR=16/3.281;b.splM=.6}else b.top=true}
     if(w.id==='flash'){const hot=has('flhot');b.fireDps=hot?10:5;b.fireT=hot?8:5;if(hot)b.blastR=15/3.281;if(has('flfast'))b.reload=2.5;if(has('flvolley')){b.volley=true;b.shots=4}}}
-  try{if(wearing('ringgreen')&&b.cd>0)b.cd/=1.15}catch(e){}   // Green ring: 15 percent faster fire rate
+  try{if(wearing('ringgreen')&&b.cd>0)b.cd/=1.15}catch(e){}
+  try{if(wearing('goggles')){const gm=WCAT.smg.includes(w.id)||MCAT.smg.includes(w.id)?1.2:1.1;   // Binocular goggles: 20 percent more range on SMGs, 10 on everything else
+    if(b.rng)b.rng*=gm;if(Array.isArray(b.range))b.range=[b.range[0]*gm,b.range[1]*gm,b.range[2]];if(b.hR)b.hR*=gm;if(b.ftR)b.ftR*=gm;if(b.full)b.full*=gm;if(b.reach)b.reach*=gm}}catch(e){}   // Green ring: 15 percent faster fire rate
   if(b.akimbo){b.name='Akimbo '+w.name+'s';b.short=w.short+' x2'}
   return b;
 }
@@ -8149,6 +8152,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-goggles',date:'November 19, 2026',title:'New standard wearable: Binocular goggles',items:[
+    'Binocular goggles are in the Armory under Armor, then Standard wearables, for 3,500 silver. Submachine guns reach 20 percent farther before their damage falls off, and every other weapon reaches 10 percent farther.',
+    'They are eyewear, so you wear either the goggles or the Monocle, not both, alongside up to 2 rings.']},
   {id:'2026-11-19-ringgreen',date:'November 19, 2026',title:'New mythical wearable: Green ring',items:[
     'The Green ring is in the Armory under Armor, then Mythical wearables, for 20,000 silver. Every weapon fires 15 percent faster.',
     'Like the other rings, wear up to 2 rings at a time, on top of any armor.']},
