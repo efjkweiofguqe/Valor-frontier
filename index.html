@@ -74,13 +74,15 @@ label{display:flex;flex-direction:column;gap:6px;font-weight:700}
 select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);color:var(--fg);border:2px solid var(--line);border-radius:8px;padding:10px}
 /* game */
 #game{margin:0 auto;height:100%;display:flex;flex-direction:column;gap:8px;padding-block:8px;box-sizing:border-box}
-.hud{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-variant-numeric:tabular-nums;padding-right:52px}
+.hud{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;font-variant-numeric:tabular-nums;padding-right:122px}
 #game{position:relative}
-#b-flock{position:absolute;top:8px;right:0;width:46px;height:46px;min-height:0;padding:0;margin:0;font-size:10px;line-height:1.05;border-radius:8px;z-index:5;background:var(--panel);border:1px solid var(--line);color:inherit}
+#b-flock,#b-ctype,#b-cuse{position:absolute;top:8px;right:80px;width:38px;height:40px;min-height:0;padding:0;margin:0;font-size:10px;line-height:1.05;border-radius:8px;z-index:5;background:var(--panel);border:1px solid var(--line);color:inherit}
 #b-flock[aria-checked="true"]{background:#c0392b;color:#fff;border-color:#fff}
+#b-ctype{right:40px}#b-cuse{right:0}#b-cuse.live{background:#1e8449;color:#fff;border-color:#fff}
 .hud div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 7px;min-width:0}
 .hud b{display:block;font-family:var(--display);font-weight:400;font-size:20px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hud span{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+@media (max-width:560px){.hud{gap:3px}.hud div{padding:4px 3px}.hud b{font-size:14px}.hud span{font-size:8px;letter-spacing:.02em;display:block;overflow:hidden;white-space:nowrap}}   /* narrow phones: room for Fire lock, Item type and Use item */
 .hp-low b{color:var(--danger)}
 #b-fire{grid-area:fire;min-height:120px;width:100%;position:relative;overflow:hidden;background:var(--accent);color:var(--accent-ink);border:3px solid var(--accent);border-radius:22px;font-family:var(--display);font-size:52px;touch-action:manipulation}
 #b-fire span{position:relative}
@@ -776,6 +778,8 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 <section id="game" hidden>
   <h2 class="sr" id="game-h" tabindex="-1">Battle</h2>
   <button id="b-flock" role="switch" aria-checked="false" aria-label="Fire lock">Fire<br>lock</button>
+  <button id="b-ctype" aria-label="Consumable type">Item<br>type</button>
+  <button id="b-cuse" aria-label="Use consumable">Use<br>item</button>
   <div id="tut" class="tutbox" hidden>
     <p class="tag" id="tut-tag">Tutorial</p>
     <p id="tut-t"></p>
@@ -803,7 +807,6 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button id="b-cover" aria-pressed="false">Take cover</button>
     <button id="b-nade">Grenade</button>
     <button id="b-ntype">Grenade type</button>
-    <button id="b-adren" hidden>Adrenaline shot</button>
     <button id="b-pause">Pause</button>
     <button id="b-look" hidden>Surroundings</button>
   </div>
@@ -5299,7 +5302,15 @@ function adrTick(dt){if(!(G.adrT>0))return;G.adrT-=dt;
   G.adrBeatT-=dt;if(G.adrBeatT<=0){G.adrBeatT=G.adrT<5?.55:.85;fx.adrBeat()}
   if(G.adrT<=5&&!G.adrWarn){G.adrWarn=true;say('Adrenaline wearing off.')}
   if(G.adrT<=0){G.adrT=0;fx.adrFade();say('Adrenaline worn off.');adrUi()}}
-function adrUi(){const b=$('b-adren');if(!b)return;const n=P.cons.adren||0;b.hidden=!(n>0||(G&&G.adrT>0));b.textContent=G&&G.adrT>0?'Adrenaline active':`Adrenaline shot (${n})`}
+/* consumables in battle: Item type (B on a keyboard) picks which kind, Use item (V) uses one. Both sit at the top, right of Fire lock */
+const CONS={adren:{name:'Adrenaline shot',plural:'Adrenaline shots',use:()=>useAdren()}},CTYPES=Object.keys(CONS);
+let curCons='adren';
+function consWords(k){const n=P.cons[k]||0;return `${CONS[k].name}, ${n} left${k==='adren'&&G&&G.adrT>0?`, ${Math.ceil(G.adrT)} seconds still running`:''}`}
+function consType(){if(!G||G.over)return;initAudio();const i=CTYPES.indexOf(curCons);curCons=CTYPES[(i+1)%CTYPES.length];fx.click();
+  say(CTYPES.length>1?consWords(curCons)+'.':`${consWords(curCons)}. It is the only kind of consumable so far.`);adrUi()}
+function useCons(){if(!G||G.over)return;initAudio();CONS[curCons].use()}
+function adrUi(){const b=$('b-cuse');if(!b)return;const on=!!(G&&G.adrT>0);b.classList.toggle('live',on);
+  b.setAttribute('aria-label',`Use consumable: ${consWords(curCons)}`)}
 function consBuy(k){initAudio();if(P.coins<ADR_PRICE)return broke(ADR_PRICE,'An adrenaline shot');
   P.coins-=ADR_PRICE;P.cons.adren=(P.cons.adren||0)+1;fx.buy();saveP();updateShop();say(`Bought an adrenaline shot. You have ${P.cons.adren}. ${P.coins} silver left.`)}
 function throwNade(){
@@ -8323,10 +8334,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-consbtns',date:'November 19, 2026',title:'New consumable buttons in battle',items:['Two small new buttons at the top of the battle screen, right of Fire lock: Item type picks which consumable you will use and says how many you have, and Use item uses one. On a keyboard, B is Item type and V is Use item.','The Adrenaline shot button at the bottom is gone: use the new Use item button instead. Use item turns green while an adrenaline shot is running.']},
   {id:'2026-11-19-adren',date:'November 19, 2026',title:'New consumable: Adrenaline shot',items:[
     'The first consumable is in the Armory under Throwables and consumables, then Consumables: the Adrenaline shot, 50,000 silver each.',
-    'Inject it in battle with the new Adrenaline shot button, or V on a keyboard. For 35 seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage.',
-    'You hear the needle, a rush, then your heartbeat pounding until it wears off, with a warning 5 seconds before. The button only shows when you have a shot. Used up when injected, one at a time. Does not work in Tutorial/practice.']},
+    'Inject it in battle with the Use item button at the top of the screen, or V on a keyboard. For 35 seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage.',
+    'You hear the needle, a rush, then your heartbeat pounding until it wears off, with a warning 5 seconds before. Used up when injected, one at a time. Does not work in Tutorial/practice.']},
   {id:'2026-11-19-thrsub',date:'November 19, 2026',title:'Throwables and consumables: two new sections',items:['Throwables and consumables in the Armory now has two parts: Throwables, with every grenade, and Consumables, which is empty for now. Consumables are coming soon.']},
   {id:'2026-11-19-throwables',date:'November 19, 2026',title:'Grenades section renamed',items:['The Grenades section of the Armory shop is now called Throwables and consumables. Everything in it is the same.']},
   {id:'2026-11-19-glovesreload',date:'November 19, 2026',title:'Tactical gloves: faster pistol reloads',items:[
@@ -9468,9 +9480,9 @@ bf.addEventListener('contextmenu',e=>e.preventDefault());
       A quick tap still presses straight away, without the name.
    2. A phone sends no click for a tap made while another finger is down, so the buttons did nothing while a thumb
       was held on the walk or turn pad in Jungle scavenger. Those taps are now pressed here. */
-(function(){const SEL='.pad button,#b-flock',gm=$('game');let T=null,skipT=0;
+(function(){const SEL='.pad button,#b-flock,#b-ctype,#b-cuse',gm=$('game');let T=null,skipT=0;
   const own=el=>{const b=el&&el.closest?el.closest(SEL):null;return b&&gm.contains(b)&&!b.hidden&&!b.disabled?b:null};
-  const label=b=>b.id==='b-flock'?`Fire lock, ${G&&G.flock?'on':'off'}`:(b.firstChild&&b.firstChild.nodeType===3?b.firstChild.nodeValue:b.textContent).trim();
+  const label=b=>b.id==='b-flock'?`Fire lock, ${G&&G.flock?'on':'off'}`:b.id==='b-ctype'?'Consumable type':b.id==='b-cuse'?'Use consumable':(b.firstChild&&b.firstChild.nodeType===3?b.firstChild.nodeValue:b.textContent).trim();
   const talk=()=>S.voice==='tts'&&G&&!G.over&&!G.paused;
   const mine=e=>T&&[...e.changedTouches].find(t=>t.identifier===T.id);
   gm.addEventListener('touchstart',e=>{if(T)return;const t=[...e.changedTouches].find(t=>own(t.target));if(!t)return;const b=own(t.target);
@@ -9483,7 +9495,7 @@ bf.addEventListener('contextmenu',e=>e.preventDefault());
   gm.addEventListener('touchcancel',e=>{if(!mine(e))return;clearTimeout(T.tm);T=null});
   gm.addEventListener('click',e=>{if(e.isTrusted&&performance.now()<skipT&&own(e.target)){e.stopImmediatePropagation();e.preventDefault()}},true);
 })();
-$('b-reload').onclick=reload;$('b-switch').onclick=switchW;$('b-cover').onclick=cover;$('b-nade').onclick=throwNade;$('b-adren').onclick=useAdren;$('b-ntype').onclick=nadeType;
+$('b-reload').onclick=reload;$('b-switch').onclick=switchW;$('b-cover').onclick=cover;$('b-nade').onclick=throwNade;$('b-cuse').onclick=useCons;$('b-ctype').onclick=consType;$('b-ntype').onclick=nadeType;
 $('b-radar').onclick=radar;$('b-status').onclick=status;$('b-pause').onclick=pause;
 $('b-resume').onclick=resume;$('b-quit').onclick=()=>{const sb=G&&!G.over?zsbSnap():null;quit();if(sb)zsbOpen(sb,true,()=>show('menu'))};$('b-pswitch').onclick=switchW;$('b-pntype').onclick=nadeType;$('b-retry').onclick=()=>coopOn()?show('coop'):begin(lastMap);$('b-menu').onclick=quit;
 document.addEventListener('keydown',e=>{
@@ -9493,7 +9505,7 @@ document.addEventListener('keydown',e=>{
   if(G.over)return;
   const k=e.key.toLowerCase();
   if(k===' '||k==='f'){e.preventDefault();if(!e.repeat){firePressed=true;fire();G.hold=true}return}
-  const map={l:toggleFlock,arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,v:useAdren,e:radar,t:status,escape:pause,p:pause,h:tutRepeat,n:()=>$('tut-next').hidden||$('tut-next').click()};
+  const map={l:toggleFlock,arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,v:useCons,b:consType,e:radar,t:status,escape:pause,p:pause,h:tutRepeat,n:()=>$('tut-next').hidden||$('tut-next').click()};
   if(map[k]&&!e.repeat){e.preventDefault();map[k]()}
 });
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k===' '||k==='f'){const was=firePressed;firePressed=false;if(G){G.hold=false;if(was&&G.flock){setFlock(false);say('Fire lock off.')}}}});
@@ -9609,7 +9621,7 @@ function buildShop(keepFocus){
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
     const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
     ups.forEach(u=>mkItem(list,'mu-'+u.id,u.name,u.desc,{act:()=>marmAct(u)}))});
-  if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-adren','Adrenaline shot',`A single-use shot of pure adrenaline. Inject it in battle with the Adrenaline shot button, or V on a keyboard: for ${ADR_T} seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage. You hear the needle, a rush, and your heartbeat pounding until it wears off, with a warning 5 seconds before. Used up when injected. One at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('adren')});
+  if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-adren','Adrenaline shot',`A single-use shot of pure adrenaline. Inject it in battle with the Use item button at the top of the battle screen, right of Fire lock, or V on a keyboard: for ${ADR_T} seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage. You hear the needle, a rush, and your heartbeat pounding until it wears off, with a warning 5 seconds before. Used up when injected. One at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('adren')});
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>mkItem(list,'gr-'+k,k==='fatman'?'Fat Man':k==='jack'?'Jack-in-the-boxes':k==='pandora'?N.plural:N.name+'s',N.desc,{act:()=>nadeBuy(k,1),extra:()=>nadeBuy(k,5),
     hear:()=>{initAudio();if(k==='horizon'){hzDemo();return}if(k==='pandora'){pdxDemo();return}if(k==='jack'){fx.jackSet();setTimeout(()=>fx.jackTune(0,3),400);setTimeout(()=>{fx.jackPop(0,3);setTimeout(()=>fx.boom(0,3),450)},1700);return}fx.pin();if(k==='fatman'){fx.fall();fx.nuke(2)}else if(k==='incend'){fx.drop(.25);setTimeout(()=>fx.incBurst(),800)}else{fx.drop(.25);(k==='frag'?fx.boom:fx.cryo)(0,1.5,1)}}}));
   if(curCat==='perks')PERKS.forEach(pk=>mkItem(list,'pk-'+pk.id,pk.name,pk.desc,{act:()=>perkAct(pk)}));
