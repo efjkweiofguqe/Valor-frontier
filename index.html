@@ -2579,7 +2579,8 @@ const ATT=[
   {id:'bbtrig2',name:'Hair trigger V2',price:5000,for:'bubble',grp:'trigger',req:'bbtrig1',desc:()=>'Fires one bubble every half second. Buy V1 first.'},
   {id:'bbtrouble',name:'Bubble trouble',price:12000,for:'bubble',desc:()=>'Doubles how many bubbles you can have out at once, from 4 to 8.'},
   {id:'bbexpand',name:'Bubble expansion',price:10000,for:'bubble',desc:()=>'Every bubble swells from 10 feet wide to 15 feet wide, trapping enemies within 7 and a half feet of its centre instead of 5.'},
-  {id:'bbinter',name:'Interdimensional bubble',price:25000,for:'bubble',desc:()=>'Special ability. The inside of every bubble opens into another dimension, so there is always room. A bubble no longer stops at 10 enemies: it traps every enemy that is inside it or walks into it, with no limit.'},
+  {id:'bbinter',name:'Interdimensional bubble',price:25000,for:'bubble',grp:'special',alt:'bubblesp',desc:()=>'Special ability. The inside of every bubble opens into another dimension, so there is always room. A bubble no longer stops at 10 enemies: it traps every enemy that is inside it or walks into it, with no limit. Use Interdimensional bubble or Bursting bubble, not both.'},
+  {id:'bbburst',name:'Bursting bubble',price:20000,for:'bubble',grp:'special',alt:'bubblesp',desc:()=>'Special ability. The moment a bubble is full, holding the most enemies it can, it bursts. Every enemy inside takes 20 damage and is thrown out, and every enemy outside it within 10 feet of the bubble is sent flying like a ragdoll, without taking damage. Use Bursting bubble or Interdimensional bubble, not both.'},
   {id:'bhcore',name:'Dark matter core',price:25000,for:'blackhole',desc:()=>'Special ability. A core of dark matter makes every black hole far heavier. Its pull reaches 35 feet instead of 25 and drags enemies in twice as fast, it crushes everything caught in it for 20 damage a second instead of 9, and it stays open for 8 seconds instead of 4 before it collapses.'},
   {id:'heatvent',name:'Heat vent',price:23000,for:'jet',desc:()=>'Special ability. A jet engine this hot has to breathe. Every time you reload, the turbine dumps its stored heat in a roaring blast of superheated exhaust that sets every enemy around you on fire, burning 20 health per second for 5 seconds. The more you fire before reloading, the bigger the blast: 7 feet after 1 round, 15 feet after 2, and 25 feet after 3 or more.'},
   {id:'qcool1',name:'Cryo coolant V1',price:6000,for:'quasar',desc:()=>'Liquid cryo coolant in the turbine jacket. After it overheats, it cools down in 20 seconds instead of 25.'},
@@ -2680,7 +2681,7 @@ function build(w){
   if(w.id==='symbiote'){b.mag=has('symmag3')?220:has('symmag2')?165:has('symmag1')?110:55;
     const nb=(has('symbarrel1')?1:0)+(has('symbarrel2')?1:0);b.barrel=nb>0;b.dmg=w.dmg*(1+.15*nb);
     b.rng=has('symbrake')?120/3.281:w.rng*(1+.25*nb);if(has('symbrake'))b.acc=.97;b.vamp=has('vamp');b.infect=has('infect')}
-  if(w.id==='bubble'){b.bubMax=has('bbtrouble')?8:4;b.bubR=(has('bbexpand')?7.5:5)/3.281;b.bubCap=has('bbinter')?Infinity:BUB_CAP;b.inter=has('bbinter');b.cd=w.cd*(has('bbtrig2')?.25:has('bbtrig1')?.5:1)}
+  if(w.id==='bubble'){b.bubMax=has('bbtrouble')?8:4;b.bubR=(has('bbexpand')?7.5:5)/3.281;b.bubCap=has('bbinter')?Infinity:BUB_CAP;b.inter=has('bbinter');b.burst=has('bbburst')&&!b.inter;b.cd=w.cd*(has('bbtrig2')?.25:has('bbtrig1')?.5:1)}
   if(w.id==='blackhole'){b.core=has('bhcore');b.holeT=b.core?8:4;b.holeDps=b.core?20:9;b.pullR=(b.core?35:25)/3.281;b.pullSp=b.core?2:1}
   if(w.id==='quasar'){b.qDur=has('qburn3')?20:has('qburn2')?16:has('qburn1')?13:10;b.qCool=has('qcool3')?10:has('qcool2')?15:has('qcool1')?20:25;b.qBeam=has('qbeam')}
   if(w.id==='banshee')b.mag=has('bnmag3')?60:has('bnmag2')?45:has('bnmag1')?30:15;
@@ -4056,7 +4057,27 @@ const bubFx={
   open(rel,dist){const d=out(rel,dist,1,gunBus);tone(d,{type:'sine',f:130,f2:520,dur:.5,vol:.85,attack:.03});tone(d,{type:'sine',f:700,f2:1150,dur:.3,vol:.3,at:.32,attack:.02});noise(d,{dur:.5,vol:.2,type:'bandpass',f:900,f2:2400,q:4,attack:.05})},
   hum(rel,dist,hot){const d=out(rel,dist,.75,gunBus),f=hot?520:300;tone(d,{type:'sine',f,f2:f*1.5,dur:.12,vol:.4,attack:.01});tone(d,{type:'sine',f:f*1.35,f2:f*2,dur:.1,vol:.3,at:.14,attack:.01})},
   trap(rel,dist,at=0){const d=out(rel,dist,.9,gunBus);tone(d,{type:'sine',f:900,f2:260,dur:.16,vol:.5,at,attack:.005});tone(d,{type:'sine',f:240,f2:480,dur:.12,vol:.4,at:at+.14,attack:.01})},
+  burst(rel,dist){const d=out(rel,dist,1.2,gunBus);noise(d,{dur:.08,vol:1,type:'highpass',f:1400,attack:.001});tone(d,{type:'sine',f:90,f2:40,dur:.5,vol:.9,attack:.003});tone(d,{type:'sine',f:1600,f2:150,dur:.22,vol:.7,attack:.002});noise(d,{dur:.9,vol:.4,type:'bandpass',f:2600,f2:400,q:1.2,at:.06,attack:.01});noise(d,{dur:.6,vol:.35,type:'lowpass',f:500,f2:120,at:.02,attack:.005})},
   pop(rel,dist){const d=out(rel,dist,1,gunBus);noise(d,{dur:.05,vol:.9,type:'highpass',f:1800,attack:.001});tone(d,{type:'sine',f:1300,f2:180,dur:.14,vol:.6,attack:.002});noise(d,{dur:.5,vol:.25,type:'bandpass',f:3000,f2:600,q:1.5,at:.05,attack:.01})}};
+/* Bursting bubble: a full bubble bursts. Enemies inside take BUB_BURST_DMG and are thrown out; enemies outside within
+   BUB_BURST_R of its skin are thrown like ragdolls with no damage. Bosses and mini bosses only stagger a little. */
+const BUB_BURST_DMG=20,BUB_BURST_R=10/3.281;
+function bubBurst(b,rel,bx,by){
+  const m=gunMult(),R=b.r+BUB_BURST_R;let inN=0,outN=0;
+  G.enemies.forEach(o=>{if(o.hp<=0)return;const inside=o.bub===b.id;if(inside)o.bub=0;if(o.hb>0||o.hz)return;
+    const op=xy(o.angle,o.dist),g=Math.hypot(op[0]-bx,op[1]-by);if(!inside&&g>R)return;
+    if(inside){o.hp-=BUB_BURST_DMG*m;inN++;fx.impact(norm(o.angle-G.heading),o.dist,o.type,.03)}else outN++;
+    if(o.hp<=0)return;
+    const big=EN[o.type].boss||EN[o.type].mini,f=Math.max(.35,1-g/R),push=(big?1.2:7)*f,
+      ux=g>.05?(op[0]-bx)/g:Math.sin(o.angle*Math.PI/180),uy=g>.05?(op[1]-by)/g:Math.cos(o.angle*Math.PI/180),nx=op[0]+ux*push,ny=op[1]+uy*push;
+    o.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;o.dist=Math.min(50,Math.max(MELEE,Math.hypot(nx,ny)));
+    o.wind=0;o.charge=0;o.engaged=false;o.cue=Math.min(o.cue||0,.4);o.stunT=Math.max(o.stunT||0,big?.6:1.4)});
+  bubFx.burst(rel,b.dist);vib([40,30,90]);
+  rdBlast(bx,by,R*1.05,24,{dis:0,lift:1,c:'170,225,255',T:.6});
+  G.enemies.filter(o=>o.hp<=0).forEach(o=>{o.hk=false;fx.kill(norm(o.angle-G.heading),o.dist,.12,o.type)});
+  const killed=processDead('bubble');
+  if(!G.over&&!killed)say(`Bubble burst! ${inN} inside took a hit${outN?`, ${outN} more thrown`:''}, ${clock(rel)}, ${ft(b.dist)} feet.`);
+}
 function bubFire(w){
   G.bubs=G.bubs||[];
   if(G.bubs.length>=w.bubMax){G.cd=.5;if(!(G.bubSayT>performance.now())){G.bubSayT=performance.now()+2500;fx.click();
@@ -4064,7 +4085,7 @@ function bubFire(w){
   G.cd=w.cd;gunSound(w,1);if(rdOn())RD.muzzle=.07;
   const e=G.enemies.filter(o=>o.hp>0&&!(o.hb>0)&&!o.hz&&!o.bub&&Math.abs(norm(o.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist)[0];
   const dd=Math.min(BUB_R,e?e.dist:12.2);
-  G.bubId=(G.bubId||0)+1;G.bubs.push({id:G.bubId,angle:e?e.angle:G.heading,dist:Math.max(.3,dd),fly:.3+dd*.05,t:BUB_T,hum:0,r:w.bubR,cap:w.bubCap,n:0,newN:0,sayT:0});hud();
+  G.bubId=(G.bubId||0)+1;G.bubs.push({id:G.bubId,angle:e?e.angle:G.heading,dist:Math.max(.3,dd),fly:.3+dd*.05,t:BUB_T,hum:0,r:w.bubR,cap:w.bubCap,burst:!!w.burst,n:0,newN:0,sayT:0});hud();
 }
 function bubTick(dt){
   if(!G.bubs||!G.bubs.length)return;let popped=false;
@@ -4081,9 +4102,11 @@ function bubTick(dt){
     if(first){say(n?`Bubble open. ${n} trapped.`:'Bubble open. Nothing caught yet.');b.sayT=2}
     else if(got)b.newN+=got;
     if(b.sayT>0)b.sayT-=dt;
+    if(b.burst&&b.t>0&&isFinite(b.cap)&&n>=b.cap){b.t=0;b.bursting=true}   // Bursting bubble: pops the moment it is full
     if(b.newN&&b.sayT<=0&&b.t>0){say(`Bubble trapped ${b.newN} more. ${n} inside.`);b.newN=0;b.sayT=2.5}
     if(b.t>0){b.hum-=dt;if(b.hum<=0){const hot=b.t<=5;bubFx.hum(rel,b.dist,hot);b.hum=hot?.45:2.5}
       if(b.t<=5&&!b.warn){b.warn=true;if(n)say(`A bubble with ${n} inside pops in 5 seconds.`)}return}
+    if(b.bursting){bubBurst(b,rel,bx,by);popped=true;return}
     // pop: everything inside goes free
     let free=0;G.enemies.forEach(o=>{if(o.bub===b.id){o.bub=0;if(o.hp>0){free++;o.cue=Math.min(o.cue||0,.4)}}});
     bubFx.pop(rel,b.dist);vib(60);popped=true;
@@ -7996,6 +8019,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-bubburst',date:'November 18, 2026',title:'New Heavy Bubble Blaster ability: Bursting bubble',items:[
+    'New special ability for the Heavy Bubble Blaster: Bursting bubble, 20,000 silver, in its attachments menu.',
+    'The moment a bubble is full, holding the most enemies it can, it bursts with a deep wet boom. Every enemy inside takes 20 damage and is thrown out. Every enemy outside the bubble within 10 feet of it is sent flying like a ragdoll, but takes no damage.',
+    'Bursting bubble and Interdimensional bubble cannot be used together. Equipping one unequips the other. A bubble with no limit can never fill up, so it could never burst.']},
   {id:'2026-11-18-bubbleaoe',date:'November 18, 2026',title:'Heavy Bubble Blaster moved to AOE weapons',items:[
     'The Heavy Bubble Blaster is now in the Armory under Legendary, Mythical weapons, AOE weapons, with the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast and Medusa\'s Head.',
     'It was the last weapon in the mythical Launchers section, so that section is gone. The weapon itself is unchanged, and if you own it you still have it.']},
