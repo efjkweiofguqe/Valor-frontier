@@ -90,6 +90,12 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
     <label>Username to free up<input id="free-n" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></label>
     <button type="button" id="free-go">Free up this username</button>
   </section>
+  <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="lb-h">
+    <h2 id="lb-h">Leaderboard</h2>
+    <p class="muted">The top 3 in every game mode, as players see them. Remove a record that looks fake. The next player in line moves up, and the spot opens for the next real score.</p>
+    <div id="lbs" style="display:flex;flex-direction:column;gap:10px"></div>
+    <button id="lb-refresh" type="button">Refresh leaderboard</button>
+  </section>
   <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="spam-h">
     <h2 id="spam-h">Remove spam accounts</h2>
     <p class="muted">Finds every player whose username starts with the word tester, then removes their username, player entry, save, requests and feedback. Tap once to see how many it found, then tap again to delete them.</p>
@@ -123,7 +129,7 @@ const auth=A.getAuth(app),db=F.getFirestore(app);
 A.onAuthStateChanged(auth,u=>{
   const admin=u&&!u.isAnonymous;
   $('login').hidden=!!admin;$('app').hidden=!admin;
-  if(admin){status(`Signed in as ${u.email}.`);loadPlayers();loadReqs();loadFb();loadSent()}else status('Sign in with your developer account.');
+  if(admin){status(`Signed in as ${u.email}.`);loadPlayers();loadReqs();loadFb();loadSent();loadLb()}else status('Sign in with your developer account.');
 });
 $('login-f').onsubmit=async e=>{e.preventDefault();status('Signing in…');
   try{await A.signInWithEmailAndPassword(auth,$('em').value.trim(),$('pw').value)}catch(err){const c=String(err&&err.code||'unknown').replace('auth/','');
@@ -279,6 +285,28 @@ async function loadSent(){
   }catch(e){console.error('loadSent',e);$('sent').innerHTML=`<li>Could not load gifts. ${esc(why(e))}</li>`}
 }
 $('refresh').onclick=()=>{loadPlayers();loadReqs();loadFb();loadSent()};
+/* ---------- leaderboard ---------- */
+const LBB=[['campaign','Campaign'],['endless','Endless survival'],['bossrush','Boss rush'],['z_standard','Zombie siege, Standard'],['z_six','Zombie siege, Watch my six'],
+  ['z_ragdoll','Zombie siege, Ragdoll sandbox'],['z_roam','Zombie siege, Jungle scavenger'],['z_hall','Zombie siege, Horror hallway']];
+const lbCmp=(a,b)=>(b.s-a.s)||(b.k-a.k)||((a.t||0)-(b.t||0));
+const lbScore=(b,e)=>b==='campaign'?`${e.s} kills`:`survived ${e.s} waves, ${e.k} kills`;
+async function loadLb(){
+  const box=$('lbs');
+  try{const snaps=await Promise.all(LBB.map(([b])=>F.getDoc(F.doc(db,'leaderboard',b))));box.innerHTML='';
+    snaps.forEach((s,i)=>{const [b,name]=LBB[i],top=(s.exists()&&Array.isArray(s.data().top)?s.data().top:[]).slice().sort(lbCmp);
+      const el=document.createElement('article');el.className='req';
+      el.innerHTML=`<h3>${esc(name)}</h3>`+(top.length?'':'<p class="muted">No records yet.</p>');
+      top.forEach((e,j)=>{const p=document.createElement('p');p.textContent=`${['First','Second','Third'][j]} place: ${e.n}, ${lbScore(b,e)}${e.w?', with the '+e.w:''}. ${e.d||''}`;
+        const btn=document.createElement('button');btn.type='button';btn.textContent=`Remove ${e.n}'s ${name} record`;
+        btn.onclick=async()=>{btn.disabled=true;
+          try{const rest=top.filter(x=>x!==e);if(rest.length)await F.setDoc(F.doc(db,'leaderboard',b),{top:rest});else await F.deleteDoc(F.doc(db,'leaderboard',b));
+            status(`Removed ${e.n}'s ${name} record.`)}catch(err){status(`Could not remove it. ${why(err)} If this says Firebase refused, the new leaderboard rules have not been published yet.`)}
+          loadLb()};
+        el.append(p,btn)});
+      box.appendChild(el)});
+  }catch(e){console.error('loadLb',e);box.innerHTML=`<p class="muted">Could not load the leaderboard. ${esc(why(e))}</p>`}
+}
+$('lb-refresh').onclick=()=>{loadLb();status('Leaderboard refreshed.')};
 
 $('gift-f').onsubmit=async e=>{e.preventDefault();
   const uid=WHO||byName($('who').value)||'',name=PL[uid];

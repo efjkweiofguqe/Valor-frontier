@@ -182,6 +182,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-go="tutorial">Training and sound check<small>Learn the controls and every enemy sound</small></button>
     <button class="btn" data-go="settings">Settings<small>Voice, volume, difficulty</small></button>
     <button class="btn" id="b-record">Service record<small>Hear your lifetime stats</small></button>
+    <button class="btn" data-go="lb" id="menu-lb">Leaderboard<small>The top 3 players in every game mode</small></button>
     <button class="btn" data-go="req" id="menu-req" hidden>Request items and feedback<small>Ask the developer for things to test, or tell them how they played</small></button>
     <button class="btn" data-go="pid" id="menu-pid">Account<small id="menu-pid-s">Log in, or create an account to back up your progress</small></button>
   </div>
@@ -228,6 +229,17 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <button class="btn back" data-go="menu">Back</button>
   <p class="note">Newest updates first. Each update is a heading, so you can jump between them with your screen reader.</p>
   <div class="stack" id="log-list"></div>
+</section>
+
+<!-- LEADERBOARD (top 3 in every game mode, shared online) -->
+<section id="lb" class="screen" hidden>
+  <p class="tag">Top players</p>
+  <h2 id="lb-h" tabindex="-1">Leaderboard</h2>
+  <button class="btn back" data-go="menu">Back</button>
+  <p class="note">The top 3 players in every game mode. Modes with waves rank by waves survived, and kills break ties. Campaign ranks by kills. Solo matches count when you have an account. Co-op and Tutorial/practice do not count. Each mode is a heading.</p>
+  <p class="note" id="lb-st" role="status"></p>
+  <div class="stack" id="lb-list"></div>
+  <button class="btn" id="lb-refresh">Refresh<small>Load the newest records</small></button>
 </section>
 
 <!-- ACCOUNT (player ID, login and cloud save) -->
@@ -4984,7 +4996,7 @@ function processDead(src,kind){
   let pay=0,lv='',heal='',healN=0;
   if(src==='symbiote'){lv+=symGrow(dead.length);const sw=G.lo.find(x=>x.id==='symbiote');
     if(sw&&sw.vamp){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal=` Plus ${got} health.`;healN+=got;fx.symHeal();hud()}}}
-  const msg=dead.map(e=>{G.kills++;zsbAdd(src,kind,e);const t=EN[e.type];pay+=e.mega?(G.mode==='zombies'?Math.round(5*t.reward*paySc()*zDfG().pay):Math.round(250*paySc()/(1+.08*6))):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDfG().pay:1)*(e.type==='zancient'?ancF():1));if(src!=='mate'){P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++}
+  const msg=dead.map(e=>{G.kills++;zsbAdd(src,kind,e);lbTally(src,kind,e);const t=EN[e.type];pay+=e.mega?(G.mode==='zombies'?Math.round(5*t.reward*paySc()*zDfG().pay):Math.round(250*paySc()/(1+.08*6))):Math.round(t.reward*paySc()*(G.mode==='zombies'?zDfG().pay:1)*(e.type==='zancient'?ancF():1));if(src!=='mate'){P.stats.kills++;if(e.hk)P.stats.headshots++;if(t.boss)P.stats.bossKills++}
     if(src&&WBY[src]){const b=mlevel(src);P.mast[src]=(P.mast[src]||0)+1;const a=mlevel(src);
       if(a>b){lv=` ${WBY[src].name} mastery level ${a}. Attachments stronger.`;const i=G.lo.findIndex(x=>x.id===src);if(i>=0)G.lo[i]=build(WBY[src])}}
     return (src==='fence'?'Fried! ':src==='hyp'?'Hypnotized kill! ':'')+(e.stone?'Petrified! ':e.crys?'Crystallized! ':e.hk?'Headshot! ':'')+(t.boss?`${e.mega?'Mega ':''}${t.name} is down!`:`${t.name} down.`)});
@@ -8334,6 +8346,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-leaderboard',date:'November 19, 2026',title:'New: Leaderboard',items:[
+    'A new Leaderboard button on the main menu shows the top 3 players in every game mode: Campaign, Endless survival, Boss rush, and each of the five Zombie siege modes. Each record gives the player, their score, the weapon they got the most kills with, and the battlefield, plus the difficulty in Zombie siege.',
+    'Modes with waves rank by waves survived, and kills break ties. Campaign ranks by kills.',
+    'Solo matches count when you have an account, whether you die or quit from the pause menu. Co-op and Tutorial/practice do not count. If you make the top 3, you hear it at the end of the match.']},
   {id:'2026-11-19-consbtns',date:'November 19, 2026',title:'New consumable buttons in battle',items:['Two small new buttons at the top of the battle screen, right of Fire lock: Item type picks which consumable you will use and says how many you have, and Use item uses one. On a keyboard, B is Item type and V is Use item.','The Adrenaline shot button at the bottom is gone: use the new Use item button instead. Use item turns green while an adrenaline shot is running.']},
   {id:'2026-11-19-adren',date:'November 19, 2026',title:'New consumable: Adrenaline shot',items:[
     'The first consumable is in the Armory under Throwables and consumables, then Consumables: the Adrenaline shot, 50,000 silver each.',
@@ -9086,6 +9102,90 @@ const LOGKEY='vf-log-seen';
 function logSeen(){try{return localStorage.getItem(LOGKEY)||''}catch(e){return ''}}
 function updateLogBtn(){const b=$('menu-log');if(!b)return;const fresh=UPDATES.length&&logSeen()!==UPDATES[0].id;
   b.textContent=fresh?'Update log, new update':'Update log'}
+/* ---------- leaderboard ----------
+   The top 3 solo players in every game mode, shared by everyone, kept in Firestore at leaderboard/{board} as { top:[entry…] }.
+   An entry is { u: uid, n: username, s: score, k: kills, w: main weapon, d: map and difficulty, t: time }.
+   Wave modes rank by waves survived, so a later start wave gives no head start; kills break ties, then whoever got there first.
+   Campaign ranks by kills. Only the GitHub Pages game reads or writes it. A match only writes when it makes the top 3,
+   and the screen reads the boards only when opened (kept for a minute). The developer removes fake records from admin.html. */
+const LB_ON=location.hostname==='efjkweiofguqe.github.io';
+const LBB=[['campaign','Campaign'],['endless','Endless survival'],['bossrush','Boss rush'],['z_standard','Zombie siege, Standard'],['z_six','Zombie siege, Watch my six'],
+  ['z_ragdoll','Zombie siege, Ragdoll sandbox'],['z_roam','Zombie siege, Jungle scavenger'],['z_hall','Zombie siege, Horror hallway']];
+const LBN=Object.fromEntries(LBB),LBPLACE=['first','second','third'];
+var lbCache=null,lbAt=0,lbLoading=null,lbQueued='';
+const lbOkE=e=>!!e&&typeof e.u==='string'&&typeof e.n==='string'&&Number.isInteger(e.s)&&Number.isInteger(e.k);
+const lbCmp=(a,b)=>(b.s-a.s)||(b.k-a.k)||((a.t||0)-(b.t||0));   // below zero: a ranks above b
+const lbNum=n=>Number(n).toLocaleString('en-US');
+function lbScore(b,e){return b!=='campaign'?`survived ${lbNum(e.s)} wave${e.s===1?'':'s'}, ${lbNum(e.k)} kill${e.k===1?'':'s'}`:`${lbNum(e.s)} kill${e.s===1?'':'s'}`}
+function lbLine(b,e,i){const p=LBPLACE[i];return `${p[0].toUpperCase()+p.slice(1)} place: ${e.n}, ${lbScore(b,e)}${e.w?', with the '+e.w:''}. ${e.d||''}${e.d?'.':''}`}
+/* kills per weapon this match, so the record can name the weapon that did the most work */
+function lbTally(src,kind,e){if(!G||(kind&&NADE[kind]))return;const w=kind==='burn'?(e.fireSrc||src):src;if(!w||!WBY[w])return;const t=(G.lbW=G.lbW||{});t[w]=(t[w]||0)+1}
+function lbEntry(g){
+  if(!g||g.coop||g.mode==='practice'||g.tut)return null;
+  let b,s;
+  if(g.mode==='campaign'){b='campaign';s=g.kills}
+  else if(g.mode==='endless'||g.mode==='bossrush'){b=g.mode;s=g.wave-1}
+  else if(g.mode==='zombies'){b='z_'+(g.zm||'standard');s=g.wave-(g.zStart||1)}
+  else return null;
+  s=Math.floor(num(s));if(!LBN[b]||!(s>0))return null;
+  const W=g.lbW||{},top=Object.keys(W).sort((x,y)=>W[y]-W[x])[0]||(g.lo&&g.lo[0]&&g.lo[0].id),w=top&&WBY[top]?WBY[top].name:'';
+  const d=(MAPS[g.map]?MAPS[g.map].name:'')+(g.mode==='zombies'?`, ${(ZDIFF[g.zd]||ZDIFF.normal).n} difficulty${g.zg?', giants only':''}`:'');
+  return {b,e:{u:'',n:'',s,k:Math.max(0,Math.floor(num(g.kills))),w:w.slice(0,40),d:d.slice(0,80),t:Date.now()}};
+}
+/* sends a finished solo match to the leaderboard; resolves to a sentence to speak if it made the top 3, otherwise '' */
+async function lbSubmit(g){
+  const r=lbEntry(g);if(!r||!LB_ON||!P.player||!fbUser)return '';
+  const {b,e}=r,uid=fbUser.uid,C=lbCache&&lbCache[b];
+  if(C){const mine=C.find(x=>x.u===uid);   // scores only go up, so a cached board can rule a write out without asking the server
+    if(mine&&lbCmp(mine,e)<=0)return '';
+    if(!mine&&C.length>=3&&lbCmp(C[2],e)<0)return ''}
+  try{
+    const {db,fs,au}=await fbBoot();const u=au.currentUser;if(!u||u.uid!==uid)return '';
+    const ref=fs.doc(db,'leaderboard',b);let place=0,before=0,L=null;
+    e.u=uid;e.n=P.player;
+    await fs.runTransaction(db,async t=>{place=0;L=null;
+      const cur=await t.get(ref),old=cur.exists()&&Array.isArray(cur.data().top)?cur.data().top.filter(lbOkE):[];
+      const mine=old.find(x=>x.u===uid);before=mine?old.slice().sort(lbCmp).indexOf(mine)+1:0;
+      if(mine&&lbCmp(mine,e)<=0){L=old.slice().sort(lbCmp);return}
+      const next=old.filter(x=>x!==mine).concat([e]).sort(lbCmp).slice(0,3),i=next.indexOf(e);
+      L=i<0?old.slice().sort(lbCmp):next;if(i<0)return;
+      t.set(ref,{top:next});place=i+1});
+    if(lbCache&&L)lbCache[b]=L;
+    if(!place)return '';
+    const p=LBPLACE[place-1],nm=LBN[b];
+    if(before===place)return `New leaderboard score! You are still in ${p} place in ${nm}.`;
+    if(place===1)return `New leaderboard record! You are now in first place in ${nm}.`;
+    return before?`You moved up to ${p} place on the leaderboard in ${nm}!`:`You made the leaderboard, in ${p} place in ${nm}!`;
+  }catch(err){console.warn('leaderboard',err);return ''}
+}
+/* waits a moment for the leaderboard result so it can join the end-of-match summary; a late result is spoken on its own */
+function lbAfter(p,cb){let done=false;const tm=setTimeout(()=>{if(!done){done=true;cb('')}},2500);
+  Promise.resolve(p).then(l=>{if(!done){done=true;clearTimeout(tm);cb(l)}else if(l)setTimeout(()=>say(l),300)},()=>{if(!done){done=true;clearTimeout(tm);cb('')}})}
+async function lbLoad(force){
+  if(!force&&lbCache&&performance.now()-lbAt<60000)return lbCache;
+  if(!lbLoading)lbLoading=(async()=>{const {db,fs}=await fbBoot();
+      const snaps=await Promise.all(LBB.map(([b])=>fs.getDoc(fs.doc(db,'leaderboard',b))));
+      const c={};snaps.forEach((s,i)=>{const d=s.exists()?s.data():null;c[LBB[i][0]]=d&&Array.isArray(d.top)?d.top.filter(lbOkE).sort(lbCmp).slice(0,3):[]});
+      lbCache=c;lbAt=performance.now();return c})().finally(()=>{lbLoading=null});
+  return lbLoading;
+}
+function lbDraw(c){const box=$('lb-list');box.textContent='';
+  LBB.forEach(([b,name])=>{const d=document.createElement('div');d.className='logent';
+    const h=document.createElement('h3');h.textContent=name;
+    const ul=document.createElement('ul'),L=c[b]||[];
+    if(!L.length){const li=document.createElement('li');li.textContent='No records yet. Be the first.';ul.appendChild(li)}
+    L.forEach((e,i)=>{const li=document.createElement('li');li.textContent=lbLine(b,e,i)+(fbUser&&e.u===fbUser.uid?' That is you.':'');ul.appendChild(li)});
+    d.append(h,ul);box.appendChild(d)})}
+async function lbShow(force){
+  const st=$('lb-st');$('lb-refresh').hidden=!LB_ON;
+  if(!LB_ON){$('lb-list').textContent='';st.textContent='The leaderboard only works in the web version of the game, at efjkweiofguqe.github.io/Valor-frontier.';return}
+  if(!lbCache||force)st.textContent='Loading the leaderboard…';
+  try{const c=await lbLoad(force);if(curScr!=='lb')return;lbDraw(c);
+    st.textContent=P.player?`Your solo matches count as ${P.player}.`:'Create an account from the main menu to get your own scores on the leaderboard.';
+    if(force)say('Leaderboard refreshed.')}
+  catch(err){console.warn('leaderboard',err);if(curScr==='lb'){st.textContent='Could not load the leaderboard. Check your internet connection, then tap Refresh.';say(st.textContent)}}
+}
+$('lb-refresh').onclick=()=>lbShow(true);
 function buildLog(){
   const box=$('log-list');box.textContent='';
   UPDATES.forEach(u=>{const d=document.createElement('div');d.className='logent';
@@ -9098,7 +9198,7 @@ function buildLog(){
 updateLogBtn();
 
 /* ---------- screens ---------- */
-const screens=['menu','maps','coop','shop','mods','tutorial','settings','pid','req','log','game'];
+const screens=['menu','maps','coop','shop','mods','tutorial','settings','pid','req','log','lb','game'];
 function show(id){
   curScr=id;setTimeout(menuAmbSync,0);
   screens.forEach(s=>$(s).hidden=s!==id);$('pause').hidden=true;$('over').hidden=true;$('perks').hidden=true;$('zsb').hidden=true;
@@ -9110,6 +9210,8 @@ function show(id){
   if(id==='coop')updateCoop();
   if(id==='req'){fillReq();fillFb();fillErrBox()}
   if(id==='log')buildLog();
+  if(id==='lb')lbShow(false);
+  if(id==='menu'&&lbQueued){const l=lbQueued;lbQueued='';setTimeout(()=>say(l),900)}
   if(id==='menu')updateLogBtn();
   if(id==='menu')updatePidMenu();
   const h=$(id+'-h');if(h)setTimeout(()=>h.focus(),50);
@@ -9146,6 +9248,7 @@ document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>begin(b.dataset
 function endGame(won){
   if(G.coop&&!coopFromNet)coopSend({t:'end',won:!!won});
   G.over=true;G.hold=false;setFlock(false);stopAmb();won?fx.win():fx.lose();if(won&&G.mode==='campaign')P.stats.wins++;saveP();flushCloud();
+  const lbP=lbSubmit(G);
   let msg;
   if(G.mode==='zombies'&&G.zm==='hall'){const B=P.bestZH,K=zKey(G.map,G.zd,G.zg),n=hallScore(),best=B[K]||0,nb=n>best;if(nb){B[K]=n;saveP()}
     msg=`${ZDIFF[G.zd].n} horror hallway score ${n}: ${hallFt()} feet walked and ${G.kills} kills, reaching wave ${G.wave}. ${nb?'New best! ':`Best: ${best}. `}`}
@@ -9155,7 +9258,9 @@ function endGame(won){
   msg+=` Earned ${G.earned} silver. You have ${P.coins}.`;
   if(G.coopWhy)msg=G.coopWhy+' '+msg.replace(/^You fell on/,'The battle ended on');
   $('over-h').textContent=won?'Victory':G.coopWhy?'Teammate down':'Killed in action';$('over-sum').textContent=msg;
-  const g=G,sb=zsbSnap(),res=()=>{if(G!==g)return;$('over').hidden=false;setTimeout(()=>{if(G!==g||$('over').hidden)return;$('over-h').focus();say(($('over-h').textContent)+'. '+msg)},400)};
+  const g=G,sb=zsbSnap(),res=()=>{if(G!==g)return;$('over').hidden=false;
+    lbAfter(lbP,l=>{if(G!==g)return;if(l){msg+=' '+l;$('over-sum').textContent=msg}
+      setTimeout(()=>{if(G!==g||$('over').hidden)return;$('over-h').focus();say(($('over-h').textContent)+'. '+msg)},400)})};
   if(sb)zsbOpen(sb,false,res);else res();
 }
 function pause(){if(!G||G.over||G.paused)return;timeGo();G.paused=true;pauseLabels();flushSave();G.hold=false;if(ambBus)ambBus.gain.value=0;$('pause').hidden=false;setTimeout(()=>$('pause-h').focus(),50);say(coopFromNet?'Your teammate paused the game.':'Paused.');if(G.coop&&!coopFromNet)coopSend({t:'pause'})}
@@ -9497,7 +9602,9 @@ bf.addEventListener('contextmenu',e=>e.preventDefault());
 })();
 $('b-reload').onclick=reload;$('b-switch').onclick=switchW;$('b-cover').onclick=cover;$('b-nade').onclick=throwNade;$('b-cuse').onclick=useCons;$('b-ctype').onclick=consType;$('b-ntype').onclick=nadeType;
 $('b-radar').onclick=radar;$('b-status').onclick=status;$('b-pause').onclick=pause;
-$('b-resume').onclick=resume;$('b-quit').onclick=()=>{const sb=G&&!G.over?zsbSnap():null;quit();if(sb)zsbOpen(sb,true,()=>show('menu'))};$('b-pswitch').onclick=switchW;$('b-pntype').onclick=nadeType;$('b-retry').onclick=()=>coopOn()?show('coop'):begin(lastMap);$('b-menu').onclick=quit;
+$('b-resume').onclick=resume;$('b-quit').onclick=()=>{const sb=G&&!G.over?zsbSnap():null;
+  if(G&&!G.over)lbSubmit(G).then(l=>{if(!l)return;if(!$('zsb').hidden)lbQueued=l;else say(l)});
+  quit();if(sb)zsbOpen(sb,true,()=>show('menu'))};$('b-pswitch').onclick=switchW;$('b-pntype').onclick=nadeType;$('b-retry').onclick=()=>coopOn()?show('coop'):begin(lastMap);$('b-menu').onclick=quit;
 document.addEventListener('keydown',e=>{
   if(!G||$('game').hidden)return;
   if(!$('perks').hidden||!$('tpick').hidden)return;
