@@ -658,7 +658,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
     <button data-arm="mythic">Mythical armor<small>Legendary armor with special abilities and traits</small></button>
-    <button data-arm="wear">Standard wearables<small>Monocle, binocular goggles, tactical gloves, dog tags, ammo bandolier and lucky rabbit's foot</small></button>
+    <button data-arm="wear">Standard wearables<small>Monocle, binocular goggles, tactical gloves, sweat band, dog tags, ammo bandolier and lucky rabbit's foot</small></button>
     <button data-arm="mwear">Mythical wearables<small>Black, blue, red, green and purple rings</small></button>
   </div>
   <p class="note" id="shop-note"></p>
@@ -2091,7 +2091,8 @@ const ARMOR=[
 ];
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
 /* Wearables: worn on top of armor, by slot. Up to 2 rings and 1 piece of eyewear (monocle, glasses) at once */
-const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'},neck:{max:1,one:'necklace',many:'necklaces'},hands:{max:1,one:'pair of gloves',many:'pairs of gloves'},charm:{max:1,one:'charm',many:'charms'},chest:{max:1,one:'chest piece',many:'chest pieces'}},WEAR=[
+const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'},neck:{max:1,one:'necklace',many:'necklaces'},hands:{max:1,one:'pair of gloves',many:'pairs of gloves'},charm:{max:1,one:'charm',many:'charms'},wrist:{max:1,one:'sweat band',many:'sweat bands'},chest:{max:1,one:'chest piece',many:'chest pieces'}},WEAR=[
+  {id:'sweatband',name:'Sweat band',slot:'wrist',price:4000,desc:'A thick terry-cloth sweat band for a firmer grip and more strength. The Samurai sword and the Unquenchable scythe hit 10 percent harder and swing 10 percent faster. The bonus is worked out from each weapon\'s base stats only, so upgrades are not boosted again: the Samurai sword\'s wave gains 100 at full reach, making 1,100, or 2,100 with an Iaido draw. The Kinetic baseball bat is not a melee weapon and is not changed. Wristband: one at a time, and it fits under Tactical gloves.'},
   {id:'gloves',name:'Tactical gloves',slot:'hands',price:3000,desc:'Snug tactical gloves with grippy palms for a steadier pistol hold. Every pistol does 15 percent more damage, including the Micro Catastrophe. Gloves: one pair at a time.'},
   {id:'dogtags',name:'Dog tags',slot:'neck',price:4000,desc:'A pair of stamped steel dog tags on a ball chain. You earn 10 percent more silver from every kill. Necklace: one at a time.'},
   {id:'bandolier',name:'Ammo bandolier',slot:'chest',price:5000,desc:'A leather bandolier slung across your chest, packed with spare rounds. Every gun holds 15 percent more rounds per magazine, at least 1 more. Single-shot guns, fuel, batteries, treats and toys are not changed. Chest piece: one at a time.'},
@@ -2787,6 +2788,7 @@ function build(w){
     if(w.id==='javelin'){b.home=true;b.charge=has('jvlock2')?.6:has('jvlock1')?1.2:2;if(has('jvfast'))b.reload=2;
       if(has('jvdirect')){b.spd=w.spd*2;b.blastR=16/3.281;b.splM=.6}else b.top=true}
     if(w.id==='flash'){const hot=has('flhot');b.fireDps=hot?10:5;b.fireT=hot?8:5;if(hot)b.blastR=15/3.281;if(has('flfast'))b.reload=2.5;if(has('flvolley')){b.volley=true;b.shots=4}}}
+  try{if(w.id==='katana'&&sweatOn()&&b.cd>0)b.cd=1/(1/b.cd+SWEAT/w.cd)}catch(e){}   // Sweat band: 10 percent of the sword's base swing rate added on top
   try{if(wearing('ringgreen')&&b.cd>0)b.cd/=1.15}catch(e){}
   try{if(wearing('gloves')&&(WCAT.pistol.includes(w.id)||MCAT.pistol.includes(w.id)))b.dmg*=1.15}catch(e){}   // Tactical gloves: pistols 15 percent harder
   try{if(wearing('bandolier')&&b.mag>=2&&!b.fog&&!b.rubik&&!b.flame&&!b.teddy&&!b.bubble&&!isMelee(b))b.mag=Math.max(b.mag+1,Math.round(b.mag*1.15))}catch(e){}   // Ammo bandolier: 15 percent bigger magazines
@@ -3228,6 +3230,7 @@ const wearing=id=>!!(P.wear&&P.wear.on.includes(id));
 const blackN=()=>G?Math.max(1,(G.wave||1)-(G.zStart||1)+1):0;   // waves into this match, counting the starting wave as 1
 const ringDmg=()=>(wearing('ringblack')&&G?1+Math.min(.5,.01*blackN()):1)*(wearing('ringred')&&G&&G.lo&&G.lo[G.w]&&MCAT.aoe.includes(G.lo[G.w].id)?1.19:1);
 const ringGuard=()=>wearing('ringblack')&&G?1-Math.min(.5,.01*blackN()):1;
+const SWEAT=.1,sweatOn=()=>wearing('sweatband');   // Sweat band: melee (Samurai sword, scythe) +10 percent of base damage and swing rate
 const ringReload=()=>wearing('ringblue')?1/1.2:1;
 const maxHP=()=>100+hpBonus(P.perk.hp);
 const HEADZONE=7.6;   // half a 15 degree turn, so any enemy can be lined up dead centre
@@ -5115,7 +5118,8 @@ const SCY_T=2.7,SCY_DMG=75;
    If 15 seconds pass without a scythe kill, the stacks drain away to nothing over 1.5 seconds. */
 const SL_STEP=.02,SL_SPD=.05,SL_MIN=1,SL_KEEP=15,SL_DRAIN=1.5;
 const slN=()=>G&&G.slN>0?G.slN:0;
-const scyTime=w=>w.spLeech?Math.max(SL_MIN,SCY_T/(1+SL_SPD*slN())):SCY_T;
+const scyTime0=w=>w.spLeech?Math.max(SL_MIN,SCY_T/(1+SL_SPD*slN())):SCY_T;
+const scyTime=w=>sweatOn()?1/(1/scyTime0(w)+SWEAT/SCY_T):scyTime0(w);   // Sweat band: 10 percent of the base swing rate added on top
 function slGain(n){const before=Math.floor(slN()/10);G.slN=slN()+n;G.slT=0;G.slDrop=0;G.slWarn=false;
   const now=Math.floor(G.slN/10);if(now>before)(g=>setTimeout(()=>{if(G===g&&!G.over)say(`Spirit leech, ${Math.floor(G.slN)} kills. ${Math.round(G.slN*SL_STEP*100)} percent more damage, one swing every ${r1(scyTime({spLeech:true}))} seconds.`)},400))(G)}
 function slTick(dt){if(!(G.slN>0))return;G.slT=(G.slT||0)+dt;
@@ -5133,7 +5137,7 @@ function scytheSwing(w){const g=G,R=(w.scyR||10)/3.281,a0=G.heading,hit=new Set(
     while(seg<Math.min(11,Math.floor(sw/30))){seg++;fx.scySweep(norm(a0+seg*30+15-G.heading))}
     let died=0;
     for(const e of G.enemies){if(e.hp<=0||e.hb>0||hit.has(e)||e.dist>R)continue;if((e.angle-a0+720)%360>sw)continue;
-      hit.add(e);const dmg=SCY_DMG*mul*gunMult(),rel=norm(e.angle-G.heading);e.hp-=dmg;rdShot(e,{id:'scythe'},false);fx.scyHit(rel,e.dist);
+      hit.add(e);const dmg=(SCY_DMG*mul+(sweatOn()?SCY_DMG*SWEAT:0))*gunMult(),rel=norm(e.angle-G.heading);e.hp-=dmg;rdShot(e,{id:'scythe'},false);fx.scyHit(rel,e.dist);
       let heal=w.leech?dmg*.1:0;if(e.hp<=0){fx.kill(rel,e.dist,.08,e.type);died++;heal+=(e.maxhp||EN[e.type].hp)*(w.spLeech?.1:.2)}
       if(heal)feedHeal(heal)}
     if(died){if(w.spLeech)slGain(died);processDead('scythe');if(G.over)return true}
@@ -5539,7 +5543,7 @@ function katanaSwing(w,o={}){
   const h0=G.heading,pos=e=>{const a=norm(e.angle-h0)*Math.PI/180;return[e.dist*Math.cos(a),e.dist*Math.sin(a)]},gm=gunMult(),bl=(w.katBlade||5)/3.281;
   let kills=0;
   G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0)return;const[f,l]=pos(e);if(f<0||f>bl||Math.abs(l)>bl/2)return;
-    const T=EN[e.type],rel=norm(e.angle-G.heading);if(T.boss||T.mini)e.hp-=(w.katBoss||100)*gm;else e.hp=0;rdShot(e,{id:'katana'},false);fx.katBlade(rel,e.dist);if(e.hp<=0){fx.kill(rel,e.dist,.12,e.type);kills++}});
+    const T=EN[e.type],rel=norm(e.angle-G.heading);if(T.boss||T.mini)e.hp-=((w.katBoss||100)+(sweatOn()?100*SWEAT:0))*gm;else e.hp=0;rdShot(e,{id:'katana'},false);fx.katBlade(rel,e.dist);if(e.hp<=0){fx.kill(rel,e.dist,.12,e.type);kills++}});
   processDead('katana');if(G.over)return;
   katFocus(w,kills);
   let gold=false;if(w.bushido&&G.kGold){gold=true;G.kGold=false}
@@ -5557,7 +5561,7 @@ function katWave(w,h0,o){
       if(o.gold){f=e.dist;l=0}else{[f,l]=pos(e);if(f<0)return}
       if(f<r0-.3||f>wave.r)return;
       const fft=Math.min(Rft,f*3.281);if(!o.gold&&Math.abs(l)*3.281>(5+30*Math.min(35,fft)/35)*(o.wid||1)/2)return;
-      hit.add(e);const k=fft/Rft,rel=norm(e.angle-G.heading);e.hp-=(100+900*k)*(o.mul||1)*gm;rdShot(e,{id:'katwave'},false);fx.katGhost(rel,e.dist,k);
+      hit.add(e);const k=fft/Rft,rel=norm(e.angle-G.heading);e.hp-=((100+900*k)*(o.mul||1)+(sweatOn()?(100+900*k)*SWEAT:0))*gm;rdShot(e,{id:'katwave'},false);fx.katGhost(rel,e.dist,k);
       if(e.hp<=0){fx.kill(rel,e.dist,.06,e.type);died++;dead.push(e)}});
     if(died){if(w.blossom)dead.forEach(d=>blossom(d));processDead('katana');if(G.over)return true;katFocus(w,died)}
     if(wave.r<R)return false;
@@ -8283,6 +8287,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-sweatband',date:'November 19, 2026',title:'New standard wearable: Sweat band',items:[
+    'The Sweat band is in the Armory under Armor, then Standard wearables, for 4,000 silver. Melee weapons, the Samurai sword and the Unquenchable scythe, do 10 percent more damage and swing 10 percent faster.',
+    "The bonus comes from each weapon's base stats only. The Samurai sword's wave reaches 1,100 instead of 1,000, or 2,100 with an Iaido draw. The Kinetic baseball bat does not count as a melee weapon.",
+    'It goes on your wrist, its own slot, so you can wear it with every other wearable.']},
   {id:'2026-11-19-wear5',date:'November 19, 2026',title:'Five new wearables',items:[
     "Four new standard wearables, under Armor, then Standard wearables. Each has its own slot, so you can wear them all at once, alongside your eyewear and up to 2 rings.",
     'Tactical gloves, 3,000 silver: every pistol does 15 percent more damage.',
@@ -9541,7 +9549,7 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of gloves, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of gloves, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
