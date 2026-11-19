@@ -657,7 +657,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   </div>
   <div class="seg" id="thr-sub" role="group" aria-label="Throwables and consumables type" hidden>
     <button data-thr="throw">Throwables<small>Grenades and everything else you throw</small></button>
-    <button data-thr="cons">Consumables<small>Coming soon</small></button>
+    <button data-thr="cons">Consumables<small>Adrenaline shot</small></button>
   </div>
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
@@ -803,6 +803,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button id="b-cover" aria-pressed="false">Take cover</button>
     <button id="b-nade">Grenade</button>
     <button id="b-ntype">Grenade type</button>
+    <button id="b-adren" hidden>Adrenaline shot</button>
     <button id="b-pause">Pause</button>
     <button id="b-look" hidden>Surroundings</button>
   </div>
@@ -2145,7 +2146,7 @@ const PERKEFF={hp:l=>`Max health ${100+hpBonus(l)}`,heal:l=>`Heals ${25+healBonu
 /* Thunderclap damage bands: the closer the enemy, the bigger the multiplier */
 const TBM=[3,2.5,2,1.5,1],tMult=(w,d)=>{const b=w.tband;for(let i=0;i<b.length;i++)if(d<b[i])return TBM[i];return 1};
 const growPct=()=>G&&G.pk&&G.pk.grow?10*Math.max(0,G.wave-(G.growFrom??G.wave)):0;   // Growing Violence: plus 10 percent per wave since you bought it, added flat
-const gunMult=()=>(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1)*(1+growPct()/100)*ringDmg();
+const gunMult=()=>(G&&G.adrT>0?1.25:1)*(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1)*(1+growPct()/100)*ringDmg();
 const MLV=[0,10,25,45,70,100,135,175,220,270];
 function mlevel(id){const k=P.mast[id]||0;let L=1;MLV.forEach((t,i)=>{if(k>=t)L=i+1});return L}
 const WPN=[
@@ -2807,7 +2808,7 @@ function build(w){
    Progress lives in two places: this device (instant, but a phone can wipe it) and your
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
-const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
+const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},cons:{adren:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
   stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',skin:{own:{},on:{}},ts:0};
 const P0=JSON.stringify(P);   // a brand new save, used when logging in or out
 function resetP(){Object.keys(P).forEach(k=>delete P[k]);Object.assign(P,JSON.parse(P0))}
@@ -2823,6 +2824,7 @@ function loadP(s){
     const own=own0.filter(i=>ATTBY[i]&&attOK(ATTBY[i],WBY[k]));P.att[k]={own,eq:eq0.filter(i=>own.includes(i))}}
   P.coins+=fmjBack;P.fmjSG=true;
   if(s.gren)NTYPES.forEach(k=>{P.gren[k]=Math.max(0,num(s.gren[k],P.gren[k])|0)});
+  P.cons={adren:Math.max(0,num(s.cons&&s.cons.adren,0)|0)};   // consumables
   P.mast={};if(s.mast&&typeof s.mast==='object')for(const k in s.mast)if(WBY[k])P.mast[k]=Math.max(0,num(s.mast[k])|0);
   if(s.perk)['hp','heal','aim','scav'].forEach(k=>{P.perk[k]=Math.max(0,Math.min(PERKS.find(p=>p.id===k).max,num(s.perk[k])|0))});
   if(s.armor){P.armor.own=(Array.isArray(s.armor.own)?s.armor.own:[]).filter(i=>ARMOR.some(a=>a.id===i));P.armor.on=P.armor.own.includes(s.armor.on)?s.armor.on:''}
@@ -5013,7 +5015,7 @@ function hurtPlayer(dmg,by){
   if(G.down)return;   // co-op: knocked down, nothing can hurt you while you wait to be revived
   if(wearing('rabbit')&&Math.random()<.05){fx.whoosh();const n=performance.now();if(!(G.luckAt>n-4000)){G.luckAt=n;say('Lucky! Missed you.')}return}   // Lucky rabbit's foot: 5 percent of hits miss
   let d=dmg*(S.diff<1?.7:S.diff>1.5?1.6:1);const ar=ARMBY[P.armor.on];
-  if(ar)d*=1-ar.prot;if(G.cover)d*=.5;d*=ringGuard();
+  if(ar)d*=1-ar.prot;if(G.cover)d*=.5;d*=ringGuard();if(G.adrT>0)d*=.5;   // Adrenaline shot: half damage
   const zerk=P.armor.on==='berserk';if(zerk){const tl=tlv('tough');if(tl)d*=1-MUBY.tough.cut[tl]}
   G.hp-=d;fx.hurt();if(ar)fx.armorHit();vib(140);
   // Razorwire Carapace: the attacker is torn by the barbs and bleeds
@@ -5273,6 +5275,33 @@ function timeGo(){if(!G||!(G.tstop>0))return;G.tstop=0;if(ctx){fx.tFreeze(false)
 /* pause menu labels: what you are holding now */
 function pauseLabels(){if(!G||!$('ps-w'))return;const w=G.lo[G.w];$('ps-w').textContent=`Now: ${w.name}, ${ammoWords()}`;$('ps-g').textContent=`Now: ${NADE[G.gt].name}, ${G.gren[G.gt]} left`}
 /* grenades go off around YOU: no aiming, everything inside the radius is hit */
+/* Adrenaline shot (consumable, Armory > Throwables and consumables > Consumables): used up when injected. For ADR_T seconds
+   you take 50 percent less damage, on top of armor and everything else, and do 25 percent more damage with every weapon.
+   One shot at a time. Not in Tutorial/practice. Battle button Adrenaline shot, or V on a keyboard. */
+const ADR_T=35,ADR_PRICE=50000;
+Object.assign(fx,{
+  adrInject(){if(!ctx)return;const d=gunDest(0);
+    noise(d,{dur:.04,vol:.35,type:'highpass',f:3500,attack:.001});
+    noise(d,{dur:.6,vol:.22,type:'bandpass',f:2400,f2:900,q:1.2,at:.08,attack:.05});
+    tone(d,{type:'sine',f:220,f2:880,dur:1.1,vol:.16,at:.3,attack:.1});
+    [0,.42,.84,1.2].forEach((t,i)=>{tone(d,{type:'sine',f:60,f2:42,dur:.12,vol:.6,at:.9+t,attack:.004});tone(d,{type:'sine',f:55,f2:40,dur:.1,vol:.45,at:1.05+t,attack:.004})})},
+  adrBeat(){if(!ctx)return;const d=gunDest(0);tone(d,{type:'sine',f:58,f2:42,dur:.11,vol:.32,attack:.004});tone(d,{type:'sine',f:52,f2:40,dur:.09,vol:.24,at:.16,attack:.004})},
+  adrFade(){if(!ctx)return;const d=gunDest(0);tone(d,{type:'sine',f:700,f2:180,dur:1.1,vol:.18,attack:.05});noise(d,{dur:.8,vol:.1,type:'lowpass',f:900,f2:200,attack:.1})}
+});
+function useAdren(){
+  if(!G||G.paused||G.over)return;if(G.down){downNag();return}
+  if(G.mode==='practice'){fx.click();say('Adrenaline shots do not work in Tutorial/practice.');return}
+  if(G.adrT>0){fx.click();say(`Adrenaline is already pumping, ${Math.ceil(G.adrT)} seconds left. You have ${P.cons.adren} shots.`);return}
+  if(!(P.cons.adren>0)){fx.click();say('No adrenaline shots. Buy them in the Armory, under Throwables and consumables, then Consumables.');return}
+  P.cons.adren--;saveP();G.adrT=ADR_T;G.adrBeatT=1.6;G.adrWarn=false;fx.adrInject();vib(120);
+  say(`Adrenaline! For ${ADR_T} seconds you take half damage and hit 25 percent harder. ${P.cons.adren} shot${P.cons.adren===1?'':'s'} left.`);adrUi()}
+function adrTick(dt){if(!(G.adrT>0))return;G.adrT-=dt;
+  G.adrBeatT-=dt;if(G.adrBeatT<=0){G.adrBeatT=G.adrT<5?.55:.85;fx.adrBeat()}
+  if(G.adrT<=5&&!G.adrWarn){G.adrWarn=true;say('Adrenaline wearing off.')}
+  if(G.adrT<=0){G.adrT=0;fx.adrFade();say('Adrenaline worn off.');adrUi()}}
+function adrUi(){const b=$('b-adren');if(!b)return;const n=P.cons.adren||0;b.hidden=!(n>0||(G&&G.adrT>0));b.textContent=G&&G.adrT>0?'Adrenaline active':`Adrenaline shot (${n})`}
+function consBuy(k){initAudio();if(P.coins<ADR_PRICE)return broke(ADR_PRICE,'An adrenaline shot');
+  P.coins-=ADR_PRICE;P.cons.adren=(P.cons.adren||0)+1;fx.buy();saveP();updateShop();say(`Bought an adrenaline shot. You have ${P.cons.adren}. ${P.coins} silver left.`)}
 function throwNade(){
   if(!G||G.paused||G.over||G.ncd>0)return;if(G.down){downNag();return}timeGo();
   const t=G.gt,N=NADE[t];
@@ -5986,7 +6015,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);adrTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -8294,6 +8323,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-adren',date:'November 19, 2026',title:'New consumable: Adrenaline shot',items:[
+    'The first consumable is in the Armory under Throwables and consumables, then Consumables: the Adrenaline shot, 50,000 silver each.',
+    'Inject it in battle with the new Adrenaline shot button, or V on a keyboard. For 35 seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage.',
+    'You hear the needle, a rush, then your heartbeat pounding until it wears off, with a warning 5 seconds before. The button only shows when you have a shot. Used up when injected, one at a time. Does not work in Tutorial/practice.']},
   {id:'2026-11-19-thrsub',date:'November 19, 2026',title:'Throwables and consumables: two new sections',items:['Throwables and consumables in the Armory now has two parts: Throwables, with every grenade, and Consumables, which is empty for now. Consumables are coming soon.']},
   {id:'2026-11-19-throwables',date:'November 19, 2026',title:'Grenades section renamed',items:['The Grenades section of the Armory shop is now called Throwables and consumables. Everything in it is the same.']},
   {id:'2026-11-19-glovesreload',date:'November 19, 2026',title:'Tactical gloves: faster pistol reloads',items:[
@@ -9092,7 +9125,7 @@ let lastMap='rainforest';
 function begin(map){
   initAudio();if((S.mode||'campaign')==='zombies'&&S.zmode==='roam')map='rainforest';
   if(!P.carry.length){fx.click();say('You are not carrying any guns. Open the Armory shop and choose Carry into battle on up to 4 guns.');return}lastMap=map;const mode=S.mode||'campaign';show('game');newGame(map,mode);if(mode!=='practice'){P.stats.games++;saveP()}hud();startAmb(map);
-  const bc=$('b-cover');bc.textContent='Take cover';bc.setAttribute('aria-pressed','false');rUi();
+  adrUi();const bc=$('b-cover');bc.textContent='Take cover';bc.setAttribute('aria-pressed','false');rUi();
   const lead=MAPS[map].intro+' '+G.lo[0].name+' drawn. '+(G.lo[0].msg?`It unfolds in your hands and reads: ${G.lo[0].msg}. `:'');
   say(lead+(mode==='practice'?'Tutorial/practice. Targets stand still and cannot hurt you. Grenades are free.':mode==='zombies'?(G.zm==='roam'?`Jungle scavenger. You are at Base camp, in the middle of eight clearings joined by trails. Hold and drag on Turn left to walk, and drag sideways on Turn right to turn, holding it there to keep turning, or press Walk to walk forward on your own. Zombies come through the jungle from every side. Supply crates beep from the clearings: walk onto one to collect it. Out now: ${G.rm.first}. Press Surroundings to hear the trails and crates around you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='hall'?`Horror hallway. You walk on your own. Quick footsteps mean the way is clear. You slow down as zombies gather ahead, and stop when it is packed. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()} ahead${zBossWords()}.`:G.zm==='six'?`Watch my six. Two windows, 50 feet out, straight ahead and right behind you. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:G.zm==='ragdoll'?`Ragdoll sandbox. Four windows surround you, 50 feet out, at north, east, south and west. Blasts throw zombies around, and you can hear every body land. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`:`Zombie siege. Four windows surround you, 50 feet out, at north, east, south and west. ${G.wave>1?`Starting at wave ${G.wave}`:'Wave 1'}. ${zIntro()}${zBossWords()}.`):mode==='endless'?`Endless survival. Wave 1. ${G.toSpawn} hostiles and a mini boss.`:mode==='bossrush'?'Boss rush. One boss incoming.':`Wave 1. ${G.toSpawn} hostiles and a mini boss.`));
   setTimeout(()=>$('b-fire').focus(),60);
@@ -9450,7 +9483,7 @@ bf.addEventListener('contextmenu',e=>e.preventDefault());
   gm.addEventListener('touchcancel',e=>{if(!mine(e))return;clearTimeout(T.tm);T=null});
   gm.addEventListener('click',e=>{if(e.isTrusted&&performance.now()<skipT&&own(e.target)){e.stopImmediatePropagation();e.preventDefault()}},true);
 })();
-$('b-reload').onclick=reload;$('b-switch').onclick=switchW;$('b-cover').onclick=cover;$('b-nade').onclick=throwNade;$('b-ntype').onclick=nadeType;
+$('b-reload').onclick=reload;$('b-switch').onclick=switchW;$('b-cover').onclick=cover;$('b-nade').onclick=throwNade;$('b-adren').onclick=useAdren;$('b-ntype').onclick=nadeType;
 $('b-radar').onclick=radar;$('b-status').onclick=status;$('b-pause').onclick=pause;
 $('b-resume').onclick=resume;$('b-quit').onclick=()=>{const sb=G&&!G.over?zsbSnap():null;quit();if(sb)zsbOpen(sb,true,()=>show('menu'))};$('b-pswitch').onclick=switchW;$('b-pntype').onclick=nadeType;$('b-retry').onclick=()=>coopOn()?show('coop'):begin(lastMap);$('b-menu').onclick=quit;
 document.addEventListener('keydown',e=>{
@@ -9460,7 +9493,7 @@ document.addEventListener('keydown',e=>{
   if(G.over)return;
   const k=e.key.toLowerCase();
   if(k===' '||k==='f'){e.preventDefault();if(!e.repeat){firePressed=true;fire();G.hold=true}return}
-  const map={l:toggleFlock,arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,e:radar,t:status,escape:pause,p:pause,h:tutRepeat,n:()=>$('tut-next').hidden||$('tut-next').click()};
+  const map={l:toggleFlock,arrowleft:()=>turn(-15),a:()=>turn(-15),arrowright:()=>turn(15),d:()=>turn(15),arrowdown:()=>turn(180),r:reload,q:switchW,c:cover,g:throwNade,x:nadeType,v:useAdren,e:radar,t:status,escape:pause,p:pause,h:tutRepeat,n:()=>$('tut-next').hidden||$('tut-next').click()};
   if(map[k]&&!e.repeat){e.preventDefault();map[k]()}
 });
 document.addEventListener('keyup',e=>{const k=e.key.toLowerCase();if(k===' '||k==='f'){const was=firePressed;firePressed=false;if(G){G.hold=false;if(was&&G.flock){setFlock(false);say('Fire lock off.')}}}});
@@ -9547,7 +9580,7 @@ document.querySelectorAll('#scav-sub button').forEach(b=>b.onclick=()=>{initAudi
 document.querySelectorAll('#sam-sub button').forEach(b=>b.onclick=()=>{initAudio();curSam=b.dataset.sam;buildShop(true);say(SAMN[curSam])});
 document.querySelectorAll('#night-sub button').forEach(b=>b.onclick=()=>{initAudio();curNight=b.dataset.night;buildShop(true);say(NIGHTN[curNight])});
 document.querySelectorAll('#myth-sub button').forEach(b=>b.onclick=()=>{initAudio();curMyth=b.dataset.myth;buildShop(true);say(MCATN[curMyth])});
-document.querySelectorAll('#thr-sub button').forEach(b=>b.onclick=()=>{initAudio();curThr=b.dataset.thr;buildShop(true);say(curThr==='throw'?'Throwables.':'Consumables. Nothing here yet, consumables are coming soon.')});
+document.querySelectorAll('#thr-sub button').forEach(b=>b.onclick=()=>{initAudio();curThr=b.dataset.thr;buildShop(true);say(curThr==='throw'?'Throwables.':'Consumables.')});
 document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(ARMSUBN[curArm]+'.')});
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
 const ARMSUBN={regular:'Standard armor',mythic:'Mythical armor',wear:'Standard wearables',mwear:'Mythical wearables'};
@@ -9566,7 +9599,7 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='grenades'&&curThr==='cons'?'Consumables. Items you use up in battle. Nothing here yet: consumables are coming soon.':curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='grenades'&&curThr==='cons'?'Consumables. Items you use up in battle. Each one is gone once you use it.':curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
@@ -9576,6 +9609,7 @@ function buildShop(keepFocus){
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
     const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
     ups.forEach(u=>mkItem(list,'mu-'+u.id,u.name,u.desc,{act:()=>marmAct(u)}))});
+  if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-adren','Adrenaline shot',`A single-use shot of pure adrenaline. Inject it in battle with the Adrenaline shot button, or V on a keyboard: for ${ADR_T} seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage. You hear the needle, a rush, and your heartbeat pounding until it wears off, with a warning 5 seconds before. Used up when injected. One at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('adren')});
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>mkItem(list,'gr-'+k,k==='fatman'?'Fat Man':k==='jack'?'Jack-in-the-boxes':k==='pandora'?N.plural:N.name+'s',N.desc,{act:()=>nadeBuy(k,1),extra:()=>nadeBuy(k,5),
     hear:()=>{initAudio();if(k==='horizon'){hzDemo();return}if(k==='pandora'){pdxDemo();return}if(k==='jack'){fx.jackSet();setTimeout(()=>fx.jackTune(0,3),400);setTimeout(()=>{fx.jackPop(0,3);setTimeout(()=>fx.boom(0,3),450)},1700);return}fx.pin();if(k==='fatman'){fx.fall();fx.nuke(2)}else if(k==='incend'){fx.drop(.25);setTimeout(()=>fx.incBurst(),800)}else{fx.drop(.25);(k==='frag'?fx.boom:fx.cryo)(0,1.5,1)}}}));
   if(curCat==='perks')PERKS.forEach(pk=>mkItem(list,'pk-'+pk.id,pk.name,pk.desc,{act:()=>perkAct(pk)}));
@@ -9603,6 +9637,7 @@ function updateShop(){
     if(!own)setItem('ar-'+a.id,`Price ${a.price} silver`,`Buy for ${a.price}`,`Buy ${a.name} for ${a.price} silver`,P.coins>=a.price,false);
     else if(on)setItem('ar-'+a.id,'Owned · Wearing','Take off',`Wearing ${a.name}. Take it off`,false,true);
     else setItem('ar-'+a.id,'Owned','Wear it',`Wear ${a.name}`,false,false)});
+  if(curCat==='grenades'&&curThr==='cons'){const n=P.cons.adren||0;setItem('cs-adren',`Price ${ADR_PRICE} silver · You have ${n}`,`Buy 1 for ${ADR_PRICE}`,`Buy 1 adrenaline shot for ${ADR_PRICE} silver. You have ${n}`,P.coins>=ADR_PRICE,n>0)}
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>{const p5=Math.round(N.price*5*.9);
     setItem('gr-'+k,`You have ${P.gren[k]}`,`Buy 1 for ${N.price}`,`Buy 1 ${N.name} for ${N.price} silver. You have ${P.gren[k]}`,P.coins>=N.price,P.gren[k]>0);
     const x=$('gr-'+k).querySelector('.att');x.innerHTML=`Buy 5 for ${p5}<small>10 percent off</small>`;x.setAttribute('aria-label',`Buy 5 ${N.plural} for ${p5} silver`)});
