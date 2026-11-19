@@ -658,8 +658,8 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
     <button data-arm="mythic">Mythical armor<small>Legendary armor with special abilities and traits</small></button>
-    <button data-arm="wear">Standard wearables<small>Monocle</small></button>
-    <button data-arm="mwear">Mythical wearables<small>Black, blue and red rings</small></button>
+    <button data-arm="wear">Standard wearables<small>Monocle, binocular goggles, tactical gloves, dog tags, ammo bandolier and lucky rabbit's foot</small></button>
+    <button data-arm="mwear">Mythical wearables<small>Black, blue, red, green and purple rings</small></button>
   </div>
   <p class="note" id="shop-note"></p>
   <div class="stack" id="shop-list"></div>
@@ -2091,13 +2091,18 @@ const ARMOR=[
 ];
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
 /* Wearables: worn on top of armor, by slot. Up to 2 rings and 1 piece of eyewear (monocle, glasses) at once */
-const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'}},WEAR=[
+const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'},neck:{max:1,one:'necklace',many:'necklaces'},hands:{max:1,one:'pair of gloves',many:'pairs of gloves'},charm:{max:1,one:'charm',many:'charms'},chest:{max:1,one:'chest piece',many:'chest pieces'}},WEAR=[
+  {id:'gloves',name:'Tactical gloves',slot:'hands',price:3000,desc:'Snug tactical gloves with grippy palms for a steadier pistol hold. Every pistol does 15 percent more damage, including the Micro Catastrophe. Gloves: one pair at a time.'},
+  {id:'dogtags',name:'Dog tags',slot:'neck',price:4000,desc:'A pair of stamped steel dog tags on a ball chain. You earn 10 percent more silver from every kill. Necklace: one at a time.'},
+  {id:'bandolier',name:'Ammo bandolier',slot:'chest',price:5000,desc:'A leather bandolier slung across your chest, packed with spare rounds. Every gun holds 15 percent more rounds per magazine, at least 1 more. Single-shot guns, fuel, batteries, treats and toys are not changed. Chest piece: one at a time.'},
+  {id:'rabbit',name:"Lucky rabbit's foot",slot:'charm',price:6000,desc:"A lucky rabbit's foot on a key chain. Every hit an enemy lands on you has a 5 percent chance to miss you completely. Charm: one at a time."},
   {id:'monocle',name:'Monocle',slot:'eye',price:5000,desc:'A polished glass monocle on a fine chain. Adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, on every gun that can headshot, and stacks with the Grip and Sniper scope. On the Tetra-prism sniper it raises each crystal\'s headshot chance by 5 percent. Shotguns still need a Grip to headshot at all. Eyewear: wear one piece of eyewear at a time, alongside your rings.'},
   {id:'goggles',name:'Binocular goggles',slot:'eye',price:3500,desc:'Helmet-mounted binocular goggles that flip down over both eyes. Submachine guns reach 20 percent farther before their damage starts to fall off, and every other weapon reaches 10 percent farther. Eyewear: wear one piece of eyewear at a time, so not with the Monocle, alongside your rings.'},
   {id:'ringblack',slot:'ring',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match. Works with any armor.'},
   {id:'ringblue',slot:'ring',name:'Blue ring',price:20000,myth:true,desc:'A cool blue ring that steadies your hands. Every gun reloads 20 percent faster, including guns that load one shell at a time. Stacks with the Quick hands perk and reload attachments.'},
   {id:'ringred',slot:'ring',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'},
-  {id:'ringgreen',slot:'ring',name:'Green ring',price:20000,myth:true,desc:'A bright green ring that quickens your trigger finger. Every weapon fires 15 percent faster. Stacks with Hair trigger and other trigger upgrades.'}
+  {id:'ringgreen',slot:'ring',name:'Green ring',price:20000,myth:true,desc:'A bright green ring that quickens your trigger finger. Every weapon fires 15 percent faster. Stacks with Hair trigger and other trigger upgrades.'},
+  {id:'ringpurple',slot:'ring',name:'Purple ring',price:20000,myth:true,desc:'A deep purple ring that drinks in life. Every kill you make heals you 1 health, up to your max health.'}
 ],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r]));
 const MARMUP=[
   {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
@@ -2783,6 +2788,8 @@ function build(w){
       if(has('jvdirect')){b.spd=w.spd*2;b.blastR=16/3.281;b.splM=.6}else b.top=true}
     if(w.id==='flash'){const hot=has('flhot');b.fireDps=hot?10:5;b.fireT=hot?8:5;if(hot)b.blastR=15/3.281;if(has('flfast'))b.reload=2.5;if(has('flvolley')){b.volley=true;b.shots=4}}}
   try{if(wearing('ringgreen')&&b.cd>0)b.cd/=1.15}catch(e){}
+  try{if(wearing('gloves')&&(WCAT.pistol.includes(w.id)||MCAT.pistol.includes(w.id)))b.dmg*=1.15}catch(e){}   // Tactical gloves: pistols 15 percent harder
+  try{if(wearing('bandolier')&&b.mag>=2&&!b.fog&&!b.rubik&&!b.flame&&!b.teddy&&!b.bubble&&!isMelee(b))b.mag=Math.max(b.mag+1,Math.round(b.mag*1.15))}catch(e){}   // Ammo bandolier: 15 percent bigger magazines
   try{if(wearing('goggles')){const gm=WCAT.smg.includes(w.id)||MCAT.smg.includes(w.id)?1.2:1.1;   // Binocular goggles: 20 percent more range on SMGs, 10 on everything else
     if(b.rng)b.rng*=gm;if(Array.isArray(b.range))b.range=[b.range[0]*gm,b.range[1]*gm,b.range[2]];if(b.hR)b.hR*=gm;if(b.ftR)b.ftR*=gm;if(b.full)b.full*=gm;if(b.reach)b.reach*=gm}}catch(e){}   // Green ring: 15 percent faster fire rate
   if(b.akimbo){b.name='Akimbo '+w.name+'s';b.short=w.short+' x2'}
@@ -4978,6 +4985,8 @@ function processDead(src,kind){
   pay=Math.round(pay*(1+scavBonus(P.perk.scav||0)/100)*(G.pk&&G.pk.gold?2:1));
   if(G.pk&&G.pk.blood&&G.hp>0){const h0=G.hp,amt=dead.reduce((a,e)=>a+(EN[e.type].boss||EN[e.type].mini?10:3),0);G.hp=Math.min(G.maxhp,G.hp+amt);const got=Math.round(G.hp-h0);
     if(got>0){heal+=` Plus ${got} health.`;healN+=got;setTimeout(()=>{if(ctx)fx.bloodDrink()},200)}}
+  if(wearing('ringpurple')&&src!=='mate'&&G.hp>0){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+dead.length);const got=Math.round(G.hp-h0);if(got>0){heal+=` Plus ${got} health.`;healN+=got}}   // Purple ring: 1 health a kill
+  if(wearing('dogtags'))pay=Math.round(pay*1.1);   // Dog tags: 10 percent more silver
   G.earned+=pay;P.coins+=pay;P.stats.earned+=pay;saveP();
   setTimeout(()=>{if(ctx)fx.coin(pay>=20?3:1)},420);
   if(lv)setTimeout(()=>{if(ctx)fx.levelup()},800);
@@ -4992,6 +5001,7 @@ function hurtPlayer(dmg,by){
   if(!G||G.over||G.mode==='practice')return;
   if(G.coop&&coopHurtHook(dmg,by))return;
   if(G.down)return;   // co-op: knocked down, nothing can hurt you while you wait to be revived
+  if(wearing('rabbit')&&Math.random()<.05){fx.whoosh();const n=performance.now();if(!(G.luckAt>n-4000)){G.luckAt=n;say('Lucky! Missed you.')}return}   // Lucky rabbit's foot: 5 percent of hits miss
   let d=dmg*(S.diff<1?.7:S.diff>1.5?1.6:1);const ar=ARMBY[P.armor.on];
   if(ar)d*=1-ar.prot;if(G.cover)d*=.5;d*=ringGuard();
   const zerk=P.armor.on==='berserk';if(zerk){const tl=tlv('tough');if(tl)d*=1-MUBY.tough.cut[tl]}
@@ -8273,6 +8283,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-wear5',date:'November 19, 2026',title:'Five new wearables',items:[
+    "Four new standard wearables, under Armor, then Standard wearables. Each has its own slot, so you can wear them all at once, alongside your eyewear and up to 2 rings.",
+    'Tactical gloves, 3,000 silver: every pistol does 15 percent more damage.',
+    'Dog tags, 4,000 silver: 10 percent more silver from every kill.',
+    'Ammo bandolier, 5,000 silver: every gun holds 15 percent more rounds per magazine, at least 1 more. Single-shot guns, fuel, batteries, treats and toys are not changed.',
+    "Lucky rabbit's foot, 6,000 silver: every hit an enemy lands on you has a 5 percent chance to miss you completely.",
+    'And a new mythical ring, under Mythical wearables: the Purple ring, 20,000 silver. Every kill you make heals you 1 health.']},
   {id:'2026-11-19-rubik',date:'November 19, 2026',title:"New toy: Rubik's Cube",items:[
     "A new Toys section in the Armory under Standard weapons, with its first toy: the Rubik's Cube, 7,500 silver.",
     "Press Fire to toss a cube at the nearest enemy you are facing, up to 40 feet away. Up to 4 zombies crowd round it, pick it up and try to solve it for a minute and a half, and never attack while they work. Kill one and the rest keep going. When it is solved, a chime plays and they come back for you.",
@@ -9524,7 +9541,7 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings and 1 piece of eyewear at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings and 1 piece of eyewear at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of gloves, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of gloves, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
