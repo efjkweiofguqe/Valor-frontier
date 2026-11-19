@@ -152,7 +152,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 .item h3,.item h4{font-family:var(--display);font-weight:400;font-size:24px;margin:0;line-height:1.1}
 #mods-list h3.grp,#shop-list h3.grp,#tpick-list h3.grp{font-family:var(--display);font-weight:400;font-size:20px;color:var(--accent);margin:14px 0 0;padding-bottom:4px;border-bottom:2px solid var(--line);text-transform:uppercase;letter-spacing:.06em}
 #mods-list h3.grp:first-child{margin-top:0}
-#arm-sub button small{display:block}
+#arm-sub button small,#thr-sub button small{display:block}
 .item .meta{font-size:14px;text-transform:uppercase;letter-spacing:.1em;color:var(--accent)}
 .item.owned .meta{color:var(--ok)}
 .item .acts{display:grid;grid-template-columns:2fr 1fr;gap:8px}
@@ -654,6 +654,10 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-myth="divine">Divine weapons<small>Mjölnir, Zeus's Thunderbolt</small></button>
     <button data-myth="toy">Toys<small>Unbearable Buddy</small></button>
     <button data-myth="treat">Treats<small>Brain Fog Bites</small></button>
+  </div>
+  <div class="seg" id="thr-sub" role="group" aria-label="Throwables and consumables type" hidden>
+    <button data-thr="throw">Throwables<small>Grenades and everything else you throw</small></button>
+    <button data-thr="cons">Consumables<small>Coming soon</small></button>
   </div>
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
@@ -8290,6 +8294,7 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-thrsub',date:'November 19, 2026',title:'Throwables and consumables: two new sections',items:['Throwables and consumables in the Armory now has two parts: Throwables, with every grenade, and Consumables, which is empty for now. Consumables are coming soon.']},
   {id:'2026-11-19-throwables',date:'November 19, 2026',title:'Grenades section renamed',items:['The Grenades section of the Armory shop is now called Throwables and consumables. Everything in it is the same.']},
   {id:'2026-11-19-glovesreload',date:'November 19, 2026',title:'Tactical gloves: faster pistol reloads',items:[
     'Tactical gloves now also make every pistol reload 15 percent faster, on top of the 15 percent extra damage. They stack with Fast hands, the Blue ring and the Quick hands perk.']},
@@ -9501,7 +9506,7 @@ const SAMN={blade:'Samurai pack swords. Swing with the Fire button. You must own
 const SCAVN={throw:'Scavenger pack throwing weapons. Throw them with the Fire button and they come back to you.',armor:'Scavenger pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep.'};
 const setOf=id=>Object.keys(LSET).find(k=>LSET[k].list&&LSET[k].list.includes(id))||'mythic';
 const GUNCATS=['pistol','smg','rifle','lmg','sniper','shotgun','launcher','hightech','toy'];let curStd='pistol';
-let curCat='grenades',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade',curNight='gun';
+let curThr='throw',curCat='grenades',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade',curNight='gun';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
 const CATNOTE={toy:'Toys. Everyday toys that keep the enemy busy instead of hurting them. Each takes only its own upgrades.'+WNOTE,hightech:'High tech weapons. Cutting-edge weapons built on real experimental technology, like electromagnetic railguns. Each takes only its own upgrades.'+WNOTE,pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,launcher:'AOE weapons. Area of effect weapons: real grenade and rocket launchers, and real flamethrowers that burn everything in their stream. Every shell flies out to the nearest enemy you are facing and explodes, hitting everything around it. Each takes only its own upgrades, based on the real ammo and parts.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
@@ -9542,6 +9547,7 @@ document.querySelectorAll('#scav-sub button').forEach(b=>b.onclick=()=>{initAudi
 document.querySelectorAll('#sam-sub button').forEach(b=>b.onclick=()=>{initAudio();curSam=b.dataset.sam;buildShop(true);say(SAMN[curSam])});
 document.querySelectorAll('#night-sub button').forEach(b=>b.onclick=()=>{initAudio();curNight=b.dataset.night;buildShop(true);say(NIGHTN[curNight])});
 document.querySelectorAll('#myth-sub button').forEach(b=>b.onclick=()=>{initAudio();curMyth=b.dataset.myth;buildShop(true);say(MCATN[curMyth])});
+document.querySelectorAll('#thr-sub button').forEach(b=>b.onclick=()=>{initAudio();curThr=b.dataset.thr;buildShop(true);say(curThr==='throw'?'Throwables.':'Consumables. Nothing here yet, consumables are coming soon.')});
 document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(ARMSUBN[curArm]+'.')});
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
 const ARMSUBN={regular:'Standard armor',mythic:'Mythical armor',wear:'Standard wearables',mwear:'Mythical wearables'};
@@ -9552,6 +9558,7 @@ function buildShop(keepFocus){
   const isGun=GUNCATS.includes(curCat);if(isGun)curStd=curCat;
   document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat==='std'?isGun:b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   $('std-sub').hidden=!isGun;document.querySelectorAll('#std-sub button').forEach(b=>{const on=b.dataset.std===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
+  $('thr-sub').hidden=curCat!=='grenades';document.querySelectorAll('#thr-sub button').forEach(b=>{const on=b.dataset.thr===curThr;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   $('arm-sub').hidden=curCat!=='armor';$('leg-sub').hidden=curCat!=='mythic';$('myth-sub').hidden=curCat!=='mythic'||curSet!=='mythic';$('scav-sub').hidden=curCat!=='mythic'||curSet!=='scav';$('sam-sub').hidden=curCat!=='mythic'||curSet!=='samurai';$('night-sub').hidden=curCat!=='mythic'||curSet!=='night';
   document.querySelectorAll('#night-sub button').forEach(b=>{const on=b.dataset.night===curNight;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#scav-sub button').forEach(b=>{const on=b.dataset.scav===curScav;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
@@ -9559,7 +9566,7 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='grenades'&&curThr==='cons'?'Consumables. Items you use up in battle. Nothing here yet: consumables are coming soon.':curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
@@ -9569,7 +9576,7 @@ function buildShop(keepFocus){
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
     const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
     ups.forEach(u=>mkItem(list,'mu-'+u.id,u.name,u.desc,{act:()=>marmAct(u)}))});
-  if(curCat==='grenades')Object.entries(NADE).forEach(([k,N])=>mkItem(list,'gr-'+k,k==='fatman'?'Fat Man':k==='jack'?'Jack-in-the-boxes':k==='pandora'?N.plural:N.name+'s',N.desc,{act:()=>nadeBuy(k,1),extra:()=>nadeBuy(k,5),
+  if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>mkItem(list,'gr-'+k,k==='fatman'?'Fat Man':k==='jack'?'Jack-in-the-boxes':k==='pandora'?N.plural:N.name+'s',N.desc,{act:()=>nadeBuy(k,1),extra:()=>nadeBuy(k,5),
     hear:()=>{initAudio();if(k==='horizon'){hzDemo();return}if(k==='pandora'){pdxDemo();return}if(k==='jack'){fx.jackSet();setTimeout(()=>fx.jackTune(0,3),400);setTimeout(()=>{fx.jackPop(0,3);setTimeout(()=>fx.boom(0,3),450)},1700);return}fx.pin();if(k==='fatman'){fx.fall();fx.nuke(2)}else if(k==='incend'){fx.drop(.25);setTimeout(()=>fx.incBurst(),800)}else{fx.drop(.25);(k==='frag'?fx.boom:fx.cryo)(0,1.5,1)}}}));
   if(curCat==='perks')PERKS.forEach(pk=>mkItem(list,'pk-'+pk.id,pk.name,pk.desc,{act:()=>perkAct(pk)}));
   updateShop();
@@ -9596,7 +9603,7 @@ function updateShop(){
     if(!own)setItem('ar-'+a.id,`Price ${a.price} silver`,`Buy for ${a.price}`,`Buy ${a.name} for ${a.price} silver`,P.coins>=a.price,false);
     else if(on)setItem('ar-'+a.id,'Owned · Wearing','Take off',`Wearing ${a.name}. Take it off`,false,true);
     else setItem('ar-'+a.id,'Owned','Wear it',`Wear ${a.name}`,false,false)});
-  if(curCat==='grenades')Object.entries(NADE).forEach(([k,N])=>{const p5=Math.round(N.price*5*.9);
+  if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>{const p5=Math.round(N.price*5*.9);
     setItem('gr-'+k,`You have ${P.gren[k]}`,`Buy 1 for ${N.price}`,`Buy 1 ${N.name} for ${N.price} silver. You have ${P.gren[k]}`,P.coins>=N.price,P.gren[k]>0);
     const x=$('gr-'+k).querySelector('.att');x.innerHTML=`Buy 5 for ${p5}<small>10 percent off</small>`;x.setAttribute('aria-label',`Buy 5 ${N.plural} for ${p5} silver`)});
   if(curCat==='perks')PERKS.forEach(pk=>{const l=P.perk[pk.id],eff=PERKEFF[pk.id](l);
