@@ -507,6 +507,10 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="fogmunch">Brain Fog Bites, enemy munching</button>
     <button class="btn" data-test="fogdaze">Brain Fog Bites, enemy dazed</button>
     <button class="btn" data-test="foggroan">Brain Fog Bites, dazed enemy nearby</button>
+    <button class="btn" data-test="rbthrow">Rubik's Cube, tossing a cube and landing</button>
+    <button class="btn" data-test="rbtwist">Rubik's Cube, zombies twisting it</button>
+    <button class="btn" data-test="rbspike">Rubik's Cube, twisting with Spiked Tiles</button>
+    <button class="btn" data-test="rbsolve">Rubik's Cube, solved</button>
     <button class="btn" data-test="mdcharge">Medusa's Head, charging all three levels</button>
     <button class="btn" data-test="mdblast">Medusa's Head, petrifying wave</button>
     <button class="btn" data-test="mdstone">Enemy turned to stone</button>
@@ -603,7 +607,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-cat="grenades">Grenades</button>
     <button data-cat="perks">Perks</button>
     <button data-cat="armor">Body armor</button>
-    <button data-cat="std">Standard weapons<small>Pistols, submachine guns, rifles, light machine guns, sniper rifles, shotguns, AOE weapons and high tech weapons</small></button>
+    <button data-cat="std">Standard weapons<small>Pistols, submachine guns, rifles, light machine guns, sniper rifles, shotguns, AOE weapons, high tech weapons and toys</small></button>
     <button data-cat="secret" hidden>Gifts<small>Special items from the developer</small></button>
     <button data-cat="mythic">Legendary<small>Sets of legendary weapons</small></button>
   </div>
@@ -616,6 +620,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-std="shotgun">Shotguns</button>
     <button data-std="launcher">AOE weapons</button>
     <button data-std="hightech">High tech weapons</button>
+    <button data-std="toy">Toys</button>
   </div>
   <div class="seg" id="leg-sub" role="group" aria-label="Legendary set" hidden>
     <button data-set="mythic">Mythical<small>Rifles, sniper rifles, submachine guns, shotguns, AOE weapons and heavy weapons</small></button>
@@ -1619,6 +1624,7 @@ function gunSound(w,n=1,side=-1){
   if(w.id==='quasar'){quasarRun(gunDest(0));return}
   if(w.ra){raPreview(gunDest(0));return}
   if(w.teddy){tdPreview(gunDest(0));return}
+  if(w.rubik){fx.rbThrow();setTimeout(()=>{if(ctx)fx.rbLand(0,9)},550);return}
   if(w.fog){fx.bagThrow();setTimeout(()=>{if(ctx)fx.snackLand(0,9)},550);return}
   if(w.id==='symbiote'){symShot(gunDest(0),n,w.barrel);return}
   if(w.id==='rivet'){if(w.buzz){rivetBuzz(w.buzz,w.sil);return}const d=gunDest(0);if(w.sil)d.gain.value=.55;for(let i=0;i<n;i++)rivetShot(d,w.odLvl||0);return}
@@ -2232,6 +2238,8 @@ const WPN=[
    traits:'Mythical heavy sniper rifle that fires a collapsing star. Every round hits for 900, and wherever it lands the star goes supernova: a huge blast hits every other enemy within 10 feet of the one you hit for 250 and throws them. One shot every 2 seconds, 5 rounds, 3 second reload. Never loses damage to distance. Takes only its own upgrades: Singularity implosion or Chain reaction, one at a time.'},
   {id:'fog',rng:0,name:'Brain Fog Bites',short:'SNACKS',mag:3,dmg:0,cone:15,cd:1,reload:0,shots:1,fog:true,price:35000,
    traits:'Mythical treat. A crinkly bag of snacks that reads Brain Fog Bites, with Medical THC 20 percent underneath. Press Fire to throw a handful of 10 snacks. They land in a small pile at the nearest enemy you are facing, up to 40 feet away, or 40 feet straight ahead if nothing is that close. Enemies nearby go for the pile and eat. A regular enemy is dazed after 1 snack, a mini boss after 5, a boss after 15 and the Ancient One after 50. A dazed enemy stays dazed until it dies: it wanders about and never attacks. Leftover snacks stay on the ground until the wave ends. You get a fresh bag every wave with 3 handfuls, plus 1 more handful every 5 waves. No damage of its own. Takes only its own special abilities, one at a time: Family Size Bag or Contact high.'},
+  {id:'rubik',rng:0,name:"Rubik's Cube",short:'CUBE',mag:3,dmg:0,cone:15,cd:1,reload:0,shots:1,rubik:true,price:7500,
+   traits:"Toy. A real 3 by 3 Rubik's Cube. Press Fire to toss one to the nearest enemy you are facing, up to 40 feet away, or 40 feet straight ahead if nothing is that close. Up to 4 zombies within 30 feet crowd round it, pick it up together and try to solve it, and they never attack while they work. It takes them a minute and a half. When it is solved, a chime plays, they come back for you, and they never pick up another cube. Kill one and the rest keep working, and another enemy can take its place. A boss or mini boss takes a cube all to itself, with nobody else allowed to join, and the Ancient One solves it in 45 seconds. You have 3 cubes out at a time, and each one comes back to you once it is solved. No damage of its own. Takes only its own upgrades: Puzzle Party and Spiked Tiles."},
   {id:'teddy',rng:0,name:'Unbearable Buddy',short:'BUDDY',mag:10,dmg:5,cone:10,cd:.05,reload:2.2,shots:1,teddy:true,price:40000,
    traits:'Mythical toy. A fluffy teddy bear you hold in both hands, with a laser in each eye. Hold Fire and both eyes pour out a constant laser beam at the nearest enemy you are facing, 5 damage a second, out to 100 feet with no falloff. A fresh battery runs the lasers for 10 seconds of firing. When it goes flat the lasers cut out and you push a new battery into the back of the bear\'s head, and Unbearable Buddy lets you know when it is ready. Takes only its own upgrades: Higher capacity batteries, High beams, and the special ability Blinding love.'},
   {id:'hypno',rng:26,name:'Hypno-rifle',short:'HYPNO',mag:30,dmg:7,cone:15,cd:.1,reload:2,shots:1,hypno:true,price:45000,
@@ -2477,6 +2485,8 @@ const ATT=[
   {id:'nvchain',name:'Chain reaction',price:30000,for:'nova',grp:'special',alt:'novasp',desc:()=>'Special ability. Every enemy the supernova reaches goes supernova too, blasting everyone within 10 feet of it, and so on through the whole crowd. Each enemy explodes only once per shot, and each step of the chain is 15 percent weaker than the one before: 250, then 212, 180, 153 and on down. It all goes off at once, then a voice tells you how many blew up. Use Singularity implosion or Chain reaction, not both.'},
   {id:'fogfam',name:'Family Size Bag',price:15000,for:'fog',grp:'special',alt:'fogsp',desc:()=>'Special ability. A much bigger bag. Every handful is 20 snacks instead of 10, so one throw can daze a whole pack. Cannot be used together with Contact high.'},
   {id:'fogcontact',name:'Contact high',price:15000,for:'fog',grp:'special',alt:'fogsp',desc:()=>'Special ability. The daze rubs off. Whenever an enemy that is not dazed comes within 5 feet of a dazed one, there is a 50 percent chance it gets dazed too. Each dazed enemy gets one try on each enemy that comes near it, so a crowd can catch it from several. For mini bosses, bosses and the Ancient One, each catch counts as one snack. Cannot be used together with Family Size Bag.'},
+  {id:'rbparty',name:'Puzzle Party',price:3000,for:'rubik',grp:'mag',desc:()=>'A whole box of cubes. You can have 5 cubes out at once instead of 3.'},
+  {id:'rbspike',name:'Spiked Tiles',price:5000,for:'rubik',grp:'special',desc:()=>'Tiny needles hidden in the tiles prick every finger that twists them. Every enemy working on one of your cubes takes 1 damage a second for as long as it keeps solving. You hear a faint sharp prick with each twist.'},
   {id:'tdbatt',name:'Higher capacity batteries',price:8000,for:'teddy',grp:'mag',desc:()=>'Bigger batteries in the back of the bear\'s head. Each one runs the lasers for 20 seconds of firing instead of 10.'},
   {id:'tdbeam',name:'High beams',price:12000,for:'teddy',grp:'ammo',desc:()=>'Turns both eye lasers up to full brightness. 10 damage a second instead of 5.'},
   {id:'tdlove',name:'Blinding love',price:25000,for:'teddy',grp:'special',desc:()=>'Special ability. For every second you fire, there is a 10 percent chance the enemy in the beam is blinded by love before the laser hurts it, so it can never die before it falls in love. That is about one enemy for every 10 seconds of firing. A lovestruck enemy forgets all about you and wanders around with no goal for 30 seconds, never attacking, with a soft heartbeat so you can hear where it is. The lasers pass over it while it is lovestruck, but your other weapons can still hit it. Mini bosses can be blinded, bosses cannot. Does not work in Tutorial/practice or Co-op.'},
@@ -2661,7 +2671,7 @@ const ATT=[
 ];
 const ATTBY=Object.fromEntries(ATT.map(a=>[a.id,a]));
 const LNCH=['m79','mgl','xm25','rpg7','javelin','flash'];
-const OWNUP=[...LNCH,...FLAMES,'gaussr','zeliska','getwell','vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble','mjolnir','zeus','nova','micro','hypno','soul','medusa','teddy','fog',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
+const OWNUP=[...LNCH,...FLAMES,'gaussr','zeliska','getwell','vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble','mjolnir','zeus','nova','micro','hypno','soul','medusa','teddy','fog','rubik',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
 const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||((w.id==='symbiote'||w.id==='hades')&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
@@ -2701,6 +2711,7 @@ function build(w){
   if(w.id==='jackfrost'){b.mag=has('jfmag3')?30:has('jfmag2')?20:has('jfmag1')?15:10;b.reload=w.reload*(has('jffast2')?.45:has('jffast1')?.7:1);b.frag=has('jffrag');b.blizz=has('jfblizz')}
   if(w.id==='nova'){b.sing=has('nvsing');b.chainRx=has('nvchain')}
   if(w.id==='hypno'){b.mag=has('hymag2')?60:has('hymag1')?45:30;b.reload=w.reload*(has('hystrip')?.6:1);b.contag=has('hycontag');b.hive=has('hyhive')}
+  if(w.id==='rubik'){b.mag=has('rbparty')?5:3;b.spike=has('rbspike')}
   if(w.id==='fog'){b.fogN=has('fogfam')?20:10;b.contact=has('fogcontact')}
   if(w.id==='teddy'){b.mag=has('tdbatt')?20:10;b.tdDps=has('tdbeam')?10:5;b.love=has('tdlove')}
   if(w.id==='tetra'){b.barrel=has('tpbarrel');b.dmg=w.dmg*(b.barrel?2:1);b.crysCh=has('tpspy')?.24:.15;b.mag=has('tpmag2')?30:has('tpmag1')?20:10;
@@ -3108,7 +3119,7 @@ function reqText(it){const p=[];it=it||{};if(it.silver)p.push(`${it.silver} silv
 function fillReq(){
   const opt=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o};
   const ws=$('req-w');ws.textContent='';ws.appendChild(opt('','No weapon'));
-  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',launcher:'AOE weapons',hightech:'High tech weapons',mythic:'Legendary weapons'};
+  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',launcher:'AOE weapons',hightech:'High tech weapons',toy:'Toys',mythic:'Legendary weapons'};
   Object.keys(WCAT).forEach(c=>{const ids=WCAT[c].filter(i=>!P.owned.includes(i));if(!ids.length)return;const g=document.createElement('optgroup');g.label=CN[c]||c;ids.forEach(i=>g.appendChild(opt(i,WBY[i].name)));ws.appendChild(g)});
   const as=$('req-a');as.textContent='';as.appendChild(opt('','No armor'));ARMOR.filter(a=>!P.armor.own.includes(a.id)).forEach(a=>as.appendChild(opt(a.id,a.name)));
   const gs=$('req-g');gs.textContent='';gs.appendChild(opt('','No grenades'));NTYPES.forEach(k=>gs.appendChild(opt(k,NADE[k].plural[0].toUpperCase()+NADE[k].plural.slice(1))));
@@ -3154,7 +3165,7 @@ function fillFb(){
   const sel=$('fb-topic'),keep=sel.value;sel.textContent='';
   const opt=(v,t,par)=>{const o=document.createElement('option');o.value=v;o.textContent=t;(par||sel).appendChild(o)};
   opt('General','General feedback');
-  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',launcher:'AOE weapons',hightech:'High tech weapons',mythic:'Legendary weapons'};
+  const CN={pistol:'Pistols',smg:'Submachine guns',rifle:'Rifles',lmg:'Light machine guns',sniper:'Sniper rifles',shotgun:'Shotguns',launcher:'AOE weapons',hightech:'High tech weapons',toy:'Toys',mythic:'Legendary weapons'};
   Object.keys(WCAT).forEach(c=>{const g=document.createElement('optgroup');g.label=CN[c]||c;WCAT[c].forEach(i=>opt('Weapon: '+WBY[i].name,WBY[i].name,g));sel.appendChild(g)});
   const g=document.createElement('optgroup');g.label='Other';
   [['Armor','Armor'],['Grenades','Grenades'],['Enemies and bosses','Enemies and bosses'],['Maps and modes','Maps and modes'],['Sounds','Sounds and audio cues'],['Menus and controls','Menus, controls and VoiceOver'],['Bug','Something is broken (a bug)']].forEach(([v,t])=>opt(v,t,g));
@@ -3275,7 +3286,7 @@ const memeType=w=>w%2===1?'goblin':'clown';
 const hallSpeed=w=>Math.min(2,.8+.05*(w-1));
 const zIntro=()=>`${G.toSpawn} ${G.zg?(G.toSpawn>1?'giant zombies':'giant zombie'):'zombies'}`;
 function startWave(){
-  G.pools=[];G.snk=[];G.lo.forEach((w,i)=>{if(w.fog)G.ammo[i][0]=fogMax()});   // Brain Fog Bites: leftover snacks go, and a fresh bag
+  G.pools=[];G.snk=[];G.lo.forEach((w,i)=>{if(w.fog)G.ammo[i][0]=fogMax()});G.rbc=[];G.lo.forEach((w,i)=>{if(w.rubik)G.ammo[i][0]=w.mag});   // Brain Fog Bites: leftover snacks go, and a fresh bag
   if(G.statues&&G.statues.length){const n=G.statues.length;G.statues=[];setTimeout(()=>{if(ctx)fx.crumble(n)},1200)}
   const w=G.wave,end=G.mode==='endless',sym='';
   G.toldShop=0;G.waitWave=false;if(G.coop==='host')coopSend({t:'wv',w});   // co-op: the guest starts each wave when the host does
@@ -3309,7 +3320,7 @@ function zPack(n){
 function zPackTick(dt){
   if(G.mode!=='zombies'||!G.win||G.coop==='guest')return;
   const P={};
-  for(const e of G.enemies){e.pkS=1;if(!e.pk||e.hp<=0||e.inside||e.rdb||e.pinG||e.loveT>0||e.fog||e.snkP)continue;
+  for(const e of G.enemies){e.pkS=1;if(!e.pk||e.hp<=0||e.inside||e.rdb||e.pinG||e.loveT>0||e.fog||e.snkP||e.rbC)continue;
     const p=P[e.pk]||(P[e.pk]={id:e.pk,win:e.win,front:1e9,back:0,off:0,m:[]});
     p.m.push(e);p.front=Math.min(p.front,e.dist);p.back=Math.max(p.back,e.dist);p.off+=norm(e.angle-G.win[e.win].a)}
   const ps=Object.values(P);ps.forEach(p=>p.off/=p.m.length);
@@ -3392,6 +3403,7 @@ function fire(){
   if(G.lo[G.w].ra){raTrigger();return}
   if(G.lo[G.w].teddy){teddyTrigger();return}
   if(G.lo[G.w].fog){fogThrow(G.lo[G.w]);return}
+  if(G.lo[G.w].rubik){rbThrow(G.lo[G.w]);return}
   if(G.lo[G.w].bubble){bubFire(G.lo[G.w]);return}
   if(G.lo[G.w].boomer){boomThrow(G.lo[G.w]);return}
   if(G.lo[G.w].kbat){kbSwing(G.lo[G.w]);return}
@@ -4266,6 +4278,112 @@ function teddyTrigger(){const wi=G.w,A=G.ammo[wi];
   if(G.jobs.some(j=>j.wi===wi)){G.cd=.1;return}   // a battery is going in
   if(A[0]<=0){fx.click();G.cd=.3;startReload(wi,0);rSay('Battery flat. Changing batteries.');return}
   G.tdRun=.3;G.cd=.05}
+/* Rubik's Cube (standard weapon, Toys): Fire throws a cube to the nearest enemy you are facing within RB_RF feet, or RB_RF
+   feet straight ahead. Up to RB_CAP regular enemies within RB_PULLF feet crowd round a cube, pick it up together and work on
+   it for RB_T seconds, never attacking. A boss, mini boss or mega boss takes a cube all to itself, and nobody else can join;
+   the Ancient One solves it in RB_ANC seconds. The clock runs while anyone is working on it. Kill a solver and the rest
+   carry on, and another enemy can take the free spot. When it is solved, a chime plays, the cube is gone and they come for
+   you again; an enemy that has solved a cube never picks up another. 3 cubes out at once (5 with Puzzle Party): a solved
+   cube comes back to you. Spiked Tiles: RB_SPIKE damage a second to everyone working on a cube. Every wave starts with all
+   cubes back in hand. Not in Tutorial/practice or Co-op, like Brain Fog Bites. */
+const RB_RF=40,RB_R=RB_RF/3.281,RB_PULLF=30,RB_PULL=RB_PULLF/3.281,RB_CAP=4,RB_T=90,RB_ANC=45,RB_SPIKE=1,RB_NEAR=.55;
+const rbBig=e=>!!(e.mega||EN[e.type].boss||EN[e.type].mini);
+Object.assign(fx,{
+  rbThrow(){if(!ctx)return;const d=gunDest(0);
+    for(let i=0;i<5;i++)noise(d,{dur:.012,vol:.35,type:'bandpass',f:2800+Math.random()*900,q:5,at:i*.035,attack:.001});
+    noise(d,{dur:.3,vol:.2,type:'bandpass',f:700,f2:2200,q:.8,at:.15,attack:.05})},
+  rbLand(rel,dist,at=0){const d=out(rel,dist,1,gunBus);
+    [0,.11,.19,.25].forEach((t,i)=>{noise(d,{dur:.018,vol:.5-i*.08,type:'bandpass',f:2400+Math.random()*1200,q:4,at:at+t,attack:.001});
+      tone(d,{type:'square',f:1500-i*120,f2:1300-i*120,dur:.03,vol:.06,at:at+t})});
+    noise(d,{dur:.08,vol:.25,type:'lowpass',f:700,f2:250,at,attack:.002})},
+  rbTwist(rel,dist,at=0,spike=false){const d=out(rel,dist,.75,enBus);
+    noise(d,{dur:.014,vol:.42,type:'bandpass',f:3100+Math.random()*700,q:6,at,attack:.001});
+    noise(d,{dur:.05,vol:.16,type:'bandpass',f:1500,f2:2400,q:2,at:at+.012,attack:.004});
+    noise(d,{dur:.012,vol:.36,type:'bandpass',f:2600+Math.random()*600,q:6,at:at+.07,attack:.001});
+    if(spike)tone(d,{type:'sine',f:4200,f2:3600,dur:.05,vol:.05,at:at+.03,attack:.002})},
+  rbPick(rel,dist,at=0){const d=out(rel,dist,.9,enBus);[0,.08,.16].forEach(t=>noise(d,{dur:.015,vol:.35,type:'bandpass',f:2200,q:5,at:at+t,attack:.001}))},
+  rbSolved(rel,dist,at=0){const d=out(rel,dist,1,gunBus);
+    [880,1109,1319,1760].forEach((f,i)=>tone(d,{type:'sine',f,dur:.5-i*.06,vol:.17,at:at+i*.11,attack:.01}));
+    tone(d,{type:'triangle',f:2637,dur:.6,vol:.07,at:at+.45,attack:.02})}
+});
+function rbCubeWi(){return G.lo.findIndex(w=>w.rubik)}
+function rbSync(){const wi=rbCubeWi();if(wi<0)return;const w=G.lo[wi];G.ammo[wi][0]=Math.max(0,w.mag-(G.rbc||[]).length)}
+function rbThrow(w){const wi=G.w,A=G.ammo[wi];
+  if(G.coop||G.mode==='practice'){fx.click();G.cd=.5;say(`The Rubik's Cube does not work in ${G.coop?'Co-op':'Tutorial/practice'}.`);return}
+  G.rbc=G.rbc||[];rbSync();
+  if(A[0]<=0){fx.click();G.cd=.6;say(`All ${w.mag} cubes are out. A cube comes back when it is solved.`);return}
+  G.cd=w.cd;G.rbThrowT=.45;
+  const tgt=G.enemies.filter(e=>e.hp>0&&!e.fog&&!e.hz&&!(e.hb>0)&&Math.abs(norm(e.angle-G.heading))<=w.cone&&e.dist<=RB_R).sort((a,b)=>a.dist-b.dist)[0];
+  const angle=tgt?tgt.angle:G.heading,dist=tgt?tgt.dist:RB_R,T=.3+dist*3.281*.012;
+  G.rbc.push({angle,dist,fly:T,T,id:(G.rbId=(G.rbId||0)+1),who:[],boss:false,full:0,left:0,cue:.3,on:false,spin:Math.random()*6});
+  rbSync();fx.rbThrow();hud();
+  if(A[0]<=1)(g=>setTimeout(()=>{if(G===g&&!G.over)say(A[0]?'One cube left.':'No cubes left in hand.')},400))(G)}
+/* heading for a cube with room, or working on it. true while busy with a cube */
+function rbSeek(e,t,rel,slow,dt){
+  if(e.pinG||e.bub||e.rdb||e.hz||(e.crysT>0)||e.crys||e.rbDone)return false;
+  const big=rbBig(e);
+  let q=e.rbC&&G.rbc.includes(e.rbC)&&e.rbC.fly<=0?e.rbC:null;
+  const[x,y]=xy(e.angle,e.dist);
+  if(!q){e.rbC=null;e.rbOn=false;let best=RB_PULL;
+    for(const c of G.rbc){if(c.fly>0)continue;if(G.win&&e.win!=null&&(c.dist<ZWIN)!==!!e.inside)continue;
+      if(big?c.who.length:(c.boss||c.who.length>=RB_CAP))continue;
+      const[cx,cy]=xy(c.angle,c.dist),d=Math.hypot(cx-x,cy-y);if(d<best){best=d;q=c}}
+    if(!q)return false;
+    q.who.push(e);e.rbC=q;if(big)q.boss=true;
+    if(!q.full){q.full=e.type==='zancient'?RB_ANC:RB_T;q.left=q.full}}
+  e.engaged=false;e.wind=0;e.charge=0;
+  // everyone stands in their own spot around the cube
+  const slot=Math.max(0,q.who.indexOf(e)),a=(q.id*1.7+slot*Math.PI/2),r=q.boss?.25:.42;
+  const[cx,cy]=xy(q.angle,q.dist),tx=cx+Math.sin(a)*r,ty=cy+Math.cos(a)*r,dx=tx-x,dy=ty-y,d=Math.hypot(dx,dy);
+  if(d>RB_NEAR*.5){const st=Math.min(d,t.speed*S.diff*slow*(e.sm||1)*1.15*dt);hypSet(e,x+dx/d*st,y+dy/d*st)}
+  const was=e.rbOn;e.rbOn=Math.hypot(cx-x,cy-y)<=RB_NEAR+r;
+  if(e.rbOn&&!was){if(!q.on){q.on=true;fx.rbPick(rel,e.dist);
+      if(!killQuiet()&&(q.boss||!(G.rbSayT>performance.now()))){G.rbSayT=performance.now()+3000;
+        say(q.boss?`${e.mega?'Mega ':''}${t.name} is solving a Rubik's Cube! ${clock(rel)}, ${Math.ceil(q.left)} seconds.`:`Zombies picked up a cube, ${clock(rel)}.`)}}}
+  e.cue-=dt;if(e.cue<=0){if(cryOk(t)&&Math.random()<.35)CRY[e.type](out(rel,e.dist,.6,enBus,zKind(e.type)));e.cue=4+Math.random()*3}
+  return true}
+function rbTick(dt){
+  if(G.rbThrowT>0)G.rbThrowT-=dt;
+  if(!G.rbc||!G.rbc.length)return;
+  let kills=false;const w=G.lo.find(x=>x.rubik),spike=!!(w&&w.spike);
+  for(const c of G.rbc){
+    if(c.fly>0){c.fly-=dt;if(c.fly<=0){c.fly=0;fx.rbLand(norm(c.angle-G.heading),c.dist)}continue}
+    c.who=c.who.filter(e=>{const ok=e.hp>0&&e.rbC===c&&G.enemies.includes(e)&&!e.fog&&!(e.loveT>0)&&!e.hyp;if(!ok&&e.rbC===c){e.rbC=null;e.rbOn=false}return ok});
+    if(!c.who.length){c.boss=false;if(c.left===c.full)c.full=0}   // nobody left: free for anyone, and an untouched cube starts fresh
+    const work=c.who.filter(e=>e.rbOn);if(!work.length)continue;
+    c.left-=dt;c.cue-=dt;
+    const rel=norm(c.angle-G.heading);
+    if(c.cue<=0){c.cue=.28+Math.random()*.25;fx.rbTwist(rel,c.dist,0,spike)}
+    if(spike)work.forEach(e=>{e.hp-=RB_SPIKE*dt;if(e.hp<=0){e.rbKill=true;kills=true;fx.kill(norm(e.angle-G.heading),e.dist,0,e.type)}});
+    if(c.left<=0){c.done=true;fx.rbSolved(rel,c.dist);vib(30);
+      const n=c.who.filter(e=>e.hp>0).length;c.who.forEach(e=>{e.rbC=null;e.rbOn=false;e.rbDone=true});
+      if(!killQuiet())say(`Cube solved, ${clock(rel)}! ${n===1?'One enemy is':n+' enemies are'} coming back for you. Cube back in hand.`)}}
+  G.rbc=G.rbc.filter(c=>!c.done);rbSync();
+  if(kills)processDead('rubik')}
+function rbWords(){const n=G&&G.rbc?G.rbc.reduce((s,c)=>s+c.who.filter(e=>e.hp>0&&e.rbOn).length,0):0;return n?`${n} ${n===1?'enemy':'enemies'} solving cubes. `:''}
+/* draws one Rubik's Cube from three faces, with its front corner at (x,y) and edge length s, in screen pixels */
+const RB_COL=['#f4f4f4','#ffd500','#c41e3a','#ff5800','#0051ba','#009e60'];
+function rbIso(c,x,y,s,seed){
+  const u1=[s*.87,-s*.5],u2=[-s*.87,-s*.5],up=[0,-s],B=[x,y],T=[x,y-s];
+  const face=(o,u,v,f)=>{c.fillStyle='#111';c.beginPath();c.moveTo(o[0],o[1]);c.lineTo(o[0]+u[0],o[1]+u[1]);c.lineTo(o[0]+u[0]+v[0],o[1]+u[1]+v[1]);c.lineTo(o[0]+v[0],o[1]+v[1]);c.closePath();c.fill();
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++){const k=(seed*7+f*11+i*5+j*3+i*j)%9,col=RB_COL[k<4?f:(f+k)%6],g=.08;
+      const p=(a,b)=>[o[0]+u[0]*a+v[0]*b,o[1]+u[1]*a+v[1]*b],a0=(i+g)/3,a1=(i+1-g)/3,b0=(j+g)/3,b1=(j+1-g)/3;
+      const q=[p(a0,b0),p(a1,b0),p(a1,b1),p(a0,b1)];c.fillStyle=col;c.beginPath();c.moveTo(q[0][0],q[0][1]);for(let n=1;n<4;n++)c.lineTo(q[n][0],q[n][1]);c.closePath();c.fill()}};
+  face(B,u2,up,2);face(B,u1,up,4);face(T,u1,u2,0)}
+/* the picture: cubes on the ground or in the air, and a cube held in your hand at the bottom */
+function rbDraw(c,W,H,X0,Y0,P){
+  const o=[0,0,0];
+  if(G.rbc&&G.rbc.length){c.save();
+    for(const q of G.rbc){const[px,pz]=xy(q.angle,q.dist);let x=px,y=.03,z=pz;
+      if(q.fly>0){const s=1-q.fly/q.T,[sx,sz]=xy(G.heading,.7);x=sx+(px-sx)*s;z=sz+(pz-sz)*s;y=1.3*(1-s)+.03+2.2*Math.sin(Math.PI*s)}
+      else if(q.on)y=.9;   // held up by the zombies working on it
+      if(P(x,y,z,o)){const sz=Math.max(5,.11*W/o[2]);rbIso(c,o[0],o[1]+sz*.5,sz,q.id)}}
+    c.restore()}
+  const w=G.lo[G.w];if(!w||!w.rubik)return;
+  const R=Math.min(W*.13,H*.15),th=G.rbThrowT>0?G.rbThrowT/.45:0,lift=Math.sin(th*Math.PI)*R*.6;
+  c.save();c.fillStyle='#d9a77c';c.beginPath();c.ellipse(X0+R*.15,H-R*.35-lift,R*.95,R*.55,-.2,0,Math.PI*2);c.fill();   // your palm under the cube
+  if(G.ammo[G.w][0]>0||th>0)rbIso(c,X0,H-R*.45-lift,R*.75,7);
+  c.restore()}
 const loveOk=e=>e&&e.hp>0&&!e.fog&&!EN[e.type].boss&&!e.mega&&!(e.hb>0)&&!e.bub&&!e.hz&&!e.rdb&&!(e.crysT>0)&&!e.crys&&!e.tutT&&!(e.loveT>0)&&!G.coop&&G.mode!=='practice';
 function loveHearts(e,n){if(!rdOn())return;const[x,z]=xy(e.angle,e.dist);
   for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=.3+Math.random()*.7;RD.flash.push({heart:1,x,y:1.9,z,vx:Math.sin(a)*v,vy:.8+Math.random()*1,vz:Math.cos(a)*v,s:.16+Math.random()*.12,t:0,T:1.1+Math.random()*.6,fade:1,c:Math.random()<.5?'255,90,160':'255,40,110'})}}
@@ -5072,7 +5190,7 @@ Object.assign(fx,{
   rEmpty(){if(!ctx)return;const d=uiBus;tone(d,{type:'triangle',f:560,dur:.08,vol:.4,attack:.003});tone(d,{type:'triangle',f:370,dur:.12,vol:.4,at:.1,attack:.003})},
   rReady(){if(!ctx)return;const d=uiBus;tone(d,{type:'triangle',f:440,dur:.07,vol:.4,attack:.003});tone(d,{type:'triangle',f:660,dur:.13,vol:.42,at:.09,attack:.003})}});
 function rSay(t,ready){if(S.rcall==='cue'){ready?fx.rReady():fx.rEmpty();$('feed').textContent=t;return}say(t)}
-function startReload(wi,side){const w=G.lo[wi];if(w.fog)return;   // the snack bag is never reloaded, a fresh one comes every wave
+function startReload(wi,side){const w=G.lo[wi];if(w.fog||w.rubik)return;   // the snack bag is never reloaded, a fresh one comes every wave
 if(w.teddy){loadTeddyRec();G.tdOn=false}
   if(w.shell){const per=Math.max(.2,w.shell*(G.pk&&G.pk.quick?.5:1)*ringReload());G.jobs.push({wi,side,shell:true,per,left:per,total:per,i:0,ev:[],pan:0});return}if(w.vent&&G.heat&&G.heat[wi]){heatVent(G.heat[wi]);G.heat[wi]=0}
   if(w.blizz&&!(G.blizzT>0))blizzard();const rt=w.reload*(G.pk&&G.pk.quick?.5:1)*ringReload();if(SMG_PITCH[w.id])loadSmgRec();if(SG_PITCH[w.id])loadSgRec();const rk=RKIND[w.id];G.jobs.push({wi,side,total:rt,left:rt,i:0,ev:SMG_PITCH[w.id]&&smgBuf?smgReloadEv(rt):SG_PITCH[w.id]&&sgBuf&&['shells','twin','break'].includes(rk)?sgReloadEv(w.id,rk):(RSEQ[rk]||RSEQ.hand),pan:w.akimbo?(side?.45:-.45):0})}
@@ -5084,11 +5202,12 @@ function blizzard(){const r=40/3.281;G.blizzT=10;fx.blizzard();vib(250);let c=0;
 function heatVent(n){const f=n>=3?25:n===2?15:7,r=f/3.281;fx.ventBlast(f);vib(60);let c=0;rdBlast(0,0,r,4,{c:'255,120,40'});
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;e.fireT=5;e.fireDps=Math.max(e.fireDps||0,20);e.fireSrc='jet';c++;fx.burn(norm(e.angle-G.heading),e.dist,.15)});
   const msg=`Heat vent, ${f} feet. ${c?c+(c>1?' enemies':' enemy')+' burning.':'Nothing in range.'}`;(g=>setTimeout(()=>{if(G===g&&!G.over)say(msg)},400))(G)}
-function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.flame)return `${n1(A[0])} of ${n1(w.mag)} seconds of fuel`;if(w.gaussr&&G.gs)return `charging, ${Math.round(G.gs.p*100)} percent, ${A[0]} of ${w.mag} rounds`;if(w.medusa){const s=mdSouls(),L=mdLvlFor(s);return G.md?`charging, level ${G.md.lv}, ${s} souls`:`${s} souls, ${L?`enough for level ${L}, ${MD_FT[L]} feet${L<3?`. Level ${L+1} needs ${MD_COST[L+1]}`:''}`:`level 1 needs ${MD_COST[1]}`}`}if(w.mjol)return G.mj?'Mjölnir is out':'Mjölnir in hand';if(w.soul)return G.sb?`charging, ${Math.round(sbFt(G.sb.p))} feet, ${Math.round(G.sb.spent/G.maxhp*100)} percent of your health`:G.sbCd>0?'gathering souls':'ready';if(w.zeus)return G.zCd>0?'forging a new bolt':G.zc?`charging, ${Math.round(G.zc.p*100)} percent`:'bolt ready';if(w.heatT&&G.ovh&&G.ovh[w.id]>0)return `changing the barrel, ${Math.ceil(G.ovh[w.id])} seconds, ${A[0]} of ${w.mag} rounds`;if(w.kbat){const n=(G.kb||[]).length;return n?`${n} ${n>1?'baseballs':'baseball'} in play`:'no baseballs in play'}if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.katana||w.scythe)return 'blade ready';if(w.bubble){const n=(G.bubs||[]).length;return `${n} of ${w.bubMax} bubbles out`}if(w.fog)return `${A[0]} of ${fogMax()} handfuls left in the bag, ${build(w).fogN} snacks each`;if(w.teddy)return G.jobs.some(j=>j.wi===G.w)?'changing batteries':`${Math.ceil(A[0])} of ${w.mag} seconds of battery left`;if(w.ra)return G.raCool>0?`overheated, cooling, ${Math.ceil(G.raCool)} seconds left`:`heat ${Math.round((G.raHeat||0)/RA_DUR*100)} percent`;if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
+function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.flame)return `${n1(A[0])} of ${n1(w.mag)} seconds of fuel`;if(w.gaussr&&G.gs)return `charging, ${Math.round(G.gs.p*100)} percent, ${A[0]} of ${w.mag} rounds`;if(w.medusa){const s=mdSouls(),L=mdLvlFor(s);return G.md?`charging, level ${G.md.lv}, ${s} souls`:`${s} souls, ${L?`enough for level ${L}, ${MD_FT[L]} feet${L<3?`. Level ${L+1} needs ${MD_COST[L+1]}`:''}`:`level 1 needs ${MD_COST[1]}`}`}if(w.mjol)return G.mj?'Mjölnir is out':'Mjölnir in hand';if(w.soul)return G.sb?`charging, ${Math.round(sbFt(G.sb.p))} feet, ${Math.round(G.sb.spent/G.maxhp*100)} percent of your health`:G.sbCd>0?'gathering souls':'ready';if(w.zeus)return G.zCd>0?'forging a new bolt':G.zc?`charging, ${Math.round(G.zc.p*100)} percent`:'bolt ready';if(w.heatT&&G.ovh&&G.ovh[w.id]>0)return `changing the barrel, ${Math.ceil(G.ovh[w.id])} seconds, ${A[0]} of ${w.mag} rounds`;if(w.kbat){const n=(G.kb||[]).length;return n?`${n} ${n>1?'baseballs':'baseball'} in play`:'no baseballs in play'}if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.katana||w.scythe)return 'blade ready';if(w.bubble){const n=(G.bubs||[]).length;return `${n} of ${w.bubMax} bubbles out`}if(w.rubik)return `${A[0]} of ${w.mag} cubes in hand`;if(w.fog)return `${A[0]} of ${fogMax()} handfuls left in the bag, ${build(w).fogN} snacks each`;if(w.teddy)return G.jobs.some(j=>j.wi===G.w)?'changing batteries':`${Math.ceil(A[0])} of ${w.mag} seconds of battery left`;if(w.ra)return G.raCool>0?`overheated, cooling, ${Math.ceil(G.raCool)} seconds left`:`heat ${Math.round((G.raHeat||0)/RA_DUR*100)} percent`;if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
 function reload(){
   if(G&&!G.paused&&!G.over)timeGo();
   if(!G||G.paused||G.over)return;if(G.down){downNag();return}
   const wi=G.w,w=G.lo[wi],A=G.ammo[wi];
+  if(w.rubik){say(`No reloading. ${ammoWords()}. A cube comes back to you when it is solved.`);return}
   if(w.fog){say(`No reloading. ${ammoWords()}. You get a fresh bag at the start of every wave.`);return}
   if(w.bubble){say(`The bubble blaster never needs reloading. ${ammoWords()}.`);return}
   if(w.mjol){say(G.mj?'Mjölnir is still out. It never needs reloading.':'Mjölnir never needs reloading. It is in your hand.');return}
@@ -5488,7 +5607,7 @@ const enPlural=n=>/[^aeiou]y$/.test(n)?n.slice(0,-1)+'ies':/wolf$/.test(n)?n.sli
 function enStates(e){const o=[],add=(one,many)=>o.push([one,many||one]);
   if(e.pinG&&e.pinG.mem.length>1)add(`pinned with ${e.pinG.mem.length-1} other${e.pinG.mem.length>2?'s':''}`,'pinned');
   if(e.crysT>0)add('locked in crystal');else if(e.frozeT>0)add('frozen solid');else if(e.slowT>0)add('frozen');
-  if(e.grav)add('floating upside down');if(e.tiny)add('shrunk');if(e.slomoT>0)add('in slow motion');if(e.stunT>0)add('stunned');if(e.loveT>0)add('blinded by love');if(e.fog)add('dazed');else if(e.snkP)add('eating snacks');if(e.shockT>0)add('shocked');if(e.inf)add('infected');if(e.ice)add(`chilled ${e.ice} of 5`,'chilled');
+  if(e.grav)add('floating upside down');if(e.tiny)add('shrunk');if(e.slomoT>0)add('in slow motion');if(e.stunT>0)add('stunned');if(e.loveT>0)add('blinded by love');if(e.fog)add('dazed');else if(e.snkP)add('eating snacks');if(e.rbC)add(e.rbOn?"solving a Rubik's Cube":"going for a Rubik's Cube");if(e.shockT>0)add('shocked');if(e.inf)add('infected');if(e.ice)add(`chilled ${e.ice} of 5`,'chilled');
   if(e.fireT>0)add('on fire');if(e.acidT>0)add('covered in acid');if(e.bleedT>0)add('bleeding');
   if(e.crawl)add('crawling, no legs','crawling');else if(e.rdOn)add('on its knees','on their knees');if(e.rdb)add('knocked down');return o}
 const enHp=e=>Math.max(1,Math.round(e.hp/e.maxhp*100));
@@ -5812,6 +5931,7 @@ function stepEnemy(e,dt){
     return}
   if(e.fog){fogStep(e,t,rel,slow,dt);return}   // Brain Fog Bites: dazed for good, harmless
   if(e.loveT>0){loveStep(e,t,rel,slow,dt);return}
+  if(G.rbc&&G.rbc.length&&rbSeek(e,t,rel,slow,dt))return;   // Rubik's Cube: going for a cube, or busy solving it
   if(G.snk&&G.snk.length&&fogSeek(e,t,rel,slow,dt))return;   // going for a pile of snacks, or eating   // Unbearable Buddy's Blinding love: wandering with no goal, never attacking
   if(G.hyp&&G.hyp.length&&hypFight(e,t,rel,slow,dt))return;   // busy fighting a hypnotized enemy
   const stop=e.type==='revenant'?8:MELEE,chase=G.mode==='zombies'&&G.zm==='hall'?Math.min(2,(Math.cos(e.angle*Math.PI/180)<0?2.4:1)*hallSpeed(G.wave)):1;   // never faster than double speed, even chasing from behind
@@ -5845,7 +5965,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -5929,7 +6049,7 @@ function step(dt){
   const w=G.lo[G.w];
   const inSight=G.enemies.filter(e=>Math.abs(norm(e.angle-G.heading))<=w.cone).sort((a,b)=>a.dist-b.dist)[0];
   G.lockT-=dt;
-  if(inSight){const head=!w.spread&&!w.lantern&&!w.sonic&&!w.hydra&&!w.hole&&!w.turbine&&!w.ra&&!w.teddy&&!w.fog&&!w.bubble&&!w.mjol&&!w.zeus&&!w.soul&&!w.medusa&&!w.flame&&Math.abs(norm(inSight.angle-G.heading))<=(w.hz||HEADZONE);
+  if(inSight){const head=!w.spread&&!w.lantern&&!w.sonic&&!w.hydra&&!w.hole&&!w.turbine&&!w.ra&&!w.teddy&&!w.fog&&!w.rubik&&!w.bubble&&!w.mjol&&!w.zeus&&!w.soul&&!w.medusa&&!w.flame&&Math.abs(norm(inSight.angle-G.heading))<=(w.hz||HEADZONE);
     if(G.lockE!==inSight){G.lockE=inSight;vib(head?40:20)}
     if(G.lockT<=0){fx.lock(inSight.dist,head);G.lockT=.32}}
   else G.lockE=null;
@@ -6106,7 +6226,7 @@ const RDSZ={zombie:{h:1,w:1,m:1,col:'#86a36f'},zrunner:{h:.97,w:.85,m:.85,col:'#
 const rdSz=t=>RDSZ[t]||RDSZ.zombie;
 // how hard each weapon throws what it kills, in metres a second (heavier zombies move less)
 const RDPOW={m2flame:1.5,fw41:1.5,xm42:1.5,arcflame:1.5,pulsefire:1.5,gaussr1:6,gaussr2:12,gaussr3:20,m79:9,mgl:9,xm25:8,rpg7:14,javelin:16,flash:9,vlad:7,scythe:6,ra:1.5,katana:5,katwave:6,qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
-  jet:24,jackfrost:3,tetra:3,nova:13,micro:30,soul:22,medusa:0,hypno:4,hyp:5,teddy:2,fog:1,getwell:18,boomer:5,kbat:2,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
+  jet:24,jackfrost:3,tetra:3,nova:13,micro:30,soul:22,medusa:0,hypno:4,hyp:5,teddy:2,fog:1,rubik:1,getwell:18,boomer:5,kbat:2,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
   last:12,berserk:2,incend:2,fence:1,barbed:1.5};
 const RD={slash:0,cr:0,crT:0,bodies:[],decals:[],flash:[],voices:[],acc:0,muzzle:0,sb:0,kd:0,kdT:0,lsT:0,winT:0,tmp:new Float32Array(33),c:new Float32Array(3)};
 const rdOn=()=>!!G;   // ragdoll physics and the picture run in every mode now
@@ -8042,6 +8162,7 @@ function rdDraw(){
       c.strokeStyle=lg;c.lineWidth=Math.max(1.5,W/260);c.beginPath();c.moveTo(s0[0],s0[1]);c.lineTo(s1[0],s1[1]);c.stroke();
       const dr=Math.max(2.5,W/150),gd=c.createRadialGradient(s1[0],s1[1],0,s1[0],s1[1],dr*3);gd.addColorStop(0,'rgba(255,90,90,.95)');gd.addColorStop(.35,'rgba(255,30,30,.6)');gd.addColorStop(1,'rgba(255,0,0,0)');
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
+  rbDraw(c,W,H,X0,Y0,P);   // Rubik's Cubes on the ground, in the air, and in your hand
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   gsDraw(c,W,H,X0,Y0);   // the Gauss rifle in your hands
   ftDraw(c,W,H,X0,Y0,P);   // real flamethrowers and their stream of fire
@@ -8061,7 +8182,7 @@ function rdFig(it,P,F,pal){
   let col=b&&b.col||s.col;const now=performance.now();
   if(b&&b.stone)col='#8e8e8e';else if(b&&b.crys)col='#7ff3ff';
   else if(e&&e.hp>0){if(e.rdFl>.05)col='#ffffff';else if(e.fireT>0)col=e.hblue?['#f4f9ff','#2f7bff','#6fb6ff','#9a7bff'][(now/70|0)%4]:(now/90|0)%2?'#ff8a2a':'#ffb347';else if(e.shockT>0)col=(now/70|0)%2?'#ffe14d':s.col;
-    else if(e.slowT>0||e.ice||e.frozeT>0)col='#a9dcff';else if(e.acidT>0)col='#a6e84a';else if(e.hyp)col=(now/350|0)%2?'#c46bff':'#ff6bd8';else if(e.loveT>0)col=(now/450|0)%2?'#ff8cc6':'#ffc4e1';else if(e.fog)col=(now/700|0)%2?'#9fd46a':'#b9a2f0'}
+    else if(e.slowT>0||e.ice||e.frozeT>0)col='#a9dcff';else if(e.acidT>0)col='#a6e84a';else if(e.hyp)col=(now/350|0)%2?'#c46bff':'#ff6bd8';else if(e.loveT>0)col=(now/450|0)%2?'#ff8cc6':'#ffc4e1';else if(e.fog)col=(now/700|0)%2?'#9fd46a':'#b9a2f0';else if(e.rbOn)col=(now/500|0)%2?'#ffd500':'#0051ba'}
   else if(b&&b.dead&&!b.shard)col=rdShade(col,.62);
   const fog=S.zfog?Math.max(0,Math.min(1,1-(it.d-FOG_A)/(FOG_B-FOG_A))):Math.max(.35,Math.min(1,1-(it.d-18)/30));if(fog<=.01)return;let al=fog;if(b&&b.fade>0&&b.fade<2)al*=Math.min(1,b.fade/(b.shard?1.6:2));
   c.globalAlpha=al;c.strokeStyle=col;c.fillStyle=col;c.lineCap='round';
@@ -8144,7 +8265,7 @@ function hud(){
   if(!G.down){$('v-hp').textContent=Math.max(0,Math.ceil(G.hp));$('hud-hp').classList.toggle('hp-low',G.hp<G.maxhp*.3);$('hud-hp').firstElementChild.textContent='Health'}   // while down, the box shows your teammate's health
   {const mc=$('mc-gun');if(mc)mc.hidden=!w.micro}
   {const gc=$('gw-card');if(gc){gc.hidden=!w.msg;if(w.msg&&gc.dataset.m!==w.msg){gc.dataset.m=w.msg;const i=w.msg.indexOf(',');$('gw-t').textContent=i>0?w.msg.slice(0,i+1):w.msg;$('gw-n').textContent=i>0?w.msg.slice(i+1).trim():''}}}
-  $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.flame?(G.jobs.some(j=>j.wi===G.w)?'NEW TANK':`FUEL ${Math.ceil(A[0])} S`):w.gaussr&&G.gs?`CHARGE ${Math.round(G.gs.p*100)}%`:w.medusa?(G.md?`LV ${G.md.lv} ${mdSouls()}`:`${mdSouls()} SOULS`):w.soul?(G.sb?`${Math.round(sbFt(G.sb.p))} FT`:G.sbCd>0?'WAIT':'READY'):w.mjol?(G.mj?'OUT':'READY'):w.zeus?(G.zCd>0?'FORGE':G.zc?`CHARGE ${Math.round(G.zc.p*100)}%`:'READY'):w.heatT&&G.ovh&&G.ovh[w.id]>0?`BARREL ${Math.ceil(G.ovh[w.id])}`:w.kbat?(G.kbCd>0?`WAIT ${Math.ceil(G.kbCd)}`:(G.kb||[]).length?`BALLS ${(G.kb||[]).length}`:'READY'):w.katana||w.scythe?'BLADE':w.boomer?(G.boom?'OUT':'READY'):w.bubble?`OUT ${(G.bubs||[]).length}/${w.bubMax}`:w.fog?`${A[0]}/${fogMax()}`:w.teddy?(G.jobs.some(j=>j.wi===G.w)?'BATTERY':`${Math.ceil(A[0])} S`):w.ra?(G.raCool>0?`COOL ${Math.ceil(G.raCool)}`:`HEAT ${Math.round((G.raHeat||0)/RA_DUR*100)}%`):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
+  $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.flame?(G.jobs.some(j=>j.wi===G.w)?'NEW TANK':`FUEL ${Math.ceil(A[0])} S`):w.gaussr&&G.gs?`CHARGE ${Math.round(G.gs.p*100)}%`:w.medusa?(G.md?`LV ${G.md.lv} ${mdSouls()}`:`${mdSouls()} SOULS`):w.soul?(G.sb?`${Math.round(sbFt(G.sb.p))} FT`:G.sbCd>0?'WAIT':'READY'):w.mjol?(G.mj?'OUT':'READY'):w.zeus?(G.zCd>0?'FORGE':G.zc?`CHARGE ${Math.round(G.zc.p*100)}%`:'READY'):w.heatT&&G.ovh&&G.ovh[w.id]>0?`BARREL ${Math.ceil(G.ovh[w.id])}`:w.kbat?(G.kbCd>0?`WAIT ${Math.ceil(G.kbCd)}`:(G.kb||[]).length?`BALLS ${(G.kb||[]).length}`:'READY'):w.katana||w.scythe?'BLADE':w.boomer?(G.boom?'OUT':'READY'):w.bubble?`OUT ${(G.bubs||[]).length}/${w.bubMax}`:w.rubik?`CUBES ${A[0]}/${w.mag}`:w.fog?`${A[0]}/${fogMax()}`:w.teddy?(G.jobs.some(j=>j.wi===G.w)?'BATTERY':`${Math.ceil(A[0])} S`):w.ra?(G.raCool>0?`COOL ${Math.ceil(G.raCool)}`:`HEAT ${Math.round((G.raHeat||0)/RA_DUR*100)}%`):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
   $('v-wave').textContent=G.mode==='practice'?'—':G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'?`${G.wave}`:`${G.wave}/${MAXW}`;$('v-coins').textContent=P.coins;
   const hall=G.mode==='zombies'&&G.zm==='hall';$('v-wave').previousElementSibling.textContent=hall?'Score':'Wave';if(hall)$('v-wave').textContent=hallScore();
 }
@@ -8152,6 +8273,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-rubik',date:'November 19, 2026',title:"New toy: Rubik's Cube",items:[
+    "A new Toys section in the Armory under Standard weapons, with its first toy: the Rubik's Cube, 7,500 silver.",
+    "Press Fire to toss a cube at the nearest enemy you are facing, up to 40 feet away. Up to 4 zombies crowd round it, pick it up and try to solve it for a minute and a half, and never attack while they work. Kill one and the rest keep going. When it is solved, a chime plays and they come back for you.",
+    'A boss or mini boss takes a cube all to itself, and the Ancient One solves it in 45 seconds. You have 3 cubes out at a time, and each one comes back to you once it is solved.',
+    'Upgrades: Puzzle Party, 3,000 silver, lets you have 5 cubes out at once. Spiked Tiles, 5,000 silver, does 1 damage a second to every zombie working on a cube.',
+    'Does not work in Tutorial/practice or Co-op. New Sound check buttons for the cube sounds.']},
   {id:'2026-11-19-goggles',date:'November 19, 2026',title:'New standard wearable: Binocular goggles',items:[
     'Binocular goggles are in the Armory under Armor, then Standard wearables, for 3,500 silver. Submachine guns reach 20 percent farther before their damage falls off, and every other weapon reaches 10 percent farther.',
     'They are eyewear, so you wear either the goggles or the Monocle, not both, alongside up to 2 rings.']},
@@ -9166,7 +9293,7 @@ const WBEST={
   boomer:'Crowds across the front of you. It slices every enemy on its path out and back for 400, and never needs reloading. Wait for it to come back before throwing again.',
   katana:'Enemies that reach you. The blade kills anything within 5 feet instantly, and every swing sends out a purple wave that hits harder the farther it travels, up to 35 feet.',
   quasar:'Surrounded situations. Enemies behind you are sucked in and shredded, and enemies in front are blown away. Bosses are too heavy to be sucked in. Watch the heat, because it overheats if you hold it too long.'};
-const WCATN={hightech:'High tech weapon',launcher:'AOE weapon',pistol:'Pistol',smg:'Submachine gun',rifle:'Assault rifle',lmg:'Machine gun',sniper:'Sniper rifle',shotgun:'Shotgun',mythic:'Mythical or legendary weapon'};
+const WCATN={hightech:'High tech weapon',toy:'Toy',launcher:'AOE weapon',pistol:'Pistol',smg:'Submachine gun',rifle:'Assault rifle',lmg:'Machine gun',sniper:'Sniper rifle',shotgun:'Shotgun',mythic:'Mythical or legendary weapon'};
 const NBEST={frag:'Enemies that have reached you and are attacking. It only reaches 5 feet, so wait until they are close.',
   cryo:'Fast enemies and bosses that have reached you. Slowing them buys time to shoot them or get to cover.',
   incend:'Crowds closing in. Everything within 15 feet burns until it dies, and the ring of fire keeps catching anything else that comes close for 15 seconds.',
@@ -9250,7 +9377,7 @@ function toggleFlock(){if(!G||G.over)return;
   if(isMelee(G.lo[G.w])){fx.click();say('Fire lock does not work with melee weapons.');return}
   setFlock(true);fx.click();vib(30);say('Fire lock on.')}
 function flockLive(){if(!G||!G.flock||G.paused||G.over)return false;const w=G.lo[G.w];
-  if(isMelee(w)||w.fog){setFlock(false);return false}
+  if(isMelee(w)||w.fog||w.rubik){setFlock(false);return false}
   if((w.ra&&G.raCool>0)||(w.turbine&&G.qCool>0)||(w.heatT&&G.ovh&&G.ovh[w.id]>0)){if(!G.flWait){G.flWait=true;say('Overheated. Fire lock will start again when it cools down.')}return false}
   G.flWait=false;return true}
 $('b-flock').addEventListener('click',toggleFlock);
@@ -9317,7 +9444,7 @@ function record(){
 $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
-const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet','zeliska'],smg:['skorpion','mac10','p90','mp5','tommy','vector'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2','minigun'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin','m2flame','fw41','xm42','arcflame','pulsefire'],hightech:['gaussr'],mythic:['jet','jackfrost','tetra','nova','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar','mjolnir','zeus','medusa']};
+const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet','zeliska'],smg:['skorpion','mac10','p90','mp5','tommy','vector'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2','minigun'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin','m2flame','fw41','xm42','arcflame','pulsefire'],hightech:['gaussr'],toy:['rubik'],mythic:['jet','jackfrost','tetra','nova','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar','mjolnir','zeus','medusa']};
 const GRIP10=[...WCAT.rifle,...WCAT.smg,...WCAT.lmg];   // real assault rifles, SMGs and LMGs: Grip gives 10 percent base headshot chance
 const MCAT={pistol:['micro'],rifle:['banshee','hypno'],sniper:['jet','jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],aoe:['blackhole','hydra','salvo','soul','medusa','bubble'],heavy:['quasar'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
 const MCATN={aoe:'Mythical AOE weapons. Area of effect weapons that hit everything in a whole area at once: explosions, black holes, shockwaves, Medusa\'s petrifying gaze and bubbles that trap whole crowds.',pistol:'Mythical pistols. Tiny guns with enormous consequences. Micro Catastrophe fits in your palm and levels a 50 foot area.',treat:'Mythical treats. Snacks the enemies cannot resist. Brain Fog Bites leaves them dazed and harmless.',toy:'Mythical toys. Cuddly on the outside, deadly on the inside. Unbearable Buddy fires lasers from its eyes.',rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
@@ -9338,15 +9465,15 @@ const NIGHTN={lantern:'Nightwalker pack lanterns. Hold Fire to shine the Lantern
 const SAMN={blade:'Samurai pack swords. Swing with the Fire button. You must own the Samurai armor before you can buy the Samurai sword.',armor:'Samurai pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Samurai armor has its own special ability, Dark samurai, listed under it.'};
 const SCAVN={throw:'Scavenger pack throwing weapons. Throw them with the Fire button and they come back to you.',armor:'Scavenger pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep.'};
 const setOf=id=>Object.keys(LSET).find(k=>LSET[k].list&&LSET[k].list.includes(id))||'mythic';
-const GUNCATS=['pistol','smg','rifle','lmg','sniper','shotgun','launcher','hightech'];let curStd='pistol';
+const GUNCATS=['pistol','smg','rifle','lmg','sniper','shotgun','launcher','hightech','toy'];let curStd='pistol';
 let curCat='grenades',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade',curNight='gun';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
-const CATNOTE={hightech:'High tech weapons. Cutting-edge weapons built on real experimental technology, like electromagnetic railguns. Each takes only its own upgrades.'+WNOTE,pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,launcher:'AOE weapons. Area of effect weapons: real grenade and rocket launchers, and real flamethrowers that burn everything in their stream. Every shell flies out to the nearest enemy you are facing and explodes, hitting everything around it. Each takes only its own upgrades, based on the real ammo and parts.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
+const CATNOTE={toy:'Toys. Everyday toys that keep the enemy busy instead of hurting them. Each takes only its own upgrades.'+WNOTE,hightech:'High tech weapons. Cutting-edge weapons built on real experimental technology, like electromagnetic railguns. Each takes only its own upgrades.'+WNOTE,pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,launcher:'AOE weapons. Area of effect weapons: real grenade and rocket launchers, and real flamethrowers that burn everything in their stream. Every shell flies out to the nearest enemy you are facing and explodes, hitting everything around it. Each takes only its own upgrades, based on the real ammo and parts.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
   grenades:'Grenades go off around you, so there is no aiming: everything inside the blast radius is hit. They are used up when thrown. In battle, Grenade uses one, and Grenade type cycles frag, cryo, incendiary, jack-in-the-box, event horizon and Fat Man.',
   perks:'Permanent upgrades to your soldier. Toughness and Field medic go up to level 150, Deadeye and Scavenger up to level 50. Every level up to 20 gives the full boost, after that each level gives a smaller one. From level 6 to 50, every level costs 10 percent more than the one before, and past 50 only 3 percent more.'};
 const n1=x=>Math.round(x*10)/10;
-function dmgLine(w){if(w.flame){const b=build(w);return `Damage: ${w.dmg} a second to everything in the stream, out to ${b.ftR} feet and ${b.ftW} feet wide at the end. Burns ${b.ftBd} a second for ${b.ftBt} seconds, spreading to anyone within ${FT_SPREAD} feet. Fuel: ${n1(b.mag)} seconds. Tank swap: ${b.reload} seconds.`}if(w.gaussr)return `Damage: up to ${w.dmg} at full charge, to every enemy in its line, through up to 30 enemies. A tap does a tenth and goes through 3. Full charge in 2 and a half seconds. Never misses and ignores cover.`;if(w.micro)return `Damage: ${w.dmg} at the centre of a ${w.blast} foot explosion, fading evenly to ${Math.round(w.dmg*MC_EDGE)} at the edge. Every enemy caught is thrown as a rag doll. One shot every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.fog){const b=build(w);return `No damage. Each handful is ${b.fogN} snacks. A regular enemy is dazed by 1 snack, a mini boss by 5, a boss by 15 and the Ancient One by 50. Dazed enemies never attack again. Fresh bag every wave: 3 handfuls, plus 1 more every 5 waves.`}if(w.teddy){const b=build(w);return `Damage: ${b.tdDps} a second as a constant laser beam from both eyes, out to ${TD_R} feet with no falloff. Each battery lasts ${b.mag} seconds of firing, and changing it takes ${b.reload} seconds.`}if(w.medusa)return `No damage: it turns enemies to stone. Level 1, ${MD_FT[1]} feet for ${MD_COST[1]} souls. Level 2, ${MD_FT[2]} feet for ${MD_COST[2]} souls. Level 3, ${MD_FT[3]} feet for ${MD_COST[3]} souls. 1 second per level. The wave is as wide as it has travelled. The Ancient One loses 10, 20 or 30 percent of its health instead.`;if(w.soul)return 'Kills everything the shockwave reaches, bosses and mini bosses included. The Ancient One loses half its health. Costs 10 to 65 percent of your max health for a 10 to 70 foot blast around you, never taking you below 10 percent.';if(w.heart)return `Damage: ${w.dmg} to the enemy a heart hits, and up to ${Math.round(w.dmg*w.splM)} to everyone within ${w.blast} feet, who are thrown away from it. ${n1(1/w.cd)} hearts per second. For scale, light enemies have 2 to 3 health.`;if(w.lnch)return lnDmgLine(w);if(w.mjol)return `Damage: ${w.dmg} on impact, with lightning leaping to up to 4 more enemies within 15 feet for 60 percent, and 100 to every enemy it smashes flying home. Reaches 80 feet, 60 feet a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.zeus)return `Damage: ${w.dmg} for a quick tap, rising to ${w.dmg+500} at full power after 2 seconds of charge. Arcs from half power, and stuns at full. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
+function dmgLine(w){if(w.flame){const b=build(w);return `Damage: ${w.dmg} a second to everything in the stream, out to ${b.ftR} feet and ${b.ftW} feet wide at the end. Burns ${b.ftBd} a second for ${b.ftBt} seconds, spreading to anyone within ${FT_SPREAD} feet. Fuel: ${n1(b.mag)} seconds. Tank swap: ${b.reload} seconds.`}if(w.gaussr)return `Damage: up to ${w.dmg} at full charge, to every enemy in its line, through up to 30 enemies. A tap does a tenth and goes through 3. Full charge in 2 and a half seconds. Never misses and ignores cover.`;if(w.micro)return `Damage: ${w.dmg} at the centre of a ${w.blast} foot explosion, fading evenly to ${Math.round(w.dmg*MC_EDGE)} at the edge. Every enemy caught is thrown as a rag doll. One shot every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.rubik){const b=build(w);return `No damage${b.spike?` except Spiked Tiles, ${RB_SPIKE} a second to each solver`:''}. ${b.mag} cubes out at once. Up to ${RB_CAP} zombies, or one boss, per cube, busy for ${RB_T} seconds, the Ancient One ${RB_ANC}.`}if(w.fog){const b=build(w);return `No damage. Each handful is ${b.fogN} snacks. A regular enemy is dazed by 1 snack, a mini boss by 5, a boss by 15 and the Ancient One by 50. Dazed enemies never attack again. Fresh bag every wave: 3 handfuls, plus 1 more every 5 waves.`}if(w.teddy){const b=build(w);return `Damage: ${b.tdDps} a second as a constant laser beam from both eyes, out to ${TD_R} feet with no falloff. Each battery lasts ${b.mag} seconds of firing, and changing it takes ${b.reload} seconds.`}if(w.medusa)return `No damage: it turns enemies to stone. Level 1, ${MD_FT[1]} feet for ${MD_COST[1]} souls. Level 2, ${MD_FT[2]} feet for ${MD_COST[2]} souls. Level 3, ${MD_FT[3]} feet for ${MD_COST[3]} souls. 1 second per level. The wave is as wide as it has travelled. The Ancient One loses 10, 20 or 30 percent of its health instead.`;if(w.soul)return 'Kills everything the shockwave reaches, bosses and mini bosses included. The Ancient One loses half its health. Costs 10 to 65 percent of your max health for a 10 to 70 foot blast around you, never taking you below 10 percent.';if(w.heart)return `Damage: ${w.dmg} to the enemy a heart hits, and up to ${Math.round(w.dmg*w.splM)} to everyone within ${w.blast} feet, who are thrown away from it. ${n1(1/w.cd)} hearts per second. For scale, light enemies have 2 to 3 health.`;if(w.lnch)return lnDmgLine(w);if(w.mjol)return `Damage: ${w.dmg} on impact, with lightning leaping to up to 4 more enemies within 15 feet for 60 percent, and 100 to every enemy it smashes flying home. Reaches 80 feet, 60 feet a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.zeus)return `Damage: ${w.dmg} for a quick tap, rising to ${w.dmg+500} at full power after 2 seconds of charge. Arcs from half power, and stuns at full. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
   if(w.hydra)return `Damage: 3 rockets of ${w.dmg} each per trigger pull, each splashing enemies within 5 feet for half. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.hole){const b=build(w);return `Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${w.dmg} on collapse to everything within 12 feet, half that to the rest it pulled in. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(false)return ` For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.sonic)return `Damage: ${w.dmg} to every enemy in the cone within ${ft(w.full)} feet, plus a stun, fading to 40 percent at ${ft(w.reach)} feet. ${n1(1/w.cd)} screams per second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.stake)return `Damage: ${w.dmg} per stake to the first enemy, then 15 percent less for each enemy it skewers behind a body it kills. ${n1(1/w.cd)} stakes per second at stock. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.scythe)return `Damage: ${w.dmg} to everything within 10 feet, all the way around you, once every ${SCY_T} seconds. Kills heal you 20 percent of the enemy's full health. For scale, light enemies have 2 to 3 health and bosses about 80.`;
@@ -9401,7 +9528,7 @@ function buildShop(keepFocus){
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
-  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
+  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.rubik||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
   shopWear().forEach(r=>mkItem(list,'wr-'+r.id,r.name,r.desc,{act:()=>wearAct(r)}));
   shopArmors().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
@@ -9530,6 +9657,7 @@ function lnDmgLine(w){const b=build(w);if(!b.lnch)return `Buckshot round on: ${n
 function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(P.perk.aim||0)/100,D=x=>n1(x*aim),out=[];
   if(b.flame)return[`Damage: ${D(b.dmg)} a second to every enemy in the stream, which swings onto the enemy giving you the lock-on ping.`,`Reach: ${n1(b.ftR)} feet${b.ftR>w.flame.R?', Long nozzle on':''}, from 1 foot wide at the nozzle to ${b.ftW} feet wide at the end.`,`Fire: everything it touches burns ${n1(b.ftBd)} a second for ${n1(b.ftBt)} seconds${b.ftBd>w.flame.bd?', Hotter fuel on':''}. Burning enemies set fire to anyone within ${FT_SPREAD} feet.`,`Fuel: ${n1(b.mag)} seconds${b.mag>w.mag?', bigger tank on':''}. Swapping the tank takes ${r1(b.reload)} seconds.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`];
   if(b.gaussr)return[`Damage: ${D(b.dmg)} at full charge${b.dmg>w.dmg?', Electromagnetic barrel on':''}, to every enemy the slug passes through, down to ${D(b.dmg*GS_MIN)} for a quick tap. Headshots on the first enemy hit 1.6 times as hard.`,`Punch through: up to ${b.gsPen} enemies at full charge${b.gsPen>30?', Upgraded capacitors on':''}, fewer the less it is charged. Never misses and ignores cover. Knocks back everything it hits, up to ${GS_KB} feet at full charge.`,`Full charge in ${r1(b.gsT)} seconds${b.gsT<2.5?', Quick charge on':''}. Hold at full charge to keep it charged.`,`Magazine ${b.mag}. Reload ${r1(b.reload)} seconds${b.reload<2?', Fast magazine on':''}.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`];
+  if(b.rubik)return[`No damage of its own. Each throw tosses one cube to the nearest enemy you are facing up to ${RB_RF} feet away, or ${RB_RF} feet straight ahead.`,`Up to ${RB_CAP} regular enemies within ${RB_PULLF} feet crowd round each cube and work on it for ${RB_T} seconds, never attacking. A boss, mini boss or mega boss takes a cube alone. The Ancient One solves it in ${RB_ANC} seconds. An enemy that solves a cube never picks up another.`,`Cubes: ${b.mag} out at once${b.mag>3?', Puzzle Party on':''}. Each one comes back to you when it is solved, and every wave starts with all of them in hand. Does not work in Tutorial/practice or Co-op.`,b.spike?`Spiked Tiles: every enemy working on a cube takes ${RB_SPIKE} damage a second.`:'Spiked Tiles: not on.'];
   if(b.fog)return[`No damage of its own. Each throw is a handful of ${b.fogN} snacks${b.fogN>10?', Family Size Bag on':''}. It lands at the nearest enemy you are facing up to ${FOG_RF} feet away, or ${FOG_RF} feet straight ahead.`,`Bag: a fresh one every wave with 3 handfuls, plus 1 more handful every 5 waves. Leftover snacks stay on the ground until the wave ends.`,`Enemies within ${FOG_SMELLF} feet of a pile go and eat. Snacks to daze: regular enemies 1, mini bosses 5, bosses 15, the Ancient One 50. A dazed enemy wanders about and never attacks until it dies. Does not work in Tutorial/practice or Co-op.`,b.contact?`Contact high: an enemy that comes within 5 feet of a dazed one has a 50 percent chance to be dazed too, one try per dazed enemy. For bigger enemies each catch counts as one snack.`:b.fogN>10?`Special ability: Family Size Bag.`:`Special ability: none on. Family Size Bag or Contact high, one at a time.`];
   if(b.teddy)return[`Damage: ${D(b.tdDps)} a second${b.tdDps>5?', High beams on':''}, a constant laser beam from both eyes for as long as you hold Fire. It hits the nearest enemy you are facing, out to ${TD_R} feet, with no falloff.`,`Battery: ${b.mag} seconds of firing${b.mag>10?', Higher capacity batteries on':''}. Changing the battery takes ${r1(b.reload)} seconds.`,b.love?`Blinding love: for every second you fire, a ${TD_LOVE*100} percent chance the enemy in the beam is blinded by love before the laser hurts it, about one enemy for every 10 seconds of firing. It wanders around with no goal for ${TD_LOVE_T} seconds and never attacks. Bosses cannot be blinded. Does not work in Tutorial/practice or Co-op.`:`Special ability: none on. Blinding love can be bought.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`];
   if(b.hypno)return[`Damage: ${D(b.dmg)} per round, about ${n1(1/b.cd)} rounds a second, full auto. Effective range 26 feet; past that, damage and accuracy fall off.`,`Magazine ${b.mag}. Reload ${r1(b.reload)} seconds${b.reload<2?', Quick strip on':''}.`,`Hypnosis: every round that hits has a 25 percent chance to hypnotize the enemy instead of hurting it. Mini bosses can be hypnotized, bosses cannot. Does not work in Tutorial/practice or Co-op.`,`A hypnotized enemy has triple health, attack damage and speed, attacks other enemies until it dies, and is fought back. Your shots pass through it, and its kills pay you silver.`,b.contag?`Contagious trance: each hit a hypnotized enemy lands has a ${HYP_SPREAD*100} percent chance to hypnotize its target too.`:b.hive?`Hive mind: for every other hypnotized enemy alive, each one hits 10 percent harder and moves and attacks 5 percent faster, with no limit.`:`Special ability: none on. Contagious trance or Hive mind, one at a time.`,`Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}.`];
@@ -9594,7 +9722,7 @@ function renderStats(w){const box=$('mods-stats');box.textContent='';
   const h=document.createElement('h3');h.textContent=`${w.name}: current stats`;box.appendChild(h);
   const n=document.createElement('p');n.className='note';n.textContent='With every attachment you have turned on. Changes as you turn attachments on or off.';box.appendChild(n);
   const ul=document.createElement('ul');fullStats(w).forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li)});box.appendChild(ul)}
-function statLine(w){const b=build(w);if(b.flame){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${n1(b.dmg)} damage a second out to ${n1(b.ftR)} feet, burning ${n1(b.ftBd)} a second for ${n1(b.ftBt)} seconds, ${n1(b.mag)} seconds of fuel.`}if(b.gaussr){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: up to ${n1(b.dmg)} damage through ${b.gsPen} enemies at full charge in ${r1(b.gsT)} seconds, ${b.mag} rounds, ${r1(b.reload)} second reload.`}if(b.medusa){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Turns enemies to stone out to 15, 40 or 65 feet for 15, 40 or 70 souls.`}if(b.soul){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Clears 10 to 70 feet for 10 to 65 percent of your max health.`}if(b.mjol||b.zeus){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: `+(b.mjol?`${r1(b.dmg)} damage on impact, lightning to up to ${b.chainN} more, ${r1(b.mjSp*3.281)} feet a second${b.worthy?', Worthy on':''}.`:`${r1(b.dmg)} to ${r1(b.dmg+b.zTop)} damage, full power in ${r1(b.zCharge)} seconds${b.fork?', Forked bolt on':''}${b.cloud?', Storm cloud on':''}${b.cell?', Super cell core on':''}.`)}if(b.kbat){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per hit, ${r1(b.kbSp)} feet a second${b.kbHead?', every hit a headshot':''}.`}if(b.bubble)return `Right now: ${b.bubMax} bubbles out at once, each ${n1(b.bubR*3.281*2)} feet wide, trapping ${b.inter?'unlimited enemies':'up to '+b.bubCap+' enemies'} for ${BUB_T} seconds. One bubble every ${n1(b.cd)} ${b.cd===1?'second':'seconds'}.`;if(b.ra){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${b.lens?`${r1(RA_HIT*RA_LENS)} damage every ${RA_TICK} seconds in a thin beam through up to ${RA_PEN} enemies. Magnifying glass on.`:`${RA_HIT} damage every ${RA_TICK} seconds to every enemy in the light.`}`}if(b.scythe){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: 75 damage to everything within ${b.scyR} feet, one full circle every ${SCY_T} seconds.${b.leech?' Leeching edge on.':''}${b.spLeech?' Spirit leech on.':''}`}
+function statLine(w){const b=build(w);if(b.rubik)return `Right now: ${b.mag} cubes out at once, up to ${RB_CAP} zombies or one boss per cube for ${RB_T} seconds${b.spike?`, ${RB_SPIKE} damage a second to every solver`:''}.`;if(b.flame){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${n1(b.dmg)} damage a second out to ${n1(b.ftR)} feet, burning ${n1(b.ftBd)} a second for ${n1(b.ftBt)} seconds, ${n1(b.mag)} seconds of fuel.`}if(b.gaussr){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: up to ${n1(b.dmg)} damage through ${b.gsPen} enemies at full charge in ${r1(b.gsT)} seconds, ${b.mag} rounds, ${r1(b.reload)} second reload.`}if(b.medusa){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Turns enemies to stone out to 15, 40 or 65 feet for 15, 40 or 70 souls.`}if(b.soul){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Clears 10 to 70 feet for 10 to 65 percent of your max health.`}if(b.mjol||b.zeus){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: `+(b.mjol?`${r1(b.dmg)} damage on impact, lightning to up to ${b.chainN} more, ${r1(b.mjSp*3.281)} feet a second${b.worthy?', Worthy on':''}.`:`${r1(b.dmg)} to ${r1(b.dmg+b.zTop)} damage, full power in ${r1(b.zCharge)} seconds${b.fork?', Forked bolt on':''}${b.cloud?', Storm cloud on':''}${b.cell?', Super cell core on':''}.`)}if(b.kbat){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per hit, ${r1(b.kbSp)} feet a second${b.kbHead?', every hit a headshot':''}.`}if(b.bubble)return `Right now: ${b.bubMax} bubbles out at once, each ${n1(b.bubR*3.281*2)} feet wide, trapping ${b.inter?'unlimited enemies':'up to '+b.bubCap+' enemies'} for ${BUB_T} seconds. One bubble every ${n1(b.cd)} ${b.cd===1?'second':'seconds'}.`;if(b.ra){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${b.lens?`${r1(RA_HIT*RA_LENS)} damage every ${RA_TICK} seconds in a thin beam through up to ${RA_PEN} enemies. Magnifying glass on.`:`${RA_HIT} damage every ${RA_TICK} seconds to every enemy in the light.`}`}if(b.scythe){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: 75 damage to everything within ${b.scyR} feet, one full circle every ${SCY_T} seconds.${b.leech?' Leeching edge on.':''}${b.spLeech?' Spirit leech on.':''}`}
   if(b.stake){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per stake, skewers up to ${b.pinN} behind a kill. Belt of ${b.mag}. Reload ${r1(b.reload)} seconds. ${r1(1/b.cd)} stakes per second.${b.stack?' Stacking stakes on.':''}`}
   if(b.katana){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Blade kills instantly within ${b.katBlade} feet. Wave 100 rising to 1,000 at ${b.katR} feet. One swing every ${n1(b.cd)} seconds.`}if(b.boomer){const L=b.mlv,k=P.mast[w.id]||0;return `Mastery level ${L} of 10${L<10?`, ${MLV[L]-k} kills to the next`:''}. Right now: ${r1(b.dmg)} damage per slice, ${b.bmFt} feet out, ${b.bmCap===Infinity?'no limit on':'up to '+b.bmCap} enemies per throw.`}
   const L=b.mlv,k=P.mast[w.id]||0;
@@ -9747,7 +9875,7 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
     cryo:()=>{fx.pin();fx.drop(.25);fx.cryo(0,1.5,.8)},incend:()=>{fx.pin();fx.drop(.25);setTimeout(()=>fx.incBurst(),800)},
     fireloop:()=>{loadFireLoop();const go=()=>{if(!fireBuf)return setTimeout(go,150);const t=ctx.currentTime,g=ctx.createGain(),src=fireSrcNode(t,1);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.6,t+.2);g.gain.setValueAtTime(.6,t+4.5);g.gain.linearRampToValueAtTime(0,t+5);src.connect(g);g.connect(out(30,6,1,enBus));src.stop(t+5.1)};go()},holefx:()=>{fx.holeOpen(0,8);[.6,1.1,1.6,2.1,2.6,3.1,3.6].forEach(t=>setTimeout(()=>fx.holeHum(0,8),t*1000));setTimeout(()=>fx.holeCollapse(0,8),4100)},
     micro:()=>{microShot(gunDest(0));lnFly(0,12,.08+12/60,'micro');setTimeout(()=>{if(ctx)fx.microBoom(0,12)},(.08+12/60)*1000)},
-    novaboom:()=>fx.novaBoom(0,12),hypnotize:()=>fx.hypno(0,8),teddyfire:()=>tdPreview(gunDest(0)),fogthrow:()=>fx.bagThrow(),mdcharge:()=>{fx.mdStart();for(let i=0;i<20;i++)fx.mdHum(Math.min(1,i/20),false,0,i*.15);[1,2,3].forEach(n=>setTimeout(()=>{if(ctx)fx.mdLevel(n)},n*1000))},mdblast:()=>fx.mdBlast(3),mdstone:()=>{fx.mdStone(-30,10);setTimeout(()=>fx.mdStone(30,20),700)},fogland:()=>fx.snackLand(0,9),fogmunch:()=>fx.munch(0,6),fogdaze:()=>fx.fogDaze(0,8),foggroan:()=>{fx.fogGroan(-40,8);setTimeout(()=>fx.fogGroan(40,8),1800)},teddyready:()=>{loadTeddyRec();setTimeout(()=>{if(!teddyClip())say('Still loading, press it again.')},250)},teddylove:()=>fx.loveHit(0,10),teddylovehum:()=>{fx.loveHum(-40,8);setTimeout(()=>fx.loveHum(40,8),900)},hyphum:()=>{fx.hypHum(-40,6);setTimeout(()=>fx.hypHum(40,6),700)},novasing:()=>{fx.novaImplode(0,12);setTimeout(()=>{fx.novaBoom(0,12,0,1);fx.novaPush(0,12,.05)},SG_T*1000)},novachain:()=>{fx.novaBoom(0,12,0,1);[-40,-15,20,45].forEach(r=>fx.novaBoom(r,14));setTimeout(()=>say('Chain reaction times 9.'),1700)},
+    novaboom:()=>fx.novaBoom(0,12),hypnotize:()=>fx.hypno(0,8),teddyfire:()=>tdPreview(gunDest(0)),fogthrow:()=>fx.bagThrow(),rbthrow:()=>{fx.rbThrow();setTimeout(()=>{if(ctx)fx.rbLand(0,9)},550)},rbtwist:()=>{for(let i=0;i<8;i++)fx.rbTwist(-20,6,i*.36)},rbspike:()=>{for(let i=0;i<6;i++)fx.rbTwist(20,6,i*.36,true)},rbsolve:()=>fx.rbSolved(0,8),mdcharge:()=>{fx.mdStart();for(let i=0;i<20;i++)fx.mdHum(Math.min(1,i/20),false,0,i*.15);[1,2,3].forEach(n=>setTimeout(()=>{if(ctx)fx.mdLevel(n)},n*1000))},mdblast:()=>fx.mdBlast(3),mdstone:()=>{fx.mdStone(-30,10);setTimeout(()=>fx.mdStone(30,20),700)},fogland:()=>fx.snackLand(0,9),fogmunch:()=>fx.munch(0,6),fogdaze:()=>fx.fogDaze(0,8),foggroan:()=>{fx.fogGroan(-40,8);setTimeout(()=>fx.fogGroan(40,8),1800)},teddyready:()=>{loadTeddyRec();setTimeout(()=>{if(!teddyClip())say('Still loading, press it again.')},250)},teddylove:()=>fx.loveHit(0,10),teddylovehum:()=>{fx.loveHum(-40,8);setTimeout(()=>fx.loveHum(40,8),900)},hyphum:()=>{fx.hypHum(-40,6);setTimeout(()=>fx.hypHum(40,6),700)},novasing:()=>{fx.novaImplode(0,12);setTimeout(()=>{fx.novaBoom(0,12,0,1);fx.novaPush(0,12,.05)},SG_T*1000)},novachain:()=>{fx.novaBoom(0,12,0,1);[-40,-15,20,45].forEach(r=>fx.novaBoom(r,14));setTimeout(()=>say('Chain reaction times 9.'),1700)},
     zapfx:()=>{[0,.07,.14].forEach((t,i)=>fx.zap(i*40-40,8,t))},dbreathfx:()=>{const b=build(WBY.spas);b.dragon=true;gunSound(b,1);fx.burn(0,6,.15)},fatman:()=>{fx.pin();fx.fall();fx.nuke(2)},hadesfire:()=>hadesShot(gunDest(0),'fire'),boomwide:()=>fx.boomDemo('wide'),kbat:()=>fx.kbDemo(),boomnarrow:()=>fx.boomDemo('narrow'),boomcircle:()=>fx.boomDemo('circle'),slice:()=>fx.slice(-30,10),barbs:()=>{fx.barbs(0,2);[1,2,3].forEach(t=>setTimeout(()=>fx.bleed(0,2),t*1000))},hydrasever:()=>hydraShot(gunDest(0),0,6),hydrahe:()=>fx.heBoom(0,12),hydraacid:()=>{fx.boom(0,12);fx.acidHit(0,12,.05)},acidsizzle:()=>[0,1.1,2.2].forEach(t=>setTimeout(()=>fx.acidSizzle(0,10),t*1000)),acidpool:()=>{fx.poolSplash(0,10);[.4,1.8,3.2].forEach(t=>setTimeout(()=>fx.poolBubble(0,10),t*1000))},tetra:()=>crystalShot(gunDest(0)),tetraburst:()=>[0,.09,.18].forEach(t=>crystalShot(gunDest(0),t)),crystallize:()=>{crystalShot(gunDest(0));fx.crystallize(0,12,.1)},crysboss:()=>{crystalShot(gunDest(0));fx.crysBoss(0,12,.1);setTimeout(()=>fx.crysFree(0,12),3100)},crumble:()=>fx.crumble(5),hadeshell:()=>hadesShot(gunDest(0),'hell'),pandora:()=>pdxDemo(),
     hadesslug:()=>{hadesShot(gunDest(0),'slug');fx.erupt(0,12,.25)},hadeserupt:()=>{fx.erupt(0,10);setTimeout(()=>fx.crackle(-30,10),900);setTimeout(()=>fx.crackle(30,10),1500)},
     hadesload:()=>{loadSgRec();for(let i=0;i<5;i++)setTimeout(()=>{if(!sgShell(rdest(0),SG_PITCH.hades))shellIn(rdest(0))},i*700);setTimeout(()=>{if(!sgPlay(rdest(0),'pump',{rate:SG_PITCH.hades}))MECH.pump(0,rdest(0))},3600)},armor:()=>{fx.hurt();fx.armorHit()},
