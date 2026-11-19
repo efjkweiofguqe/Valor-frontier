@@ -2084,12 +2084,12 @@ const ARMOR=[
   {id:'berserk',name:'Viking berserker armor',prot:.6,price:50000,myth:true,desc:'Mythical armor of iron, fur and runes. Cuts all damage you take by 60 percent. Has its own special ability, Berserker rage, and special traits you buy below. Traits level up only from kills you make while wearing it.'}
 ];
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
-/* Wearables: rings and other trinkets worn on top of armor. Up to WEAR_MAX at once */
-const WEAR_MAX=2,WEAR=[
-  {id:'monocle',name:'Monocle',price:5000,desc:'A polished glass monocle on a fine chain. Adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, on every gun that can headshot, and stacks with the Grip and Sniper scope. On the Tetra-prism sniper it raises each crystal\'s headshot chance by 5 percent. Shotguns still need a Grip to headshot at all.'},
-  {id:'ringblack',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match. Works with any armor.'},
-  {id:'ringblue',name:'Blue ring',price:20000,myth:true,desc:'A cool blue ring that steadies your hands. Every gun reloads 20 percent faster, including guns that load one shell at a time. Stacks with the Quick hands perk and reload attachments.'},
-  {id:'ringred',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'}
+/* Wearables: worn on top of armor, by slot. Up to 2 rings and 1 piece of eyewear (monocle, glasses) at once */
+const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'}},WEAR=[
+  {id:'monocle',name:'Monocle',slot:'eye',price:5000,desc:'A polished glass monocle on a fine chain. Adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, on every gun that can headshot, and stacks with the Grip and Sniper scope. On the Tetra-prism sniper it raises each crystal\'s headshot chance by 5 percent. Shotguns still need a Grip to headshot at all. Eyewear: wear one piece of eyewear at a time, alongside your rings.'},
+  {id:'ringblack',slot:'ring',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match. Works with any armor.'},
+  {id:'ringblue',slot:'ring',name:'Blue ring',price:20000,myth:true,desc:'A cool blue ring that steadies your hands. Every gun reloads 20 percent faster, including guns that load one shell at a time. Stacks with the Quick hands perk and reload attachments.'},
+  {id:'ringred',slot:'ring',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'}
 ],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r]));
 const MARMUP=[
   {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
@@ -2796,7 +2796,7 @@ function loadP(s){
   P.mast={};if(s.mast&&typeof s.mast==='object')for(const k in s.mast)if(WBY[k])P.mast[k]=Math.max(0,num(s.mast[k])|0);
   if(s.perk)['hp','heal','aim','scav'].forEach(k=>{P.perk[k]=Math.max(0,Math.min(PERKS.find(p=>p.id===k).max,num(s.perk[k])|0))});
   if(s.armor){P.armor.own=(Array.isArray(s.armor.own)?s.armor.own:[]).filter(i=>ARMOR.some(a=>a.id===i));P.armor.on=P.armor.own.includes(s.armor.on)?s.armor.on:''}
-  P.wear={own:[],on:[]};if(s.wear&&typeof s.wear==='object'){P.wear.own=[...new Set((Array.isArray(s.wear.own)?s.wear.own:[]).filter(i=>WEARBY[i]))];P.wear.on=[...new Set((Array.isArray(s.wear.on)?s.wear.on:[]).filter(i=>P.wear.own.includes(i)))].slice(0,WEAR_MAX)}
+  P.wear={own:[],on:[]};if(s.wear&&typeof s.wear==='object'){P.wear.own=[...new Set((Array.isArray(s.wear.own)?s.wear.own:[]).filter(i=>WEARBY[i]))];P.wear.on=[...new Set((Array.isArray(s.wear.on)?s.wear.on:[]).filter(i=>P.wear.own.includes(i)))];const cnt={};P.wear.on=P.wear.on.filter(i=>{const k=WEARBY[i].slot;cnt[k]=(cnt[k]||0)+1;return cnt[k]<=WSLOT[k].max})}
   P.marm={};if(s.marm&&typeof s.marm==='object')for(const k in s.marm)if(MUBY[k]&&s.marm[k])P.marm[k]={kills:Math.max(0,num(s.marm[k].kills)|0)};
   P.best={};if(s.best&&typeof s.best==='object')for(const k in s.best)if(MAPS[k])P.best[k]=Math.max(0,num(s.best[k])|0);
   P.bestBoss={};if(s.bestBoss&&typeof s.bestBoss==='object')for(const k in s.bestBoss)if(MAPS[k])P.bestBoss[k]=Math.max(0,num(s.bestBoss[k])|0);
@@ -8149,9 +8149,9 @@ function hud(){
 const UPDATES=[
   {id:'2026-11-18-monocle',date:'November 18, 2026',title:'New standard wearable: Monocle',items:[
     'The Monocle is in the Armory under Armor, then Standard wearables, for 5,000 silver. It adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, and stacks with the Grip and Sniper scope.',
-    'It counts toward your 2 wearables, so you can wear it with one ring.']},
+    'It is eyewear, its own kind of wearable: wear one piece of eyewear at a time, alongside up to 2 rings.']},
   {id:'2026-11-18-rings',date:'November 18, 2026',title:'New mythical wearables: three rings',items:[
-    'Three rings are in the Armory under Armor, then Mythical wearables, 20,000 silver each. Wear up to 2 wearables at a time, on top of any armor.',
+    'Three rings are in the Armory under Armor, then Mythical wearables, 20,000 silver each. Wear up to 2 rings at a time, on top of any armor.',
     'Black ring: every wave of a match, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match.',
     'Blue ring: every gun reloads 20 percent faster.',
     'Red ring: area of effect weapons do 19 percent more damage. That is the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.']},
@@ -9386,7 +9386,7 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 wearables at a time, from either wearables section. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings and 1 piece of eyewear at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings and 1 piece of eyewear at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
@@ -9459,12 +9459,16 @@ function shopAct(w){
   saveP();updateShop();
 }
 function wearAct(r){
-  initAudio();const W=P.wear,own=W.own.includes(r.id),full=W.on.length>=WEAR_MAX,others=()=>W.on.map(i=>WEARBY[i].name).join(' or ');
+  initAudio();const W=P.wear,own=W.own.includes(r.id),sl=WSLOT[r.slot],same=W.on.filter(i=>WEARBY[i].slot===r.slot),full=same.length>=sl.max,others=()=>same.map(i=>WEARBY[i].name).join(' or ');
+  // one-item slots like eyewear swap straight over; the ring slots ask you to take one off first
+  const swap=()=>{const old=same[0];W.on=W.on.filter(i=>i!==old);W.on.push(r.id);return WEARBY[old].name};
   if(!own){if(P.coins<r.price)return broke(r.price,r.name);P.coins-=r.price;W.own.push(r.id);fx.buy();
     if(!full){W.on.push(r.id);say(`Bought ${r.name}. You are wearing it. ${P.coins} silver left.`)}
-    else say(`Bought ${r.name}. You already wear ${WEAR_MAX} wearables, so take off the ${others()} to wear it. ${P.coins} silver left.`)}
+    else if(sl.max===1){const o=swap();say(`Bought ${r.name}. You are wearing it in place of the ${o}. ${P.coins} silver left.`)}
+    else say(`Bought ${r.name}. You already wear ${sl.max} ${sl.many}, so take off the ${others()} to wear it. ${P.coins} silver left.`)}
   else if(W.on.includes(r.id)){W.on=W.on.filter(i=>i!==r.id);fx.click();say(`${r.name} off.`)}
-  else if(full){fx.click();say(`You can wear ${WEAR_MAX} wearables at a time. Take off the ${others()} first.`)}
+  else if(full&&sl.max===1){const o=swap();fx.click();say(`Wearing ${r.name} in place of the ${o}.`)}
+  else if(full){fx.click();say(`You can wear ${sl.max} ${sl.many} at a time. Take off the ${others()} first.`)}
   else{W.on.push(r.id);fx.click();say(`Wearing ${r.name}.`)}
   saveP();updateShop();
 }
