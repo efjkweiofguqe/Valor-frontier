@@ -654,7 +654,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
     <button data-arm="mythic">Mythical armor<small>Legendary armor with special abilities and traits</small></button>
     <button data-arm="wear">Standard wearables<small>Coming soon</small></button>
-    <button data-arm="mwear">Mythical wearables<small>Coming soon</small></button>
+    <button data-arm="mwear">Mythical wearables<small>Black, blue and red rings</small></button>
   </div>
   <p class="note" id="shop-note"></p>
   <div class="stack" id="shop-list"></div>
@@ -2084,6 +2084,12 @@ const ARMOR=[
   {id:'berserk',name:'Viking berserker armor',prot:.6,price:50000,myth:true,desc:'Mythical armor of iron, fur and runes. Cuts all damage you take by 60 percent. Has its own special ability, Berserker rage, and special traits you buy below. Traits level up only from kills you make while wearing it.'}
 ];
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
+/* Wearables: rings and other trinkets worn on top of armor. Up to WEAR_MAX at once */
+const WEAR_MAX=2,WEAR=[
+  {id:'ringblack',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 2 and a half percent more damage and you take 2 percent less damage. It tops out at 50 percent more damage by wave 20 and 50 percent less damage taken by wave 25, and starts over each match. Works with any armor.'},
+  {id:'ringblue',name:'Blue ring',price:20000,myth:true,desc:'A cool blue ring that steadies your hands. Every gun reloads 20 percent faster, including guns that load one shell at a time. Stacks with the Quick hands perk and reload attachments.'},
+  {id:'ringred',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'}
+],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r]));
 const MARMUP=[
   {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
   {id:'tough',arm:'berserk',kind:'trait',name:'Toughness',price:12000,lv:[0,0,150,400],cut:[0,.1,.2,.3],desc:'Special trait with 3 levels. Cuts the damage you take by another 10 percent at level 1, 20 at level 2 and 30 at level 3, on top of the armor. Starts at level 1. Reaches level 2 after 150 kills and level 3 after 400 kills, counted only while you wear the armor after buying this trait.'}
@@ -2119,7 +2125,7 @@ const PERKEFF={hp:l=>`Max health ${100+hpBonus(l)}`,heal:l=>`Heals ${25+healBonu
 /* Thunderclap damage bands: the closer the enemy, the bigger the multiplier */
 const TBM=[3,2.5,2,1.5,1],tMult=(w,d)=>{const b=w.tband;for(let i=0;i<b.length;i++)if(d<b[i])return TBM[i];return 1};
 const growPct=()=>G&&G.pk&&G.pk.grow?10*Math.max(0,G.wave-(G.growFrom??G.wave)):0;   // Growing Violence: plus 10 percent per wave since you bought it, added flat
-const gunMult=()=>(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1)*(1+growPct()/100);
+const gunMult=()=>(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1)*(1+growPct()/100)*ringDmg();
 const MLV=[0,10,25,45,70,100,135,175,220,270];
 function mlevel(id){const k=P.mast[id]||0;let L=1;MLV.forEach((t,i)=>{if(k>=t)L=i+1});return L}
 const WPN=[
@@ -2770,7 +2776,7 @@ function build(w){
    Progress lives in two places: this device (instant, but a phone can wipe it) and your
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
-const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
+const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
   stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',skin:{own:{},on:{}},ts:0};
 const P0=JSON.stringify(P);   // a brand new save, used when logging in or out
 function resetP(){Object.keys(P).forEach(k=>delete P[k]);Object.assign(P,JSON.parse(P0))}
@@ -2789,6 +2795,7 @@ function loadP(s){
   P.mast={};if(s.mast&&typeof s.mast==='object')for(const k in s.mast)if(WBY[k])P.mast[k]=Math.max(0,num(s.mast[k])|0);
   if(s.perk)['hp','heal','aim','scav'].forEach(k=>{P.perk[k]=Math.max(0,Math.min(PERKS.find(p=>p.id===k).max,num(s.perk[k])|0))});
   if(s.armor){P.armor.own=(Array.isArray(s.armor.own)?s.armor.own:[]).filter(i=>ARMOR.some(a=>a.id===i));P.armor.on=P.armor.own.includes(s.armor.on)?s.armor.on:''}
+  P.wear={own:[],on:[]};if(s.wear&&typeof s.wear==='object'){P.wear.own=[...new Set((Array.isArray(s.wear.own)?s.wear.own:[]).filter(i=>WEARBY[i]))];P.wear.on=[...new Set((Array.isArray(s.wear.on)?s.wear.on:[]).filter(i=>P.wear.own.includes(i)))].slice(0,WEAR_MAX)}
   P.marm={};if(s.marm&&typeof s.marm==='object')for(const k in s.marm)if(MUBY[k]&&s.marm[k])P.marm[k]={kills:Math.max(0,num(s.marm[k].kills)|0)};
   P.best={};if(s.best&&typeof s.best==='object')for(const k in s.best)if(MAPS[k])P.best[k]=Math.max(0,num(s.best[k])|0);
   P.bestBoss={};if(s.bestBoss&&typeof s.bestBoss==='object')for(const k in s.bestBoss)if(MAPS[k])P.bestBoss[k]=Math.max(0,num(s.bestBoss[k])|0);
@@ -3193,6 +3200,11 @@ function clock(rel){let h=Math.round(rel/30);if(h<=0)h+=12;return h+" o'clock"}
 const DIRS=['north','north east','east','south east','south','south west','west','north west'];
 const facing=()=>DIRS[Math.round(G.heading/45)%8];
 const ARMBY=Object.fromEntries(ARMOR.map(a=>[a.id,a]));
+const wearing=id=>!!(P.wear&&P.wear.on.includes(id));
+const blackN=()=>G?Math.max(1,(G.wave||1)-(G.zStart||1)+1):0;   // waves into this match, counting the starting wave as 1
+const ringDmg=()=>(wearing('ringblack')&&G?1+Math.min(.5,.025*blackN()):1)*(wearing('ringred')&&G&&G.lo&&G.lo[G.w]&&MCAT.aoe.includes(G.lo[G.w].id)?1.19:1);
+const ringGuard=()=>wearing('ringblack')&&G?1-Math.min(.5,.02*blackN()):1;
+const ringReload=()=>wearing('ringblue')?1/1.2:1;
 const maxHP=()=>100+hpBonus(P.perk.hp);
 const HEADZONE=7.6;   // half a 15 degree turn, so any enemy can be lined up dead centre
 function vib(ms){if(S.haptic&&navigator.vibrate)try{navigator.vibrate(ms)}catch(e){}}
@@ -4856,7 +4868,7 @@ function hurtPlayer(dmg,by){
   if(G.coop&&coopHurtHook(dmg,by))return;
   if(G.down)return;   // co-op: knocked down, nothing can hurt you while you wait to be revived
   let d=dmg*(S.diff<1?.7:S.diff>1.5?1.6:1);const ar=ARMBY[P.armor.on];
-  if(ar)d*=1-ar.prot;if(G.cover)d*=.5;
+  if(ar)d*=1-ar.prot;if(G.cover)d*=.5;d*=ringGuard();
   const zerk=P.armor.on==='berserk';if(zerk){const tl=tlv('tough');if(tl)d*=1-MUBY.tough.cut[tl]}
   G.hp-=d;fx.hurt();if(ar)fx.armorHit();vib(140);
   // Razorwire Carapace: the attacker is torn by the barbs and bleeds
@@ -5055,8 +5067,8 @@ Object.assign(fx,{
 function rSay(t,ready){if(S.rcall==='cue'){ready?fx.rReady():fx.rEmpty();$('feed').textContent=t;return}say(t)}
 function startReload(wi,side){const w=G.lo[wi];if(w.fog)return;   // the snack bag is never reloaded, a fresh one comes every wave
 if(w.teddy){loadTeddyRec();G.tdOn=false}
-  if(w.shell){const per=Math.max(.2,w.shell*(G.pk&&G.pk.quick?.5:1));G.jobs.push({wi,side,shell:true,per,left:per,total:per,i:0,ev:[],pan:0});return}if(w.vent&&G.heat&&G.heat[wi]){heatVent(G.heat[wi]);G.heat[wi]=0}
-  if(w.blizz&&!(G.blizzT>0))blizzard();const rt=w.reload*(G.pk&&G.pk.quick?.5:1);if(SMG_PITCH[w.id])loadSmgRec();if(SG_PITCH[w.id])loadSgRec();const rk=RKIND[w.id];G.jobs.push({wi,side,total:rt,left:rt,i:0,ev:SMG_PITCH[w.id]&&smgBuf?smgReloadEv(rt):SG_PITCH[w.id]&&sgBuf&&['shells','twin','break'].includes(rk)?sgReloadEv(w.id,rk):(RSEQ[rk]||RSEQ.hand),pan:w.akimbo?(side?.45:-.45):0})}
+  if(w.shell){const per=Math.max(.2,w.shell*(G.pk&&G.pk.quick?.5:1)*ringReload());G.jobs.push({wi,side,shell:true,per,left:per,total:per,i:0,ev:[],pan:0});return}if(w.vent&&G.heat&&G.heat[wi]){heatVent(G.heat[wi]);G.heat[wi]=0}
+  if(w.blizz&&!(G.blizzT>0))blizzard();const rt=w.reload*(G.pk&&G.pk.quick?.5:1)*ringReload();if(SMG_PITCH[w.id])loadSmgRec();if(SG_PITCH[w.id])loadSgRec();const rk=RKIND[w.id];G.jobs.push({wi,side,total:rt,left:rt,i:0,ev:SMG_PITCH[w.id]&&smgBuf?smgReloadEv(rt):SG_PITCH[w.id]&&sgBuf&&['shells','twin','break'].includes(rk)?sgReloadEv(w.id,rk):(RSEQ[rk]||RSEQ.hand),pan:w.akimbo?(side?.45:-.45):0})}
 /* Jack Frost Blizzard blast: on reload, freeze every enemy within 40 feet solid for 15 seconds. Recharges in 10 seconds */
 function blizzard(){const r=40/3.281;G.blizzT=10;fx.blizzard();vib(250);let c=0;
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;e.frozeT=15;e.wind=0;c++;fx.frost(norm(e.angle-G.heading),e.dist,1.5+Math.random()*.8)});if(c)G.thawT=15;
@@ -8133,6 +8145,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-rings',date:'November 18, 2026',title:'New mythical wearables: three rings',items:[
+    'Three rings are in the Armory under Armor, then Mythical wearables, 20,000 silver each. Wear up to 2 wearables at a time, on top of any armor.',
+    'Black ring: every wave of a match, your weapons do 2 and a half percent more damage and you take 2 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken, and starts over each match.',
+    'Blue ring: every gun reloads 20 percent faster.',
+    'Red ring: area of effect weapons do 19 percent more damage. That is the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.']},
   {id:'2026-11-18-wearables',date:'November 18, 2026',title:'New armor sections: wearables',items:[
     'The Armor section of the Armory now has four parts: Standard armor, Mythical armor, Standard wearables and Mythical wearables.',
     'The two wearables sections are empty for now. New wearables are coming soon.']},
@@ -9351,7 +9368,8 @@ document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
 const ARMSUBN={regular:'Standard armor',mythic:'Mythical armor',wear:'Standard wearables',mwear:'Mythical wearables'};
 const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&(curArm==='wear'||curArm==='mwear'?a.wear&&(curArm==='mwear'?!!a.myth:!a.myth):!a.wear&&(curArm==='mythic'?a.myth:!a.myth)));
-const shopArmors=()=>curCat==='armor'?armList():curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):[];
+const shopWear=()=>curCat==='armor'&&(curArm==='wear'||curArm==='mwear')?WEAR.filter(r=>curArm==='mwear'?!!r.myth:!r.myth):[];
+const shopArmors=()=>curCat==='armor'?(curArm==='wear'||curArm==='mwear'?[]:armList()):curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):[];
 function buildShop(keepFocus){
   const isGun=GUNCATS.includes(curCat);if(isGun)curStd=curCat;
   document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat==='std'?isGun:b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
@@ -9363,11 +9381,12 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Nothing here yet. New wearables are coming soon.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Nothing here yet. New wearables are coming soon.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Nothing here yet. New wearables are coming soon.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
   catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
+  shopWear().forEach(r=>mkItem(list,'wr-'+r.id,r.name,r.desc,{act:()=>wearAct(r)}));
   shopArmors().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
     const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
@@ -9391,6 +9410,10 @@ function updateShop(){
     else if(u.kind==='ability')setItem('mu-'+u.id,`Owned · Active while you wear the ${a.name}`,'Owned',`${u.name} is owned and active while you wear the ${a.name}`,false,true);
     else{const l=tlv(u.id),k=P.marm[u.id].kills,next=l<3?` · ${u.lv[l+1]-k} kills to level ${l+1}`:' · Maxed out';
       setItem('mu-'+u.id,`Owned · Level ${l} of 3${next}`,`Level ${l} of 3`,`${u.name} level ${l} of 3.${l<3?` ${u.lv[l+1]-k} more kills in the ${a.name} to level ${l+1}.`:' Maxed out.'}`,false,true)}});
+  shopWear().forEach(r=>{const own=P.wear.own.includes(r.id),on=P.wear.on.includes(r.id);
+    if(!own)setItem('wr-'+r.id,`Price ${r.price} silver`,`Buy for ${r.price}`,`Buy ${r.name} for ${r.price} silver`,P.coins>=r.price,false);
+    else if(on)setItem('wr-'+r.id,'Owned · Wearing','Take off',`Wearing ${r.name}. Take it off`,false,true);
+    else setItem('wr-'+r.id,'Owned','Wear it',`Wear ${r.name}`,false,false)});
   shopArmors().forEach(a=>{const own=P.armor.own.includes(a.id),on=P.armor.on===a.id;
     if(!own)setItem('ar-'+a.id,`Price ${a.price} silver`,`Buy for ${a.price}`,`Buy ${a.name} for ${a.price} silver`,P.coins>=a.price,false);
     else if(on)setItem('ar-'+a.id,'Owned · Wearing','Take off',`Wearing ${a.name}. Take it off`,false,true);
@@ -9428,6 +9451,16 @@ function shopAct(w){
     if(P.carry.length>=MAXCARRY){fx.click();say(`You already carry ${MAXCARRY} guns. Leave one in storage first.`);return}
     P.carry.push(w.id);sortCarry();fx.reload(.3);say(`${w.name} carried. Carrying ${P.carry.length} of ${MAXCARRY}.`);
   }
+  saveP();updateShop();
+}
+function wearAct(r){
+  initAudio();const W=P.wear,own=W.own.includes(r.id),full=W.on.length>=WEAR_MAX,others=()=>W.on.map(i=>WEARBY[i].name).join(' or ');
+  if(!own){if(P.coins<r.price)return broke(r.price,r.name);P.coins-=r.price;W.own.push(r.id);fx.buy();
+    if(!full){W.on.push(r.id);say(`Bought ${r.name}. You are wearing it. ${P.coins} silver left.`)}
+    else say(`Bought ${r.name}. You already wear ${WEAR_MAX} wearables, so take off the ${others()} to wear it. ${P.coins} silver left.`)}
+  else if(W.on.includes(r.id)){W.on=W.on.filter(i=>i!==r.id);fx.click();say(`${r.name} off.`)}
+  else if(full){fx.click();say(`You can wear ${WEAR_MAX} wearables at a time. Take off the ${others()} first.`)}
+  else{W.on.push(r.id);fx.click();say(`Wearing ${r.name}.`)}
   saveP();updateShop();
 }
 function armorAct(a){
