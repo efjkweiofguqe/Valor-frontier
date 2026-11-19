@@ -2089,7 +2089,8 @@ const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewe
   {id:'monocle',name:'Monocle',slot:'eye',price:5000,desc:'A polished glass monocle on a fine chain. Adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, on every gun that can headshot, and stacks with the Grip and Sniper scope. On the Tetra-prism sniper it raises each crystal\'s headshot chance by 5 percent. Shotguns still need a Grip to headshot at all. Eyewear: wear one piece of eyewear at a time, alongside your rings.'},
   {id:'ringblack',slot:'ring',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match. Works with any armor.'},
   {id:'ringblue',slot:'ring',name:'Blue ring',price:20000,myth:true,desc:'A cool blue ring that steadies your hands. Every gun reloads 20 percent faster, including guns that load one shell at a time. Stacks with the Quick hands perk and reload attachments.'},
-  {id:'ringred',slot:'ring',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'}
+  {id:'ringred',slot:'ring',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'},
+  {id:'ringgreen',slot:'ring',name:'Green ring',price:20000,myth:true,desc:'A bright green ring that quickens your trigger finger. Every weapon fires 15 percent faster. Stacks with Hair trigger and other trigger upgrades.'}
 ],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r]));
 const MARMUP=[
   {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
@@ -2769,6 +2770,7 @@ function build(w){
     if(w.id==='javelin'){b.home=true;b.charge=has('jvlock2')?.6:has('jvlock1')?1.2:2;if(has('jvfast'))b.reload=2;
       if(has('jvdirect')){b.spd=w.spd*2;b.blastR=16/3.281;b.splM=.6}else b.top=true}
     if(w.id==='flash'){const hot=has('flhot');b.fireDps=hot?10:5;b.fireT=hot?8:5;if(hot)b.blastR=15/3.281;if(has('flfast'))b.reload=2.5;if(has('flvolley')){b.volley=true;b.shots=4}}}
+  try{if(wearing('ringgreen')&&b.cd>0)b.cd/=1.15}catch(e){}   // Green ring: 15 percent faster fire rate
   if(b.akimbo){b.name='Akimbo '+w.name+'s';b.short=w.short+' x2'}
   return b;
 }
@@ -8147,6 +8149,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-ringgreen',date:'November 19, 2026',title:'New mythical wearable: Green ring',items:[
+    'The Green ring is in the Armory under Armor, then Mythical wearables, for 20,000 silver. Every weapon fires 15 percent faster.',
+    'Like the other rings, wear up to 2 rings at a time, on top of any armor.']},
   {id:'2026-11-18-monocle',date:'November 18, 2026',title:'New standard wearable: Monocle',items:[
     'The Monocle is in the Armory under Armor, then Standard wearables, for 5,000 silver. It adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, and stacks with the Grip and Sniper scope.',
     'It is eyewear, its own kind of wearable: wear one piece of eyewear at a time, alongside up to 2 rings.']},
