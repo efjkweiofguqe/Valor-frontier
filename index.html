@@ -2092,7 +2092,7 @@ const ARMOR=[
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
 /* Wearables: worn on top of armor, by slot. Up to 2 rings and 1 piece of eyewear (monocle, glasses) at once */
 const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'},neck:{max:1,one:'necklace',many:'necklaces'},hands:{max:1,one:'pair of gloves',many:'pairs of gloves'},charm:{max:1,one:'charm',many:'charms'},head:{max:1,one:'crown',many:'crowns'},wrist:{max:1,one:'sweat band',many:'sweat bands'},chest:{max:1,one:'chest piece',many:'chest pieces'}},WEAR=[
-  {id:'sweatband',name:'Sweat band',slot:'wrist',price:4000,desc:'A thick terry-cloth sweat band for a firmer grip and more strength. The Samurai sword and the Unquenchable scythe hit 10 percent harder and swing 10 percent faster. The bonus is worked out from each weapon\'s base stats only, so upgrades are not boosted again: the Samurai sword\'s wave gains 100 at full reach, making 1,100, or 2,100 with an Iaido draw. The Kinetic baseball bat is not a melee weapon and is not changed. Wristband: one at a time, and it fits under Tactical gloves.'},
+  {id:'sweatband',name:'Sweat band',slot:'wrist',price:4000,desc:'A thick terry-cloth sweat band for a firmer grip and more strength. The Samurai sword and the Unquenchable scythe hit 10 percent harder and swing 10 percent faster. The bonus is worked out from each weapon\'s base stats only, so upgrades are not boosted again: the Samurai sword\'s wave gains 100 at full reach, making 1,100, or 2,100 with an Iaido draw. The Kinetic baseball bat is not a melee weapon and is not changed. Wristband: one at a time, and it fits under Tactical gloves. It does not stack with the Crown of Vlad the Impaler: putting one on takes the other off.'},
   {id:'gloves',name:'Tactical gloves',slot:'hands',price:3000,desc:'Snug tactical gloves with grippy palms for a steadier pistol hold. Every pistol does 15 percent more damage, including the Micro Catastrophe. Gloves: one pair at a time.'},
   {id:'dogtags',name:'Dog tags',slot:'neck',price:4000,desc:'A pair of stamped steel dog tags on a ball chain. You earn 10 percent more silver from every kill. Necklace: one at a time.'},
   {id:'bandolier',name:'Ammo bandolier',slot:'chest',price:5000,desc:'A leather bandolier slung across your chest, packed with spare rounds. Every gun holds 15 percent more rounds per magazine, at least 1 more. Single-shot guns, fuel, batteries, treats and toys are not changed. Chest piece: one at a time.'},
@@ -2104,8 +2104,8 @@ const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewe
   {id:'ringred',slot:'ring',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'},
   {id:'ringgreen',slot:'ring',name:'Green ring',price:20000,myth:true,desc:'A bright green ring that quickens your trigger finger. Every weapon fires 15 percent faster. Stacks with Hair trigger and other trigger upgrades.'},
   {id:'ringpurple',slot:'ring',name:'Purple ring',price:20000,myth:true,desc:'A deep purple ring that drinks in life. Every kill you make heals you 1 health, up to your max health.'},
-  {id:'crownvlad',slot:'head',name:'Crown of Vlad the Impaler',price:33000,myth:true,desc:'The iron crown of the Impaler himself. The Samurai sword and the Unquenchable scythe hit 20 percent harder and swing 20 percent faster, worked out from each weapon\'s base stats only, like the Sweat band: the Samurai sword\'s wave reaches 1,200, or 2,200 with an Iaido draw. Wear it with the Sweat band for 30 percent. And every 30 kills you make in a match, by any weapon, heal you 5 percent of your max health. The Kinetic baseball bat is not a melee weapon and is not changed. Crown: one at a time, alongside your rings.'}
-],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r]));
+  {id:'crownvlad',slot:'head',name:'Crown of Vlad the Impaler',price:33000,myth:true,desc:'The iron crown of the Impaler himself. The Samurai sword and the Unquenchable scythe hit 20 percent harder and swing 20 percent faster, worked out from each weapon\'s base stats only, like the Sweat band: the Samurai sword\'s wave reaches 1,200, or 2,200 with an Iaido draw. It does not stack with the Sweat band: putting one on takes the other off. And every 30 kills you make in a match, by any weapon, heal you 5 percent of your max health. The Kinetic baseball bat is not a melee weapon and is not changed. Crown: one at a time, alongside your rings.'}
+],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r])),WEX={sweatband:'crownvlad',crownvlad:'sweatband'};   // pairs that never stack
 const MARMUP=[
   {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
   {id:'tough',arm:'berserk',kind:'trait',name:'Toughness',price:12000,lv:[0,0,150,400],cut:[0,.1,.2,.3],desc:'Special trait with 3 levels. Cuts the damage you take by another 10 percent at level 1, 20 at level 2 and 30 at level 3, on top of the armor. Starts at level 1. Reaches level 2 after 150 kills and level 3 after 400 kills, counted only while you wear the armor after buying this trait.'}
@@ -3231,7 +3231,7 @@ const wearing=id=>!!(P.wear&&P.wear.on.includes(id));
 const blackN=()=>G?Math.max(1,(G.wave||1)-(G.zStart||1)+1):0;   // waves into this match, counting the starting wave as 1
 const ringDmg=()=>(wearing('ringblack')&&G?1+Math.min(.5,.01*blackN()):1)*(wearing('ringred')&&G&&G.lo&&G.lo[G.w]&&MCAT.aoe.includes(G.lo[G.w].id)?1.19:1);
 const ringGuard=()=>wearing('ringblack')&&G?1-Math.min(.5,.01*blackN()):1;
-const meleeB=()=>(wearing('sweatband')?.1:0)+(wearing('crownvlad')?.2:0),sweatOn=()=>meleeB()>0;   // melee bonus from base stats: Sweat band 10 percent, Crown of Vlad the Impaler 20 percent, both together 30   // Sweat band: melee (Samurai sword, scythe) +10 percent of base damage and swing rate
+const meleeB=()=>wearing('crownvlad')?.2:wearing('sweatband')?.1:0,sweatOn=()=>meleeB()>0;   // melee bonus from base stats: Sweat band 10 percent, Crown of Vlad the Impaler 20 percent. They never stack   // Sweat band: melee (Samurai sword, scythe) +10 percent of base damage and swing rate
 const ringReload=()=>wearing('ringblue')?1/1.2:1;
 const maxHP=()=>100+hpBonus(P.perk.hp);
 const HEADZONE=7.6;   // half a 15 degree turn, so any enemy can be lined up dead centre
@@ -8292,7 +8292,7 @@ function hud(){
 const UPDATES=[
   {id:'2026-11-19-crownvlad',date:'November 19, 2026',title:'New mythical wearable: Crown of Vlad the Impaler',items:[
     'The Crown of Vlad the Impaler is in the Armory under Armor, then Mythical wearables, for 33,000 silver.',
-    "Like the Sweat band but stronger: the Samurai sword and the Unquenchable scythe do 20 percent more damage and swing 20 percent faster, from each weapon's base stats. Wear both for 30 percent.",
+    "Like the Sweat band but stronger: the Samurai sword and the Unquenchable scythe do 20 percent more damage and swing 20 percent faster, from each weapon's base stats. It does not stack with the Sweat band: putting one on takes the other off.",
     'Every 30 kills you make in a match heal you 5 percent of your max health. It goes on your head, its own slot.']},
   {id:'2026-11-19-sweatband',date:'November 19, 2026',title:'New standard wearable: Sweat band',items:[
     'The Sweat band is in the Armory under Armor, then Standard wearables, for 4,000 silver. Melee weapons, the Samurai sword and the Unquenchable scythe, do 10 percent more damage and swing 10 percent faster.',
@@ -9629,7 +9629,7 @@ function shopAct(w){
   saveP();updateShop();
 }
 function wearAct(r){
-  initAudio();const W=P.wear,own=W.own.includes(r.id),sl=WSLOT[r.slot],same=W.on.filter(i=>WEARBY[i].slot===r.slot),full=same.length>=sl.max,others=()=>same.map(i=>WEARBY[i].name).join(' or ');
+  initAudio();const W=P.wear,own=W.own.includes(r.id),wasOn=W.on.includes(r.id),sl=WSLOT[r.slot],same=W.on.filter(i=>WEARBY[i].slot===r.slot),full=same.length>=sl.max,others=()=>same.map(i=>WEARBY[i].name).join(' or ');
   // one-item slots like eyewear swap straight over; the ring slots ask you to take one off first
   const swap=()=>{const old=same[0];W.on=W.on.filter(i=>i!==old);W.on.push(r.id);return WEARBY[old].name};
   if(!own){if(P.coins<r.price)return broke(r.price,r.name);P.coins-=r.price;W.own.push(r.id);fx.buy();
@@ -9640,6 +9640,8 @@ function wearAct(r){
   else if(full&&sl.max===1){const o=swap();fx.click();say(`Wearing ${r.name} in place of the ${o}.`)}
   else if(full){fx.click();say(`You can wear ${sl.max} ${sl.many} at a time. Take off the ${others()} first.`)}
   else{W.on.push(r.id);fx.click();say(`Wearing ${r.name}.`)}
+  // wearables that never stack: putting one on takes the other off
+  const ex=WEX[r.id];if(!wasOn&&ex&&W.on.includes(r.id)&&W.on.includes(ex)){W.on=W.on.filter(i=>i!==ex);say(`${own?'':'Bought '+r.name+'. '}Wearing ${r.name}. The ${WEARBY[ex].name} came off, since the two do not stack.${own?'':' '+P.coins+' silver left.'}`)}
   saveP();updateShop();
 }
 function armorAct(a){
