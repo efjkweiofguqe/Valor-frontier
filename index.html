@@ -2086,7 +2086,7 @@ const ARMOR=[
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
 /* Wearables: rings and other trinkets worn on top of armor. Up to WEAR_MAX at once */
 const WEAR_MAX=2,WEAR=[
-  {id:'ringblack',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 2 and a half percent more damage and you take 2 percent less damage. It tops out at 50 percent more damage by wave 20 and 50 percent less damage taken by wave 25, and starts over each match. Works with any armor.'},
+  {id:'ringblack',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match. Works with any armor.'},
   {id:'ringblue',name:'Blue ring',price:20000,myth:true,desc:'A cool blue ring that steadies your hands. Every gun reloads 20 percent faster, including guns that load one shell at a time. Stacks with the Quick hands perk and reload attachments.'},
   {id:'ringred',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'}
 ],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r]));
@@ -3202,8 +3202,8 @@ const facing=()=>DIRS[Math.round(G.heading/45)%8];
 const ARMBY=Object.fromEntries(ARMOR.map(a=>[a.id,a]));
 const wearing=id=>!!(P.wear&&P.wear.on.includes(id));
 const blackN=()=>G?Math.max(1,(G.wave||1)-(G.zStart||1)+1):0;   // waves into this match, counting the starting wave as 1
-const ringDmg=()=>(wearing('ringblack')&&G?1+Math.min(.5,.025*blackN()):1)*(wearing('ringred')&&G&&G.lo&&G.lo[G.w]&&MCAT.aoe.includes(G.lo[G.w].id)?1.19:1);
-const ringGuard=()=>wearing('ringblack')&&G?1-Math.min(.5,.02*blackN()):1;
+const ringDmg=()=>(wearing('ringblack')&&G?1+Math.min(.5,.01*blackN()):1)*(wearing('ringred')&&G&&G.lo&&G.lo[G.w]&&MCAT.aoe.includes(G.lo[G.w].id)?1.19:1);
+const ringGuard=()=>wearing('ringblack')&&G?1-Math.min(.5,.01*blackN()):1;
 const ringReload=()=>wearing('ringblue')?1/1.2:1;
 const maxHP=()=>100+hpBonus(P.perk.hp);
 const HEADZONE=7.6;   // half a 15 degree turn, so any enemy can be lined up dead centre
@@ -8147,7 +8147,7 @@ function hud(){
 const UPDATES=[
   {id:'2026-11-18-rings',date:'November 18, 2026',title:'New mythical wearables: three rings',items:[
     'Three rings are in the Armory under Armor, then Mythical wearables, 20,000 silver each. Wear up to 2 wearables at a time, on top of any armor.',
-    'Black ring: every wave of a match, your weapons do 2 and a half percent more damage and you take 2 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken, and starts over each match.',
+    'Black ring: every wave of a match, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match.',
     'Blue ring: every gun reloads 20 percent faster.',
     'Red ring: area of effect weapons do 19 percent more damage. That is the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.']},
   {id:'2026-11-18-wearables',date:'November 18, 2026',title:'New armor sections: wearables',items:[
