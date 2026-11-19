@@ -653,7 +653,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
     <button data-arm="mythic">Mythical armor<small>Legendary armor with special abilities and traits</small></button>
-    <button data-arm="wear">Standard wearables<small>Coming soon</small></button>
+    <button data-arm="wear">Standard wearables<small>Monocle</small></button>
     <button data-arm="mwear">Mythical wearables<small>Black, blue and red rings</small></button>
   </div>
   <p class="note" id="shop-note"></p>
@@ -2086,6 +2086,7 @@ const ARMOR=[
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
 /* Wearables: rings and other trinkets worn on top of armor. Up to WEAR_MAX at once */
 const WEAR_MAX=2,WEAR=[
+  {id:'monocle',name:'Monocle',price:5000,desc:'A polished glass monocle on a fine chain. Adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, on every gun that can headshot, and stacks with the Grip and Sniper scope. On the Tetra-prism sniper it raises each crystal\'s headshot chance by 5 percent. Shotguns still need a Grip to headshot at all.'},
   {id:'ringblack',name:'Black ring',price:20000,myth:true,desc:'A heavy ring of black iron that grows stronger the longer you fight. Every wave of a match, counting from the wave you start on, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match. Works with any armor.'},
   {id:'ringblue',name:'Blue ring',price:20000,myth:true,desc:'A cool blue ring that steadies your hands. Every gun reloads 20 percent faster, including guns that load one shell at a time. Stacks with the Quick hands perk and reload attachments.'},
   {id:'ringred',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'}
@@ -3455,8 +3456,9 @@ function fire(){
     if(w.stake&&hi>0&&(hits[0].hp>0||EN[hits[0].type].boss))return;   // a stake only passes through an enemy it kills
     const rel=norm(e.angle-G.heading),fly=w.gyro?gyroT(e.dist):.03+e.dist*.006;
     let head=!(w.stake&&hi>0)&&!w.spread&&!w.lantern&&!w.sonic&&!w.crystal&&Math.abs(rel)<=(w.hz||HEADZONE);
-    if(w.crystal)head=Math.random()<1-Math.pow(1-w.crysCh,shots);   // every crystal rolls its own headshot chance
+    if(w.crystal)head=Math.random()<1-Math.pow(1-(w.crysCh+(wearing('monocle')?.05:0)),shots);   // every crystal rolls its own headshot chance
     if(!head&&w.grip&&Math.random()<w.grip)head=true;
+    if(!head&&wearing('monocle')&&!(w.stake&&hi>0)&&!w.lantern&&!w.sonic&&!w.crystal&&(!w.spread||w.grip)&&Math.random()<.05)head=true;   // Monocle wearable: 5 percent extra headshot chance
     if(!head&&w.scope&&e.dist>=50/3.281&&Math.random()<w.scope)head=true;
     const T=EN[e.type],hm=(head?(T.boss?w.hsBoss:w.hs):1)*(w.ap>1&&(T.boss||T.mini||T.mat!=='flesh')?w.ap:1);
     // past a gun's effective range, damage and accuracy fall off (snipers never do)
@@ -8145,6 +8147,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-monocle',date:'November 18, 2026',title:'New standard wearable: Monocle',items:[
+    'The Monocle is in the Armory under Armor, then Standard wearables, for 5,000 silver. It adds a 5 percent chance that a hit which is not dead centre still lands as a headshot, and stacks with the Grip and Sniper scope.',
+    'It counts toward your 2 wearables, so you can wear it with one ring.']},
   {id:'2026-11-18-rings',date:'November 18, 2026',title:'New mythical wearables: three rings',items:[
     'Three rings are in the Armory under Armor, then Mythical wearables, 20,000 silver each. Wear up to 2 wearables at a time, on top of any armor.',
     'Black ring: every wave of a match, your weapons do 1 percent more damage and you take 1 percent less damage. It tops out at 50 percent more damage and 50 percent less damage taken by wave 50, and starts over each match.',
@@ -9381,7 +9386,7 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Nothing here yet. New wearables are coming soon.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 wearables at a time, from either wearables section. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
