@@ -3361,7 +3361,7 @@ function hadesHits(w,tgt){const inR=tgt.filter(e=>e.dist<=w.hR);if(!inR.length)r
   return G.enemies.filter(e=>{if(e.hp<=0||e.dist>w.hR)return false;if(e===c)return true;const a=norm(e.angle-c.angle)*Math.PI/180,fwd=e.dist*Math.cos(a);
     if(fwd<=0)return false;return Math.abs(e.dist*Math.sin(a))*3.281<=w.hW(fwd*3.281)/2}).sort((a,b)=>a.dist-b.dist)}
 // Hades fire never goes out: it burns until the enemy dies
-function hIgnite(e,dps,at){const was=e.hfire;e.hfire=true;e.fireT=Infinity;e.fireDps=Math.max(e.fireDps||0,dps);e.fireSrc='hades';if(!was)fx.burn(norm(e.angle-G.heading),e.dist,at||0)}
+function hIgnite(e,dps,at,blue){const was=e.hfire;e.hfire=true;if(blue)e.hblue=true;e.fireT=Infinity;e.fireDps=Math.max(e.fireDps||0,dps);e.fireSrc='hades';if(!was)fx.burn(norm(e.angle-G.heading),e.dist,at||0)}
 function fire(){
   if(G&&!G.paused&&!G.over)timeGo();
   if(!G||G.paused||G.over||G.cd>0)return;
@@ -3460,7 +3460,7 @@ function fire(){
     const tEnd=rounds[rounds.length-1]*gap+fly;
     if(w.inc){fx.burn(rel,e.dist,tEnd);burned.push([e,dmg])}
     if(w.dragon)ignite(e,w.id,tEnd);
-    if(w.hades){if(e.hp>0)hIgnite(e,w.burn,tEnd);if(w.erupt)erupts.push([e,tEnd,...xy(e.angle,e.dist),rel])}
+    if(w.hades){if(e.hp>0)hIgnite(e,w.burn,tEnd,w.hades==='hell');if(w.erupt)erupts.push([e,tEnd,...xy(e.angle,e.dist),rel])}
     if(w.sonic){e.stunT=Math.max(e.stunT||0,1.5*sfo);fx.stun(rel,e.dist,tEnd)}
     if(w.rivet&&w.magR&&e===hits[0]&&e.dist<=w.magR)magBack+=rounds.length;
     if(w.rivet){if(w.hot)ignite(e,'rivet',tEnd);e.nails=(e.nails||0)+rounds.length;if(e.nails>=10){e.nails-=10;if(e.hp>0){e.stunT=Math.max(e.stunT||0,1);fx.pinned(rel,e.dist,tEnd+.03)}}}
@@ -5798,7 +5798,7 @@ function step(dt){
     if(e.fireCue<=0){if(!fireVoices.has(e))fx.crackle(norm(e.angle-G.heading),e.dist);e.fireCue=.9}if(e.hp<=0)fx.kill(norm(e.angle-G.heading),e.dist,0,e.type)});
   // Hades fire spreads: any enemy that comes within 3 feet of one burning with Hades fire catches it too
   G.hSprT=(G.hSprT||0)-dt;if(G.hSprT<=0){G.hSprT=.2;const lit=G.enemies.filter(e=>e.hfire&&e.hp>0).map(e=>[e,...xy(e.angle,e.dist)]);
-    if(lit.length)G.enemies.forEach(o=>{if(o.hfire||o.hp<=0)return;const[ox,oy]=xy(o.angle,o.dist),src=lit.find(([e,x,y])=>Math.hypot(x-ox,y-oy)<=3/3.281);if(src)hIgnite(o,src[0].fireDps,0)})}
+    if(lit.length)G.enemies.forEach(o=>{if(o.hfire||o.hp<=0)return;const[ox,oy]=xy(o.angle,o.dist),src=lit.find(([e,x,y])=>Math.hypot(x-ox,y-oy)<=3/3.281);if(src)hIgnite(o,src[0].fireDps,0,src[0].hblue)})}
   // Hydra corrosive acid: a coated enemy loses HACID health a second for 10 seconds, then the acid fades
   G.enemies.forEach(e=>{if(!(e.acidT>0)||e.hp<=0)return;e.acidT-=dt;e.hp-=HACID*dt;e.acidCue-=dt;
     if(e.acidCue<=0&&e.hp>0){fx.acidSizzle(norm(e.angle-G.heading),e.dist);e.acidCue=1.1}if(e.hp<=0){e.acidKill=true;fx.kill(norm(e.angle-G.heading),e.dist,0,e.type)}});
@@ -7355,7 +7355,33 @@ function rfHdPat(c){if(!rfHd.img){rfHd.img=new Image();rfHd.img.src=HADES_MAGMA}
 function rfHdFill(c,path,heat,now,dark){const p=rfHdPat(c);c.save();c.fillStyle=dark||'#1c1513';c.fill(path,'evenodd');
   if(p){c.clip(path,'evenodd');c.fillStyle=p;c.fill(path,'evenodd');c.globalCompositeOperation='lighter';c.globalAlpha=Math.min(.9,.14+.08*Math.sin(now/420)+heat*.55);c.fill(path,'evenodd')}
   c.restore()}
+/* Hellfire loaded: the same cracked magma, but burning blue-white instead of orange */
+function rfHdBlue(c,path,heat,now){const p=rfHdPat(c);c.save();c.fillStyle='#0b1636';c.fill(path,'evenodd');c.clip(path,'evenodd');
+  if(p){c.fillStyle=p;c.fill(path,'evenodd');c.globalCompositeOperation='color';c.fillStyle='#3d8cff';c.fill(path,'evenodd')}
+  c.globalCompositeOperation='lighter';c.globalAlpha=Math.min(.95,.22+.08*Math.sin(now/420)+heat*.6);c.fillStyle='#6fb0ff';c.fill(path,'evenodd');
+  c.globalAlpha=Math.min(.8,heat*.7);c.fillStyle='#ffffff';c.fill(path,'evenodd');c.restore()}
 function rfHdHeat(now){for(const s of RF.kicks)if(!s.hd){s.hd=1;RF.hdT=Math.max(RF.hdT||0,s.t)}const d=now-(RF.hdT||-1e9);return d<0?1:Math.exp(-d/1400)}
+/* Hellfire jet: blinding white-hot core, pale icy blue around it, deep electric blue at the wide outer edge, and a thin
+   violet fringe where the tips lick out and die. The edges ripple with heat. */
+function rfHellEnv(u,hw){return 1.6+(hw-1.6)*Math.pow(u,.6)*(1-.5*u*u)}
+function rfHellPath(c,mx,L,hw,sc,now,ph){const N=16;c.beginPath();c.moveTo(mx,-1.4*sc);
+  for(let i=1;i<=N;i++){const u=i/N;c.lineTo(mx-L*u,-rfHellEnv(u,hw)*sc*(1+.09*Math.sin(u*19-now/24+ph)))}
+  for(let i=N;i>=1;i--){const u=i/N;c.lineTo(mx-L*u,rfHellEnv(u,hw)*sc*(1+.09*Math.sin(u*17-now/27+ph+2)))}
+  c.lineTo(mx,1.4*sc);c.closePath()}
+function rfHellJet(c,mx,t,k,now){const L=24*(.6+.4*Math.min(1,t/.06)),hw=11*(.8+.2*Math.sin(now/30)),fl=(.8+.2*Math.random())*k,lg=(a,b)=>c.createLinearGradient(mx,0,mx-a,0);
+  let g=lg(L*1.08);g.addColorStop(0,`rgba(110,170,255,${fl*.7})`);g.addColorStop(.55,`rgba(40,90,255,${fl*.85})`);g.addColorStop(.86,`rgba(140,80,255,${fl*.65})`);g.addColorStop(1,'rgba(120,50,230,0)');
+  c.fillStyle=g;rfHellPath(c,mx,L*1.08,hw,1.1,now,0);c.fill();
+  g=lg(L*.85);g.addColorStop(0,`rgba(215,238,255,${fl})`);g.addColorStop(.6,`rgba(120,190,255,${fl*.75})`);g.addColorStop(1,'rgba(80,150,255,0)');
+  c.fillStyle=g;rfHellPath(c,mx,L*.85,hw,.7,now,1.3);c.fill();
+  g=lg(L*.6);g.addColorStop(0,`rgba(255,255,255,${fl})`);g.addColorStop(.7,`rgba(240,248,255,${fl*.8})`);g.addColorStop(1,'rgba(220,240,255,0)');
+  c.fillStyle=g;rfHellPath(c,mx,L*.6,hw,.36,now,2.6);c.fill();
+  // violet tongues licking off the tip
+  for(let i=0;i<4;i++){const a=now/70+i*1.9,x=mx-L*(1.02+.08*Math.sin(a)),y=(i-1.5)*hw*.32+Math.sin(a*1.3)*1.2,r=1.1+.6*Math.sin(a*.7+i);
+    const v=c.createRadialGradient(x,y,.1,x,y,r*1.8);v.addColorStop(0,`rgba(170,110,255,${fl*.7})`);v.addColorStop(1,'rgba(110,40,220,0)');c.fillStyle=v;c.beginPath();c.ellipse(x,y,r*1.8,r,0,0,Math.PI*2);c.fill()}}
+/* heat shimmer: faint wavy ripples hanging in the air where the flame was, fading out */
+function rfHellShimmer(c,mx,t,now){const a=.1*(1-t/.9),L=26;c.lineWidth=.35;
+  for(let j=0;j<5;j++){const off=(j-2)*3.2;c.strokeStyle=`rgba(200,225,255,${a*(1-Math.abs(j-2)*.25)})`;c.beginPath();
+    for(let i=0;i<=20;i++){const u=i/20,x=mx-2-L*u,y=off*(.5+u)+Math.sin(u*14-now/45+j*1.7)*(.6+u)*1.1;i?c.lineTo(x,y):c.moveTo(x,y)}c.stroke()}}
 Object.assign(RF_GUN,{
   hades:{shot:1,th:.47,kk:1.2,sc:1.12,anc:[.7,.86],grip:[79.4,5.6],gripRot:-.72,trig:[68.4,7.2],pumpX:14,pumpL:12,foreTop:.4,foreBot:6.6,vgrip:[14.6,10.2],pump:'pump',port:[64,6.4],eject:[62,-2.6],tip:-.4,noFlash:1,
     body(c,o){const C=RFC,bk='#1f1b1a',bkLo='#0c0a0a',hi='#3d3634',now=o.now,heat=rfHdHeat(now),am=o.w.hades||'fire',bx=o.bx,has=o.has;
@@ -7370,7 +7396,7 @@ Object.assign(RF_GUN,{
       // barrel
       rfRR(c,bx+4,-1.4,52-bx,2.8,.5,'#262222','#110f0f',.3);
       // heat shield: magma glows through its holes, brightest just after a shot
-      const hs=new Path2D();hs.rect(14,-4,38,3.6);rfHdFill(c,hs,.15+heat*.85,now,'#3a120a');
+      const hs=new Path2D();hs.rect(14,-4,38,3.6);if(am==='hell')rfHdBlue(c,hs,.15+heat*.85,now);else rfHdFill(c,hs,.15+heat*.85,now,'#3a120a');
       const sh=new Path2D();sh.moveTo(13.4,-4.2);sh.lineTo(52.4,-4.2);sh.lineTo(52.4,-.2);sh.lineTo(13.4,-.2);sh.closePath();
       for(let x=16;x<51;x+=2.7){sh.moveTo(x+.75,-2.2);sh.arc(x,-2.2,.75,0,Math.PI*2)}
       c.save();c.fillStyle=bk;c.fill(sh,'evenodd');c.strokeStyle=bkLo;c.lineWidth=.3;c.stroke(sh);c.restore();rfLine(c,[14,-3.8,52,-3.8],hi,.35);
@@ -7378,7 +7404,7 @@ Object.assign(RF_GUN,{
       if(!o.sil){const g=.35+.65*heat+.06*Math.sin(now/180);
         rfPoly(c,[bx+5,-1.9,bx-3.2,-3.9,bx-3.2,3.9,bx+5,1.9],'#2a2523','#0d0b0b',.35);rfLine(c,[bx+4.4,-1.6,bx-2.8,-3.3],'#4a403c',.35);
         c.save();c.globalCompositeOperation='lighter';const gr=c.createRadialGradient(bx-3.2,0,.2,bx-3.2,0,4.4);
-        const hot=am==='hell'?'255,245,200':'255,170,60';gr.addColorStop(0,`rgba(${hot},${Math.min(1,g)})`);gr.addColorStop(.5,`rgba(255,90,20,${g*.6})`);gr.addColorStop(1,'rgba(255,60,10,0)');
+        const hl=am==='hell',hot=hl?'255,255,255':'255,170,60',mid=hl?'90,170,255':'255,90,20',edge=hl?'60,80,255':'255,60,10';gr.addColorStop(0,`rgba(${hot},${Math.min(1,g)})`);gr.addColorStop(.5,`rgba(${mid},${g*.6})`);gr.addColorStop(1,`rgba(${edge},0)`);
         c.fillStyle=gr;c.beginPath();c.ellipse(bx-3.2,0,1.6,3.6,0,0,Math.PI*2);c.fill();c.restore()}
       else rfSil(c,bx,16,2.6);
       // long pump right up near the muzzle, with a magma-rock inlay
@@ -7397,9 +7423,11 @@ Object.assign(RF_GUN,{
       c.save();c.globalCompositeOperation='lighter';
       if(t>=0&&t<.32){const k=1-t/.32;
         if(am==='slug'){for(let i=0;i<2;i++){const d=(t*260+i*7),x=mx-d,r=2.2-i*.6;const g=c.createRadialGradient(x,0,.2,x,0,r*2.4);g.addColorStop(0,'rgba(255,240,180,1)');g.addColorStop(.35,'rgba(255,120,30,.9)');g.addColorStop(1,'rgba(200,40,0,0)');c.fillStyle=g;c.beginPath();c.arc(x,0,r*2.4,0,Math.PI*2);c.fill()}}
+        else if(am==='hell')rfHellJet(c,mx,t,k,now);
         else{const hell=am==='hell',L=(hell?24:38)*(.6+.4*Math.min(1,t/.06)),hw=(hell?11:3.4)*(.8+.2*Math.sin(now/30)),fl=(.8+.2*Math.random())*k;
           const g=c.createLinearGradient(mx,0,mx-L,0);g.addColorStop(0,hell?`rgba(255,255,235,${fl})`:`rgba(255,230,140,${fl})`);g.addColorStop(.35,`rgba(255,${hell?190:130},40,${fl*.85})`);g.addColorStop(1,'rgba(220,40,0,0)');
           c.fillStyle=g;c.beginPath();c.moveTo(mx,-1.6);c.quadraticCurveTo(mx-L*.5,-hw*1.1,mx-L,-hw*.4);c.lineTo(mx-L,hw*.4);c.quadraticCurveTo(mx-L*.5,hw*1.1,mx,1.6);c.closePath();c.fill()}}
+      if(am==='hell'&&t>=0&&t<.9)rfHellShimmer(c,mx,t,now);
       // Volcanic slugs: the furnace mouth drips molten drops while you hold it
       if(am==='slug'&&!o.sil)for(let i=0;i<2;i++){const ph=((now/1000+i*.55)%1.1)/1.1,y=3.2+ph*ph*30,a=1-ph;c.fillStyle=`rgba(255,${130+80*a|0},40,${a*.9})`;c.beginPath();c.ellipse(mx+.6+i*.8,y,.55,.55+ph*.9,0,0,Math.PI*2);c.fill()}
       // Hyper hands: flame flickers around your loading hand
@@ -7927,7 +7955,7 @@ function rdFig(it,P,F,pal){
   const c=v2,p=it.p,s=it.s,h=s.h,e=it.e,b=it.b,A=[0,0,0],B=[0,0,0];
   let col=b&&b.col||s.col;const now=performance.now();
   if(b&&b.stone)col='#8e8e8e';else if(b&&b.crys)col='#7ff3ff';
-  else if(e&&e.hp>0){if(e.rdFl>.05)col='#ffffff';else if(e.fireT>0)col=(now/90|0)%2?'#ff8a2a':'#ffb347';else if(e.shockT>0)col=(now/70|0)%2?'#ffe14d':s.col;
+  else if(e&&e.hp>0){if(e.rdFl>.05)col='#ffffff';else if(e.fireT>0)col=e.hblue?['#f4f9ff','#2f7bff','#6fb6ff','#9a7bff'][(now/70|0)%4]:(now/90|0)%2?'#ff8a2a':'#ffb347';else if(e.shockT>0)col=(now/70|0)%2?'#ffe14d':s.col;
     else if(e.slowT>0||e.ice||e.frozeT>0)col='#a9dcff';else if(e.acidT>0)col='#a6e84a';else if(e.hyp)col=(now/350|0)%2?'#c46bff':'#ff6bd8';else if(e.loveT>0)col=(now/450|0)%2?'#ff8cc6':'#ffc4e1';else if(e.fog)col=(now/700|0)%2?'#9fd46a':'#b9a2f0'}
   else if(b&&b.dead&&!b.shard)col=rdShade(col,.62);
   const fog=S.zfog?Math.max(0,Math.min(1,1-(it.d-FOG_A)/(FOG_B-FOG_A))):Math.max(.35,Math.min(1,1-(it.d-18)/30));if(fog<=.01)return;let al=fog;if(b&&b.fade>0&&b.fade<2)al*=Math.min(1,b.fade/(b.shard?1.6:2));
@@ -8019,6 +8047,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-hellblue',date:'November 18, 2026',title:'Hades Pump Action: a new look for Hellfire ammo',items:[
+    'Hellfire ammo now burns blue and white, hotter than the orange of the regular fire. This is a look change only: sounds, damage and range are the same.',
+    'The Hellfire jet has a blinding white-hot core, pale icy blue around it and deep electric blue at its wide outer edge. A thin violet fringe flickers at the tips, and the air ripples with heat after each shot.',
+    'With Hellfire loaded, the furnace muzzle and the heat shield over the barrel glow blue-white instead of orange, so you can see which ammo is in the gun.',
+    'Enemies set on fire by Hellfire burn with flickering blue and white flames, so you can tell them apart from enemies burning orange. Blue fire spreads blue to the enemies it touches.']},
   {id:'2026-11-18-bubburst',date:'November 18, 2026',title:'New Heavy Bubble Blaster ability: Bursting bubble',items:[
     'New special ability for the Heavy Bubble Blaster: Bursting bubble, 20,000 silver, in its attachments menu.',
     'The moment a bubble is full, holding the most enemies it can, it bursts with a deep wet boom. Every enemy inside takes 20 damage and is thrown out. Every enemy outside the bubble within 10 feet of it is sent flying like a ragdoll, but takes no damage.',
