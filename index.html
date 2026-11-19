@@ -651,8 +651,10 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-myth="treat">Treats<small>Brain Fog Bites</small></button>
   </div>
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
-    <button data-arm="regular">Regular<small>Vests, plates and suits</small></button>
-    <button data-arm="mythic">Mythical<small>Legendary armor with special abilities and traits</small></button>
+    <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
+    <button data-arm="mythic">Mythical armor<small>Legendary armor with special abilities and traits</small></button>
+    <button data-arm="wear">Standard wearables<small>Coming soon</small></button>
+    <button data-arm="mwear">Mythical wearables<small>Coming soon</small></button>
   </div>
   <p class="note" id="shop-note"></p>
   <div class="stack" id="shop-list"></div>
@@ -8131,6 +8133,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-wearables',date:'November 18, 2026',title:'New armor sections: wearables',items:[
+    'The Armor section of the Armory now has four parts: Standard armor, Mythical armor, Standard wearables and Mythical wearables.',
+    'The two wearables sections are empty for now. New wearables are coming soon.']},
   {id:'2026-11-18-gripten',date:'November 18, 2026',title:'Grip rebalance for rifles, LMGs and SMGs',items:[
     'The Grip now gives a 1 in 10 chance, instead of 1 in 5, for hits that are not dead centre to land as headshots on the AK-47, AN-94, M4A1 carbine, M249 SAW, MG42, M2 Browning, M134 Minigun, Skorpion vz. 61, MAC-10, FN P90, Heckler and Koch MP5, Thompson M1928 and KRISS Vector.',
     'Mastery still raises it: each mastery level makes the Grip 5 percent stronger, up to 14.5 percent at max level. The wider dead-centre head zone is unchanged. Every other gun keeps its 1 in 5 Grip.']},
@@ -9342,9 +9347,10 @@ document.querySelectorAll('#scav-sub button').forEach(b=>b.onclick=()=>{initAudi
 document.querySelectorAll('#sam-sub button').forEach(b=>b.onclick=()=>{initAudio();curSam=b.dataset.sam;buildShop(true);say(SAMN[curSam])});
 document.querySelectorAll('#night-sub button').forEach(b=>b.onclick=()=>{initAudio();curNight=b.dataset.night;buildShop(true);say(NIGHTN[curNight])});
 document.querySelectorAll('#myth-sub button').forEach(b=>b.onclick=()=>{initAudio();curMyth=b.dataset.myth;buildShop(true);say(MCATN[curMyth])});
-document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(curArm==='mythic'?'Mythical armor.':'Regular armor.')});
+document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(ARMSUBN[curArm]+'.')});
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
-const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&(curArm==='mythic'?a.myth:!a.myth));
+const ARMSUBN={regular:'Standard armor',mythic:'Mythical armor',wear:'Standard wearables',mwear:'Mythical wearables'};
+const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&(curArm==='wear'||curArm==='mwear'?a.wear&&(curArm==='mwear'?!!a.myth:!a.myth):!a.wear&&(curArm==='mythic'?a.myth:!a.myth)));
 const shopArmors=()=>curCat==='armor'?armList():curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):[];
 function buildShop(keepFocus){
   const isGun=GUNCATS.includes(curCat);if(isGun)curStd=curCat;
@@ -9357,7 +9363,7 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Nothing here yet. New wearables are coming soon.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Nothing here yet. New wearables are coming soon.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
