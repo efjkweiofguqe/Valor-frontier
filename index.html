@@ -2520,7 +2520,7 @@ const ATT=[
   {id:'tchoke',name:'Thunder choke',price:6000,for:'thunder',desc:()=>'Tightens the spread. The close-range damage bands reach 60 percent farther, but the blast covers a narrower area, so it hits fewer enemies at once. Has no effect with the ball lightning slug.'},
   {id:'trod',name:'Lightning rod',price:15000,for:'thunder',desc:()=>'Every kill builds charge. After 5 kills you hear a rising hum and a voice tells you it is ready. While it stays charged, electricity crackles around you whenever the Thunderclap is in your hands. Your next shot is a supercharged thunderclap with double damage and a huge rumble.'},
   {id:'tdrum',name:'Conductive drum',price:5000,for:'thunder',desc:w=>`Doubles the magazine, 6 shells becomes 12. Stacks with the extended magazine.`},
-  {id:'hdhell',name:'Hellfire ammo',price:15000,for:'hades',ammo:true,desc:()=>'A much wider and hotter flame with a shorter reach. Maximum range 35 feet, 50 with the extended barrel. The jet leaves the barrel 4 feet wide and spreads to 12 feet across at its maximum range. Triples the damage: 1980 from point blank out to 15 feet, 1320 out to 25 feet, and 660 out to 35 feet. The extended barrel stretches these bands out in proportion. Enemies it hits burn twice as hot.'},
+  {id:'hdhell',name:'Hellfire ammo',price:15000,for:'hades',ammo:true,desc:()=>'A much wider and hotter flame with a shorter reach. Maximum range 35 feet, 50 with the extended barrel. The jet leaves the barrel 4 feet wide and spreads to 20 feet across at its maximum range. Triples the damage: 1980 from point blank out to 15 feet, 1320 out to 25 feet, and 660 out to 35 feet. The extended barrel stretches these bands out in proportion. Enemies it hits burn twice as hot.'},
   {id:'hdslug',name:'Volcanic slugs',price:25000,for:'hades',ammo:true,grp:'special',desc:()=>'Special ability. The jet of fire becomes a glob of magma that flies very fast like a slug, straight at one enemy, with no spread. Far more accurate at very long range, reaching 160 feet, and it holds its damage far better: it loses damage 7 times more slowly than the fire, so it hits for 660 out to 56 feet, 550 out to 105 feet and 440 out to 160 feet. Can land headshots. Every enemy it hits erupts with magma: enemies within 5 feet of it take 100 damage, and every enemy within 10 feet catches fire and burns until it dies. The extended barrel adds 10 feet of reach.'},
   {id:'hdbarrel',name:'Extended barrel',price:3000,for:'hades',desc:()=>'A longer barrel that throws the fire farther. The fire jet reaches 70 feet instead of 50, Hellfire ammo 50 feet instead of 35, and Volcanic slugs 170 feet instead of 160. The damage bands stretch out in proportion.'},
   {id:'hdmag1',name:'Extended magazine V1',price:3000,for:'hades',desc:()=>'Holds 8 shells instead of 5.'},
@@ -2742,7 +2742,7 @@ function build(w){
     // hR: maximum reach in metres. hB: damage bands [edge in metres, multiplier], closest first. hBase: multiplier past the last band
     const band=(L,sc)=>L.map(([f,m])=>[f*sc/3.281,m]);
     if(am==='fire'){const R=hb?70:50;b.hR=R/3.281;b.hB=band([[8,3],[15,2.5],[23,2],[35,1.5]],R/50);b.hBase=1;b.hW=f=>Math.max(1,3*f/25);b.burn=10}
-    else if(am==='hell'){const R=hb?50:35;b.hR=R/3.281;b.hB=band([[15,9],[25,6]],R/35);b.hBase=3;b.hW=f=>4+8*Math.min(1,f/R);b.burn=20}
+    else if(am==='hell'){const R=hb?50:35;b.hR=R/3.281;b.hB=band([[15,9],[25,6]],R/35);b.hBase=3;b.hW=f=>4+16*Math.min(1,f/R);b.burn=20}
     else{const R=hb?170:160;b.spread=false;b.slug=true;b.erupt=true;b.cone=14;b.acc=.98;b.hR=R/3.281;b.hB=band([[56,3],[105,2.5],[161,2],[245,1.5]],R/160);b.hBase=1;b.burn=15}}
   if(w.heart){b.blastR=w.blast/3.281;b.lk='heart'}
   if(w.micro){b.blastR=w.blast/3.281;b.lk='micro'}
@@ -7368,7 +7368,7 @@ function rfHellPath(c,mx,L,hw,sc,now,ph){const N=16;c.beginPath();c.moveTo(mx,-1
   for(let i=1;i<=N;i++){const u=i/N;c.lineTo(mx-L*u,-rfHellEnv(u,hw)*sc*(1+.09*Math.sin(u*19-now/24+ph)))}
   for(let i=N;i>=1;i--){const u=i/N;c.lineTo(mx-L*u,rfHellEnv(u,hw)*sc*(1+.09*Math.sin(u*17-now/27+ph+2)))}
   c.lineTo(mx,1.4*sc);c.closePath()}
-function rfHellJet(c,mx,t,k,now){const L=24*(.6+.4*Math.min(1,t/.06)),hw=11*(.8+.2*Math.sin(now/30)),fl=(.8+.2*Math.random())*k,lg=(a,b)=>c.createLinearGradient(mx,0,mx-a,0);
+function rfHellJet(c,mx,t,k,now){const L=24*(.6+.4*Math.min(1,t/.06)),hw=14*(.8+.2*Math.sin(now/30)),fl=(.8+.2*Math.random())*k,lg=(a,b)=>c.createLinearGradient(mx,0,mx-a,0);
   let g=lg(L*1.08);g.addColorStop(0,`rgba(110,170,255,${fl*.7})`);g.addColorStop(.55,`rgba(40,90,255,${fl*.85})`);g.addColorStop(.86,`rgba(140,80,255,${fl*.65})`);g.addColorStop(1,'rgba(120,50,230,0)');
   c.fillStyle=g;rfHellPath(c,mx,L*1.08,hw,1.1,now,0);c.fill();
   g=lg(L*.85);g.addColorStop(0,`rgba(215,238,255,${fl})`);g.addColorStop(.6,`rgba(120,190,255,${fl*.75})`);g.addColorStop(1,'rgba(80,150,255,0)');
@@ -8047,6 +8047,8 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-hellwide',date:'November 18, 2026',title:'Hades Pump Action: wider Hellfire',items:[
+    'Hellfire ammo now spreads to 20 feet across at its maximum range, up from 12. It still leaves the barrel 4 feet wide and widens evenly from there, so it catches even more of a crowd. Range and damage are unchanged.']},
   {id:'2026-11-18-hellblue',date:'November 18, 2026',title:'Hades Pump Action: a new look for Hellfire ammo',items:[
     'Hellfire ammo now burns blue and white, hotter than the orange of the regular fire. This is a look change only: sounds, damage and range are the same.',
     'The Hellfire jet has a blinding white-hot core, pale icy blue around it and deep electric blue at its wide outer edge. A thin violet fringe flickers at the tips, and the air ripples with heat after each shot.',
@@ -9404,7 +9406,7 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
   else if(b.hades){const B=b.hB.filter(x=>x[0]<b.hR).map(([r,m])=>`${D(b.dmg*m)} within ${ft(r)} feet`);
     out.push(`Damage${b.slug?' per slug':' to every enemy in the flame'}: ${B.join(', ')}, and ${D(b.dmg*b.hBase)} out to ${ft(b.hR)} feet.`,
       b.slug?`Volcanic slugs: one enemy at a time. Each hit erupts, 100 damage to enemies within 5 feet of it, and everything within 10 feet burns until death at ${b.burn} per second.`:
-      b.hades==='hell'?`Hellfire: the flame is 4 feet wide at the barrel and 12 feet wide at ${ft(b.hR)} feet. Burns ${b.burn} per second until death.`:`The flame fans out to 3 feet wide at 25 feet. Burns ${b.burn} per second until death.`,
+      b.hades==='hell'?`Hellfire: the flame is 4 feet wide at the barrel and 20 feet wide at ${ft(b.hR)} feet. Burns ${b.burn} per second until death.`:`The flame fans out to 3 feet wide at 25 feet. Burns ${b.burn} per second until death.`,
       'Burning enemies set fire to any enemy within 3 feet of them.',`${n1(pulls)} ${n1(pulls)===1?'shot':'shots'} per second.`)}
   else if(b.tband){const B=b.tband.map(ft);out.push(`Damage: at least ${D(b.dmg)} to every enemy in the blast at any distance. 1.5 times, ${D(b.dmg*1.5)}, within ${B[3]} feet. Double, ${D(b.dmg*2)}, within ${B[2]} feet. 2.5 times, ${D(b.dmg*2.5)}, within ${B[1]} feet. Triple, ${D(b.dmg*3)}, within ${B[0]} feet.`,
     `Splash: anyone within 10 feet of the first enemy hit takes 60 percent of that blast, full within 3 feet, down to half of that at 10 feet.`,`${n1(pulls)} trigger pulls per second, about ${Math.round(b.dmg*aim*pulls)} to ${Math.round(b.dmg*3*aim*pulls)} damage per second to each enemy.`)}
