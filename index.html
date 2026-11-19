@@ -2494,7 +2494,7 @@ const ATT=[
   {id:'reflex',name:'Reflex sight',price:85,noSpread:true,desc:()=>'A red-dot sight. Headshots hit much harder: 110 percent extra damage instead of 60, and 55 percent instead of 30 on bosses.'},
   {id:'scope',name:'Sniper scope',price:120,only:HEAVY,desc:()=>'A long-range optic. Beyond 50 feet, 7 in 10 hits that are not already dead centre still land as headshots.'},
   {id:'pscope',name:'Precision scope',price:1000,only:SNIPERS,myth:true,desc:()=>'A high-power tactical scope. Headshots hit much harder: 60 percent extra on top of your usual headshot bonus, 30 on bosses. Almost every shot lands, and enemies count as in your sights a little further off centre. Stacks with the sniper scope.'},
-  {id:'grip',name:'Grip',price:1300,not:['jackfrost','salvo'],desc:w=>w.spread?'A steadying foregrip. Gives the shotgun a 1 in 5 chance per blast to land headshots, which it normally cannot.':'A steadying foregrip. The dead-centre headshot zone gets 50 percent wider, so the double chirp comes sooner, and 1 in 5 hits that are not dead centre still land as headshots.'},
+  {id:'grip',name:'Grip',price:1300,not:['jackfrost','salvo'],desc:w=>w.spread?'A steadying foregrip. Gives the shotgun a 1 in 5 chance per blast to land headshots, which it normally cannot.':'A steadying foregrip. The dead-centre headshot zone gets 50 percent wider, so the double chirp comes sooner, and '+(GRIP10.includes(w.id)?'1 in 10':'1 in 5')+' hits that are not dead centre still land as headshots. Mastery makes this chance grow.'},
   {id:'trigger',name:'Hair trigger',price:90,not:['osv96'],desc:()=>'Fires 30 percent faster.'},
   {id:'osvtrig',name:'Hair trigger',price:900,only:['osv96'],desc:()=>'A lighter trigger for the OSV-96. Fires 25 percent faster.'},
   {id:'trigger2',name:'Hair trigger V2',price:1500,only:[...SLOW,'svd'],desc:()=>'A competition trigger for slow-firing guns. Fires 40 percent faster, and it stacks with the first hair trigger: with both on, this gun fires about 2 and a half times as fast as stock.'},
@@ -2720,7 +2720,7 @@ function build(w){
   b.hs=w.id==='vlad'?2.5:1.6+(has('reflex')?.5*k:0);b.hsBoss=w.id==='vlad'?2.5:1.3+(has('reflex')?.25*k:0);   // Vlad the Impaler: built-in 2.5 times headshots, bosses toob.scope=has('scope')?Math.min(.95,.7*k):0;
   b.inc=has('inc');b.splash=.5*k;b.sil=has('silencer');b.akimbo=has('akimbo')&&HAND.includes(w.id);b.laser=has('laser')&&LASERG.includes(w.id);
   if(has('pscope')){b.acc=.99;b.cone=w.cone+4;b.hs+=.6*k;b.hsBoss+=.3*k}
-  b.hz=HEADZONE*(has('grip')?1.5:1);b.grip=has('grip')?Math.min(.4,.2*k):0;
+  b.hz=HEADZONE*(has('grip')?1.5:1);b.grip=has('grip')?Math.min(.4,(GRIP10.includes(w.id)?.1:.2)*k):0;   // real assault rifles, LMGs and SMGs: 10 percent base, others 20
   if(w.spread){const rm=w.rm||1;b.range=b.barrel?[11*rm,20*rm,.45]:[7*rm,14*rm,.25]}
   if(w.spread&&has('buck')){b.dmg*=1+.3*k;b.buck=true;b.range=[b.range[0],b.range[1],b.barrel?.7:.6];b.mid=.8}
   if(w.spread&&has('slug')){b.spread=false;b.slug=true;b.dmg*=2.5;b.cone=12;b.rng=(b.barrel?85:70)/3.281;b.acc=.9}
@@ -8131,6 +8131,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-18-gripten',date:'November 18, 2026',title:'Grip rebalance for rifles, LMGs and SMGs',items:[
+    'The Grip now gives a 1 in 10 chance, instead of 1 in 5, for hits that are not dead centre to land as headshots on the AK-47, AN-94, M4A1 carbine, M249 SAW, MG42, M2 Browning, M134 Minigun, Skorpion vz. 61, MAC-10, FN P90, Heckler and Koch MP5, Thompson M1928 and KRISS Vector.',
+    'Mastery still raises it: each mastery level makes the Grip 5 percent stronger, up to 14.5 percent at max level. The wider dead-centre head zone is unchanged. Every other gun keeps its 1 in 5 Grip.']},
   {id:'2026-11-18-pandora',date:'November 18, 2026',title:"New grenade: Paradox Pandora's Box",items:[
     "New grenade in the Armory: Paradox Pandora's Box, 15,000 silver. Drop it at your feet: the lid creaks open, a shuffle of chimes rolls, and one of 9 effects hits every enemy within 30 feet. Which one is completely random, with equal chances, and a voice tells you which.",
     'Inferno: everything in range catches fire and burns until it dies. Teleport: they are sent back to where they spawned. Deep freeze: frozen solid for one minute.',
@@ -9277,6 +9280,7 @@ $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
 const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet','zeliska'],smg:['skorpion','mac10','p90','mp5','tommy','vector'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2','minigun'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin','m2flame','fw41','xm42','arcflame','pulsefire'],hightech:['gaussr'],mythic:['jet','jackfrost','tetra','nova','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar','mjolnir','zeus','medusa']};
+const GRIP10=[...WCAT.rifle,...WCAT.smg,...WCAT.lmg];   // real assault rifles, SMGs and LMGs: Grip gives 10 percent base headshot chance
 const MCAT={pistol:['micro'],rifle:['banshee','hypno'],sniper:['jet','jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],aoe:['blackhole','hydra','salvo','soul','medusa','bubble'],heavy:['quasar'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
 const MCATN={aoe:'Mythical AOE weapons. Area of effect weapons that hit everything in a whole area at once: explosions, black holes, shockwaves, Medusa\'s petrifying gaze and bubbles that trap whole crowds.',pistol:'Mythical pistols. Tiny guns with enormous consequences. Micro Catastrophe fits in your palm and levels a 50 foot area.',treat:'Mythical treats. Snacks the enemies cannot resist. Brain Fog Bites leaves them dazed and harmless.',toy:'Mythical toys. Cuddly on the outside, deadly on the inside. Unbearable Buddy fires lasers from its eyes.',rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
