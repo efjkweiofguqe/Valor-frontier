@@ -533,6 +533,8 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="tetra">Tetra-prism sniper</button>
     <button class="btn" data-test="tetraburst">Tetra-prism sniper, Shattered glass burst</button>
     <button class="btn" data-test="micro">Micro Catastrophe, shot and explosion</button>
+    <button class="btn" data-test="rex">Alien Rex Annihilator, plasma bolt, fire and lightning</button>
+    <button class="btn" data-test="rexsup">Alien Rex Annihilator, Extinction Event bolt</button>
     <button class="btn" data-test="nova">Supernova sniper</button>
     <button class="btn" data-test="novaboom">Supernova explosion</button>
     <button class="btn" data-test="hypnotize">Hypno-rifle, enemy hypnotized</button>
@@ -683,7 +685,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-scav="armor">Armor<small>Razorwire Carapace</small></button>
   </div>
   <div class="seg" id="myth-sub" role="group" aria-label="Mythical weapon type" hidden>
-    <button data-myth="pistol">Pistols<small>Micro Catastrophe</small></button>
+    <button data-myth="pistol">Pistols<small>Micro Catastrophe, Alien Rex Annihilator</small></button>
     <button data-myth="rifle">Rifles<small>Jet rifle, Banshee</small></button>
     <button data-myth="sniper">Sniper rifles<small>Jack Frost, Tetra-prism sniper</small></button>
     <button data-myth="smg">Submachine guns<small>Alien Symbiote, Rivet Storm</small></button>
@@ -1380,7 +1382,7 @@ const PR={
   ksg:     {cr:.32,bf:800, bd:.26,bv:.95,tf:90, td:.22,tv:.9, tl:1.0,tlv:.42},
   coach:   {cr:.35,bf:700, bd:.3, bv:1,  tf:80, td:.26,tv:1,  tl:1.2,tlv:.5}
 };
-const SND={m2flame:{gap:0},fw41:{gap:0},xm42:{gap:0},arcflame:{gap:0},pulsefire:{gap:0},hades:{gap:0},gaussr:{gap:0},zeliska:{gap:0,mech:'cock'},pistol:{gap:0,mech:'slide',cas:1},deagle:{gap:0,mech:'slide',cas:1},ak:{gap:.1,cas:1},an94:{gap:.033,cas:1},
+const SND={m2flame:{gap:0},fw41:{gap:0},xm42:{gap:0},arcflame:{gap:0},pulsefire:{gap:0},hades:{gap:0},gaussr:{gap:0},zeliska:{gap:0,mech:'cock'},rex:{gap:0},pistol:{gap:0,mech:'slide',cas:1},deagle:{gap:0,mech:'slide',cas:1},ak:{gap:.1,cas:1},an94:{gap:.033,cas:1},
   skorpion:{gap:.062,cas:.4},tommy:{gap:.085,cas:.4},mp5:{gap:.07,cas:.4},vector:{gap:.05,cas:.3},mac10:{gap:.055,cas:.3},m249:{gap:.075,cas:.5},spas:{gap:0,mech:'pump'},barrett:{gap:0,cas:1},antitank:{gap:0,mech:'bolt'},
   beretta:{gap:.045,mech:'slide',cas:1},svd:{gap:0,cas:1},osv96:{gap:0,cas:1},cheytac:{gap:0,mech:'bolt'},jackfrost:{gap:0,glass:1},tetra:{gap:.09},nova:{gap:0,mech:'bolt'},micro:{gap:0},hypno:{gap:.1,cas:1},teddy:{gap:0},getwell:{gap:0},salvo:{gap:0},m79:{gap:0},mgl:{gap:0},xm25:{gap:0},rpg7:{gap:0},javelin:{gap:0},flash:{gap:.12},jet:{gap:0},rivet:{gap:0},vlad:{gap:0},scythe:{gap:0},
   glock:{gap:.035,mech:'slide',cas:.5},gyrojet:{gap:0},p90:{gap:.04,cas:.4},m4:{gap:.075,cas:1},mg42:{gap:.042,cas:.4},minigun:{gap:.025,cas:.25},mjolnir:{gap:0},zeus:{gap:0},m2:{gap:.13,cas:1},aa12:{gap:0,cas:1},bshot:{gap:.11,cas:1},ksg:{gap:0,mech:'pump'},coach:{gap:.018},
@@ -1723,6 +1725,7 @@ function gunSound(w,n=1,side=-1){
   if(w.id==='salvo'){const d=gunDest(0);lanternShot(d);return}
   if(w.heart){heartShot(gunDest(0));return}
   if(w.micro){microShot(gunDest(0));return}
+  if(w.rex){rexShot(gunDest(0),0,w.rxSup);return}
   if(LNCH.includes(w.id)){lnShot(w,n);return}
   if(w.id==='jackfrost'){const d=gunDest(0);if(w.sil)d.gain.value=.55;glassShot(d);return}
   if(w.id==='nova'){novaShot(gunDest(0));MECH.bolt(.9,gunDest(0));return}
@@ -1826,7 +1829,7 @@ function teddyClip(){if(!ctx)return false;if(!teddyBuf){loadTeddyRec();return fa
   if(enDuck&&ambDuck)[[enDuck,.22],[ambDuck,.2]].forEach(([n,d])=>{const v=n.gain;v.cancelScheduledValues(t);v.setValueAtTime(v.value,t);v.setTargetAtTime(d,t,.03);v.setTargetAtTime(1,t+len+.05,.15)});
   tdVoiceUntil=t+len+.05;return true}
 let tdVoiceUntil=0;   // while the bear speaks, gunfire and footsteps do not lift the enemies back up
-const RKIND={m2flame:'heavy',fw41:'heavy',xm42:'rifle',arcflame:'rifle',pulsefire:'hand',gaussr:'rifle',zeliska:'hand',micro:'hand',teddy:'battery',hypno:'rifle',getwell:'card',nova:'bolt',m79:'break',mgl:'shells',xm25:'rifle',rpg7:'heavy',javelin:'heavy',flash:'heavy',vlad:'belt',gyrojet:'hand',pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
+const RKIND={m2flame:'heavy',fw41:'heavy',xm42:'rifle',arcflame:'rifle',pulsefire:'hand',gaussr:'rifle',zeliska:'hand',micro:'hand',rex:'hand',teddy:'battery',hypno:'rifle',getwell:'card',nova:'bolt',m79:'break',mgl:'shells',xm25:'rifle',rpg7:'heavy',javelin:'heavy',flash:'heavy',vlad:'belt',gyrojet:'hand',pistol:'hand',deagle:'hand',ak:'rifle',an94:'rifle',skorpion:'rifle',m249:'belt',m2:'belt',spas:'shells',barrett:'heavy',antitank:'bolt',beretta:'hand',svd:'rifle',osv96:'heavy',cheytac:'bolt',jackfrost:'heavy',tetra:'heavy',salvo:'heavy',jet:'heavy',
   glock:'hand',p90:'rifle',tommy:'rifle',mp5:'rifle',vector:'rifle',mac10:'rifle',m4:'rifle',mg42:'belt',aa12:'rifle',bshot:'shells',ksg:'twin',coach:'break',thunder:'shells',hades:'shells',blackhole:'heavy',bubble:'heavy',banshee:'heavy',hydra:'heavy',symbiote:'rifle',rivet:'rifle',quasar:'heavy'};
 function rdest(pan){const g=gunDest(pan,sfx);g.gain.value=.9;return g}
 const fx={
@@ -2334,6 +2337,8 @@ const WPN=[
    traits:'Mythical sniper rifle that fires razor crystals with a bright ringing chime. 30 damage per crystal, about 1.7 shots a second, 10 crystals per magazine. Every crystal that hits has a 15 percent chance to land a headshot, wherever you aim, and a crystal headshot crystallizes the enemy: it is frozen solid in crystal and dead on the spot, whatever its health. Crystal statues stay where they fell until the next wave starts, then crumble away. Bosses and mini bosses are too strong to crystallize for good: they are locked in crystal for 3 seconds, unable to move or attack, and take 50 extra damage. Works on every enemy in every mode. Takes only its own upgrades.'},
   {id:'micro',rng:0,name:'Micro Catastrophe',short:'MICRO',mag:4,dmg:200,cone:12,cd:1.2,reload:2.4,shots:1,acc:.95,micro:true,lnch:'micro',blast:50,splM:1,spd:60,price:60000,
    traits:'Mythical pistol. Tiny enough to hide in your palm, with a sound to match: a squeaky little pew. Then the bullet hits and the world ends. Every round that lands sets off a huge 50 foot explosion: 200 damage at the centre, fading evenly to 20 at the edge, and every enemy caught in it, bosses included, is thrown like a rag doll. Mini bosses and bosses fly less far, but they still go down. A miss lands just past the enemy, so the blast still catches it. 4 rounds, one shot every 1.2 seconds, 2.4 second reload. Takes no attachments.'},
+  {id:'rex',rng:0,name:'Alien Rex Annihilator',short:'REX',mag:8,dmg:70,cone:12,cd:.7,reload:3.2,shell:.4,shots:1,acc:.93,rex:true,price:40000,
+   traits:'Mythical eight-shot revolver, a hand cannon big enough to drop a T. rex. It fires plasma bolts: 70 damage on a direct hit, one bolt every 0.7 seconds, no falloff at any range. Every bolt sets the enemy on fire, 4 damage a second for 5 seconds, and burning enemies set fire to anyone within 5 feet of them before the flames fade. Every bolt also lets loose an electric jolt, like a real lightning strike: it jumps to every enemy within 10 feet, and on from each of them, 5 damage per jump with no weakening, then it is gone. 8 rounds, loaded one at a time, 0.4 seconds each. Takes only its own upgrades.'},
   {id:'nova',rng:0,name:'Supernova',short:'SUPERNOVA',mag:5,dmg:900,cone:10,cd:2,reload:3,shots:1,acc:.97,nova:true,price:75000,
    traits:'Mythical heavy sniper rifle that fires a collapsing star. Every round hits for 900, and wherever it lands the star goes supernova: a huge blast hits every other enemy within 10 feet of the one you hit for 250 and throws them. One shot every 2 seconds, 5 rounds, 3 second reload. Never loses damage to distance. Takes only its own upgrades: Singularity implosion or Chain reaction, one at a time.'},
   {id:'fog',rng:0,name:'Brain Fog Bites',short:'SNACKS',mag:3,dmg:0,cone:15,cd:1,reload:0,shots:1,fog:true,price:35000,
@@ -2767,11 +2772,13 @@ const ATT=[
   {id:'zsfork',name:'Forked bolt',price:25000,for:'zeus',grp:'special',desc:()=>'Special ability. A full-power bolt splits in three and strikes the 3 nearest enemies you are facing, each at full power, each with its own arcs and stun. If there are fewer than 3, the spare bolts are lost.'},
   {id:'zscloud',name:'Storm cloud',price:30000,for:'zeus',grp:'special',desc:()=>'Special ability. Every full-power bolt leaves a storm cloud rumbling over where it struck for 5 seconds. Twice a second the cloud strikes a random enemy within 20 feet below it with lightning for 60. Works together with Forked bolt.'},
   {id:'zscell',name:'Super cell core',price:35000,for:'zeus',grp:'special',desc:()=>'Special ability. A supercell storm packed into the bolt. From half power up, the lightning reaches out 50 feet from the target instead of 15 or 25, and it no longer stops: it hops from zombie to zombie, leaping from every enemy it strikes to any other within 50 feet, again and again, for as long as there is another enemy close enough. Each jump is 10 percent weaker than the last, down to a quarter of the first. At full power everything it touches is still stunned for 1 and a half seconds. Works together with Forked bolt and Storm cloud.'},
+  {id:'rxspeed',name:'Speed loader',price:10000,for:'rex',grp:'reload',desc:()=>'Drops all 8 plasma rounds into the cylinder at once: a full reload in 1.5 seconds, instead of loading them one at a time for 3.2 seconds.'},
+  {id:'rxext',name:'Extinction Event',price:25000,for:'rex',grp:'special',alt:'rexsp',desc:()=>'Special ability. The last round in the cylinder is supercharged, and its chamber glows white hot so sighted players can see it coming. That bolt does triple damage: 210 on the hit, triple burn and triple jolt. Its fire spreads to anyone within 10 feet instead of 5, and its lightning jumps 20 feet instead of 10.'},
   {id:'akimbo',name:'Akimbo',only:HAND,desc:()=>'A second pistol in your other hand, each with its own magazine. Empty one and it reloads while the other keeps firing. The left gun sounds on your left, the right gun on your right.'}
 ];
 const ATTBY=Object.fromEntries(ATT.map(a=>[a.id,a]));
 const LNCH=['m79','mgl','xm25','rpg7','javelin','flash'];
-const OWNUP=[...LNCH,...FLAMES,'gaussr','zeliska','getwell','vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble','mjolnir','zeus','nova','micro','hypno','soul','medusa','teddy','fog','rubik',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
+const OWNUP=[...LNCH,...FLAMES,'gaussr','zeliska','getwell','vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble','mjolnir','zeus','nova','micro','rex','hypno','soul','medusa','teddy','fog','rubik',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
 const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||((w.id==='symbiote'||w.id==='hades')&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
@@ -2810,6 +2817,7 @@ function build(w){
   if(w.id==='banshee')b.mag=has('bnmag3')?60:has('bnmag2')?45:has('bnmag1')?30:15;
   if(w.id==='jackfrost'){b.mag=has('jfmag3')?30:has('jfmag2')?20:has('jfmag1')?15:10;b.reload=w.reload*(has('jffast2')?.45:has('jffast1')?.7:1);b.frag=has('jffrag');b.blizz=has('jfblizz')}
   if(w.id==='nova'){b.sing=has('nvsing');b.chainRx=has('nvchain')}
+  if(w.id==='rex'){b.shell=has('rxspeed')?0:.4;b.reload=has('rxspeed')?1.5:3.2;b.extinct=has('rxext')}
   if(w.id==='hypno'){b.mag=has('hymag2')?60:has('hymag1')?45:30;b.reload=w.reload*(has('hystrip')?.6:1);b.contag=has('hycontag');b.hive=has('hyhive')}
   if(w.id==='rubik'){b.mag=has('rbparty')?5:3;b.spike=has('rbspike')}
   if(w.id==='fog'){b.fogN=has('fogfam')?20:10;b.contact=has('fogcontact')}
@@ -3554,6 +3562,7 @@ function fire(){
     G.odN=(G.odN||0)+1;if(G.odN>1&&(G.odN-1)%10===0)G.odB=(G.odB||0)+stepUp;
     const cd=Math.max(.033,w.cd/(1+(G.odB||0)));G.odCd=cd;
     w={...w,cd,odLvl:(G.odB||0)*10,buzz:1/cd>=14?1/cd:0}}
+  if(w.rex){const sup=!!w.extinct&&A[side]<=1;w={...w,rxSup:sup,dmg:w.dmg*(sup?3:1)}}   // Extinction Event: the last round in the cylinder
   const shots=Math.min(w.shots,A[side]);A[side]-=shots;if(w.vent){G.heat=G.heat||{};G.heat[wi]=(G.heat[wi]||0)+shots}G.cd=w.cd;gunSound(w,shots,w.akimbo?side:-1);if(rdOn()){RD.muzzle=.07;rfShot(w,shots,w.akimbo?side:1)}if(w.heatT)mgHeat(w);
   const pr=G.mode==='practice';if(pr)G.pShots++;
   const gap=w.gap||SND[w.id].gap,acc=w.sure?1:(w.acc||.92)*(G.cover?.65:1);
@@ -3571,7 +3580,7 @@ function fire(){
   else if(w.spread)hits=tgt;
   else if(w.stake)hits=stakeLine(w,tgt);
   else if(w.pen>1){hits=[];for(const e of tgt){if(hits.length>=w.pen)break;if(hits.length&&e.dist-hits[hits.length-1].dist>w.exit)break;hits.push(e)}}
-  const burned=[],frags=[],lanterns=[],erupts=[],novas=[];
+  const burned=[],frags=[],lanterns=[],erupts=[],novas=[],rexs=[];
   let callE=null,callHead=false,anyHit=false,missAt=null;
   let magBack=0;   // Rivet Storm magnetic nails: every nail that lands within range flies straight back; a close kill also returns the ones that missed it
   hits.forEach((e,hi)=>{
@@ -3605,6 +3614,7 @@ function fire(){
     if(w.rivet&&w.magR&&e===hits[0]&&e.dist<=w.magR)magBack+=rounds.length;
     if(w.rivet){if(w.hot)ignite(e,'rivet',tEnd);e.nails=(e.nails||0)+rounds.length;if(e.nails>=10){e.nails-=10;if(e.hp>0){e.stunT=Math.max(e.stunT||0,1);fx.pinned(rel,e.dist,tEnd+.03)}}}
     if(w.nova)novas.push([e,tEnd]);
+    if(w.rex)rexs.push([e,tEnd]);
     if(w.lantern){fx.lantern(rel,e.dist,tEnd,w.loaded);lanterns.push(e)}
     if(w.infect){[e,...G.enemies.filter(o=>o!==e&&o.hp>0&&(()=>{const[a1,b1]=xy(e.angle,e.dist),[a2,b2]=xy(o.angle,o.dist);return Math.hypot(a1-a2,b1-b2)<=3/3.281})())]
       .forEach(o=>{if(o.inf||o.hp<=0)return;o.inf=true;o.infCue=3;fx.infect(norm(o.angle-G.heading),o.dist,tEnd+.05)})}
@@ -3668,6 +3678,7 @@ function fire(){
       const rel=norm(e.angle-G.heading),t=t0+.15+dd*.01;if(dd<=5){e.hp-=100;fx.impact(rel,e.dist,e.type,t);if(e.hp<=0){fx.kill(rel,e.dist,t+.08,e.type);return}}
       hIgnite(e,w.burn,t)})})}
   if(novas.length)blastN+=novaBlast(w,...novas[0]);
+  if(rexs.length)blastN+=rexBlast(w,...rexs[0]);
   if(w.stake&&anyHit)stakePins(w,hits);
   const killed=processDead(w.id);
   if(G.over)return;
@@ -4953,6 +4964,29 @@ Object.assign(fx,{
   novaPush(rel,dist,at=0){const d=out(rel,dist,1,gunBus,2);noise(d,{dur:1.4,vol:.7,type:'bandpass',f:3000,f2:250,q:.8,at,attack:.01});tone(d,{type:'sine',f:500,f2:35,dur:1.2,vol:.6,at})}
 });
 function novaShot(d,at=0){antiTankShot(d,at,true);tone(d,{type:'sine',f:300,f2:3200,dur:.35,vol:.3,at});noise(d,{dur:.5,vol:.35,type:'bandpass',f:6000,f2:1500,q:1.5,at:at+.02,attack:.01});tone(d,{f:45,f2:25,dur:.7,vol:.7,at})}
+/* Alien Rex Annihilator: a rising plasma hum, then a heavy boom with an electric crack on top. Extinction Event adds a deep roar. */
+const REX_BURN=4,REX_BT=5,REX_JOLT=5;
+function rexShot(d,at=0,sup){const k=sup?1.6:1;
+  tone(d,{type:'sine',f:140,f2:520*k,dur:.09,vol:.2,at,attack:.04});tone(d,{type:'sawtooth',f:70,f2:260*k,dur:.09,vol:.07,at,attack:.04});
+  const b=at+.08;shot(PR.zeliska,b,d,{});
+  for(let i=0;i<6;i++)noise(d,{dur:.018,vol:.5,type:'highpass',f:3500,at:b+i*.022,attack:.001});
+  tone(d,{type:'sawtooth',f:2400,f2:300,dur:.14,vol:.22,at:b});tone(d,{type:'sine',f:900,f2:180,dur:.3,vol:.12,at:b+.02});
+  if(sup){tone(d,{f:50,f2:26,dur:.9,vol:.75,at:b});noise(d,{dur:.7,vol:.4,type:'bandpass',f:5000,f2:800,q:1.2,at:b+.02,attack:.01});
+    for(let i=0;i<10;i++)noise(d,{dur:.02,vol:.45,type:'highpass',f:4000,at:b+.05+i*.035,attack:.001})}}
+function rexIgnite(e,k,fR,at){if(e.hp<=0)return;const was=e.fireT>0;if(e.fireT!==Infinity)e.fireT=Math.max(e.fireT||0,REX_BT);
+  e.fireDps=Math.max(e.fireDps||0,REX_BURN*k);e.rexF=Math.max(e.rexF||0,fR);if(!was)e.fireSrc='rex';fx.burn(norm(e.angle-G.heading),e.dist,at||0)}
+/* the bolt sets its target on fire, then the jolt strikes it and jumps to every enemy within reach of anyone already struck,
+   5 damage each with no weakening, once per enemy, then fades. Returns how many other enemies it reached. */
+function rexBlast(w,c,t0){const k=w.rxSup?3:1,R=(w.rxSup?20:10)/3.281,jd=REX_JOLT*k*gunMult();
+  rexIgnite(c,k,w.rxSup?10:5,t0);
+  const hitOne=(e,t)=>{const rel=norm(e.angle-G.heading);if(e.hp>0){e.hp-=jd;if(e.hp<=0)fx.kill(rel,e.dist,t+.08,e.type)}};
+  hitOne(c,t0);fx.zap(norm(c.angle-G.heading),c.dist,t0);
+  const left=new Set(G.enemies.filter(e=>e!==c&&e.hp>0)),q=[c];let n=0;
+  for(let qi=0;qi<q.length;qi++){const[sx,sy]=xy(q[qi].angle,q[qi].dist);
+    [...left].map(e=>{const[x,y]=xy(e.angle,e.dist);return[e,Math.hypot(x-sx,y-sy)]}).filter(a=>a[1]<=R).sort((a,b)=>a[1]-b[1]).forEach(([e])=>{left.delete(e);q.push(e);n++;
+      const t=t0+.05+Math.min(n,12)*.05+Math.max(0,Math.min(n,60)-12)*.015;if(n<=16)fx.zap(norm(e.angle-G.heading),e.dist,t);hitOne(e,t)})}
+  if(w.rxSup)(g=>setTimeout(()=>{if(G===g&&!G.over)say(`Extinction Event!${n?` Lightning hit ${n+1} enemies.`:''}`)},500))(G);
+  return n?n+1:0}
 const nvD=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 function nvHit(o,dmg,t){o.hp-=dmg;rdShot(o,{id:'nova'},false);const rel=norm(o.angle-G.heading);fx.impact(rel,o.dist,o.type,t);if(o.hp<=0)fx.kill(rel,o.dist,t+.08,o.type)}
 // returns how many other enemies the blast hit right away (the Singularity hits later, on its own)
@@ -6126,11 +6160,11 @@ function step(dt){
       else{G.wave++;G.lastUsed=false;startWave()}}return}
   if(G.waitWave)return;   // co-op guest: wave cleared, waiting for the host to start the next one
   if(G.jobs.length){const done=[];
-    G.jobs.forEach(j=>{try{if(j.shell){j.left-=dt;if(j.left<=0){const A=G.ammo[j.wi],sw=G.lo[j.wi];A[j.side]=Math.min(sw.mag,A[j.side]+1);if(sw.id==='zeliska'){const d=rdest(j.pan);clank(.01,1700,.22,d);clank(.14,4400,.09,d)}else if(!sgShell(rdest(j.pan),SG_PITCH[sw.id]||1))shellIn(rdest(j.pan));
+    G.jobs.forEach(j=>{try{if(j.shell){j.left-=dt;if(j.left<=0){const A=G.ammo[j.wi],sw=G.lo[j.wi];A[j.side]=Math.min(sw.mag,A[j.side]+1);if(sw.id==='zeliska'||sw.id==='rex'){const d=rdest(j.pan);clank(.01,1700,.22,d);clank(.14,4400,.09,d);if(sw.id==='rex')tone(d,{type:'sine',f:300,f2:900,dur:.16,vol:.1,at:.12,attack:.02})}else if(!sgShell(rdest(j.pan),SG_PITCH[sw.id]||1))shellIn(rdest(j.pan));
         if(A[j.side]>=sw.mag)done.push(j);else j.left+=j.per;hud()}return}
       j.left-=dt;const fr=1-j.left/j.total;while(j.i<j.ev.length&&j.ev[j.i][0]<=fr){j.ev[j.i][1](rdest(j.pan));j.i++}if(j.left<=0)done.push(j)}catch(e){logErr(e,'reload');j.ev=[];j.shell=false;j.left=0;done.push(j)}});   // a broken reload sound never jams the gun: it just finishes
     if(done.length){G.jobs=G.jobs.filter(j=>!done.includes(j));
-      done.forEach(j=>{const w=G.lo[j.wi];G.ammo[j.wi][j.side]=w.mag;if(w.teddy){teddyReady();return}if(j.shell&&w.id==='zeliska')clank(.1,3000,.18,rdest(0));else if(j.shell&&!sgPlay(rdest(0),'pump',{at:.12,rate:SG_PITCH[w.id]||1}))MECH.pump(.12,rdest(0));rSay(w.akimbo?`${j.side?'Right':'Left'} gun ready.`:`${w.short} ready.`,true)});hud()}}
+      done.forEach(j=>{const w=G.lo[j.wi];G.ammo[j.wi][j.side]=w.mag;if(w.teddy){teddyReady();return}if(j.shell&&(w.id==='zeliska'||w.id==='rex'))clank(.1,3000,.18,rdest(0));else if(j.shell&&!sgPlay(rdest(0),'pump',{at:.12,rate:SG_PITCH[w.id]||1}))MECH.pump(.12,rdest(0));rSay(w.akimbo?`${j.side?'Right':'Left'} gun ready.`:`${w.short} ready.`,true)});hud()}}
   if((G.hold||flockLive())&&G.cd<=0)fire();
   if(G.over)return;
   // spawning (in co-op, only the host spawns enemies)
@@ -6172,6 +6206,12 @@ function step(dt){
   // Hades fire spreads: any enemy that comes within 3 feet of one burning with Hades fire catches it too
   G.hSprT=(G.hSprT||0)-dt;if(G.hSprT<=0){G.hSprT=.2;const lit=G.enemies.filter(e=>e.hfire&&e.hp>0).map(e=>[e,...xy(e.angle,e.dist)]);
     if(lit.length)G.enemies.forEach(o=>{if(o.hfire||o.hp<=0)return;const[ox,oy]=xy(o.angle,o.dist),src=lit.find(([e,x,y])=>Math.hypot(x-ox,y-oy)<=3/3.281);if(src)hIgnite(o,src[0].fireDps,0,src[0].hblue)})}
+  // Alien Rex Annihilator plasma fire: a burning enemy sets fire to anyone within 5 feet (10 after Extinction Event),
+  // passing on only the time it has left, so a whole crowd's fire fades out together
+  G.rxSprT=(G.rxSprT||0)-dt;if(G.rxSprT<=0){G.rxSprT=.2;const lit=[];
+    G.enemies.forEach(e=>{if(!e.rexF)return;if(!(e.fireT>0)||e.hp<=0){e.rexF=0;if(!(e.fireT>0))e.fireDps=0;return}lit.push([e,...xy(e.angle,e.dist)])});
+    if(lit.length)G.enemies.forEach(o=>{if(o.hp<=0||o.fireT>0)return;const[ox,oy]=xy(o.angle,o.dist),src=lit.find(([e,x,y])=>Math.hypot(x-ox,y-oy)*3.281<=e.rexF);
+      if(src){const e=src[0];o.fireT=Math.min(REX_BT,e.fireT);o.fireDps=e.fireDps;o.fireSrc='rex';o.rexF=e.rexF;fx.burn(norm(o.angle-G.heading),o.dist,0)}})}
   // Hydra corrosive acid: a coated enemy loses HACID health a second for 10 seconds, then the acid fades
   G.enemies.forEach(e=>{if(!(e.acidT>0)||e.hp<=0)return;e.acidT-=dt;e.hp-=HACID*dt;e.acidCue-=dt;
     if(e.acidCue<=0&&e.hp>0){fx.acidSizzle(norm(e.angle-G.heading),e.dist);e.acidCue=1.1}if(e.hp<=0){e.acidKill=true;fx.kill(norm(e.angle-G.heading),e.dist,0,e.type)}});
@@ -8187,6 +8227,42 @@ RF_GUN.zeliska={rev:1,kk:2.2,grip:[95.4,16.4],gripRot:-.42,trig:[80.6,13.2],sup:
     rfStreaks(c,0,-3,58,5.2,K,0);
     // hammer: back when cocked, forward right after a shot
     c.save();c.translate(84.4,-3.6);c.rotate(o.ham?-.2:.75);rfPoly(c,[-1,0,1.2,0,2.6,-3.6,1.2,-4.6,-.2,-3.4],K.m,K.d,.3);rfLine(c,[.2,-1,1.6,-3.8],K.w,.3);c.restore()}};
+/* ----- held revolver: the Alien Rex Annihilator. Built on a giant Zeliska-sized frame and long barrel, but in gunmetal
+   black: a see-through cylinder with 8 chambers that glow like little plasma cells and go dark one by one as you fire
+   (with Extinction Event, the last full one glows white hot), glowing blue cooling vents and copper coils along the
+   barrel, and a toothy jaw-shaped muzzle. Reloads use the same hands as the Zeliska, pushing in glowing plasma rounds. ----- */
+Object.assign(RF_IDS,{rex:1});
+RF_GUN.rex={rev:1,ch:8,plasma:1,kk:2.4,grip:[95.4,16.4],gripRot:-.42,trig:[80.6,13.2],sup:[92.6,20.6],cyl:[70,3.2,6.6],gate:[80.6,6.4],
+  body(c,o){const K={d:'#0c0e11',m:'#30353c',l:'#5d646d',w:'#9aa3ad'},cx=70,cy=3.2,R=6.6,now=performance.now(),pulse=.75+.25*Math.sin(now/180),cop='#b8733a',copL='#f0a86a';
+    // grip: dark gunmetal with ridged panels and a thin blue inlay
+    rfPoly(c,[84,7.6,92,6.4,104.6,22.4,103.6,26.4,94.4,27.6,88,24.4,86,14],K.m,K.d,.35);
+    c.save();c.beginPath();c.moveTo(84,7.6);c.lineTo(92,6.4);c.lineTo(104.6,22.4);c.lineTo(103.6,26.4);c.lineTo(94.4,27.6);c.lineTo(88,24.4);c.lineTo(86,14);c.closePath();c.clip();
+    const g=c.createLinearGradient(84,6,104,26);g.addColorStop(0,K.l);g.addColorStop(.4,K.m);g.addColorStop(1,K.d);c.fillStyle=g;c.fillRect(80,4,30,26);
+    c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=.35;for(let i=0;i<7;i++){c.beginPath();c.moveTo(87+i*1.8,10+i*1.4);c.lineTo(93+i*1.8,8.6+i*1.4);c.stroke()}
+    rfLine(c,[88.6,12,99.6,25.6],`rgba(90,210,255,${.6*pulse})`,.4);c.restore();
+    // frame, recoil shield, under-strap and trigger guard
+    rfMetal(c,57.6,-4.8,27,1.8,.4,K);rfMetal(c,80,-4.8,5,15.6,.8,K,true);rfMetal(c,57.6,9.6,27,2.6,.6,K);
+    c.lineCap='round';rfLine(c,[75.4,12.2,76.6,17,86,17.2,86.6,12.2],K.m,1.1);rfLine(c,[80.2,12.2,80.8,15.2],K.l,.8);
+    // see-through cylinder: a smoky glass drum with 8 plasma cells. Lit cells are rounds still loaded; they turn with the cylinder
+    rfRR(c,cx-10,cy-R,20,R*2,2.6,'rgba(30,60,80,.45)','rgba(150,220,255,.55)',.35);
+    const N=8,lit=Math.max(0,o.n|0),ph=o.ph|0;
+    for(let k=0;k<N;k++){const a=o.cyl+k*Math.PI*2/N,z=Math.sin(a);if(z<=0)continue;const yy=cy-R*.82*Math.cos(a);
+      const slot=((k-ph)%N+N)%N,on=slot<lit,last=on&&o.ext&&lit===1;
+      rfRR(c,cx-8.6,yy-1.1*z,17.2,2.2*z,1.1*z,on?(last?`rgba(255,255,255,${.75+.25*pulse})`:`rgba(70,200,255,${(.45+.4*z)*pulse})`):`rgba(20,28,36,${.4+.4*z})`);
+      if(on){c.save();c.globalCompositeOperation='lighter';rfRR(c,cx-8,yy-.5*z,16,1*z,.5*z,last?'rgba(200,240,255,.9)':'rgba(160,240,255,.5)');c.restore()}}
+    rfLine(c,[cx-9,cy-R+.6,cx+9,cy-R+.6],'rgba(255,255,255,.35)',.3);rfCirc(c,58.6,cy,1,K.l,K.d,.3);
+    // long barrel with a vent rib on top, three copper coils, and the ejector housing underneath
+    rfMetal(c,0,-3,58.4,5.2,.8,K);rfMetal(c,.6,-4.2,57.6,1.2,.3,K);
+    for(let i=0;i<7;i++){const x=8+i*6.6;rfRR(c,x,-4,3.2,.8,.3,`rgba(80,200,255,${.55*pulse+.2})`);c.save();c.globalCompositeOperation='lighter';rfRR(c,x-.4,-4.6,4,1.8,.8,`rgba(60,170,255,${.18*pulse})`);c.restore()}
+    [[14,3],[28,3],[42,3]].forEach(([x,wd])=>{for(let j=0;j<wd;j++){rfRR(c,x+j*1.3,-3.4,1,6,.4,cop,'#5a3010',.2);rfLine(c,[x+j*1.3+.3,-3.2,x+j*1.3+.3,2.4],copL,.25)}});
+    rfMetal(c,32,2.2,26,2.2,.8,K);rfCirc(c,33+o.rod,3.3,.9,K.l,K.d,.3);
+    // toothy jaw muzzle: upper and lower jaws with fangs, a blue glow deep inside
+    rfPoly(c,[-5,-4.4,1.2,-3.6,1.2,-.6,-3.6,-.6],K.m,K.d,.3);rfPoly(c,[-5,3.4,1.2,2.6,1.2,-.2,-3.6,-.2],K.m,K.d,.3);
+    for(let i=0;i<3;i++){rfPoly(c,[-4.6+i*1.8,-.8,-3.6+i*1.8,-.8,-4.1+i*1.8,.5],'#e8eef3','#7b8590',.15);rfPoly(c,[-4.2+i*1.8,0,-3.2+i*1.8,0,-3.7+i*1.8,-1.2],'#e8eef3','#7b8590',.15)}
+    c.save();c.globalCompositeOperation='lighter';const mg=c.createRadialGradient(-1,-.3,0,-1,-.3,3);mg.addColorStop(0,`rgba(140,230,255,${.5*pulse})`);mg.addColorStop(1,'rgba(40,140,255,0)');c.fillStyle=mg;c.beginPath();c.arc(-1,-.3,3,0,Math.PI*2);c.fill();c.restore();
+    rfPoly(c,[3,-4.2,5.6,-4.2,5,-6.2,3.6,-6.2],K.m,K.d,.3);
+    // hammer
+    c.save();c.translate(84.4,-3.6);c.rotate(o.ham?-.2:.75);rfPoly(c,[-1,0,1.2,0,2.6,-3.6,1.2,-4.6,-.2,-3.4],K.m,K.d,.3);rfLine(c,[.2,-1,1.6,-3.8],'rgba(90,210,255,.7)',.3);c.restore()}};
 function rfDrawRev(c,W,H,X0,Y0,w,S0,now,dt,o,has){
   const A=(G.ammo&&G.ammo[G.w])||[1],n=A[0]!=null?A[0]:1,pt=(a,b,t)=>[rfL(a[0],b[0],t),rfL(a[1],b[1],t)];
   let kick=0,flash=0,newShots=0;for(const s of RF.kicks){const d=now-s.t;if(d<0)continue;kick+=d<35?d/35:Math.max(0,1-(d-35)/260);if(d<55)flash=Math.max(flash,1-d/55);if(s.eject){newShots++;s.eject=0}}kick=Math.min(1.4,kick);
@@ -8203,7 +8279,7 @@ function rfDrawRev(c,W,H,X0,Y0,w,S0,now,dt,o,has){
     else{const t=rfSeg(fr,.82,1);turn=rfE(t);lh=pt([gate[0]+1,gate[1]+1],[gate[0]-2,gate[1]+4],t)}
     if(fr<.18)job._e=job._e||0;if(fr>.95)job._e=0}
   if(job&&fr>.95&&!job._t){job._t=1;RF.revPh+=1;RF.revShow+=1}if(job&&fr<.5)job._t=0;if(job&&job._t)turn=0;
-  RF.revShow+=(RF.revPh-RF.revShow)*Math.min(1,dt*16);o.cyl=(RF.revShow+turn)*Math.PI*2/5;
+  RF.revShow+=(RF.revPh-RF.revShow)*Math.min(1,dt*16);o.cyl=(RF.revShow+turn)*Math.PI*2/(S0.ch||5);o.n=n;o.ph=Math.round(RF.revShow);o.ext=has('rxext');
   // placement: held out in front in both hands; tipped up during reloads so you can see the cylinder
   const th=.3,co=Math.cos(th),si=Math.sin(th),gx=S0.grip[0]*co-S0.grip[1]*si,gy=S0.grip[0]*si+S0.grip[1]*co;
   const S=Math.min(W*.4/gx,H*.36/gy),rs=Math.min(1,(now-RF.raise)/300),sway=Math.sin(now/950),bob=Math.sin(now/470);
@@ -8215,14 +8291,17 @@ function rfDrawRev(c,W,H,X0,Y0,w,S0,now,dt,o,has){
   c.save();c.setTransform(1,0,0,1,0,0);const sw=9*S*1.6;
   const rW=toS(S0.grip[0]+3,S0.grip[1]+5);rfSleeve(c,rW[0],rW[1],W+sw,H+sw*1.2,sw*1.1);const lw0=lh||S0.sup,lW=toS(lw0[0]+1,lw0[1]+5);rfSleeve(c,lW[0],lW[1],W*.4,H+sw,sw);c.restore();
   S0.body(c,o);
-  if(round){c.save();c.translate(round.x,round.y);rfRR(c,0,0,9,3,.8,RFC.brass,'#7a5c1e',.25);rfRR(c,-1.6,.25,1.8,2.5,.9,has('zlsolid')?'#d8b45a':has('zlsoft')?'#8e939a':'#b8743a');rfRR(c,8.6,-.2,.8,3.4,.3,'#c99a3e');c.restore()}
+  if(round&&S0.plasma){c.save();c.translate(round.x,round.y);rfRR(c,0,0,9,3,1,'rgba(70,200,255,.85)','#cfefff',.25);c.globalCompositeOperation='lighter';rfRR(c,1,.8,7,1.4,.6,'rgba(220,250,255,.8)');c.restore()}
+  else if(round){c.save();c.translate(round.x,round.y);rfRR(c,0,0,9,3,.8,RFC.brass,'#7a5c1e',.25);rfRR(c,-1.6,.25,1.8,2.5,.9,has('zlsolid')?'#d8b45a':has('zlsoft')?'#8e939a':'#b8743a');rfRR(c,8.6,-.2,.8,3.4,.3,'#c99a3e');c.restore()}
   // hands: right on the grip, thumb over the hammer after each shot, left hand wrapped over it
   const FS=1.7,big=(x,y,r)=>{c.save();c.translate(x,y);c.scale(FS,FS);rfFist(c,0,0,r,true);c.restore()};
   big(S0.grip[0]+.6,S0.grip[1]+1,S0.gripRot);c.lineCap='round';rfLine(c,[S0.grip[0]-4,S0.grip[1]-5.4,S0.trig[0],S0.trig[1]],RFC.gloveHi,2.6);
   if(thumb>0)rfLine(c,[90,4,rfL(90,86.4,thumb),rfL(4,-6,thumb)],RFC.gloveHi,2.4);
   if(lh)big(lh[0],lh[1],-.3);else big(S0.sup[0]-1.4,S0.sup[1]+2.2,-.55);
-  if(flash>0){rfFlash(c,-.6,'big',false,flash,-.4);c.save();c.globalCompositeOperation='lighter';const g=c.createRadialGradient(59,-1,0,59,-1,4*flash);g.addColorStop(0,`rgba(255,230,160,${flash})`);g.addColorStop(1,'rgba(255,150,40,0)');c.fillStyle=g;c.beginPath();c.arc(59,-1,4,0,Math.PI*2);c.fill();c.restore()}
+  if(flash>0&&S0.plasma){c.save();c.globalCompositeOperation='lighter';const g=c.createRadialGradient(-4,-.3,0,-4,-.3,14*flash);g.addColorStop(0,`rgba(235,250,255,${flash})`);g.addColorStop(.35,`rgba(90,200,255,${.8*flash})`);g.addColorStop(1,'rgba(40,120,255,0)');c.fillStyle=g;c.beginPath();c.arc(-4,-.3,14,0,Math.PI*2);c.fill();c.restore()}
+  else if(flash>0){rfFlash(c,-.6,'big',false,flash,-.4);c.save();c.globalCompositeOperation='lighter';const g=c.createRadialGradient(59,-1,0,59,-1,4*flash);g.addColorStop(0,`rgba(255,230,160,${flash})`);g.addColorStop(1,'rgba(255,150,40,0)');c.fillStyle=g;c.beginPath();c.arc(59,-1,4,0,Math.PI*2);c.fill();c.restore()}
   if(newShots){const mz=toS(-1,0);rfPuff(mz[0],mz[1],S*6,10,0,-S*6,true)}
+  if(RF.revEject&&S0.plasma)RF.revEject=0;
   if(RF.revEject){RF.revEject=0;const p=toS(S0.gate[0]+1,S0.gate[1]);RF.brass.push({x:p[0],y:p[1],vx:W*.04,vy:H*.05,r:0,vr:5,t:0,s:7*S})}
   c.restore();rfBrassDraw(c,W,H,S,dt);rfFx(c,W,H,X0,Y0,dt);return true}
 /* ----- the picture: a simple first-person view from where you stand ----- */
@@ -8425,6 +8504,14 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-20-rex',date:'November 20, 2026',title:'New mythical pistol: Alien Rex Annihilator',items:[
+    'New mythical revolver, the Alien Rex Annihilator, 40,000 silver. Find it in the Armory under Legendary, Mythical weapons, Pistols, next to the Micro Catastrophe.',
+    'It fires plasma bolts that hit for 70, one every 0.7 seconds, with no falloff. Every bolt sets the enemy on fire, 4 a second for 5 seconds, and burning enemies set fire to anyone within 5 feet before the flames fade.',
+    'Every bolt also sends out an electric jolt like a real lightning strike: it jumps to every enemy within 10 feet, and on from each of them, 5 damage per jump with no weakening, then it is gone.',
+    '8 rounds, loaded one at a time, 0.4 seconds each. The Speed loader, 10,000 silver, loads all 8 at once in 1.5 seconds.',
+    'Special ability, Extinction Event, 25,000 silver: the last round in the cylinder is supercharged, with triple damage, and its fire and lightning spread twice as far.',
+    'Listen for a rising plasma hum, then a heavy boom with an electric crack. Jolted zombies sizzle and burning ones crackle. You can hear it in the sound test too.',
+    'Sighted players: it is a giant gunmetal revolver with a see-through cylinder of glowing plasma cells, blue cooling vents, copper coils and a toothy jaw for a muzzle.']},
   {id:'2026-11-19-scifi',date:'November 19, 2026',title:'Real sci-fi sounds from Kenney',items:[
     'Xeth Prime: hive drones now fire small lasers, plasma brutes and the Plasma Overseer fire big plasma blasts, and the Hive Queen a deep, slimy one. Drones and armored aliens die with a crunch. The planet hums with a low starship engine, with bursts of alien computer chatter.',
     'Ashgrave: sentry mechs fire retro lasers, the Warden Mech fires rapid three-shot laser bursts, and the Iron Revenant\'s rockets launch with a thruster roar and land with a crunching blast. Mechs break apart with a crunch, and dead terminals sometimes chatter.',
@@ -9909,8 +9996,8 @@ $('b-record').onclick=record;
 /* ---------- armory shop ---------- */
 const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet','zeliska'],smg:['skorpion','mac10','p90','mp5','tommy','vector'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2','minigun'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin','m2flame','fw41','xm42','arcflame','pulsefire'],hightech:['gaussr'],toy:['rubik'],mythic:['jet','jackfrost','tetra','nova','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar','mjolnir','zeus','medusa']};
 const GRIP10=[...WCAT.rifle,...WCAT.smg,...WCAT.lmg];   // real assault rifles, SMGs and LMGs: Grip gives 10 percent base headshot chance
-const MCAT={pistol:['micro'],rifle:['banshee','hypno'],sniper:['jet','jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],aoe:['blackhole','hydra','salvo','soul','medusa','bubble'],heavy:['quasar'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
-const MCATN={aoe:'Mythical AOE weapons. Area of effect weapons that hit everything in a whole area at once: explosions, black holes, shockwaves, Medusa\'s petrifying gaze and bubbles that trap whole crowds.',pistol:'Mythical pistols. Tiny guns with enormous consequences. Micro Catastrophe fits in your palm and levels a 50 foot area.',treat:'Mythical treats. Snacks the enemies cannot resist. Brain Fog Bites leaves them dazed and harmless.',toy:'Mythical toys. Cuddly on the outside, deadly on the inside. Unbearable Buddy fires lasers from its eyes.',rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
+const MCAT={pistol:['micro','rex'],rifle:['banshee','hypno'],sniper:['jet','jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],aoe:['blackhole','hydra','salvo','soul','medusa','bubble'],heavy:['quasar'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
+const MCATN={aoe:'Mythical AOE weapons. Area of effect weapons that hit everything in a whole area at once: explosions, black holes, shockwaves, Medusa\'s petrifying gaze and bubbles that trap whole crowds.',pistol:'Mythical pistols. Tiny guns with enormous consequences. Micro Catastrophe fits in your palm and levels a 50 foot area. The Alien Rex Annihilator fires plasma bolts that burn and electrocute whole crowds.',treat:'Mythical treats. Snacks the enemies cannot resist. Brain Fog Bites leaves them dazed and harmless.',toy:'Mythical toys. Cuddly on the outside, deadly on the inside. Unbearable Buddy fires lasers from its eyes.',rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
 const mcatOf=id=>Object.keys(MCAT).find(k=>MCAT[k].includes(id))||'rifle';
 const catOf=id=>Object.keys(WCAT).find(k=>WCAT[k].includes(id))||'pistol';
 /* the list under each Armory category button is built from the shop's own lists, so a new weapon always shows up in it */
@@ -9936,7 +10023,7 @@ const CATNOTE={toy:'Toys. Everyday toys that keep the enemy busy instead of hurt
   grenades:'Throwables and consumables. Grenades go off around you, so there is no aiming: everything inside the blast radius is hit. They are used up when thrown. In battle, Grenade uses one, and Grenade type cycles frag, cryo, incendiary, jack-in-the-box, event horizon and Fat Man.',
   perks:'Permanent upgrades to your soldier. Toughness and Field medic go up to level 150, Deadeye and Scavenger up to level 50. Every level up to 20 gives the full boost, after that each level gives a smaller one. From level 6 to 50, every level costs 10 percent more than the one before, and past 50 only 3 percent more.'};
 const n1=x=>Math.round(x*10)/10;
-function dmgLine(w){if(w.flame){const b=build(w);return `Damage: ${w.dmg} a second to everything in the stream, out to ${b.ftR} feet and ${b.ftW} feet wide at the end. Burns ${b.ftBd} a second for ${b.ftBt} seconds, spreading to anyone within ${FT_SPREAD} feet. Fuel: ${n1(b.mag)} seconds. Tank swap: ${b.reload} seconds.`}if(w.gaussr)return `Damage: up to ${w.dmg} at full charge, to every enemy in its line, through up to 30 enemies. A tap does a tenth and goes through 3. Full charge in 2 and a half seconds. Never misses and ignores cover.`;if(w.micro)return `Damage: ${w.dmg} at the centre of a ${w.blast} foot explosion, fading evenly to ${Math.round(w.dmg*MC_EDGE)} at the edge. Every enemy caught is thrown as a rag doll. One shot every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.rubik){const b=build(w);return `No damage${b.spike?` except Spiked Tiles, ${RB_SPIKE} a second to each solver`:''}. ${b.mag} cubes out at once. Up to ${RB_CAP} zombies, or one boss, per cube, busy for ${RB_T} seconds, the Ancient One ${RB_ANC}.`}if(w.fog){const b=build(w);return `No damage. Each handful is ${b.fogN} snacks. A regular enemy is dazed by 1 snack, a mini boss by 5, a boss by 15 and the Ancient One by 50. Dazed enemies never attack again. Fresh bag every wave: 3 handfuls, plus 1 more every 5 waves.`}if(w.teddy){const b=build(w);return `Damage: ${b.tdDps} a second as a constant laser beam from both eyes, out to ${TD_R} feet with no falloff. Each battery lasts ${b.mag} seconds of firing, and changing it takes ${b.reload} seconds.`}if(w.medusa)return `No damage: it turns enemies to stone. Level 1, ${MD_FT[1]} feet for ${MD_COST[1]} souls. Level 2, ${MD_FT[2]} feet for ${MD_COST[2]} souls. Level 3, ${MD_FT[3]} feet for ${MD_COST[3]} souls. 1 second per level. The wave is as wide as it has travelled. The Ancient One loses 10, 20 or 30 percent of its health instead.`;if(w.soul)return 'Kills everything the shockwave reaches, bosses and mini bosses included. The Ancient One loses half its health. Costs 10 to 65 percent of your max health for a 10 to 70 foot blast around you, never taking you below 10 percent.';if(w.heart)return `Damage: ${w.dmg} to the enemy a heart hits, and up to ${Math.round(w.dmg*w.splM)} to everyone within ${w.blast} feet, who are thrown away from it. ${n1(1/w.cd)} hearts per second. For scale, light enemies have 2 to 3 health.`;if(w.lnch)return lnDmgLine(w);if(w.mjol)return `Damage: ${w.dmg} on impact, with lightning leaping to up to 4 more enemies within 15 feet for 60 percent, and 100 to every enemy it smashes flying home. Reaches 80 feet, 60 feet a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.zeus)return `Damage: ${w.dmg} for a quick tap, rising to ${w.dmg+500} at full power after 2 seconds of charge. Arcs from half power, and stuns at full. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
+function dmgLine(w){if(w.rex){const b=build(w);return `Damage: ${w.dmg} per plasma bolt, no falloff at any range. Burns ${REX_BURN} a second for ${REX_BT} seconds, spreading to anyone within 5 feet. Electric jolt: ${REX_JOLT} per jump to every enemy within 10 feet, on and on through a crowd.${b.extinct?' Extinction Event on: the last round does triple damage and spreads twice as far.':''} For scale, light enemies have 2 to 3 health.`}if(w.flame){const b=build(w);return `Damage: ${w.dmg} a second to everything in the stream, out to ${b.ftR} feet and ${b.ftW} feet wide at the end. Burns ${b.ftBd} a second for ${b.ftBt} seconds, spreading to anyone within ${FT_SPREAD} feet. Fuel: ${n1(b.mag)} seconds. Tank swap: ${b.reload} seconds.`}if(w.gaussr)return `Damage: up to ${w.dmg} at full charge, to every enemy in its line, through up to 30 enemies. A tap does a tenth and goes through 3. Full charge in 2 and a half seconds. Never misses and ignores cover.`;if(w.micro)return `Damage: ${w.dmg} at the centre of a ${w.blast} foot explosion, fading evenly to ${Math.round(w.dmg*MC_EDGE)} at the edge. Every enemy caught is thrown as a rag doll. One shot every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.rubik){const b=build(w);return `No damage${b.spike?` except Spiked Tiles, ${RB_SPIKE} a second to each solver`:''}. ${b.mag} cubes out at once. Up to ${RB_CAP} zombies, or one boss, per cube, busy for ${RB_T} seconds, the Ancient One ${RB_ANC}.`}if(w.fog){const b=build(w);return `No damage. Each handful is ${b.fogN} snacks. A regular enemy is dazed by 1 snack, a mini boss by 5, a boss by 15 and the Ancient One by 50. Dazed enemies never attack again. Fresh bag every wave: 3 handfuls, plus 1 more every 5 waves.`}if(w.teddy){const b=build(w);return `Damage: ${b.tdDps} a second as a constant laser beam from both eyes, out to ${TD_R} feet with no falloff. Each battery lasts ${b.mag} seconds of firing, and changing it takes ${b.reload} seconds.`}if(w.medusa)return `No damage: it turns enemies to stone. Level 1, ${MD_FT[1]} feet for ${MD_COST[1]} souls. Level 2, ${MD_FT[2]} feet for ${MD_COST[2]} souls. Level 3, ${MD_FT[3]} feet for ${MD_COST[3]} souls. 1 second per level. The wave is as wide as it has travelled. The Ancient One loses 10, 20 or 30 percent of its health instead.`;if(w.soul)return 'Kills everything the shockwave reaches, bosses and mini bosses included. The Ancient One loses half its health. Costs 10 to 65 percent of your max health for a 10 to 70 foot blast around you, never taking you below 10 percent.';if(w.heart)return `Damage: ${w.dmg} to the enemy a heart hits, and up to ${Math.round(w.dmg*w.splM)} to everyone within ${w.blast} feet, who are thrown away from it. ${n1(1/w.cd)} hearts per second. For scale, light enemies have 2 to 3 health.`;if(w.lnch)return lnDmgLine(w);if(w.mjol)return `Damage: ${w.dmg} on impact, with lightning leaping to up to 4 more enemies within 15 feet for 60 percent, and 100 to every enemy it smashes flying home. Reaches 80 feet, 60 feet a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.zeus)return `Damage: ${w.dmg} for a quick tap, rising to ${w.dmg+500} at full power after 2 seconds of charge. Arcs from half power, and stuns at full. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
   if(w.hydra)return `Damage: 3 rockets of ${w.dmg} each per trigger pull, each splashing enemies within 5 feet for half. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.hole){const b=build(w);return `Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${w.dmg} on collapse to everything within 12 feet, half that to the rest it pulled in. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(false)return ` For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.sonic)return `Damage: ${w.dmg} to every enemy in the cone within ${ft(w.full)} feet, plus a stun, fading to 40 percent at ${ft(w.reach)} feet. ${n1(1/w.cd)} screams per second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.stake)return `Damage: ${w.dmg} per stake to the first enemy, then 15 percent less for each enemy it skewers behind a body it kills. ${n1(1/w.cd)} stakes per second at stock. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.scythe)return `Damage: ${w.dmg} to everything within 10 feet, all the way around you, once every ${SCY_T} seconds. Kills heal you 20 percent of the enemy's full health. For scale, light enemies have 2 to 3 health and bosses about 80.`;
@@ -9993,7 +10080,7 @@ function buildShop(keepFocus){
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
-  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.rubik||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
+  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.rubik||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'||w.id==='rex'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
   shopWear().forEach(r=>mkItem(list,'wr-'+r.id,r.name,r.desc,{act:()=>wearAct(r)}));
   shopArmors().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
@@ -10161,9 +10248,10 @@ function fullStats(w){const b=build(w),L=b.mlv,k=P.mast[w.id]||0,aim=1+aimBonus(
       'Burning enemies set fire to any enemy within 3 feet of them.',`${n1(pulls)} ${n1(pulls)===1?'shot':'shots'} per second.`)}
   else if(b.tband){const B=b.tband.map(ft);out.push(`Damage: at least ${D(b.dmg)} to every enemy in the blast at any distance. 1.5 times, ${D(b.dmg*1.5)}, within ${B[3]} feet. Double, ${D(b.dmg*2)}, within ${B[2]} feet. 2.5 times, ${D(b.dmg*2.5)}, within ${B[1]} feet. Triple, ${D(b.dmg*3)}, within ${B[0]} feet.`,
     `Splash: anyone within 10 feet of the first enemy hit takes 60 percent of that blast, full within 3 feet, down to half of that at 10 feet.`,`${n1(pulls)} trigger pulls per second, about ${Math.round(b.dmg*aim*pulls)} to ${Math.round(b.dmg*3*aim*pulls)} damage per second to each enemy.`)}
-  else{out.push(b.spread?`Damage: ${D(b.dmg)} to every enemy in the blast${b.shots>1?`, ${b.shots} blasts per trigger pull`:''}.`:`Damage: ${D(b.dmg)} per ${b.slug?'slug':b.crystal?'crystal':b.gyro?'rocket at full power':'bullet'}${b.shots>1?`, ${b.shots} ${b.crystal?'crystals':'bullets'} per trigger pull`:''}.`);
+  else{out.push(b.spread?`Damage: ${D(b.dmg)} to every enemy in the blast${b.shots>1?`, ${b.shots} blasts per trigger pull`:''}.`:`Damage: ${D(b.dmg)} per ${b.slug?'slug':b.crystal?'crystal':b.rex?'plasma bolt':b.gyro?'rocket at full power':'bullet'}${b.shots>1?`, ${b.shots} ${b.crystal?'crystals':'bullets'} per trigger pull`:''}.`);
     out.push(`${n1(pulls)} trigger pulls per second, about ${Math.round(b.dmg*aim*b.shots*pulls*(b.spread?1:acc))} damage per second${b.akimbo?' from each gun':''}.`)}
-  out.push(b.shell?`${b.id==='zeliska'?'Cylinder':'Magazine'}: ${b.mag}. Loads one ${b.id==='zeliska'?'round':'shell'} at a time, ${b.shell} seconds each, ${r1(b.reload)} seconds from empty. You can fire before it finishes.`:`Magazine: ${b.mag}${b.akimbo?' in each of your two guns':''}. Reload: ${r1(b.reload)} seconds.`);
+  out.push(b.shell?`${b.id==='zeliska'||b.id==='rex'?'Cylinder':'Magazine'}: ${b.mag}. Loads one ${b.id==='zeliska'||b.id==='rex'?'round':'shell'} at a time, ${b.shell} seconds each, ${r1(b.reload)} seconds from empty. You can fire before it finishes.`:`Magazine: ${b.mag}${b.akimbo?' in each of your two guns':''}. Reload: ${r1(b.reload)} seconds.`);
+  if(b.rex)out.push(`Plasma fire: ${REX_BURN} a second for ${REX_BT} seconds, spreading to any enemy within 5 feet of a burning one before it fades.`,`Electric jolt: ${REX_JOLT} damage per jump, to every enemy within 10 feet of the enemy hit and on from each of them, with no weakening.`);if(b.rex&&b.extinct)out.push('Extinction Event: the last round in the cylinder does triple damage, fire spreads 10 feet and lightning jumps 20 feet.');
   if(b.jetHead)out.push(`Headshots hit for ${n1(Math.max(JET_HS,b.hs)*b.dmg)}, 3.4 times a round, bosses included.`);
   else if((!b.spread||b.grip)&&!b.lnch)out.push(`Headshots: ${Math.round((b.hs-1)*100)} percent more damage, ${Math.round((b.hsBoss-1)*100)} percent more on bosses.`);
   if(b.grip)out.push(`Grip: a wider dead-centre zone, and ${Math.round(b.grip*100)} percent of off-centre hits turn into headshots.`);
@@ -10343,6 +10431,8 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
     jack:()=>{fx.jackSet();setTimeout(()=>fx.jackTune(0,3),400);setTimeout(()=>{fx.jackPop(0,3);setTimeout(()=>fx.boom(0,3),450)},1700)},
     cryo:()=>{fx.pin();fx.drop(.25);fx.cryo(0,1.5,.8)},incend:()=>{fx.pin();fx.drop(.25);setTimeout(()=>fx.incBurst(),800)},
     fireloop:()=>{loadFireLoop();const go=()=>{if(!fireBuf)return setTimeout(go,150);const t=ctx.currentTime,g=ctx.createGain(),src=fireSrcNode(t,1);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.6,t+.2);g.gain.setValueAtTime(.6,t+4.5);g.gain.linearRampToValueAtTime(0,t+5);src.connect(g);g.connect(out(30,6,1,enBus));src.stop(t+5.1)};go()},holefx:()=>{fx.holeOpen(0,8);[.6,1.1,1.6,2.1,2.6,3.1,3.6].forEach(t=>setTimeout(()=>fx.holeHum(0,8),t*1000));setTimeout(()=>fx.holeCollapse(0,8),4100)},
+    rex:()=>{rexShot(gunDest(0));setTimeout(()=>{if(ctx){fx.zap(0,4);fx.zap(-25,5,.1);fx.zap(20,6,.2);fx.crackle(0,4)}},120)},
+    rexsup:()=>{rexShot(gunDest(0),0,true);setTimeout(()=>{if(ctx){[0,-30,25,-50,45].forEach((a,i)=>fx.zap(a,4+i,i*.06));fx.crackle(0,4)}},120)},
     micro:()=>{microShot(gunDest(0));lnFly(0,12,.08+12/60,'micro');setTimeout(()=>{if(ctx)fx.microBoom(0,12)},(.08+12/60)*1000)},
     novaboom:()=>fx.novaBoom(0,12),hypnotize:()=>fx.hypno(0,8),teddyfire:()=>tdPreview(gunDest(0)),fogthrow:()=>fx.bagThrow(),rbthrow:()=>{fx.rbThrow();setTimeout(()=>{if(ctx)fx.rbLand(0,9)},550)},rbtwist:()=>{for(let i=0;i<8;i++)fx.rbTwist(-20,6,i*.36)},rbspike:()=>{for(let i=0;i<6;i++)fx.rbTwist(20,6,i*.36,true)},rbsolve:()=>fx.rbSolved(0,8),mdcharge:()=>{fx.mdStart();for(let i=0;i<20;i++)fx.mdHum(Math.min(1,i/20),false,0,i*.15);[1,2,3].forEach(n=>setTimeout(()=>{if(ctx)fx.mdLevel(n)},n*1000))},mdblast:()=>fx.mdBlast(3),mdstone:()=>{fx.mdStone(-30,10);setTimeout(()=>fx.mdStone(30,20),700)},fogland:()=>fx.snackLand(0,9),fogmunch:()=>fx.munch(0,6),fogdaze:()=>fx.fogDaze(0,8),foggroan:()=>{fx.fogGroan(-40,8);setTimeout(()=>fx.fogGroan(40,8),1800)},teddyready:()=>{loadTeddyRec();setTimeout(()=>{if(!teddyClip())say('Still loading, press it again.')},250)},teddylove:()=>fx.loveHit(0,10),teddylovehum:()=>{fx.loveHum(-40,8);setTimeout(()=>fx.loveHum(40,8),900)},hyphum:()=>{fx.hypHum(-40,6);setTimeout(()=>fx.hypHum(40,6),700)},novasing:()=>{fx.novaImplode(0,12);setTimeout(()=>{fx.novaBoom(0,12,0,1);fx.novaPush(0,12,.05)},SG_T*1000)},novachain:()=>{fx.novaBoom(0,12,0,1);[-40,-15,20,45].forEach(r=>fx.novaBoom(r,14));setTimeout(()=>say('Chain reaction times 9.'),1700)},
     zapfx:()=>{[0,.07,.14].forEach((t,i)=>fx.zap(i*40-40,8,t))},dbreathfx:()=>{const b=build(WBY.spas);b.dragon=true;gunSound(b,1);fx.burn(0,6,.15)},fatman:()=>{fx.pin();fx.fall();fx.nuke(2)},hadesfire:()=>hadesShot(gunDest(0),'fire'),boomwide:()=>fx.boomDemo('wide'),kbat:()=>fx.kbDemo(),boomnarrow:()=>fx.boomDemo('narrow'),boomcircle:()=>fx.boomDemo('circle'),slice:()=>fx.slice(-30,10),barbs:()=>{fx.barbs(0,2);[1,2,3].forEach(t=>setTimeout(()=>fx.bleed(0,2),t*1000))},hydrasever:()=>hydraShot(gunDest(0),0,6),hydrahe:()=>fx.heBoom(0,12),hydraacid:()=>{fx.boom(0,12);fx.acidHit(0,12,.05)},acidsizzle:()=>[0,1.1,2.2].forEach(t=>setTimeout(()=>fx.acidSizzle(0,10),t*1000)),acidpool:()=>{fx.poolSplash(0,10);[.4,1.8,3.2].forEach(t=>setTimeout(()=>fx.poolBubble(0,10),t*1000))},tetra:()=>crystalShot(gunDest(0)),tetraburst:()=>[0,.09,.18].forEach(t=>crystalShot(gunDest(0),t)),crystallize:()=>{crystalShot(gunDest(0));fx.crystallize(0,12,.1)},crysboss:()=>{crystalShot(gunDest(0));fx.crysBoss(0,12,.1);setTimeout(()=>fx.crysFree(0,12),3100)},crumble:()=>fx.crumble(5),hadeshell:()=>hadesShot(gunDest(0),'hell'),pandora:()=>pdxDemo(),
