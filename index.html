@@ -810,6 +810,14 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p class="note">Works on Android phones. iPhone browsers do not let web pages vibrate.</p>
   </div>
   <div class="field">
+    <p class="flabel" aria-hidden="true">3D audio (headphones)</p>
+    <div class="seg" role="radiogroup" aria-label="3D audio, for headphones" data-key="audio3d">
+      <button role="radio" data-val="1" data-name="On">On<small>Real 3D sound: hear front, back and sides, and sounds stay in place as you turn. Use headphones</small></button>
+      <button role="radio" data-val="0" data-name="Off">Off<small>The regular stereo sound. Best on the phone speaker</small></button>
+    </div>
+    <p class="note">With 3D audio on, each sound is shaped the way your ears hear it from that direction, so a zombie behind you really sounds behind you. Long sounds, like a boss roar or Gravemoor's bell, stay where they are and move around your head as you turn. It needs headphones or earbuds; on the phone speaker it sounds about the same as Off. In a huge horde, the quieter sounds fall back to regular stereo to keep the game smooth.</p>
+  </div>
+  <div class="field">
     <p class="flabel" aria-hidden="true">Crosshair</p>
     <div class="seg" role="radiogroup" aria-label="Crosshair" data-key="xhair">
       <button role="radio" data-val="classic" data-name="Classic">Classic<small>Four thin lines</small></button>
@@ -922,7 +930,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 <script>
 (function(){
 /* ---------- settings ---------- */
-const S={xhair:'classic',voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1,zgiants:0,mread:0};
+const S={audio3d:0,xhair:'classic',voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1,zgiants:0,mread:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('vf-settings')||'{}'))}catch(e){}
 if(S.amix!=='solo')S.amix='mix';   // game sound with the Built-in voice: share the speaker (see unlockIOS)
 if(S.rcall!=='cue'&&S.rcall!=='say')S.rcall=S.voice==='tts'?'cue':'say';   // reload callouts: sounds by default with the Built-in voice, spoken with a screen reader
@@ -1013,6 +1021,24 @@ let sessStale=false;
 const mixMode=()=>S.voice==='tts'&&S.amix!=='solo';
 function sessType(t){try{const a=navigator.audioSession;if(a&&a.type!==t)a.type=t}catch(e){}}
 function unlockIOS(){try{if(mixMode()){sessType('ambient');if(silentEl&&!silentEl.paused)silentEl.pause();return}sessType('auto');if(!silentEl){silentEl=new Audio('data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA==');silentEl.loop=true;silentEl.setAttribute('playsinline','')}const pr=silentEl.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}}
+/* ---------- 3D audio (Settings, 3D audio with headphones) ----------
+   Each sound goes through the browser's HRTF panner, which filters it the way a real head and ears would, so with
+   headphones you hear front from back, not just left from right. Every sound is placed at a fixed spot in the world
+   (its direction plus your heading when it started), and the listener turns with you, so a long sound such as a
+   bell, a roar or a moan stays where it is and sweeps around you as you turn. Panners cost more than plain stereo,
+   so only about 24 sounds started in any 1.2 seconds get full 3D; quieter or extra ones use the regular stereo. */
+const H3={t:[],max:24,win:1.2,last:null};
+function hrtfOk(v){if(v<.04)return false;const now=ctx.currentTime;while(H3.t.length&&now-H3.t[0]>H3.win)H3.t.shift();if(H3.t.length>=H3.max)return false;H3.t.push(now);return true}
+const aSet=(p,v,t)=>{if(p.setTargetAtTime)p.setTargetAtTime(v,t,.025);else p.value=v};
+function ear3d(){if(!ctx||!S.audio3d)return;const h=(G?G.heading:0)*Math.PI/180,L=ctx.listener,fx=Math.sin(h),fz=-Math.cos(h);
+  if(H3.last===h)return;const snap=H3.last==null;H3.last=h;
+  try{if(L.forwardX){const t=ctx.currentTime;if(snap){L.forwardX.value=fx;L.forwardY.value=0;L.forwardZ.value=fz;L.upX.value=0;L.upY.value=1;L.upZ.value=0;L.positionX.value=0;L.positionY.value=0;L.positionZ.value=0}
+      else{aSet(L.forwardX,fx,t);aSet(L.forwardZ,fz,t)}}
+    else L.setOrientation(fx,0,fz,0,1,0)}catch(e){}}
+function hrtfAt(rel,dist){ear3d();const p=ctx.createPanner();p.panningModel='HRTF';p.distanceModel='linear';p.rolloffFactor=0;p.refDistance=1;p.maxDistance=1e4;
+  const b=(rel+(G?G.heading:0))*Math.PI/180,r=Math.max(1,dist),x=Math.sin(b)*r,z=-Math.cos(b)*r;
+  if(p.positionX){p.positionX.value=x;p.positionY.value=0;p.positionZ.value=z}else p.setPosition(x,0,z);
+  return p}
 function initAudio(){
   if(ctx){wakeAudio();return}
   unlockIOS();
@@ -1099,11 +1125,13 @@ function out(rel=0,dist=0,vol=1,bus,z=0){
   if(elMul!==1){vol*=elMul;if(!z&&G&&G.mode==='zombies')z=1}   // elemental sounds on zombies fade with distance like their voices, so they stay just above them
   bus=bus||sfx;const g=ctx.createGain();g.gain.value=vol*(z?zGain(dist,z):Math.max(.3,1-dist/70));
   const f=ctx.createBiquadFilter();f.type='lowpass';
-  const a=Math.abs(rel);let fc=a>90?1800+(180-a)/90*2400:16000;
+  const d3=S.audio3d&&!!ctx.createPanner&&!(rel===0&&dist<=.3)&&hrtfOk(g.gain.value);   // 3D audio: the ear shapes front, back and sides, so no muffling trick for behind
+  const a=Math.abs(rel);let fc=a>90&&!d3?1800+(180-a)/90*2400:16000;
   fc=Math.min(fc,16000*Math.pow(z?(z>1?.945:.925):.965,dist));   // far sounds lose their top end, zombies more so
   if(z&&verbSend){const ft=dist*3.281,w=ctx.createGain();w.gain.value=vol*S.evol*Math.min(1,Math.max(0,ft-30)/150)*.16;g.connect(w);w.connect(verbSend)}   // only a light touch of echo on far zombies, so each one stays in one spot
   if(G&&G.cover&&bus===enBus)fc=Math.min(fc,2600);   // behind cover the fight sounds muffled
   f.frequency.value=fc;g.connect(f);
+  if(d3){f.connect(hrtfAt(rel,dist));return g}
   if(ctx.createStereoPanner){const p=ctx.createStereoPanner();const sp=Math.sin(rel*Math.PI/180);p.pan.value=Math.max(-1,Math.min(1,(z||bus===enBus||bus===atkBus)?Math.sign(sp)*Math.pow(Math.abs(sp),.55):sp));f.connect(p);p.connect(bus)}
   else f.connect(bus);
   return g;
@@ -6077,6 +6105,7 @@ function stepEnemy(e,dt){
   }
 }
 function step(dt){
+  ear3d();   // 3D audio: the listener turns with you
   G.cryTok=Math.min(CRY_MAX,(G.cryTok??CRY_MAX)+CRY_RATE*dt);
   if(G.cd>0)G.cd-=dt;if(G.ncd>0)G.ncd-=dt;
   if((G.rod||0)>=5&&G.lo[G.w]&&G.lo[G.w].rod&&ctx&&!sparkBuf){G.rodCrT=(G.rodCrT||0)-dt;if(G.rodCrT<=0){fx.rodCrackle();G.rodCrT=.18+Math.random()*.35}}   // built-in crackle only until the recorded sparks have loaded
@@ -8395,6 +8424,10 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-19-audio3d',date:'November 19, 2026',title:'New: 3D audio for headphones',items:[
+    'Settings has a new option, 3D audio (headphones). Turn it on and wear headphones or earbuds: every sound is shaped the way your ears would hear it from that direction, so you can tell front from back, not just left from right.',
+    'Sounds now stay in place in the world as you turn. A long sound like a boss roar, a zombie moan or the Gravemoor bell sweeps around your head when you turn, the way it would in real life.',
+    'It is off by default, since on the phone speaker it sounds about the same as regular stereo. In a huge horde, the quietest sounds fall back to regular stereo to keep the game smooth.']},
   {id:'2026-11-19-gravemoor',date:'November 19, 2026',title:'New battlefield: Gravemoor, plus new menu sounds and pictures',items:[
     'New battlefield: Gravemoor, a graveyard at midnight. Choose it from Deploy in any mode. Its enemies are the Risen skeleton (light, a dry rattle of bones), the Wailing wraith (heavy, a long rising wail), the Gravekeeper mini boss (drags and swings a shovel) and the boss Count Sanguinar, who turns to mist with a long hiss and reappears 40 to 70 degrees to one side, announced by a flutter of bats.',
     'Gravemoor has four sound landmarks that stay put as you turn: the chapel bell straight ahead where you start facing, a creaking gate to your right, crows behind you and an owl to your left. Bullets hitting skeletons land with a dry crack.',
