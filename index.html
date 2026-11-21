@@ -851,6 +851,14 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <p class="note">With 3D audio on, each sound is shaped the way your ears hear it from that direction, so a zombie behind you really sounds behind you. Long sounds, like a boss roar or Gravemoor's bell, stay where they are and move around your head as you turn. It needs headphones or earbuds; on the phone speaker it sounds about the same as Off. In a huge horde, the quieter sounds fall back to regular stereo to keep the game smooth.</p>
   </div>
   <div class="field">
+    <p class="flabel" aria-hidden="true">Graphics</p>
+    <div class="seg" role="radiogroup" aria-label="Graphics" data-key="gfx">
+      <button role="radio" data-val="orig" data-name="Original">Original<small>The classic look, fastest</small></button>
+      <button role="radio" data-val="hd" data-name="Enhanced">Enhanced<small>Lighting, glows, shadows, effects and weather</small></button>
+    </div>
+    <p class="note">Only changes the picture in the battle view, for sighted players. Sounds and gameplay are exactly the same either way. Enhanced adds soft shadows under every figure, glowing eyes, glows on burning, shocked and frozen enemies, sparks and dust when you hit something, bigger explosions with smoke, embers, flying debris, a shockwave and a flash of light, a skyline around each map, and weather like snow, fireflies, falling leaves and mist. It adds no extra blood. If your phone starts to slow down, Enhanced quietly uses fewer effects until it runs smoothly again.</p>
+  </div>
+  <div class="field">
     <p class="flabel" aria-hidden="true">Crosshair</p>
     <div class="seg" role="radiogroup" aria-label="Crosshair" data-key="xhair">
       <button role="radio" data-val="classic" data-name="Classic">Classic<small>Four thin lines</small></button>
@@ -963,7 +971,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 <script>
 (function(){
 /* ---------- settings ---------- */
-const S={audio3d:0,xhair:'classic',voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1,zgiants:0,mread:0};
+const S={audio3d:0,xhair:'classic',gfx:'orig',voice:'sr',rate:1.3,vol:.9,amb:1,diff:1,gvol:1,evol:1,avol:1,tvol:1,pvol:1,haptic:0,hpcall:1,mode:'campaign',zmode:'standard',zspawn:'normal',zdiff:'normal',zstart:1,zgiants:0,mread:0};
 try{Object.assign(S,JSON.parse(localStorage.getItem('vf-settings')||'{}'))}catch(e){}
 if(S.amix!=='solo')S.amix='mix';   // game sound with the Built-in voice: share the speaker (see unlockIOS)
 if(S.rcall!=='cue'&&S.rcall!=='say')S.rcall=S.voice==='tts'?'cue':'say';   // reload callouts: sounds by default with the Built-in voice, spoken with a screen reader
@@ -8712,6 +8720,117 @@ function rdFig(it,P,F,pal){
   c.globalAlpha=1;
 }
 const NEARD=.3;
+/* ---------- Enhanced graphics (Settings, Graphics) ----------
+   Picture only, for sighted players. Original keeps the battle view exactly as it was. Enhanced adds lighting, glows,
+   soft shadows under every figure, sparks and dust on hits (never extra blood), bigger explosions with smoke, embers,
+   debris and a shockwave, a skyline on the horizon, and drifting weather for each map. It watches its own speed and
+   quietly turns itself down if the phone starts to struggle, so the game never lags because of it. */
+const gxOn=()=>S.gfx==='hd';
+const GX={p:[],amb:[],ambMap:'',q:1,ema:16,last:0,qT:0,flash:0,flashC:'255,170,80',shake:0,glows:0,pano:{},vig:null,spr:{},hitCap:0};
+function gxSprite(rgb){let s=GX.spr[rgb];if(s)return s;s=document.createElement('canvas');s.width=s.height=64;const c=s.getContext('2d'),g=c.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(.25,`rgba(${rgb},.55)`);g.addColorStop(1,`rgba(${rgb},0)`);c.fillStyle=g;c.fillRect(0,0,64,64);return GX.spr[rgb]=s}
+function gxGlow(c,x,y,r,rgb,al){if(r<1)return;c.globalAlpha=al;c.drawImage(gxSprite(rgb),x-r,y-r,r*2,r*2)}
+function gxAdd(o){if(GX.p.length<380*GX.q)GX.p.push(o)}
+/* sparks, dust, embers, smoke and debris, in the world, in metres */
+function gxBurst(x,y,z,kind,n,pow){n=Math.max(1,Math.round(n*GX.q));for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,u=Math.random()*2-1,v=(.4+Math.random())*pow,r=Math.sqrt(1-u*u);
+  gxAdd({k:kind,x,y,z,vx:Math.cos(a)*r*v,vy:u*v*.6+(kind==='ember'?1.2:kind==='debris'?2.5:kind==='smoke'?.5:1)*pow*.5,vz:Math.sin(a)*r*v,t:0,
+    T:kind==='spark'?.18+Math.random()*.2:kind==='dust'?.5+Math.random()*.4:kind==='ember'?.8+Math.random()*.9:kind==='smoke'?1.4+Math.random()*1.2:1+Math.random()*.6,
+    s:kind==='smoke'?.5+Math.random()*.6:kind==='debris'?.02+Math.random()*.03:.03+Math.random()*.03})}}
+/* the shape of each map's skyline, drawn once into a strip that wraps all the way around you */
+function gxPano(map){if(GX.pano[map])return GX.pano[map];const Wd=2048,Hd=256,cv=document.createElement('canvas');cv.width=Wd;cv.height=Hd;const c=cv.getContext('2d'),pal=RDPAL[map]||RDPAL.city;
+  let seed=map.length*977+13;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  const ridge=(col,base,amp,step,jag)=>{c.fillStyle=col;c.beginPath();c.moveTo(0,Hd);let y=base;for(let x=0;x<=Wd;x+=step){y=Math.max(base-amp,Math.min(base,y+(rnd()-.5)*jag));c.lineTo(x,y)}c.lineTo(Wd,Hd);c.closePath();c.fill()};
+  const far=rdShade(pal[2],.75),near=rdShade(pal[2],.5);
+  if(map==='city'){for(const[col,mx,mn]of[[rdShade(pal[0],1.25),150,60],[near,110,30]]){c.fillStyle=col;let x=0;while(x<Wd){const w=30+rnd()*70,h=mn+rnd()*(mx-mn);c.fillRect(x,Hd-h,w,h);
+      if(col===near){c.fillStyle='rgba(255,220,140,.35)';for(let wy=Hd-h+8;wy<Hd-8;wy+=14)for(let wx=x+6;wx<x+w-6;wx+=12)if(rnd()<.25)c.fillRect(wx,wy,4,6);c.fillStyle=col}x+=w+rnd()*8}}}
+  else if(map==='tundra'){ridge('rgba(200,215,228,.9)',Hd-60,170,16,60);c.fillStyle='rgba(255,255,255,.55)';ridge('#9fb2c0',Hd-20,90,10,30)}
+  else if(map==='alien'){c.fillStyle='rgba(255,120,220,.25)';c.beginPath();c.arc(Wd*.3,70,46,0,Math.PI*2);c.fill();c.fillStyle='rgba(120,255,230,.2)';c.beginPath();c.arc(Wd*.72,50,26,0,Math.PI*2);c.fill();
+    ridge(far,Hd-40,150,8,70);c.fillStyle=near;for(let i=0;i<26;i++){const x=rnd()*Wd,h=40+rnd()*120,w=6+rnd()*10;c.beginPath();c.moveTo(x-w,Hd);c.lineTo(x,Hd-h);c.lineTo(x+w,Hd);c.fill()}}
+  else if(map==='meme'){c.fillStyle='rgba(255,255,255,.8)';for(let i=0;i<9;i++){const x=rnd()*Wd,y=30+rnd()*60;for(let j=0;j<4;j++){c.beginPath();c.arc(x+j*22,y+(j%2)*6,18+rnd()*10,0,Math.PI*2);c.fill()}}
+    ridge('#4d9a36',Hd-30,60,24,20)}
+  else{ // rainforest and Gravemoor: rows of tree tops
+    const rows=map==='graveyard'?[[rdShade(pal[0],1.4),Hd-70,'round'],[near,Hd-30,'spike']]:[[far,Hd-90,'round'],[near,Hd-40,'round']];
+    for(const[col,base,kind]of rows){c.fillStyle=col;c.fillRect(0,base,Wd,Hd-base);let x=0;while(x<Wd){const r=14+rnd()*26;c.beginPath();
+      if(kind==='spike'){c.moveTo(x-r*.6,base);c.lineTo(x,base-r*2.4);c.lineTo(x+r*.6,base)}else c.arc(x,base,r,Math.PI,0);c.fill();x+=r*(1+rnd()*.6)}}}
+  return GX.pano[map]=cv}
+/* sky: a glow along the horizon and the skyline, both turning with you */
+{const gm0=gyMoon;gyMoon=function(c,W,Y0,F,sh,ch){if(gxOn()&&G&&!rdHall()){const pan=gxPano(G.map),pw=2*Math.PI*F,ph=pw*pan.height/pan.width*.55,hd=Math.atan2(sh,ch);
+    let x0=W/2-(hd/(2*Math.PI))*pw-pw/2;x0=((x0%pw)+pw)%pw-pw;c.save();c.globalAlpha=.85;for(let x=x0;x<W;x+=pw)c.drawImage(pan,x,Y0-ph+2,pw,ph);c.restore();
+    const pal=RDPAL[G.map]||RDPAL.city,g=c.createLinearGradient(0,Y0-W*.06,0,Y0+W*.03);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.7,rdShade(pal[1],1.15).replace('rgb','rgba').replace(')',',.35)'));g.addColorStop(1,'rgba(255,255,255,0)');
+    c.fillStyle=g;c.fillRect(0,Y0-W*.06,W,W*.09)}
+  return gm0(c,W,Y0,F,sh,ch)}}
+/* each figure: a soft shadow on the ground first, then glowing eyes and a glow while burning, shocked or frozen */
+{const rf0=rdFig;rdFig=function(it,P,F,pal){if(!gxOn()||it.g)return rf0(it,P,F,pal);
+  const c=v2,p=it.p,s=it.s,h=s.h,e=it.e,b=it.b,A=[0,0,0];
+  const fog=S.zfog?Math.max(0,Math.min(1,1-(it.d-FOG_A)/(FOG_B-FOG_A))):Math.max(.35,Math.min(1,1-(it.d-18)/30));
+  if(fog>.02&&P(p[6],.01,p[8],A)){const rx=Math.min(c.canvas.width*.2,.3*h*(s.w||1)*F/Math.max(NEARD,A[2])),ry=rx*Math.min(.45,RDEYE/Math.max(.5,A[2]));
+    if(rx>1.5){c.save();c.globalAlpha=.32*fog;c.fillStyle='#000';c.beginPath();c.ellipse(A[0],A[1],rx,Math.max(1,ry),0,0,Math.PI*2);c.fill();c.restore()}}
+  rf0(it,P,F,pal);
+  if(!e||b||!(e.hp>0)||fog<=.02)return;
+  // hit: a burst of sparks and dust from the chest, never blood
+  if(e.rdFl>.12&&!e._gxh){e._gxh=1;if(GX.hitCap<8){GX.hitCap++;gxBurst(p[3],p[4],p[5],'spark',6,1.6);gxBurst(p[3],p[4],p[5],'dust',3,.5)}}else if(!(e.rdFl>.05))e._gxh=0;
+  if(GX.glows>=60*GX.q)return;
+  c.save();c.globalCompositeOperation='lighter';
+  if(P(p[0],p[1],p[2],A)){const hr=.12*h*F/A[2];if(hr>2.2){GX.glows++;gxGlow(c,A[0],A[1]-hr*.1,hr*1.5,s.mech?'95,242,255':'255,50,30',.55*fog)}}
+  const hot=e.fireT>0,zap=e.shockT>0,ice=e.slowT>0||e.ice||e.frozeT>0;
+  if((hot||zap||ice)&&P(p[6],p[7],p[8],A)){const gr=.55*h*F/A[2],fl=.8+.2*Math.sin(performance.now()/60+e.angle);GX.glows++;
+    gxGlow(c,A[0],A[1],gr,hot?(e.hblue?'90,150,255':'255,130,30'):zap?'255,230,90':'140,210,255',(hot?.55:.4)*fl*fog);
+    if(hot&&Math.random()<.35*GX.q)gxAdd({k:'ember',x:p[6]+(Math.random()-.5)*.3,y:p[7]+Math.random()*.8,z:p[8]+(Math.random()-.5)*.3,vx:(Math.random()-.5)*.3,vy:.8+Math.random()*.8,vz:(Math.random()-.5)*.3,t:0,T:.6+Math.random()*.6,s:.03,blue:!!e.hblue})}
+  c.restore()}}
+/* explosions: smoke, embers, flying debris, a shockwave across the ground, a flash of light and a little shake */
+{const rb0=rdBlast;rdBlast=function(cx,cz,R,pow,o={}){if(gxOn()&&rdOn()&&GX.p.length<300*GX.q){const k=Math.min(1,R/6),cy=(o.cy??.35)+.6;
+    gxAdd({k:'ring',x:cx,y:.05,z:cz,t:0,T:.45,s:Math.min(R,10)});gxBurst(cx,cy,cz,'ember',8+10*k,2.2+2*k);gxBurst(cx,cy,cz,'debris',4+6*k,2+2*k);gxBurst(cx,cy-.3,cz,'smoke',3+4*k,.8);
+    GX.flash=Math.min(.6,GX.flash+.25+.25*k);GX.flashC=o.c||'255,170,80';GX.shake=Math.min(.35,GX.shake+.12+.15*k)}
+  return rb0(cx,cz,R,pow,o)}}
+/* the world effects and the weather, drawn just before the weapon in your hands */
+function gxAmbient(c,W,H,Y0,dt){const map=G.map||'city';if(GX.ambMap!==map){GX.ambMap=map;GX.amb=[]}
+  const want=Math.round((map==='tundra'?55:map==='graveyard'?28:36)*GX.q);
+  while(GX.amb.length<want)GX.amb.push({u:Math.random(),v:Math.random(),s:Math.random(),ph:Math.random()*6.28,sp:.5+Math.random()});
+  if(GX.amb.length>want)GX.amb.length=want;
+  const turn=(G.heading||0)/360,now=performance.now()/1000;c.save();
+  for(const a of GX.amb){let x,y,r,col,glow=false,al=1;
+    if(map==='tundra'){a.v+=dt*.12*a.sp;a.u+=dt*.02*Math.sin(now+a.ph);if(a.v>1){a.v=0;a.u=Math.random()}r=(1+a.s*2.2)*W/900;col='255,255,255';al=.75}
+    else if(map==='rainforest'&&a.s<.45){a.v+=dt*.05*a.sp;a.u+=dt*.03*Math.sin(now*1.5+a.ph);if(a.v>1){a.v=0;a.u=Math.random()}r=(2+a.s*4)*W/900;col=a.s<.2?'90,140,60':'130,110,50';al=.8}
+    else if(map==='alien'){a.v-=dt*.025*a.sp;if(a.v<0){a.v=1;a.u=Math.random()}r=(1.5+a.s*3)*W/900;col=a.s<.5?'200,120,255':'110,255,230';glow=true}
+    else if(map==='city'){a.u+=dt*.02*a.sp;a.v+=dt*.01*Math.sin(now+a.ph);if(a.u>1)a.u=0;r=(1+a.s*1.5)*W/900;col='200,195,185';al=.4}
+    else if(map==='meme'){r=(2+a.s*3)*W/900;col=['255,90,160','255,220,60','90,200,255','140,255,120'][(a.s*4)|0];al=.5+.5*Math.sin(now*3+a.ph);glow=true}
+    else{a.u+=dt*.02*Math.sin(now*.7+a.ph);a.v+=dt*.02*Math.cos(now*.9+a.ph*2);a.v=Math.min(.95,Math.max(.35,a.v));r=(1.5+a.s*2)*W/900;col=map==='graveyard'?'170,255,170':'220,255,120';glow=true;al=.4+.6*Math.max(0,Math.sin(now*2+a.ph))}
+    const px=((a.u-turn)%1+1)%1*W,py=a.v*H;
+    if(glow){c.globalCompositeOperation='lighter';gxGlow(c,px,py,r*4,col,al*.8);c.globalCompositeOperation='source-over'}
+    else{c.globalAlpha=al;c.fillStyle=`rgb(${col})`;c.beginPath();c.arc(px,py,Math.max(.8,r),0,Math.PI*2);c.fill()}}
+  // Gravemoor: low mist rolling along the ground
+  if(map==='graveyard'){c.globalAlpha=.18;const m=gxSprite('200,210,230');for(let i=0;i<3;i++){const x=((now*.015*(i+1)+i*.37-turn)%1+1)%1*W*1.4-W*.2;c.drawImage(m,x-W*.4,Y0-H*.02,W*.8,H*.22)}}
+  c.restore()}
+{const rbd0=rbDraw;rbDraw=function(c,W,H,X0,Y0,P){if(gxOn()){
+    const now=performance.now(),dt=Math.min(.05,GX.last?(now-GX.last)/1000:.016);GX.last=now;GX.hitCap=0;GX.glows=0;
+    const A=[0,0,0],B=[0,0,0],F=Math.max(W*.5/Math.tan(50*Math.PI/180),H*.5);c.save();
+    for(let i=GX.p.length-1;i>=0;i--){const o=GX.p[i];o.t+=dt;if(o.t>=o.T){GX.p[i]=GX.p[GX.p.length-1];GX.p.pop();continue}const k=o.t/o.T;
+      if(o.k==='ring'){const R=o.s*(.2+.8*Math.sqrt(k)),pts=[];c.globalCompositeOperation='lighter';c.strokeStyle=`rgba(255,220,170,${.6*(1-k)})`;c.lineWidth=Math.max(1.5,W/160*(1-k));c.beginPath();let pen=false;
+        for(let d=0;d<=360;d+=15){const u=d*Math.PI/180;if(P(o.x+Math.sin(u)*R,o.y,o.z+Math.cos(u)*R,A)){pen?c.lineTo(A[0],A[1]):c.moveTo(A[0],A[1]);pen=true}else pen=false}c.stroke();continue}
+      const px=o.x,py=o.y,pz=o.z;o.x+=o.vx*dt;o.z+=o.vz*dt;o.y+=o.vy*dt;
+      if(o.k==='debris'||o.k==='spark'){o.vy-=9.8*dt;if(o.y<.02){o.y=.02;o.vy*=-.3;o.vx*=.6;o.vz*=.6}}else if(o.k==='smoke'){o.vx*=.97;o.vz*=.97;o.vy*=.98}else if(o.k==='dust'){o.vy-=.5*dt;o.vx*=.95;o.vz*=.95}
+      if(!P(o.x,o.y,o.z,A))continue;const sz=o.s*F/A[2];
+      if(o.k==='spark'){if(!P(px,py,pz,B))continue;c.globalCompositeOperation='lighter';c.strokeStyle=`rgba(255,${200-80*k|0},90,${1-k})`;c.lineWidth=Math.max(1,sz*.8);c.lineCap='round';c.beginPath();c.moveTo(B[0],B[1]);c.lineTo(A[0],A[1]);c.stroke()}
+      else if(o.k==='ember'){c.globalCompositeOperation='lighter';gxGlow(c,A[0],A[1],Math.max(2,sz*3),o.blue?'120,170,255':'255,150,40',1-k)}
+      else if(o.k==='smoke'){c.globalCompositeOperation='source-over';const r=Math.max(3,sz*(1+k*1.5));c.globalAlpha=.35*(1-k);c.drawImage(gxSprite('70,66,62'),A[0]-r,A[1]-r,r*2,r*2)}
+      else if(o.k==='dust'){c.globalCompositeOperation='source-over';const r=Math.max(2,sz*4*(.5+k));c.globalAlpha=.3*(1-k);c.drawImage(gxSprite('190,180,160'),A[0]-r,A[1]-r,r*2,r*2)}
+      else{c.globalCompositeOperation='source-over';c.globalAlpha=1-k*k;c.fillStyle='#2a2522';const r=Math.max(1,Math.min(sz,c.canvas.width/150));c.fillRect(A[0]-r,A[1]-r,r*2,r*2)}}
+    c.restore();gxAmbient(c,W,H,Y0,dt)}
+  return rbd0(c,W,H,X0,Y0,P)}}
+/* last: light from your muzzle flash and explosions, a soft vignette, and the shake; then speed check */
+{const rd0=rdDraw;rdDraw=function(){rd0();const cv0=vcv;
+  if(!gxOn()){if(GX.shake||cv0.style.transform){GX.shake=0;cv0.style.transform=''}GX.p.length=0;return}
+  const c=v2,W=cv0.width,H=cv0.height;if(W<4||H<4)return;const now=performance.now(),dt=GX.lp?Math.min(.1,(now-GX.lp)/1000):.016;GX.lp=now;
+  c.save();
+  if(RD.muzzle>0){c.globalCompositeOperation='lighter';const g=c.createRadialGradient(W*.6,H*1.05,0,W*.6,H*1.05,W*.7);g.addColorStop(0,`rgba(255,190,110,${.28*RD.muzzle/.07})`);g.addColorStop(1,'rgba(255,160,80,0)');c.fillStyle=g;c.fillRect(0,0,W,H)}
+  if(GX.flash>.01){c.globalCompositeOperation='lighter';c.fillStyle=`rgba(${GX.flashC},${GX.flash*.35})`;c.fillRect(0,0,W,H);GX.flash*=Math.pow(.02,dt)}
+  c.globalCompositeOperation='source-over';
+  if(!GX.vig||GX.vig.width!==W||GX.vig.height!==H){const v=GX.vig=document.createElement('canvas');v.width=W;v.height=H;const vc=v.getContext('2d'),g=vc.createRadialGradient(W/2,H*.46,Math.min(W,H)*.35,W/2,H*.46,Math.hypot(W,H)*.62);
+    g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.55)');vc.fillStyle=g;vc.fillRect(0,0,W,H)}
+  c.drawImage(GX.vig,0,0);c.restore();
+  if(GX.shake>.005){const m=GX.shake*14;cv0.style.transform=`translate(${(Math.random()-.5)*m}px,${(Math.random()-.5)*m}px)`;GX.shake=Math.max(0,GX.shake-dt)}else if(cv0.style.transform)cv0.style.transform='';
+  // speed check: if frames slow down, use fewer effects; when it is smooth again, bring them back
+  GX.ema=GX.ema*.92+dt*1000*.08;GX.qT+=dt;if(GX.qT>.5){GX.qT=0;if(GX.ema>24)GX.q=Math.max(.3,GX.q-.15);else if(GX.ema<18)GX.q=Math.min(1,GX.q+.05)}}}
 // horror hallway: two long walls either side of you, shaded by distance, with a seam every few feet so you can see yourself walk
 function rdHallDraw(cz,cx,F,pal,X0,Y0){const c=v2,off=(G.pos||0)%3;
   for(const sx of[-1,1])for(let z0=-3-off;z0<45;z0+=3){const z1=z0+3,x=sx*HALLW,q=[[x,0,z0],[x,0,z1],[x,RDWALL,z1],[x,RDWALL,z0]].map(([x,y,z])=>[cx(x,z),y,cz(x,z)]);
@@ -8782,6 +8901,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-21-gfx',date:'November 21, 2026',title:'New Graphics setting: Enhanced look',items:[
+    'A new Graphics choice in Settings, for sighted players: Original or Enhanced. Original is the battle view exactly as it was, and stays the default. Sounds and gameplay are the same either way.',
+    'Enhanced adds soft shadows under every figure, glowing eyes on enemies, and a glow around enemies that are burning, shocked or frozen, with embers rising off burning ones.',
+    'Hits throw sparks and dust. No extra blood is added.',
+    'Explosions get smoke, embers, flying debris, a shockwave rolling across the ground, a flash of light and a small shake. Your muzzle flash lights up the view.',
+    'Each map gets a skyline that turns with you: jungle treetops, city buildings, snowy mountains, alien spires and moons, and more. Plus weather: snow on the tundra, fireflies and falling leaves in the rainforest, glowing spores on the alien planet, ash in the city, and low mist in Gravemoor.',
+    'Enhanced keeps an eye on your frame rate and uses fewer effects if your device starts to slow down, so it never lags the game.']},
   {id:'2026-11-21-lycan',date:'November 21, 2026',title:'New legendary set: Lycanthropy pack',items:[
     'A new legendary set in the Armory, under Legendary: the Lycanthropy pack, with Claws and Armor sections. The lower your health, the deadlier you get.',
     'Alpha Wolf Pelt, 50,000 silver. Cuts all damage you take by 50 percent, less than the other pack armors, because this one wants you hurt. Lycan Rage is built in: your damage with every weapon goes up by the share of health you are missing. Plus 50 percent at half health, 75 at a quarter, 90 at a tenth. Every hit you take plays your own growl, deeper the lower your health, and Status tells you how much extra damage you have.',
