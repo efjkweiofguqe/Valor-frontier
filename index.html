@@ -8754,11 +8754,11 @@ function gxPano(map){if(GX.pano[map])return GX.pano[map];const Wd=2048,Hd=256,cv
       if(kind==='spike'){c.moveTo(x-r*.6,base);c.lineTo(x,base-r*2.4);c.lineTo(x+r*.6,base)}else c.arc(x,base,r,Math.PI,0);c.fill();x+=r*(1+rnd()*.6)}}}
   return GX.pano[map]=cv}
 /* sky: a glow along the horizon and the skyline, both turning with you */
-{const gm0=gyMoon;gyMoon=function(c,W,Y0,F,sh,ch){if(gxOn()&&G&&!rdHall()){const pan=gxPano(G.map),pw=2*Math.PI*F,ph=pw*pan.height/pan.width*.55,hd=Math.atan2(sh,ch);
+function gxSky(c,W,Y0,F,sh,ch){if(gxOn()&&G&&!rdHall()){const pan=gxPano(G.map),pw=2*Math.PI*F,ph=pw*pan.height/pan.width*.55,hd=Math.atan2(sh,ch);
     let x0=W/2-(hd/(2*Math.PI))*pw-pw/2;x0=((x0%pw)+pw)%pw-pw;c.save();c.globalAlpha=.85;for(let x=x0;x<W;x+=pw)c.drawImage(pan,x,Y0-ph+2,pw,ph);c.restore();
     const pal=RDPAL[G.map]||RDPAL.city,g=c.createLinearGradient(0,Y0-W*.06,0,Y0+W*.03);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.7,rdShade(pal[1],1.15).replace('rgb','rgba').replace(')',',.35)'));g.addColorStop(1,'rgba(255,255,255,0)');
-    c.fillStyle=g;c.fillRect(0,Y0-W*.06,W,W*.09)}
-  return gm0(c,W,Y0,F,sh,ch)}}
+    c.fillStyle=g;c.fillRect(0,Y0-W*.06,W,W*.09)}}
+if(typeof gyMoon==='function'){const gm0=gyMoon;gyMoon=function(c,W,Y0,F,sh,ch){gxSky(c,W,Y0,F,sh,ch);return gm0(c,W,Y0,F,sh,ch)}}
 /* each figure: a soft shadow on the ground first, then glowing eyes and a glow while burning, shocked or frozen */
 {const rf0=rdFig;rdFig=function(it,P,F,pal){if(!gxOn()||it.g)return rf0(it,P,F,pal);
   const c=v2,p=it.p,s=it.s,h=s.h,e=it.e,b=it.b,A=[0,0,0];
@@ -8801,7 +8801,7 @@ function gxAmbient(c,W,H,Y0,dt){const map=G.map||'city';if(GX.ambMap!==map){GX.a
   // Gravemoor: low mist rolling along the ground
   if(map==='graveyard'){c.globalAlpha=.18;const m=gxSprite('200,210,230');for(let i=0;i<3;i++){const x=((now*.015*(i+1)+i*.37-turn)%1+1)%1*W*1.4-W*.2;c.drawImage(m,x-W*.4,Y0-H*.02,W*.8,H*.22)}}
   c.restore()}
-{const rbd0=rbDraw;rbDraw=function(c,W,H,X0,Y0,P){if(gxOn()){
+function gxWorld(c,W,H,X0,Y0,P){if(gxOn()){
     const now=performance.now(),dt=Math.min(.05,GX.last?(now-GX.last)/1000:.016);GX.last=now;GX.hitCap=0;GX.glows=0;
     const A=[0,0,0],B=[0,0,0],F=Math.max(W*.5/Math.tan(50*Math.PI/180),H*.5);c.save();
     for(let i=GX.p.length-1;i>=0;i--){const o=GX.p[i];o.t+=dt;if(o.t>=o.T){GX.p[i]=GX.p[GX.p.length-1];GX.p.pop();continue}const k=o.t/o.T;
@@ -8815,8 +8815,9 @@ function gxAmbient(c,W,H,Y0,dt){const map=G.map||'city';if(GX.ambMap!==map){GX.a
       else if(o.k==='smoke'){c.globalCompositeOperation='source-over';const r=Math.max(3,sz*(1+k*1.5));c.globalAlpha=.35*(1-k);c.drawImage(gxSprite('70,66,62'),A[0]-r,A[1]-r,r*2,r*2)}
       else if(o.k==='dust'){c.globalCompositeOperation='source-over';const r=Math.max(2,sz*4*(.5+k));c.globalAlpha=.3*(1-k);c.drawImage(gxSprite('190,180,160'),A[0]-r,A[1]-r,r*2,r*2)}
       else{c.globalCompositeOperation='source-over';c.globalAlpha=1-k*k;c.fillStyle='#2a2522';const r=Math.max(1,Math.min(sz,c.canvas.width/150));c.fillRect(A[0]-r,A[1]-r,r*2,r*2)}}
-    c.restore();gxAmbient(c,W,H,Y0,dt)}
-  return rbd0(c,W,H,X0,Y0,P)}}
+    c.restore();gxAmbient(c,W,H,Y0,dt)}}
+if(typeof rbDraw==='function'){const o=rbDraw;rbDraw=function(c,W,H,X0,Y0,P){gxWorld(c,W,H,X0,Y0,P);return o(c,W,H,X0,Y0,P)}}
+else if(typeof fogDraw==='function'){const o=fogDraw;fogDraw=function(c,W,H,X0,Y0,P){gxWorld(c,W,H,X0,Y0,P);return o(c,W,H,X0,Y0,P)}}
 /* last: light from your muzzle flash and explosions, a soft vignette, and the shake; then speed check */
 {const rd0=rdDraw;rdDraw=function(){rd0();const cv0=vcv;
   if(!gxOn()){if(GX.shake||cv0.style.transform){GX.shake=0;cv0.style.transform=''}GX.p.length=0;return}
