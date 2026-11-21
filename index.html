@@ -5039,7 +5039,9 @@ function rexShot(d,at=0,sup){const k=sup?1.6:1;
   const b=at+.08;shot(PR.zeliska,b,d,{});
   for(let i=0;i<6;i++)noise(d,{dur:.018,vol:.5,type:'highpass',f:3500,at:b+i*.022,attack:.001});
   tone(d,{type:'sawtooth',f:2400,f2:300,dur:.14,vol:.22,at:b});tone(d,{type:'sine',f:900,f2:180,dur:.3,vol:.12,at:b+.02});
-  if(sup){tone(d,{f:50,f2:26,dur:.9,vol:.75,at:b});noise(d,{dur:.7,vol:.4,type:'bandpass',f:5000,f2:800,q:1.2,at:b+.02,attack:.01});
+  // the plasma bolt itself: Kenney's heaviest falling laser, pitched well down into a deep, fat plasma whoom
+  sfPlay('laserSmall_004',d,{vol:1,rate:sup?.55:.72,at:b,jit:.04});
+  if(sup){sfPlay('lowFrequency_explosion_001',d,{vol:.9,at:b});tone(d,{f:50,f2:26,dur:.9,vol:.75,at:b});noise(d,{dur:.7,vol:.4,type:'bandpass',f:5000,f2:800,q:1.2,at:b+.02,attack:.01});
     for(let i=0;i<10;i++)noise(d,{dur:.02,vol:.45,type:'highpass',f:4000,at:b+.05+i*.035,attack:.001})}}
 function rexIgnite(e,k,fR,at){if(e.hp<=0)return;const was=e.fireT>0;if(e.fireT!==Infinity)e.fireT=Math.max(e.fireT||0,REX_BT);
   e.fireDps=Math.max(e.fireDps||0,REX_BURN*k);e.rexF=Math.max(e.rexF||0,fR);if(!was)e.fireSrc='rex';fx.burn(norm(e.angle-G.heading),e.dist,at||0)}
@@ -8667,6 +8669,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-21-rexsnd',date:'November 21, 2026',title:'Real plasma sound for the Alien Rex Annihilator',items:[
+    'Every Alien Rex Annihilator shot now fires a real recorded plasma bolt from the Kenney sci-fi pack, pitched way down into a deep, fat plasma whoom, on top of its rising hum, heavy boom and electric crack.',
+    'The supercharged Extinction Event shot pitches the bolt down even further and adds a deep sub-bass blast underneath. Try both in the sound test.']},
   {id:'2026-11-21-zspecial',date:'November 21, 2026',title:'New zombies: four special zombies and the Spitter Brute mini boss',items:[
     'From wave 5 in every zombie mode, special zombies now turn up completely at random among the regular ones, so some waves bring a couple close together and some bring none. Each one has its own sound, so you know what is coming before it reaches you, and each is announced with where it is. They grow tougher with the waves like every zombie. Not in Giants only.',
     'Frost Walker: crackles like ice. Its hits chill you for 3 seconds: you move 40 percent slower in Jungle scavenger and Horror hallway, and fire and reload 40 percent slower in the other modes. When it dies it bursts with a shattering crack, slowing every zombie within 8 feet to half speed for 5 seconds, and leaves an icy patch for 8 seconds that slows anything walking through it.',
