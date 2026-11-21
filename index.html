@@ -617,6 +617,9 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="stakewall">A body pinned to the wall</button>
     <button class="btn" data-test="stakee">Enemies pinned together</button>
     <button class="btn" data-test="scythe">Unquenchable scythe swing</button>
+    <button class="btn" data-test="rippers">Feral Rippers double swipe</button>
+    <button class="btn" data-test="lycgrowl">Lycan Rage growl, from high to low health</button>
+    <button class="btn" data-test="fullmoon">Full Moon transformation, then changing back</button>
     <button class="btn" data-test="scyhit">Scythe hitting an enemy</button>
     <button class="btn" data-test="batsummon">Bat swarm released</button>
     <button class="btn" data-test="batflap">A bat flying</button>
@@ -691,6 +694,11 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-set="scav">Scavenger pack<small>Throwing weapons and armor</small></button>
     <button data-set="samurai">Samurai pack<small>Swords and armor</small></button>
     <button data-set="night">Nightwalker pack<small>Machine guns, scythes, lanterns and armor</small></button>
+    <button data-set="lycan">Lycanthropy pack<small>Claws and armor</small></button>
+  </div>
+  <div class="seg" id="lyc-sub" role="group" aria-label="Lycanthropy pack section" hidden>
+    <button data-lyc="claw">Claws<small>Feral Rippers</small></button>
+    <button data-lyc="armor">Armor<small>Alpha Wolf Pelt</small></button>
   </div>
   <div class="seg" id="night-sub" role="group" aria-label="Nightwalker pack section" hidden>
     <button data-night="gun">Machine guns<small>Vlad the Impaler</small></button>
@@ -1763,6 +1771,7 @@ function gunSound(w,n=1,side=-1){
   if(w.medusa){if(w.mdLv)fx.mdBlast(w.mdLv);else fx.mdDemo();return}
   if(w.katana){fx.katSwing();setTimeout(()=>{if(ctx)fx.katWave(KAT_R/KAT_SP)},120);return}
   if(w.scythe){fx.scyStart();for(let i=0;i<12;i++)setTimeout(()=>{if(ctx)fx.scySweep(i*30+15)},i*225);return}
+  if(w.rippers){fx.ripSwipe(1);setTimeout(()=>{if(ctx)fx.ripSwipe(-1)},150);return}
   if(w.stake){stakeShot(gunDest(0));return}
   if(w.id==='hades'){const d=gunDest(0);hadesShot(d,w.hades||'fire',w.cd);return}
   if(w.id==='thunder'){const d=gunDest(0);if(w.sil)d.gain.value=.6;if(w.ballslug)ballShot(d);else thunderBlast(d);if(w.sup)superThunder(gunDest(0));return}
@@ -2255,6 +2264,7 @@ const ARMOR=[
   {id:'plate',name:'Ceramic plate carrier',prot:.45,price:450,desc:'Hard ceramic plates. Cuts all damage you take by 45 percent.'},
   {id:'jugg',name:'Juggernaut suit',prot:.6,price:800,desc:'Full bomb-disposal style armor. Cuts all damage you take by 60 percent.'},
   {id:'barbed',name:'Razorwire Carapace',prot:.5,price:15000,scav:true,desc:'Scavenger pack armor. Plates wrapped in coils of razor wire and barbs. Cuts all damage you take by 50 percent, and any enemy that hits you is torn by the barbs: it takes 40 damage straight away and keeps bleeding for 10 health a second for 5 seconds. Another hit on you starts the bleeding over. You hear the barbs rip and the enemy dripping while it bleeds.'},
+  {id:'alpha',name:'Alpha Wolf Pelt',prot:.5,price:50000,lycan:true,desc:'Lycanthropy pack armor. A heavy pelt of thick grey wolf fur over light leather, with the alpha\'s skull as a hood. Cuts all damage you take by 50 percent, less than the other pack armors, because this one wants you hurt. Lycan Rage, built in: the more health you have lost, the harder you hit, with every weapon. Your damage goes up by the same share of health you are missing: plus 50 percent at half health, plus 75 percent at a quarter, plus 90 percent at a tenth. Every time you are hit you hear your own growl, deeper the lower your health. Status tells you how much extra damage you have. You must own it before you can buy the Feral Rippers. Its special ability, Full Moon, is listed under it.'},
   {id:'samurai',name:'Samurai armor',prot:.75,price:30000,sam:true,desc:'Samurai pack armor. Lacquered steel plates laced with silk cords, with a horned helmet and a war mask. Cuts all damage you take by 75 percent, the best protection in the game. You must own it before you can buy the Samurai sword.'},
   {id:'shadow',name:'Darkest Shadow Suit',prot:.6,price:35000,night:true,desc:'Nightwalker pack armor. A long black coat with a high collar over a suit of dark, supple plates that drinks in the light. Cuts all damage you take by 60 percent. You must own it before you can buy the Unquenchable scythe. Its special ability, Bat swarm, is listed under it.'},
   {id:'berserk',name:'Viking berserker armor',prot:.6,price:50000,myth:true,desc:'Mythical armor of iron, fur and runes. Cuts all damage you take by 60 percent. Has its own special ability, Berserker rage, and special traits you buy below. Traits level up only from kills you make while wearing it.'}
@@ -2284,6 +2294,7 @@ MARMUP.push({id:'darksam',arm:'samurai',kind:'ability',name:'Dark samurai',price
 MARMUP.push({id:'hungry',arm:'barbed',kind:'ability',name:'Hungry barbs',price:15000,desc:'Special ability. The barbs grow sharper every time they kill. Every enemy killed by the Razorwire Carapace, torn apart by the barbs when it hits you or bleeding out from their wounds, makes the barbs and the bleeding 10 percent stronger, up to triple damage after 20 barb kills: 120 damage when an enemy hits you, and 30 a second of bleeding. Kills by your guns, grenades and anything else do not count. You hear a rising metal scrape each time they grow sharper, and every 5 barb kills you hear how strong they are. It builds up over each battle and starts over in the next one.'});
 MARMUP.push({id:'batswarm',arm:'shadow',kind:'ability',name:'Bat swarm',price:30000,desc:'Special ability. Every time the damage you take while wearing the Darkest Shadow Suit adds up to half your maximum health, 5 bats burst out of the coat: with 800 health, every 400 damage taken. They fly at 8 feet a second to the enemies closest to you, a different enemy each when they can, and bite for 3 damage a second each. Every bite heals you as much as it deals, so each bite gives back 3 health. They stay out for 10 seconds, then fly off and the charge starts over. It does not charge while they are out. You hear their wings and bites from wherever they are, and Feeding tells you how much health they give you.'},
   {id:'appetite',arm:'shadow',kind:'ability',req:'batswarm',name:'Endless appetite',price:20000,desc:'Second tier of Bat swarm. The bats stay out for 15 seconds instead of 10. Every kill they make drives the whole swarm into a frenzy: they fly 25 percent faster and bite 25 percent faster, and it keeps building with every kill until they fly off. Buy Bat swarm first.'});
+MARMUP.push({id:'fullmoon',arm:'alpha',kind:'ability',name:'Full Moon',price:20000,desc:'Special ability. When your health drops to a quarter or less while wearing the Alpha Wolf Pelt, you turn into a werewolf for 20 seconds: bones crack, you snarl, then let out a huge howl. While you are transformed you take half damage, on top of the armor, and every kill heals you 2 health. You keep all your weapons and can switch to the Feral Rippers any time. Lycan Rage keeps working, so you are already hitting at least 75 percent harder. When it ends you change back, panting. It can happen once per wave.'});
 const MUBY=Object.fromEntries(MARMUP.map(u=>[u.id,u]));
 // Hungry barbs: how much harder the Razorwire Carapace's barbs and bleeding hit, from barb kills this battle
 const HB_STEP=.1,HB_MAX=20;
@@ -2311,7 +2322,9 @@ const PERKEFF={hp:l=>`Max health ${100+hpBonus(l)}`,heal:l=>`Heals ${25+healBonu
 /* Thunderclap damage bands: the closer the enemy, the bigger the multiplier */
 const TBM=[3,2.5,2,1.5,1],tMult=(w,d)=>{const b=w.tband;for(let i=0;i<b.length;i++)if(d<b[i])return TBM[i];return 1};
 const growPct=()=>G&&G.pk&&G.pk.grow?10*Math.max(0,G.wave-(G.growFrom??G.wave)):0;   // Growing Violence: plus 10 percent per wave since you bought it, added flat
-const gunMult=()=>(G&&G.adrT>0?1.25:1)*(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1)*(1+growPct()/100)*ringDmg();
+// Lycan Rage (Alpha Wolf Pelt): extra damage equal to the share of health you are missing
+const lycMult=()=>G&&P.armor.on==='alpha'&&G.maxhp>0?1+Math.min(1,Math.max(0,1-G.hp/G.maxhp)):1;
+const gunMult=()=>lycMult()*(G&&G.adrT>0?1.25:1)*(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1)*(1+growPct()/100)*ringDmg();
 const MLV=[0,10,25,45,70,100,135,175,220,270];
 function mlevel(id){const k=P.mast[id]||0;let L=1;MLV.forEach((t,i)=>{if(k>=t)L=i+1});return L}
 const WPN=[
@@ -2455,6 +2468,8 @@ const WPN=[
    traits:'Mythical heavy weapon powered by your own life. Hold Fire and it drains your health into a glowing orb of souls above you, with a hum that rises as it grows. Let go and the orb slams down and bursts in a shockwave all the way around you. Everything the shockwave reaches dies instantly, bosses and mini bosses included. Only the Ancient One survives it, losing half its health. A quick tap costs 10 percent of your max health and clears 10 feet around you. Holding grows it evenly to a full charge in 4 and a half seconds: 65 percent of your max health, clearing 70 feet. It never takes you below 10 percent health: when you reach that limit, or full charge, the hum locks on one steady note and a voice says Full power. Never needs reloading. Takes no upgrades.'},
   {id:'medusa',rng:0,name:'Medusa\'s Head',short:'MEDUSA',mag:1,dmg:0,cone:27,cd:.3,reload:0,shots:1,medusa:true,price:65000,
    traits:'Mythical relic: the severed head of Medusa, held up by its snakes with her gaze turned away from you. It has no ammo. It runs on souls: every enemy you kill with any other weapon, grenade or ability adds 1 soul, with no limit, and souls last the whole match. Hold Fire to charge it in three levels, one second each, so a full charge takes 3 seconds. A hiss and grinding stone rise as it charges, and a chime marks each level: one note for level 1, two for level 2, three for level 3. Let go and her gaze sweeps out in front of you as a petrifying wave that spreads as it travels, as wide as it has gone: 15 feet across at 15 feet, 65 feet across at 65 feet. Level 1 reaches 15 feet for 15 souls, level 2 reaches 40 feet for 40 souls, level 3 reaches 65 feet for 70 souls. Charging stops at the highest level your souls can pay for. Every enemy the wave reaches turns to stone, bosses and mini bosses included, and stands there as a grey statue, its eyes dark, until the match ends. Only the Ancient One resists, losing 10, 20 or 30 percent of its health. Kills made by the head itself do not give souls. Never needs reloading. Takes no upgrades.'},
+  {id:'rippers',rng:0,name:'Feral Rippers',short:'RIPPERS',mag:1,dmg:15,cone:60,cd:.5,reload:0,shots:1,rippers:true,needArm:'alpha',price:25000,
+   traits:'Lycanthropy pack melee weapon. Long, hooked werewolf claws. Press Fire for a double swipe, one every half second, and hold Fire to keep swiping. Each swipe is wide, sweeping a 120 degree arc in front of you, from about 10 o\'clock to 2 o\'clock, out to 5 feet, and hits every enemy in it for 15, so they are made for crowds. The first swipe tears left to right, the second right to left. Every swipe sets the enemies it hits bleeding, 5 a second for 3 seconds, and another swipe starts the bleeding over. Essence Drain, built in: every enemy you hit makes the claws 1 percent stronger, with no limit, so they keep climbing in a big horde, but if you go 10 seconds without hitting anything it fades away. Lycan Rage from the Alpha Wolf Pelt makes them hit harder too. Never needs reloading. You must own the Alpha Wolf Pelt before you can buy them.'},
   {id:'scythe',rng:0,name:'Unquenchable scythe',short:'SCYTHE',mag:1,dmg:75,cone:180,cd:2.7,reload:0,shots:1,scythe:true,needArm:'shadow',price:40000,
    traits:'Nightwalker pack melee weapon. A huge scythe swung in a full circle around you. Each swing takes 2.7 seconds to go all the way around, starting straight ahead and sweeping right, behind you and left, and you can swing again the moment it finishes. Hold Fire to keep swinging. Everything within 10 feet takes 75 as the blade passes it. Every kill heals you 20 percent of that enemy\'s full health. You hear the blade whoosh in a circle around your head and slice into each enemy it reaches, and Feeding tells you how much health you got back. Never needs reloading. You must own the Darkest Shadow Suit before you can buy it.'},
   {id:'getwell',rng:0,name:'Get Well Soon card',short:'CARD',mag:6,dmg:40,cone:16,cd:.45,reload:1.8,shots:1,acc:.95,heart:true,lnch:'heart',blast:15,splM:.75,spd:16,fling:6,price:0,secret:true,
@@ -2852,7 +2867,7 @@ const ATT=[
 ];
 const ATTBY=Object.fromEntries(ATT.map(a=>[a.id,a]));
 const LNCH=['m79','mgl','xm25','rpg7','javelin','flash'];
-const OWNUP=[...LNCH,...FLAMES,'gaussr','zeliska','getwell','vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble','mjolnir','zeus','nova','micro','rex','hypno','soul','medusa','teddy','fog','rubik',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
+const OWNUP=[...LNCH,...FLAMES,'rippers','gaussr','zeliska','getwell','vlad','scythe','ra','kbat','katana','boomer','tetra','jackfrost','salvo','jet','symbiote','quasar','hades','bubble','mjolnir','zeus','nova','micro','rex','hypno','soul','medusa','teddy','fog','rubik',...MYTHNEW],JETOK=['barrel','scope','pscope','grip','silencer'];
 const attOK=(a,w)=>OWNUP.includes(w.id)?(a.for===w.id||(w.id==='jet'&&JETOK.includes(a.id))||((w.id==='symbiote'||w.id==='hades')&&(a.id==='reflex'||a.id==='grip'))||(MYTHNEW.includes(w.id)&&MYTHOK.includes(a.id)&&!(w.id==='banshee'&&a.id==='extmag'))||!!(a.myth&&a.only&&a.only.includes(w.id))):(!a.for||a.for===w.id)&&(!a.only||a.only.includes(w.id))&&!(a.not&&a.not.includes(w.id))&&!(a.noSpread&&w.spread);
 const priceOf=(a,w)=>a.price||(w.id==='deagle'?180:120);
 function attOf(id){return P.att[id]||(P.att[id]={own:[],eq:[]})}
@@ -3602,6 +3617,7 @@ function fire(){
   if(G.lo[G.w].flame){ftTrigger(G.lo[G.w]);return}
   if(G.lo[G.w].katana){katanaFire(G.lo[G.w]);return}
   if(G.lo[G.w].scythe){scytheSwing(G.lo[G.w]);return}
+  if(G.lo[G.w].rippers){ripSwing(G.lo[G.w]);return}
   const wi=G.w,A=G.ammo[wi];let w=G.lo[wi];const busy=s=>G.jobs.some(j=>j.wi===wi&&j.side===s);
   let side=0;
   if(w.akimbo){
@@ -5272,6 +5288,56 @@ function zElemTick(dt){
   if(G.apools&&G.apools.length){G.apools.forEach(p=>{p.t-=dt;p.c-=dt;if(p.c<=0&&p.t>0){p.c+=1;const[r,d]=xyRel(p.x,p.y);fx.acidSizzle(r,Math.max(.5,d));if(host&&Math.hypot(p.x,p.y)<=ICE_R)hurtPlayer(2*p.dm,null)}});
     G.apools=G.apools.filter(p=>p.t>0)}
 }
+/* ---------- Lycanthropy pack ----------
+   Alpha Wolf Pelt: Lycan Rage is built in (lycMult, next to gunMult). Every hit you take plays your own growl,
+   deeper the lower your health. Full Moon (special ability): at a quarter health or less, once per wave, you turn
+   for 20 seconds, taking half damage and healing 2 health a kill.
+   Feral Rippers: a wide double swipe every half second, 120 degrees out to 5 feet, 15 a swipe, each hit bleeding
+   5 a second for 3 seconds. Essence Drain: 1 percent stronger per enemy hit, no limit, gone after 10 seconds with no hit. */
+const RIP_R=5/3.281,RIP_ARC=60,RIP_BLEED=5,RIP_BT=3,ESS_T=10,MOON_T=20;
+Object.assign(fx,{
+  ripSwipe(dir=1){const t=ctx.currentTime,d=gunDest(0),p=ctx.createStereoPanner?ctx.createStereoPanner():null,g=ctx.createGain();g.__pri=true;
+    if(p){p.pan.setValueAtTime(-.85*dir,t);p.pan.linearRampToValueAtTime(.85*dir,t+.16);g.connect(p);p.connect(d)}else g.connect(d);
+    noise(g,{dur:.18,vol:.7,type:'bandpass',f:2200,f2:4800,q:1.4,attack:.01});noise(g,{dur:.16,vol:.35,type:'highpass',f:5000,attack:.005});
+    for(let i=0;i<3;i++)noise(g,{dur:.02,vol:.45,type:'highpass',f:3500,at:.04+i*.035,attack:.001});tone(g,{type:'sawtooth',f:220,f2:120,dur:.12,vol:.08})},
+  ripHit(rel,dist,at=0){const d=out(rel,dist,1,gunBus);noise(d,{dur:.14,vol:.75,type:'bandpass',f:1700,f2:700,q:1.6,at,attack:.003});noise(d,{dur:.1,vol:.4,type:'lowpass',f:600,at:at+.03});
+    for(let i=0;i<3;i++)noise(d,{dur:.03,vol:.25,type:'bandpass',f:500+Math.random()*500,q:6,at:at+.06+i*.04})},
+  // your own growl as you are hit: deeper and rougher the lower your health (k from 0 at full health to 1 at none)
+  lycGrowl(k){const d=gunDest(0);if(!zRec(d,'snarl',{rate:.78-.3*k,vol:.55+.3*k,max:1.1})){tone(d,{type:'sawtooth',f:150-70*k,f2:120-60*k,dur:.8,vol:.25+.15*k,attack:.08})}
+    tone(d,{type:'sawtooth',f:75-30*k,f2:60-25*k,dur:.9,vol:.12+.25*k,attack:.1});noise(d,{dur:.8,vol:.15+.2*k,type:'lowpass',f:500-250*k,attack:.1})},
+  // Full Moon: bones cracking, a deep snarl, then a long rising howl
+  moonTurn(){const d=gunDest(0);for(let i=0;i<14;i++){const at=Math.random()*1.3;noise(d,{dur:.025,vol:.7,type:'highpass',f:1800+Math.random()*1500,at,attack:.001});if(i%3===0)tone(d,{f:90,f2:50,dur:.08,vol:.4,at})}
+    if(!zRec(d,'snarl',{at:1.3,rate:.62,vol:1,max:1}))tone(d,{type:'sawtooth',f:110,f2:70,dur:.8,vol:.4,at:1.3,attack:.05});
+    const t=ctx.currentTime+2.1,g=ctx.createGain(),lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3500;g.connect(lp);lp.connect(d);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.5,t+.4);g.gain.setValueAtTime(.5,t+1.8);g.gain.exponentialRampToValueAtTime(.0001,t+2.9);
+    const lfo=ctx.createOscillator(),lg=ctx.createGain();lfo.frequency.value=5;lg.gain.value=9;lfo.connect(lg);lfo.start(t);lfo.stop(t+3);
+    [[1,'sawtooth',.35],[2,'sine',.25],[1.005,'triangle',.3]].forEach(([m,ty,v])=>{const o=ctx.createOscillator(),og=ctx.createGain();o.type=ty;
+      o.frequency.setValueAtTime(260*m,t);o.frequency.exponentialRampToValueAtTime(560*m,t+.6);o.frequency.setValueAtTime(560*m,t+1.6);o.frequency.exponentialRampToValueAtTime(380*m,t+2.9);
+      lg.connect(o.frequency);og.gain.value=v;o.connect(og);og.connect(g);o.start(t);o.stop(t+3)});
+    noise(d,{dur:2.6,vol:.12,type:'bandpass',f:1200,q:1,at:2.15,attack:.3})},
+  // changing back: heavy panting
+  moonEnd(){const d=gunDest(0);for(let i=0;i<6;i++){const at=i*.42;noise(d,{dur:.2,vol:.4,type:'bandpass',f:i%2?1100:800,q:1.2,at,attack:.04});tone(d,{type:'sawtooth',f:i%2?140:110,f2:90,dur:.18,vol:.05,at,attack:.04})}}
+});
+function lycWords(){if(P.armor.on!=='alpha'||!G)return '';const n=Math.round((lycMult()-1)*100);return `${G.moonT>0?`Full Moon, ${Math.ceil(G.moonT)} seconds left. `:''}Lycan Rage plus ${n} percent damage. `}
+function lycHurt(){const k=Math.min(1,Math.max(0,1-G.hp/G.maxhp)),n=performance.now();
+  if(!(G.lycAt>n-1200)){G.lycAt=n;fx.lycGrowl(k)}
+  if(!G.told.lyc&&k>=.25){G.told.lyc=1;say(`Lycan Rage, plus ${Math.round(k*100)} percent damage.`)}
+  if(P.marm.fullmoon&&!(G.moonT>0)&&G.hp<=G.maxhp*.25&&G.moonWave!==G.wave){G.moonWave=G.wave;G.moonT=MOON_T;fx.moonTurn();vib(600);
+    (g=>setTimeout(()=>{if(G===g&&!G.over)say(`Full Moon! You transform for ${MOON_T} seconds. Half damage, and every kill heals you.`)},1800))(G)}}
+function lycTick(dt){
+  if(G.moonT>0){G.moonT-=dt;if(G.moonT<=0){G.moonT=0;fx.moonEnd();say('The full moon fades. You change back.')}}
+  if(G.essN>0){G.essT-=dt;if(G.essT<=0){const n=G.essN;G.essN=0;if(n>=10)say('Essence Drain faded.');hud()}}
+  // Feral Rippers bleeding
+  let died=false;G.enemies.forEach(e=>{if(!(e.ripT>0)||e.hp<=0)return;e.ripT-=dt;e.hp-=RIP_BLEED*dt;e.ripCue=(e.ripCue||0)-dt;
+    if(e.ripCue<=0&&e.hp>0){fx.bleed(norm(e.angle-G.heading),e.dist);e.ripCue=1}if(e.hp<=0){fx.kill(norm(e.angle-G.heading),e.dist,0,e.type);died=true}});
+  if(died)processDead('rippers')}
+function ripSwing(w){G.cd=w.cd;vib(30);if(rdOn())RD.slash=.25;const g=G;ripSwipe(w,1);setTimeout(()=>{if(G===g&&!G.over&&!G.paused)ripSwipe(w,-1)},150)}
+function ripSwipe(w,dir){fx.ripSwipe(dir);const h0=G.heading;let n=0,i=0;
+  G.enemies.forEach(e=>{if(e.hp<=0||e.hb>0||e.dist>RIP_R||Math.abs(norm(e.angle-h0))>RIP_ARC)return;
+    const rel=norm(e.angle-G.heading),dmg=w.dmg*(1+.01*(G.essN||0))*gunMult();e.hp-=dmg;e.ripT=RIP_BT;e.ripCue=1;rdShot(e,{id:'rippers'},false);
+    if(i<5)fx.ripHit(rel,e.dist,.03+i*.02);i++;n++;if(e.hp<=0)fx.kill(rel,e.dist,.1,e.type)});
+  if(n){const b=G.essN||0;G.essN=b+n;G.essT=ESS_T;if(Math.floor(G.essN/50)>Math.floor(b/50))say(`Essence Drain, plus ${G.essN} percent.`);hud()}
+  processDead('rippers')}
 function processDead(src,kind){
   const dead=G.enemies.filter(e=>e.hp<=0);if(!dead.length)return 0;
   if(G.coop)coopDeadHook(dead,src);
@@ -5299,6 +5365,7 @@ function processDead(src,kind){
   if(wearing('ringpurple')&&src!=='mate'&&G.hp>0){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+dead.length);const got=Math.round(G.hp-h0);if(got>0){heal+=` Plus ${got} health.`;healN+=got}}   // Purple ring: 1 health a kill
   if(wearing('crownvlad')&&src!=='mate'){G.crownK=(G.crownK||0)+dead.length;let n=0;while(G.crownK>=30){G.crownK-=30;n++}   // Crown of Vlad the Impaler: 5 percent of max health every 30 kills
     if(n&&G.hp>0){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+G.maxhp*.05*n);const got=Math.round(G.hp-h0);if(got>0){heal+=` Crown of Vlad, plus ${got} health.`;healN+=got;setTimeout(()=>{if(ctx)fx.bloodDrink()},250)}}}
+  if(G.moonT>0&&src!=='mate'&&G.hp>0){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+2*dead.length);const got=Math.round(G.hp-h0);if(got>0){heal+=` Plus ${got} health.`;healN+=got}}   // Full Moon: 2 health a kill
   if(wearing('dogtags'))pay=Math.round(pay*1.1);   // Dog tags: 10 percent more silver
   G.earned+=pay;P.coins+=pay;P.stats.earned+=pay;saveP();
   setTimeout(()=>{if(ctx)fx.coin(pay>=20?3:1)},420);
@@ -5317,6 +5384,7 @@ function hurtPlayer(dmg,by){
   if(wearing('rabbit')&&Math.random()<.05){fx.whoosh();const n=performance.now();if(!(G.luckAt>n-4000)){G.luckAt=n;say('Lucky! Missed you.')}return}   // Lucky rabbit's foot: 5 percent of hits miss
   let d=dmg*(S.diff<1?.7:S.diff>1.5?1.6:1);const ar=ARMBY[P.armor.on];
   if(ar)d*=1-ar.prot;if(G.cover)d*=.5;d*=ringGuard();if(G.adrT>0)d*=.5;   // Adrenaline shot: half damage
+  if(G.moonT>0)d*=.5;   // Full Moon: half damage while transformed
   const zerk=P.armor.on==='berserk';if(zerk){const tl=tlv('tough');if(tl)d*=1-MUBY.tough.cut[tl]}
   G.hp-=d;fx.hurt();if(ar)fx.armorHit();vib(140);
   // Razorwire Carapace: the attacker is torn by the barbs and bleeds
@@ -5326,6 +5394,7 @@ function hurtPlayer(dmg,by){
   if(by&&by.hp>0&&G.pk&&G.pk.frost){const boss=!!EN[by.type].boss;by.frozeT=Math.max(by.frozeT||0,boss?1:2);by.wind=0;fx.frostSkin(norm(by.angle-G.heading),by.dist)}
   if(G.hp>0&&G.hp<G.maxhp*.25&&G.pk&&G.pk.last&&!G.lastUsed)lastStand();
   if(P.armor.on==='shadow'&&P.marm.batswarm&&!(G.batT>0)){const need=G.maxhp*.5,c0=G.batC||0;G.batC=c0+d;if(G.batC>=need){G.batC=0;batSwarm()}else if(c0<need/2&&G.batC>=need/2){fx.batFlap(0,1);say('Bat swarm half charged.')}}
+  if(P.armor.on==='alpha'&&G.hp>0)lycHurt();
   if(P.armor.on==='samurai'&&P.marm.darksam&&!(G.oniT>0)){const r0=G.dark||0,need=G.maxhp*DARK_CHG;G.dark=r0+d;if(G.dark>=need){G.dark=0;darkSamurai()}else if(r0<need/2&&G.dark>=need/2){fx.oniSnarl(0,1,.5);say('Dark samurai half charged.')}}
   if(zerk&&P.marm.rage&&!(G.ringT>0)){const r0=G.rage||0;G.rage=r0+d;if(G.rage>=100){G.rage=0;berserkRage()}else if(r0<50&&G.rage>=50){fx.rageRoar();say('Rage half full.')}}
   if(G.hp<=0&&G.pk&&G.pk.revive&&!G.revUsed){G.revUsed=true;setFlock(false);G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);rdBlast(0,0,3,7,{c:'255,255,255'});
@@ -5528,7 +5597,7 @@ function blizzard(){const r=40/3.281;G.blizzT=10;fx.blizzard();vib(250);let c=0;
 function heatVent(n){const f=n>=3?25:n===2?15:7,r=f/3.281;fx.ventBlast(f);vib(60);let c=0;rdBlast(0,0,r,4,{c:'255,120,40'});
   G.enemies.forEach(e=>{if(e.hp<=0||e.dist>r)return;e.fireT=5;e.fireDps=Math.max(e.fireDps||0,20);e.fireSrc='jet';c++;fx.burn(norm(e.angle-G.heading),e.dist,.15)});
   const msg=`Heat vent, ${f} feet. ${c?c+(c>1?' enemies':' enemy')+' burning.':'Nothing in range.'}`;(g=>setTimeout(()=>{if(G===g&&!G.over)say(msg)},400))(G)}
-function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.flame)return `${n1(A[0])} of ${n1(w.mag)} seconds of fuel`;if(w.gaussr&&G.gs)return `charging, ${Math.round(G.gs.p*100)} percent, ${A[0]} of ${w.mag} rounds`;if(w.medusa){const s=mdSouls(),L=mdLvlFor(s);return G.md?`charging, level ${G.md.lv}, ${s} souls`:`${s} souls, ${L?`enough for level ${L}, ${MD_FT[L]} feet${L<3?`. Level ${L+1} needs ${MD_COST[L+1]}`:''}`:`level 1 needs ${MD_COST[1]}`}`}if(w.mjol)return G.mj?'Mjölnir is out':'Mjölnir in hand';if(w.soul)return G.sb?`charging, ${Math.round(sbFt(G.sb.p))} feet, ${Math.round(G.sb.spent/G.maxhp*100)} percent of your health`:G.sbCd>0?'gathering souls':'ready';if(w.zeus)return G.zCd>0?'forging a new bolt':G.zc?`charging, ${Math.round(G.zc.p*100)} percent`:'bolt ready';if(w.heatT&&G.ovh&&G.ovh[w.id]>0)return `changing the barrel, ${Math.ceil(G.ovh[w.id])} seconds, ${A[0]} of ${w.mag} rounds`;if(w.kbat){const n=(G.kb||[]).length;return n?`${n} ${n>1?'baseballs':'baseball'} in play`:'no baseballs in play'}if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.katana||w.scythe)return 'blade ready';if(w.bubble){const n=(G.bubs||[]).length;return `${n} of ${w.bubMax} bubbles out`}if(w.rubik)return `${A[0]} of ${w.mag} cubes in hand`;if(w.fog)return `${A[0]} of ${fogMax()} handfuls left in the bag, ${build(w).fogN} snacks each`;if(w.teddy)return G.jobs.some(j=>j.wi===G.w)?'changing batteries':`${Math.ceil(A[0])} of ${w.mag} seconds of battery left`;if(w.ra)return G.raCool>0?`overheated, cooling, ${Math.ceil(G.raCool)} seconds left`:`heat ${Math.round((G.raHeat||0)/RA_DUR*100)} percent`;if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
+function ammoWords(){const w=G.lo[G.w],A=G.ammo[G.w];if(w.flame)return `${n1(A[0])} of ${n1(w.mag)} seconds of fuel`;if(w.gaussr&&G.gs)return `charging, ${Math.round(G.gs.p*100)} percent, ${A[0]} of ${w.mag} rounds`;if(w.medusa){const s=mdSouls(),L=mdLvlFor(s);return G.md?`charging, level ${G.md.lv}, ${s} souls`:`${s} souls, ${L?`enough for level ${L}, ${MD_FT[L]} feet${L<3?`. Level ${L+1} needs ${MD_COST[L+1]}`:''}`:`level 1 needs ${MD_COST[1]}`}`}if(w.mjol)return G.mj?'Mjölnir is out':'Mjölnir in hand';if(w.soul)return G.sb?`charging, ${Math.round(sbFt(G.sb.p))} feet, ${Math.round(G.sb.spent/G.maxhp*100)} percent of your health`:G.sbCd>0?'gathering souls':'ready';if(w.zeus)return G.zCd>0?'forging a new bolt':G.zc?`charging, ${Math.round(G.zc.p*100)} percent`:'bolt ready';if(w.heatT&&G.ovh&&G.ovh[w.id]>0)return `changing the barrel, ${Math.ceil(G.ovh[w.id])} seconds, ${A[0]} of ${w.mag} rounds`;if(w.kbat){const n=(G.kb||[]).length;return n?`${n} ${n>1?'baseballs':'baseball'} in play`:'no baseballs in play'}if(w.boomer)return G.boom?'boomerang out':'boomerang in hand';if(w.katana||w.scythe)return 'blade ready';if(w.rippers)return G.essN?`claws ready, Essence Drain plus ${G.essN} percent`:'claws ready';if(w.bubble){const n=(G.bubs||[]).length;return `${n} of ${w.bubMax} bubbles out`}if(w.rubik)return `${A[0]} of ${w.mag} cubes in hand`;if(w.fog)return `${A[0]} of ${fogMax()} handfuls left in the bag, ${build(w).fogN} snacks each`;if(w.teddy)return G.jobs.some(j=>j.wi===G.w)?'changing batteries':`${Math.ceil(A[0])} of ${w.mag} seconds of battery left`;if(w.ra)return G.raCool>0?`overheated, cooling, ${Math.ceil(G.raCool)} seconds left`:`heat ${Math.round((G.raHeat||0)/RA_DUR*100)} percent`;if(w.turbine)return (G.qCool>0?`overheated, cooling, ${Math.ceil(G.qCool)} seconds left`:`heat ${Math.round((G.qHeat||0)/w.qDur*100)} percent, ${Math.max(0,Math.floor(w.qDur-(G.qHeat||0)))} seconds of firing left`)+`, quasar charge ${G.qN||0} of 30`;return w.akimbo?`left ${A[0]}, right ${A[1]}, of ${w.mag} each`:`${A[0]} of ${w.mag}`}
 function reload(){
   if(G&&!G.paused&&!G.over)timeGo();
   if(!G||G.paused||G.over)return;if(G.down){downNag();return}
@@ -5544,7 +5613,7 @@ function reload(){
   if(w.turbine){say(`No magazine, it runs on heat. ${ammoWords()}.`);return}
   if(w.kbat){say(`The Kinetic bat never needs reloading. ${ammoWords()}.`);return}
   if(w.boomer){say(G.boom?'The boomerang is still out.':'The boomerang never needs reloading. It is in your hand.');return}
-  if(w.katana){say('The sword never needs reloading.');return}if(w.scythe){say('The scythe never needs reloading.');return}
+  if(w.katana){say('The sword never needs reloading.');return}if(w.scythe){say('The scythe never needs reloading.');return}if(w.rippers){say('The claws never need reloading.');return}
   const need=(w.akimbo?[0,1]:[0]).filter(s=>A[s]<w.mag&&!G.jobs.some(j=>j.wi===wi&&j.side===s));
   if(!need.length){say(G.jobs.some(j=>j.wi===wi)?(w.flame?'Already swapping the tank.':w.teddy?'Already changing the battery.':'Already reloading.'):(w.teddy?'Battery full.':w.flame?'Tank full.':'Magazine full.'));return}
   need.forEach(s=>startReload(wi,s));
@@ -6020,7 +6089,7 @@ function status(){
   if(G.mode==='practice'){say(`Tutorial/practice. ${G.kills} target${G.kills===1?'':'s'} down.${rdWords()} Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
   const left=G.enemies.length+G.toSpawn;
   const wv=G.mode==='zombies'?(G.zm==='roam'?`${rmName()}, wave ${G.wave}. ${rWhere()} ${G.rm.crates.length} supply crate${G.rm.crates.length===1?'':'s'} out, ${G.rm.got} collected.${rdWords()}`:G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}${rdWords()}`:`${G.zm==='six'?'Watch my six':G.zm==='ragdoll'?'Ragdoll sandbox':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.${rdWords()}`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.id==='grow'?`${p.name} plus ${growPct()} percent`:p.name).join(', ')}${G.revUsed?', second wind used':''}${G.lastUsed?', last stand recharging':''}.`:''):(G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`)+rdWords();
-  say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${hypWords()}${G.lo.some(x=>x.medusa)&&w&&!w.medusa?`Medusa's Head: ${mdSouls()} souls. `:''}${G.mdStat?`${G.mdStat} stone statue${G.mdStat>1?'s':''} standing. `:''}${P.armor.on==='shadow'&&P.marm.batswarm?(G.batT>0?`Bats out, ${Math.ceil(G.batT)} seconds left. `:`Bat swarm ${Math.min(99,Math.floor((G.batC||0)/(G.maxhp*.5)*100))} percent charged. `):''}${P.armor.on==='barbed'&&P.marm.hungry?`Hungry barbs at ${Math.round(barbMult()*100)} percent, ${Math.min(HB_MAX,G.barbK||0)} of ${HB_MAX} barb kills. `:''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing${G.statues.some(x=>x.mine)?`, ${G.statues.filter(x=>x.mine).length} armed as emerald mines`:''}.`:''} Facing ${facing()}. ${P.coins} silver.${coopMates()}`);
+  say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${lycWords()}${hypWords()}${G.lo.some(x=>x.medusa)&&w&&!w.medusa?`Medusa's Head: ${mdSouls()} souls. `:''}${G.mdStat?`${G.mdStat} stone statue${G.mdStat>1?'s':''} standing. `:''}${P.armor.on==='shadow'&&P.marm.batswarm?(G.batT>0?`Bats out, ${Math.ceil(G.batT)} seconds left. `:`Bat swarm ${Math.min(99,Math.floor((G.batC||0)/(G.maxhp*.5)*100))} percent charged. `):''}${P.armor.on==='barbed'&&P.marm.hungry?`Hungry barbs at ${Math.round(barbMult()*100)} percent, ${Math.min(HB_MAX,G.barbK||0)} of ${HB_MAX} barb kills. `:''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing${G.statues.some(x=>x.mine)?`, ${G.statues.filter(x=>x.mine).length} armed as emerald mines`:''}.`:''} Facing ${facing()}. ${P.coins} silver.${coopMates()}`);
 }
 
 /* ---------- loop ---------- */
@@ -6402,6 +6471,7 @@ function step(dt){
   else{zPackTick(dt);G.enemies.forEach(e=>stepEnemy(e,dt))}
   if(G.pins&&G.pins.length)pinStep();
   if(G.statues&&G.statues.length)emTick(dt);
+  lycTick(dt);if(G.over)return;
   if(G.mode==='zombies'){zElemTick(dt);if(G.over)return}
   if(G.mode==='zombies'&&G.win)stepWindows(dt);
   if(G.mode==='zombies'&&G.pk&&G.pk.fence){fenceTick(dt);if(G.over)return}
@@ -6619,7 +6689,7 @@ const RDSZ={zombie:{h:1,w:1,m:1,col:'#86a36f'},zrunner:{h:.97,w:.85,m:.85,col:'#
   yardle:{h:2.2,w:1.8,m:10,col:'#e6b84e'},boss:{h:2.6,w:2,m:14,col:'#6a8a42'},queen:{h:2.3,w:1.8,m:11,col:'#8a48c4'},titan:{h:3,w:2.2,m:25,col:'#b0dcf2'},revenant:{h:2.2,w:1.7,m:12,col:'#60656d',mech:1}};
 const rdSz=t=>RDSZ[t]||RDSZ.zombie;
 // how hard each weapon throws what it kills, in metres a second (heavier zombies move less)
-const RDPOW={m2flame:1.5,fw41:1.5,xm42:1.5,arcflame:1.5,pulsefire:1.5,gaussr1:6,gaussr2:12,gaussr3:20,m79:9,mgl:9,xm25:8,rpg7:14,javelin:16,flash:9,vlad:7,scythe:6,ra:1.5,katana:5,katwave:6,qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
+const RDPOW={rippers:3,m2flame:1.5,fw41:1.5,xm42:1.5,arcflame:1.5,pulsefire:1.5,gaussr1:6,gaussr2:12,gaussr3:20,m79:9,mgl:9,xm25:8,rpg7:14,javelin:16,flash:9,vlad:7,scythe:6,ra:1.5,katana:5,katwave:6,qbeam:4,pistol:3,smg:2.5,rifle:4,lmg:5,sniper:9,shotgun:8,deagle:4.5,m2:7,antitank:15,cheytac:11,coach:10,aa12:7,
   jet:24,jackfrost:3,tetra:3,nova:13,micro:30,soul:22,medusa:0,hypno:4,hyp:5,teddy:2,fog:1,rubik:1,getwell:18,boomer:5,kbat:2,symbiote:4,rivet:2.5,banshee:7,thunder:8,hades:3,hydra:9,blackhole:10,salvo:5,quasar:14,
   last:12,berserk:2,incend:2,fence:1,barbed:1.5};
 const RD={slash:0,cr:0,crT:0,bodies:[],decals:[],flash:[],voices:[],acc:0,muzzle:0,sb:0,kd:0,kdT:0,lsT:0,winT:0,tmp:new Float32Array(33),c:new Float32Array(3)};
@@ -8703,7 +8773,7 @@ function hud(){
   if(!G.down){$('v-hp').textContent=Math.max(0,Math.ceil(G.hp));$('hud-hp').classList.toggle('hp-low',G.hp<G.maxhp*.3);$('hud-hp').firstElementChild.textContent='Health'}   // while down, the box shows your teammate's health
   {const mc=$('mc-gun');if(mc)mc.hidden=!w.micro}
   {const gc=$('gw-card');if(gc){gc.hidden=!w.msg;if(w.msg&&gc.dataset.m!==w.msg){gc.dataset.m=w.msg;const i=w.msg.indexOf(',');$('gw-t').textContent=i>0?w.msg.slice(0,i+1):w.msg;$('gw-n').textContent=i>0?w.msg.slice(i+1).trim():''}}}
-  $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.flame?(G.jobs.some(j=>j.wi===G.w)?'NEW TANK':`FUEL ${Math.ceil(A[0])} S`):w.gaussr&&G.gs?`CHARGE ${Math.round(G.gs.p*100)}%`:w.medusa?(G.md?`LV ${G.md.lv} ${mdSouls()}`:`${mdSouls()} SOULS`):w.soul?(G.sb?`${Math.round(sbFt(G.sb.p))} FT`:G.sbCd>0?'WAIT':'READY'):w.mjol?(G.mj?'OUT':'READY'):w.zeus?(G.zCd>0?'FORGE':G.zc?`CHARGE ${Math.round(G.zc.p*100)}%`:'READY'):w.heatT&&G.ovh&&G.ovh[w.id]>0?`BARREL ${Math.ceil(G.ovh[w.id])}`:w.kbat?(G.kbCd>0?`WAIT ${Math.ceil(G.kbCd)}`:(G.kb||[]).length?`BALLS ${(G.kb||[]).length}`:'READY'):w.katana||w.scythe?'BLADE':w.boomer?(G.boom?'OUT':'READY'):w.bubble?`OUT ${(G.bubs||[]).length}/${w.bubMax}`:w.rubik?`CUBES ${A[0]}/${w.mag}`:w.fog?`${A[0]}/${fogMax()}`:w.teddy?(G.jobs.some(j=>j.wi===G.w)?'BATTERY':`${Math.ceil(A[0])} S`):w.ra?(G.raCool>0?`COOL ${Math.ceil(G.raCool)}`:`HEAT ${Math.round((G.raHeat||0)/RA_DUR*100)}%`):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
+  $('v-wpn').textContent=w.short;const A=G.ammo[G.w];$('v-ammo').textContent=w.flame?(G.jobs.some(j=>j.wi===G.w)?'NEW TANK':`FUEL ${Math.ceil(A[0])} S`):w.gaussr&&G.gs?`CHARGE ${Math.round(G.gs.p*100)}%`:w.medusa?(G.md?`LV ${G.md.lv} ${mdSouls()}`:`${mdSouls()} SOULS`):w.soul?(G.sb?`${Math.round(sbFt(G.sb.p))} FT`:G.sbCd>0?'WAIT':'READY'):w.mjol?(G.mj?'OUT':'READY'):w.zeus?(G.zCd>0?'FORGE':G.zc?`CHARGE ${Math.round(G.zc.p*100)}%`:'READY'):w.heatT&&G.ovh&&G.ovh[w.id]>0?`BARREL ${Math.ceil(G.ovh[w.id])}`:w.kbat?(G.kbCd>0?`WAIT ${Math.ceil(G.kbCd)}`:(G.kb||[]).length?`BALLS ${(G.kb||[]).length}`:'READY'):w.katana||w.scythe?'BLADE':w.rippers?(G.essN?`DRAIN ${G.essN}%`:'CLAWS'):w.boomer?(G.boom?'OUT':'READY'):w.bubble?`OUT ${(G.bubs||[]).length}/${w.bubMax}`:w.rubik?`CUBES ${A[0]}/${w.mag}`:w.fog?`${A[0]}/${fogMax()}`:w.teddy?(G.jobs.some(j=>j.wi===G.w)?'BATTERY':`${Math.ceil(A[0])} S`):w.ra?(G.raCool>0?`COOL ${Math.ceil(G.raCool)}`:`HEAT ${Math.round((G.raHeat||0)/RA_DUR*100)}%`):w.turbine?(G.qCool>0?`COOL ${Math.ceil(G.qCool)}`:`HEAT ${Math.round((G.qHeat||0)/w.qDur*100)}%`):w.akimbo?`${A[0]}|${A[1]}`:`${A[0]}/${w.mag}`;
   $('v-wave').textContent=G.mode==='practice'?'—':G.mode==='endless'||G.mode==='bossrush'||G.mode==='zombies'?`${G.wave}`:`${G.wave}/${MAXW}`;$('v-coins').textContent=P.coins;
   const hall=G.mode==='zombies'&&G.zm==='hall';$('v-wave').previousElementSibling.textContent=hall?'Score':'Wave';if(hall)$('v-wave').textContent=hallScore();
   pxBars();
@@ -8712,6 +8782,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-21-lycan',date:'November 21, 2026',title:'New legendary set: Lycanthropy pack',items:[
+    'A new legendary set in the Armory, under Legendary: the Lycanthropy pack, with Claws and Armor sections. The lower your health, the deadlier you get.',
+    'Alpha Wolf Pelt, 50,000 silver. Cuts all damage you take by 50 percent, less than the other pack armors, because this one wants you hurt. Lycan Rage is built in: your damage with every weapon goes up by the share of health you are missing. Plus 50 percent at half health, 75 at a quarter, 90 at a tenth. Every hit you take plays your own growl, deeper the lower your health, and Status tells you how much extra damage you have.',
+    'Full Moon, the Pelt\'s special ability, 20,000 silver: when your health drops to a quarter or less, you turn into a werewolf for 20 seconds. Bones crack, you snarl, then howl. You take half damage and every kill heals you 2 health. You keep all your weapons. When it ends you change back, panting. Once per wave.',
+    'Feral Rippers, 25,000 silver, under Claws. You need the Alpha Wolf Pelt first. Press Fire for a double swipe every half second, and hold Fire to keep swiping. Each swipe sweeps a wide 120 degree arc in front of you, from about 10 to 2 o\'clock, out to 5 feet, hitting every enemy in it for 15. The first tears left to right, the second right to left. Every swipe makes enemies bleed, 5 a second for 3 seconds.',
+    'Essence Drain, built into the Rippers: every enemy you hit makes them 1 percent stronger, with no limit. You hear the total every 50 percent. Go 10 seconds without hitting anything and it fades away.',
+    'Try the swipe, the growl and the transformation in the sound test.']},
   {id:'2026-11-21-gauss',date:'November 21, 2026',title:'Gauss rifle: new sci-fi sounds',items:[
     'Charging now has a capacitor whine from the Kenney sci-fi pack that climbs in pitch and loudness as the charge builds, holds at the top while you keep a full charge, and cuts off the moment you fire. A rising force-field surge plays when it hits full charge.',
     'Firing now adds a deep metal slam as the rails fire and a crackle of discharging energy, both stronger the more you charged, with a sub-bass blast on a full-charge shot, on top of its big laser sound.',
@@ -10027,6 +10104,7 @@ const WBEST={
   flash:'Setting a crowd on fire. Spread rockets across a group so everything burns, then switch weapons while the fire does the work. With Volley fire, one pull burns up to 4 enemies at once.',
   ra:'Crowds. The beam widens with distance and lights up every enemy inside it, and burning enemies set fire to anyone who comes close, so packed groups burn each other down. Sweep it across a crowd, then let go before it overheats.',
   vlad:'Lines of enemies coming straight at you. Kill the front one and the stake throws its body back into the ones behind, pinning them together so they move at the speed of the slowest. With Stacking stakes, keep putting stakes into a boss and each one hits harder.',
+  rippers:'Crowds that reach you. Each double swipe tears through everything in a wide arc in front of you and sets it bleeding, and Essence Drain keeps the claws getting stronger as long as you keep hitting things, so stay in the thick of it. Best with the Alpha Wolf Pelt at low health.',
   scythe:'Being surrounded. One swing hits everything within 10 feet on every side, and every kill heals you, so wade into a crowd that has reached you and keep holding Fire.',
   pistol:'A reliable backup. Use it on light enemies at short to medium range, and as the gun you switch to when your main weapon is empty. It falls off past about 40 feet, so do not use it for long shots.',
   deagle:'One-shotting light enemies at short to medium range, and headshots on heavies. Each shot counts, so wait for the double chirp before you fire.',
@@ -10100,7 +10178,7 @@ function tutWSetup(w){const ty=MAPS[G.map].types[0],S=(r,f)=>tutSpawn(ty,r,f,10)
   if(w.teddy)return[S(0,20),S(-4,30),S(4,40)];
   if(w.fog)return[S(-3,30),S(0,32),S(3,30)];
   if(w.scythe)return[S(0,6),S(90,7),S(180,6),S(-90,8)];if(w.stake)return[S(0,30),S(0,36)];
-  if(w.katana)return[S(0,4)];if(w.boomer)return[S(0,20),S(20,22)];
+  if(w.katana)return[S(0,4)];if(w.rippers)return[S(-40,4),S(0,4),S(40,4)];if(w.boomer)return[S(0,20),S(20,22)];
   if(w.turbine)return[S(180,10),S(165,14),S(0,20)];
   if(w.spread)return w.hades||w.chain?[S(0,25),S(-10,28),S(10,30)]:[S(0,14),S(-8,16),S(8,17)];
   if(w.hydra||w.lantern||w.hole||w.sonic)return[S(-15,35),S(0,38),S(15,35)];
@@ -10153,7 +10231,7 @@ $('b-left').onclick=()=>{if(performance.now()-RPAD.skipL<450)return;turn(-15)};$
 /* Fire lock: a small switch in the top right corner. On, the gun keeps firing as if Fire were held down.
    Stays on through reloads, overheat cooldowns and pausing. Turns off when you press and let go of Fire,
    switch weapons, die or the match ends. Does nothing with melee weapons. Keyboard: L. */
-const isMelee=w=>!!(w&&(w.kbat||w.katana||w.scythe));
+const isMelee=w=>!!(w&&(w.kbat||w.katana||w.scythe||w.rippers));
 function setFlock(on){const was=!!(G&&G.flock);if(G)G.flock=!!on;if(G&&was!==!!on)tutEv('flock',!!on);const b=$('b-flock');if(b)b.setAttribute('aria-checked',on?'true':'false')}
 function toggleFlock(){if(!G||G.over)return;
   if(G.flock){setFlock(false);fx.click();say('Fire lock off.');return}
@@ -10229,7 +10307,7 @@ function record(){
 $('b-record').onclick=record;
 
 /* ---------- armory shop ---------- */
-const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet','zeliska'],smg:['skorpion','mac10','p90','mp5','tommy','vector'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2','minigun'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin','m2flame','fw41','xm42','arcflame','pulsefire'],hightech:['gaussr'],toy:['rubik'],mythic:['jet','jackfrost','tetra','nova','boomer','kbat','katana','vlad','scythe','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar','mjolnir','zeus','medusa']};
+const WCAT={pistol:['pistol','deagle','beretta','glock','gyrojet','zeliska'],smg:['skorpion','mac10','p90','mp5','tommy','vector'],rifle:['ak','an94','m4'],lmg:['m249','mg42','m2','minigun'],sniper:['barrett','svd','osv96','cheytac','antitank'],shotgun:['spas','coach','ksg','bshot','aa12'],launcher:['m79','mgl','xm25','rpg7','flash','javelin','m2flame','fw41','xm42','arcflame','pulsefire'],hightech:['gaussr'],toy:['rubik'],mythic:['jet','jackfrost','tetra','nova','boomer','kbat','katana','vlad','scythe','rippers','ra','symbiote','rivet','banshee','thunder','hades','hydra','blackhole','bubble','salvo','quasar','mjolnir','zeus','medusa']};
 const GRIP10=[...WCAT.rifle,...WCAT.smg,...WCAT.lmg];   // real assault rifles, SMGs and LMGs: Grip gives 10 percent base headshot chance
 const MCAT={pistol:['micro','rex'],rifle:['banshee','hypno'],sniper:['jet','jackfrost','tetra','nova'],smg:['symbiote','rivet'],shotgun:['thunder','hades'],aoe:['blackhole','hydra','salvo','soul','medusa','bubble'],heavy:['quasar'],melee:['kbat'],divine:['mjolnir','zeus'],toy:['teddy'],treat:['fog']};
 const MCATN={aoe:'Mythical AOE weapons. Area of effect weapons that hit everything in a whole area at once: explosions, black holes, shockwaves, Medusa\'s petrifying gaze and bubbles that trap whole crowds.',pistol:'Mythical pistols. Tiny guns with enormous consequences. Micro Catastrophe fits in your palm and levels a 50 foot area. The Alien Rex Annihilator fires plasma bolts that burn and electrocute whole crowds.',treat:'Mythical treats. Snacks the enemies cannot resist. Brain Fog Bites leaves them dazed and harmless.',toy:'Mythical toys. Cuddly on the outside, deadly on the inside. Unbearable Buddy fires lasers from its eyes.',rifle:'Mythical rifles.',sniper:'Mythical sniper rifles.',smg:'Mythical submachine guns.',shotgun:'Mythical shotguns.',heavy:'Mythical heavy weapons. Engines and machines you hold fire to run.',melee:'Mythical melee weapons. Swing them with the Fire button.',divine:'Divine weapons. Weapons of the gods of thunder: a hammer you throw and a bolt you charge.'};
@@ -10240,18 +10318,20 @@ function catLabels(){const nm=ids=>ids.map(i=>WBY[i]&&WBY[i].name).filter(Boolea
   document.querySelectorAll('#myth-sub button[data-myth]').forEach(b=>{const L=MCAT[b.dataset.myth];if(!L)return;let sm=b.querySelector('small');if(!sm){sm=document.createElement('small');b.appendChild(sm)}sm.textContent=nm(L)});
   document.querySelectorAll('#std-sub button[data-std]').forEach(b=>{const L=WCAT[b.dataset.std];if(!L)return;let sm=b.querySelector('small');if(!sm){sm=document.createElement('small');b.appendChild(sm)}sm.textContent=nm(L)})}
 catLabels();
-const catW=()=>curCat==='secret'?SECRET.filter(i=>P.owned.includes(i)).map(i=>WBY[i]):curCat==='mythic'?(curSet==='mythic'?MCAT[curMyth]:curSet==='night'?(curNight==='gun'?['vlad']:curNight==='blade'?['scythe']:curNight==='lantern'?['ra']:[]):curSet==='samurai'?(curSam==='blade'?LSET.samurai.list:[]):curScav==='throw'?LSET[curSet].list:[]).map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
+const catW=()=>curCat==='secret'?SECRET.filter(i=>P.owned.includes(i)).map(i=>WBY[i]):curCat==='mythic'?(curSet==='mythic'?MCAT[curMyth]:curSet==='lycan'?(curLyc==='claw'?LSET.lycan.list:[]):curSet==='night'?(curNight==='gun'?['vlad']:curNight==='blade'?['scythe']:curNight==='lantern'?['ra']:[]):curSet==='samurai'?(curSam==='blade'?LSET.samurai.list:[]):curScav==='throw'?LSET[curSet].list:[]).map(i=>WBY[i]):WCAT[curCat]?WCAT[curCat].map(i=>WBY[i]):[];
 /* Legendary sets. The Legendary shop section holds sets of weapons: Mythical (split into weapon types, MCAT) and the
    Scavenger pack, empty for now. To add a weapon to the Scavenger pack, put its id in LSET.scav.list. */
 const LSET={mythic:{name:'Mythical'},scav:{name:'Scavenger pack',list:['boomer'],note:'The Scavenger pack. Legendary gear scavenged and rebuilt from scrap: throwing weapons and armor.'},
   samurai:{name:'Samurai pack',list:['katana'],note:'The Samurai pack. Legendary blades and armor of the samurai: swords and armor.'},
+  lycan:{name:'Lycanthropy pack',list:['rippers'],note:'The Lycanthropy pack. Legendary gear for those who turn under the full moon: claws and armor. The lower your health, the deadlier you get.'},
   night:{name:'Nightwalker pack',list:['vlad','scythe','ra'],note:'The Nightwalker pack. Legendary gear for those who hunt in the dark, and those who feed in it: machine guns, scythes, lanterns and armor.'}};
 const NIGHTN={lantern:'Nightwalker pack lanterns. Hold Fire to shine the Lantern of Ra. Its ray of sunlight sets everything it touches on fire, and the fire spreads from enemy to enemy.',gun:'Nightwalker pack machine guns. Vlad the Impaler fires wooden stakes that pin enemies to the floor, the walls and each other. Takes only its own upgrades.',blade:'Nightwalker pack scythes. Swing with the Fire button, in a full circle around you. You must own the Darkest Shadow Suit before you can buy the Unquenchable scythe.',armor:'Nightwalker pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Darkest Shadow Suit has its own special abilities, Bat swarm and Endless appetite, listed under it.'};
+const LYCN={claw:'Lycanthropy pack claws. Swipe with the Fire button. You must own the Alpha Wolf Pelt before you can buy the Feral Rippers.',armor:'Lycanthropy pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Alpha Wolf Pelt has Lycan Rage built in, and its own special ability, Full Moon, listed under it.'};
 const SAMN={blade:'Samurai pack swords. Swing with the Fire button. You must own the Samurai armor before you can buy the Samurai sword.',armor:'Samurai pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Samurai armor has its own special ability, Dark samurai, listed under it.'};
 const SCAVN={throw:'Scavenger pack throwing weapons. Throw them with the Fire button and they come back to you.',armor:'Scavenger pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep.'};
 const setOf=id=>Object.keys(LSET).find(k=>LSET[k].list&&LSET[k].list.includes(id))||'mythic';
 const GUNCATS=['pistol','smg','rifle','lmg','sniper','shotgun','launcher','hightech','toy'];let curStd='pistol';
-let curThr='throw',curCat='grenades',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade',curNight='gun';
+let curThr='throw',curCat='grenades',curArm='regular',curMyth='rifle',curSet='mythic',curScav='throw',curSam='blade',curNight='gun',curLyc='claw';
 const WNOTE=' Buy a weapon once and keep it. You carry up to four guns into battle. Owned guns get an Attachments button. Hear it plays the gunshot with its attachments. Kills raise a gun\'s mastery, up to level 10, and each level makes its attachments 5 percent stronger.';
 const CATNOTE={toy:'Toys. Everyday toys that keep the enemy busy instead of hurting them. Each takes only its own upgrades.'+WNOTE,hightech:'High tech weapons. Cutting-edge weapons built on real experimental technology, like electromagnetic railguns. Each takes only its own upgrades.'+WNOTE,pistol:'Pistols. Light, quick sidearms.'+WNOTE,smg:'Submachine guns. Huge magazines and fast bursts, best up close.'+WNOTE,rifle:'Assault rifles. All-rounders for mid range.'+WNOTE,lmg:'Light machine guns. Enormous belts for holding off crowds.'+WNOTE,sniper:'Sniper rifles. Heavy hitters with no damage lost at any range.'+WNOTE,shotgun:'Shotguns. Devastating blasts at close range.'+WNOTE,launcher:'AOE weapons. Area of effect weapons: real grenade and rocket launchers, and real flamethrowers that burn everything in their stream. Every shell flies out to the nearest enemy you are facing and explodes, hitting everything around it. Each takes only its own upgrades, based on the real ammo and parts.'+WNOTE,mythic:'The mythical weapons. Legendary experimental guns that take only their own special upgrades, except the Rivet Storm, which also takes most of the regular submachine gun attachments.'+WNOTE,
   armor:'Wear one armor at a time. Armor cuts all damage you take, and you hear a plate clank when it stops a hit. Armor you buy is yours to keep.',
@@ -10261,6 +10341,7 @@ const n1=x=>Math.round(x*10)/10;
 function dmgLine(w){if(w.rex){const b=build(w);return `Damage: ${w.dmg} per plasma bolt, no falloff at any range. Burns ${REX_BURN} a second for ${REX_BT} seconds, spreading to anyone within 5 feet. Electric jolt: ${REX_JOLT} per jump to every enemy within 10 feet, on and on through a crowd.${b.extinct?' Extinction Event on: the last round does triple damage and spreads twice as far.':''} For scale, light enemies have 2 to 3 health.`}if(w.flame){const b=build(w);return `Damage: ${w.dmg} a second to everything in the stream, out to ${b.ftR} feet and ${b.ftW} feet wide at the end. Burns ${b.ftBd} a second for ${b.ftBt} seconds, spreading to anyone within ${FT_SPREAD} feet. Fuel: ${n1(b.mag)} seconds. Tank swap: ${b.reload} seconds.`}if(w.gaussr)return `Damage: up to ${w.dmg} at full charge, to every enemy in its line, through up to 30 enemies. A tap does a tenth and goes through 3. Full charge in 2 and a half seconds. Never misses and ignores cover.`;if(w.micro)return `Damage: ${w.dmg} at the centre of a ${w.blast} foot explosion, fading evenly to ${Math.round(w.dmg*MC_EDGE)} at the edge. Every enemy caught is thrown as a rag doll. One shot every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.rubik){const b=build(w);return `No damage${b.spike?` except Spiked Tiles, ${RB_SPIKE} a second to each solver`:''}. ${b.mag} cubes out at once. Up to ${RB_CAP} zombies, or one boss, per cube, busy for ${RB_T} seconds, the Ancient One ${RB_ANC}.`}if(w.fog){const b=build(w);return `No damage. Each handful is ${b.fogN} snacks. A regular enemy is dazed by 1 snack, a mini boss by 5, a boss by 15 and the Ancient One by 50. Dazed enemies never attack again. Fresh bag every wave: 3 handfuls, plus 1 more every 5 waves.`}if(w.teddy){const b=build(w);return `Damage: ${b.tdDps} a second as a constant laser beam from both eyes, out to ${TD_R} feet with no falloff. Each battery lasts ${b.mag} seconds of firing, and changing it takes ${b.reload} seconds.`}if(w.medusa)return `No damage: it turns enemies to stone. Level 1, ${MD_FT[1]} feet for ${MD_COST[1]} souls. Level 2, ${MD_FT[2]} feet for ${MD_COST[2]} souls. Level 3, ${MD_FT[3]} feet for ${MD_COST[3]} souls. 1 second per level. The wave is as wide as it has travelled. The Ancient One loses 10, 20 or 30 percent of its health instead.`;if(w.soul)return 'Kills everything the shockwave reaches, bosses and mini bosses included. The Ancient One loses half its health. Costs 10 to 65 percent of your max health for a 10 to 70 foot blast around you, never taking you below 10 percent.';if(w.heart)return `Damage: ${w.dmg} to the enemy a heart hits, and up to ${Math.round(w.dmg*w.splM)} to everyone within ${w.blast} feet, who are thrown away from it. ${n1(1/w.cd)} hearts per second. For scale, light enemies have 2 to 3 health.`;if(w.lnch)return lnDmgLine(w);if(w.mjol)return `Damage: ${w.dmg} on impact, with lightning leaping to up to 4 more enemies within 15 feet for 60 percent, and 100 to every enemy it smashes flying home. Reaches 80 feet, 60 feet a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.zeus)return `Damage: ${w.dmg} for a quick tap, rising to ${w.dmg+500} at full power after 2 seconds of charge. Arcs from half power, and stuns at full. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.kbat)return `Damage: ${w.dmg} every time the baseball hits, 24 on a headshot, and it bounces on to any enemy within 7 feet of the last one, again and again, for up to 15 seconds. Travels 3 feet a second at stock. One swing every ${w.cd} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.bubble)return `Damage: none. Each bubble traps up to ${BUB_CAP} enemies within 5 feet of its centre for ${BUB_T} seconds. Reaches 50 feet. 4 bubbles out at once, one every ${w.cd} seconds at stock.`;if(w.ra)return `Damage: ${RA_HIT} every ${RA_TICK} seconds to every enemy in the light, out to ${RA_R} feet, then fire burns ${RA_BDPS} a second for ${RA_BURN} seconds. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.turbine){const b=build(w);return `No damage from the front: the exhaust blows enemies away. Everything behind you except bosses is sucked in and killed instantly. Runs ${b.qDur} seconds before it overheats, then cools for ${b.qCool}. Every 30 enemies sucked in fires the Quasar propulsion laser for ${QLASER} to everything in a ${QBEAM*2} degree beam ahead. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(w.charge)return `Damage: ${w.dmg} per round, punching through up to 10 enemies in line at stock. ${w.charge} second charge-up before each shot. For scale, light enemies have 2 to 3 health.`;if(w.lantern)return `Damage: ${w.dmg} on a direct hit, then fire burns 5 per second for 5 seconds on every enemy within 12 feet. ${n1(1/w.cd)} shots per second at stock. For scale, light enemies have 2 to 3 health.`;const pulls=1/w.cd,dps=w.dmg*w.shots*pulls*(w.acc||.92);
   if(w.hydra)return `Damage: 3 rockets of ${w.dmg} each per trigger pull, each splashing enemies within 5 feet for half. For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.hole){const b=build(w);return `Damage: ${b.holeDps} per second to everything in its ${ft(b.pullR)} foot pull for ${b.holeT} seconds, then ${w.dmg} on collapse to everything within 12 feet, half that to the rest it pulled in. For scale, light enemies have 2 to 3 health and bosses about 80.`}if(false)return ` For scale, light enemies have 2 to 3 health and bosses about 80.`;if(w.sonic)return `Damage: ${w.dmg} to every enemy in the cone within ${ft(w.full)} feet, plus a stun, fading to 40 percent at ${ft(w.reach)} feet. ${n1(1/w.cd)} screams per second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.stake)return `Damage: ${w.dmg} per stake to the first enemy, then 15 percent less for each enemy it skewers behind a body it kills. ${n1(1/w.cd)} stakes per second at stock. For scale, light enemies have 2 to 3 health and bosses about 80.`;
+  if(w.rippers)return `Damage: ${w.dmg} per swipe to every enemy in a 120 degree arc out to 5 feet, two swipes every ${w.cd} seconds, plus bleeding of 5 a second for 3 seconds. Essence Drain adds 1 percent per enemy hit, with no limit, until you go 10 seconds without a hit. Lycan Rage adds more the lower your health. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.scythe)return `Damage: ${w.dmg} to everything within 10 feet, all the way around you, once every ${SCY_T} seconds. Kills heal you 20 percent of the enemy's full health. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.katana)return `Blade: kills any enemy within 5 feet in front of you instantly, except bosses and mini bosses, which take 100. Wave: 100 as it leaves the blade, rising evenly to 1,000 at 35 feet, through every enemy in its path. One swing a second. For scale, light enemies have 2 to 3 health and bosses about 80.`;
   if(w.boomer)return `Damage: ${w.dmg} to every enemy it slices, on the way out and again on the way back. Flies 30 feet out at stock, up to 30 enemies per throw. For scale, light enemies have 2 to 3 health and bosses about 80.`;
@@ -10290,32 +10371,34 @@ document.querySelectorAll('#std-sub button').forEach(b=>b.onclick=()=>{initAudio
 document.querySelectorAll('#leg-sub button').forEach(b=>b.onclick=()=>{initAudio();curSet=b.dataset.set;buildShop(true);say(curSet==='mythic'?'Mythical set. Choose a weapon type.':LSET[curSet].note+' Choose a section.')});
 document.querySelectorAll('#scav-sub button').forEach(b=>b.onclick=()=>{initAudio();curScav=b.dataset.scav;buildShop(true);say(SCAVN[curScav])});
 document.querySelectorAll('#sam-sub button').forEach(b=>b.onclick=()=>{initAudio();curSam=b.dataset.sam;buildShop(true);say(SAMN[curSam])});
+document.querySelectorAll('#lyc-sub button').forEach(b=>b.onclick=()=>{initAudio();curLyc=b.dataset.lyc;buildShop(true);say(LYCN[curLyc])});
 document.querySelectorAll('#night-sub button').forEach(b=>b.onclick=()=>{initAudio();curNight=b.dataset.night;buildShop(true);say(NIGHTN[curNight])});
 document.querySelectorAll('#myth-sub button').forEach(b=>b.onclick=()=>{initAudio();curMyth=b.dataset.myth;buildShop(true);say(MCATN[curMyth])});
 document.querySelectorAll('#thr-sub button').forEach(b=>b.onclick=()=>{initAudio();curThr=b.dataset.thr;buildShop(true);say(curThr==='throw'?'Throwables.':'Consumables.')});
 document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(ARMSUBN[curArm]+'.')});
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
 const ARMSUBN={regular:'Standard armor',mythic:'Mythical armor',wear:'Standard wearables',mwear:'Mythical wearables'};
-const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&(curArm==='wear'||curArm==='mwear'?a.wear&&(curArm==='mwear'?!!a.myth:!a.myth):!a.wear&&(curArm==='mythic'?a.myth:!a.myth)));
+const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&!a.lycan&&(curArm==='wear'||curArm==='mwear'?a.wear&&(curArm==='mwear'?!!a.myth:!a.myth):!a.wear&&(curArm==='mythic'?a.myth:!a.myth)));
 const shopWear=()=>curCat==='armor'&&(curArm==='wear'||curArm==='mwear')?WEAR.filter(r=>curArm==='mwear'?!!r.myth:!r.myth):[];
-const shopArmors=()=>curCat==='armor'?(curArm==='wear'||curArm==='mwear'?[]:armList()):curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):[];
+const shopArmors=()=>curCat==='armor'?(curArm==='wear'||curArm==='mwear'?[]:armList()):curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):curCat==='mythic'&&curSet==='lycan'&&curLyc==='armor'?ARMOR.filter(a=>a.lycan):[];
 function buildShop(keepFocus){
   const isGun=GUNCATS.includes(curCat);if(isGun)curStd=curCat;
   document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat==='std'?isGun:b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   $('std-sub').hidden=!isGun;document.querySelectorAll('#std-sub button').forEach(b=>{const on=b.dataset.std===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   $('thr-sub').hidden=curCat!=='grenades';document.querySelectorAll('#thr-sub button').forEach(b=>{const on=b.dataset.thr===curThr;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('arm-sub').hidden=curCat!=='armor';$('leg-sub').hidden=curCat!=='mythic';$('myth-sub').hidden=curCat!=='mythic'||curSet!=='mythic';$('scav-sub').hidden=curCat!=='mythic'||curSet!=='scav';$('sam-sub').hidden=curCat!=='mythic'||curSet!=='samurai';$('night-sub').hidden=curCat!=='mythic'||curSet!=='night';$('nw-3d').hidden=$('night-sub').hidden;
+  $('arm-sub').hidden=curCat!=='armor';$('leg-sub').hidden=curCat!=='mythic';$('myth-sub').hidden=curCat!=='mythic'||curSet!=='mythic';$('scav-sub').hidden=curCat!=='mythic'||curSet!=='scav';$('sam-sub').hidden=curCat!=='mythic'||curSet!=='samurai';$('night-sub').hidden=curCat!=='mythic'||curSet!=='night';$('nw-3d').hidden=$('night-sub').hidden;$('lyc-sub').hidden=curCat!=='mythic'||curSet!=='lycan';
+  document.querySelectorAll('#lyc-sub button').forEach(b=>{const on=b.dataset.lyc===curLyc;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#night-sub button').forEach(b=>{const on=b.dataset.night===curNight;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#scav-sub button').forEach(b=>{const on=b.dataset.scav===curScav;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#sam-sub button').forEach(b=>{const on=b.dataset.sam===curSam;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='grenades'&&curThr==='cons'?'Consumables. Items you use up in battle. Each one is gone once you use it.':curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='grenades'&&curThr==='cons'?'Consumables. Items you use up in battle. Each one is gone once you use it.':curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:curSet==='lycan'?LYCN[curLyc]:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
-  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.rubik||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'||w.id==='rex'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
+  catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.rippers||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.rubik||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'||w.id==='rex'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
   shopWear().forEach(r=>mkItem(list,'wr-'+r.id,r.name,r.desc,{act:()=>wearAct(r)}));
   shopArmors().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
@@ -10598,7 +10681,7 @@ function modAct(a){
   saveP();updateMods();
 }
 $('mods-hear').onclick=()=>hearGun(WBY[curMod]);
-$('mods-back').onclick=()=>{initAudio();curCat=catOf(curMod);if(curCat==='mythic'){curSet=setOf(curMod);if(curSet==='mythic')curMyth=mcatOf(curMod);else{curScav='throw';curSam='blade';curNight=curMod==='scythe'?'blade':curMod==='ra'?'lantern':'gun'}}show('shop');setTimeout(()=>{const b=document.querySelector(`#it-${curMod} .att`);if(b)b.focus()},140)};
+$('mods-back').onclick=()=>{initAudio();curCat=catOf(curMod);if(curCat==='mythic'){curSet=setOf(curMod);if(curSet==='mythic')curMyth=mcatOf(curMod);else{curScav='throw';curSam='blade';curLyc='claw';curNight=curMod==='scythe'?'blade':curMod==='ra'?'lantern':'gun'}}show('shop');setTimeout(()=>{const b=document.querySelector(`#it-${curMod} .att`);if(b)b.focus()},140)};
 
 /* sound check */
 document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
@@ -10655,6 +10738,9 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
   if(pos[k]){CRY.soldier(out(pos[k][0],pos[k][1]));return}
   if(k==='lock'){[0,.32,.64].forEach(t=>setTimeout(()=>fx.lock(8),t*1000));return}
   if(k==='zhit'){ATTACK.zombie(out(0,2,1,enBus));return}
+  if(k==='rippers'){fx.ripSwipe(1);setTimeout(()=>fx.ripSwipe(-1),150);setTimeout(()=>{fx.ripHit(-20,1.2,0);fx.ripHit(25,1.3,.05)},80);return}
+  if(k==='lycgrowl'){[0,.33,.66,.95].forEach((k2,i)=>setTimeout(()=>fx.lycGrowl(k2),i*1300));return}
+  if(k==='fullmoon'){fx.moonTurn();setTimeout(()=>fx.moonEnd(),4200);return}
   if(k==='zspit-gargle'){fx.spitGargle(0,12);setTimeout(()=>{fx.spitLaunch(0,12);setTimeout(()=>fx.spitSplash(0,1),700)},1000);return}
   if(k==='zember-boom'){DEATH.zember(out(0,8,1,enBus),0);return}
   if(k==='zfrost-burst'){DEATH.zfrost(out(0,8,1,enBus),0);return}
@@ -10917,7 +11003,7 @@ function coopRetarget(){   // the host decides who each enemy goes after: only t
 }
 /* your teammate's gunfire, from the direction they face, a little quieter than your own */
 function coopShot(w){
-  if(!coopOn()||!w||w.katana||w.scythe||w.boomer||w.kbat)return;const now=performance.now();if(now-C.shotAt<90)return;C.shotAt=now;
+  if(!coopOn()||!w||w.katana||w.scythe||w.rippers||w.boomer||w.kbat)return;const now=performance.now();if(now-C.shotAt<90)return;C.shotAt=now;
   coopSend({t:'f',w:w.id,h:G.heading});
 }
 function coopMateShot(id,h){
