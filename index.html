@@ -498,6 +498,14 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="zombie">Zombie</button>
     <button class="btn" data-test="zrunner">Zombie runner</button>
     <button class="btn" data-test="zbrute">Bloated zombie</button>
+    <button class="btn" data-test="zfrost">Frost Walker</button>
+    <button class="btn" data-test="zember">Ember Zombie</button>
+    <button class="btn" data-test="zplague">Plague Carrier</button>
+    <button class="btn" data-test="zstorm">Storm Zombie</button>
+    <button class="btn" data-test="zspit">Mini boss: Spitter Brute</button>
+    <button class="btn" data-test="zspit-gargle">Spitter Brute about to spit</button>
+    <button class="btn" data-test="zember-boom">Ember Zombie exploding</button>
+    <button class="btn" data-test="zfrost-burst">Frost Walker bursting</button>
     <button class="btn" data-test="zgiant">Giant zombie boss</button>
     <button class="btn" data-test="zancient">The Ancient One</button>
     <button class="btn" data-test="zhit">A zombie hitting you</button>
@@ -1357,6 +1365,40 @@ Object.assign(ATTACK,{
   zancient(d){zRec(d,'hit',{at:.2,rate:.55,vol:1.1});tone(d,{f:50,f2:18,dur:1.1,vol:1});noise(d,{dur:1,vol:1,type:'lowpass',f:900,f2:80});tone(d,{type:'sawtooth',f:80,f2:40,dur:.8,vol:.5,at:.1});thudDrop(d,.2,1)},
   zgiant(d){zRec(d,'hit',{at:.15,rate:.65+Math.random()*.05,vol:1.1});tone(d,{f:60,f2:22,dur:.8,vol:1});noise(d,{dur:.8,vol:1,type:'lowpass',f:1000,f2:100});tone(d,{type:'sawtooth',f:90,f2:50,dur:.6,vol:.4,at:.1})}
 });
+/* special zombies: each with its own sound so you know what is coming before it reaches you */
+Object.assign(CRY,{
+  zfrost(d){if(!zRec(d,'moan',{rate:1.05+Math.random()*.15,vol:.6,max:1.6}))tone(d,{type:'sawtooth',f:150,f2:110,dur:.8,vol:.22,attack:.12});
+    noise(d,{dur:.9,vol:.12,type:'highpass',f:6000,attack:.05});for(let i=0;i<9;i++)tone(d,{f:2800+Math.random()*2600,dur:.035,vol:.09,at:Math.random()*.9,attack:.002})},
+  zember(d){if(!zRec(d,'moan',{rate:.95+Math.random()*.1,vol:.55,max:1.4}))tone(d,{type:'sawtooth',f:130,f2:95,dur:.8,vol:.2,attack:.12});
+    noise(d,{dur:1.3,vol:.32,type:'bandpass',f:1100,f2:700,q:.7,attack:.08});noise(d,{dur:1.1,vol:.12,type:'highpass',f:5000,attack:.1});
+    for(let i=0;i<10;i++)noise(d,{dur:.012,vol:.28,type:'highpass',f:2400,at:Math.random()*1.2,attack:.001})},
+  zplague(d){buzz(d,64,1.4,.22);tone(d,{type:'sawtooth',f:96,f2:90,dur:1.4,vol:.1,attack:.3});
+    [0,.32,.7].forEach(t=>{noise(d,{dur:.14,vol:.55,type:'bandpass',f:650+Math.random()*200,f2:300,q:2.5,at:t,attack:.01});noise(d,{dur:.1,vol:.2,type:'lowpass',f:500,at:t+.06})});
+    for(let i=0;i<5;i++)noise(d,{dur:.04,vol:.18,type:'bandpass',f:400+Math.random()*500,q:8,at:.9+i*.09})},
+  zstorm(d){if(!zRec(d,'moan',{rate:1+Math.random()*.15,vol:.5,max:1.3}))tone(d,{type:'sawtooth',f:140,f2:100,dur:.7,vol:.2});
+    tone(d,{type:'sawtooth',f:118,f2:121,dur:1.1,vol:.12,attack:.05});tone(d,{type:'square',f:236,dur:1.1,vol:.04});
+    for(let i=0;i<7;i++){const t=Math.random()*1.05;noise(d,{dur:.025,vol:.45,type:'highpass',f:3500,at:t,attack:.001});tone(d,{type:'sawtooth',f:1600,f2:400,dur:.04,vol:.08,at:t})}},
+  zspit(d){if(!zRec(d,'bloat',{rate:.55+Math.random()*.08,vol:1.3})){buzz(d,45,1,.5);noise(d,{dur:1,vol:.5,type:'lowpass',f:300,attack:.1})}
+    tone(d,{f:44,f2:34,dur:1.2,vol:.45,attack:.15});[.15,.85,1.55].forEach(t=>thudDrop(d,t,.85))}
+});
+Object.assign(ATTACK,{
+  zfrost(d){ATTACK.zombie(d);for(let i=0;i<6;i++)tone(d,{f:3200+Math.random()*2400,dur:.05,vol:.14,at:.15+i*.03,attack:.002})},
+  zember(d){ATTACK.zombie(d);noise(d,{dur:.5,vol:.45,type:'bandpass',f:1200,f2:400,q:.8,at:.12,attack:.02})},
+  zplague(d){ATTACK.zombie(d);noise(d,{dur:.16,vol:.4,type:'bandpass',f:700,f2:300,q:2.5,at:.3})},
+  zstorm(d){ATTACK.zombie(d);for(let i=0;i<4;i++)noise(d,{dur:.03,vol:.6,type:'highpass',f:3000,at:.15+i*.03,attack:.001});tone(d,{type:'sawtooth',f:1800,f2:300,dur:.15,vol:.25,at:.15})},
+  zspit(d){zRec(d,'hit',{at:.1,rate:.6,vol:1.1});tone(d,{f:55,f2:20,dur:.9,vol:1});noise(d,{dur:.9,vol:1,type:'lowpass',f:900,f2:90});thudDrop(d,.1,1)}
+});
+Object.assign(DEATH,{
+  // shatters like ice
+  zfrost(d,at){noise(d,{dur:.35,vol:.9,type:'highpass',f:3000,f2:1500,at,attack:.003});for(let i=0;i<16;i++)tone(d,{f:2200+Math.random()*4000,dur:.06+Math.random()*.1,vol:.12,at:at+Math.random()*.5,attack:.002});
+    tone(d,{type:'triangle',f:900,f2:300,dur:.3,vol:.25,at});thudDrop(d,at+.5,.4)},
+  // bursts into flames
+  zember(d,at){noise(d,{dur:.9,vol:1,type:'lowpass',f:2200,f2:180,at,attack:.01});tone(d,{f:90,f2:30,dur:.7,vol:.8,at});
+    noise(d,{dur:1.4,vol:.4,type:'bandpass',f:900,f2:400,q:.7,at:at+.15,attack:.05});for(let i=0;i<12;i++)noise(d,{dur:.012,vol:.3,type:'highpass',f:2400,at:at+.2+Math.random()*1.2,attack:.001})},
+  zplague(d,at){noise(d,{dur:.5,vol:.6,type:'lowpass',f:600,f2:150,at});for(let i=0;i<6;i++)noise(d,{dur:.05,vol:.25,type:'bandpass',f:300+Math.random()*500,q:6,at:at+.1+i*.07});thudDrop(d,at+.5,.6)},
+  zstorm(d,at){for(let i=0;i<8;i++)noise(d,{dur:.03,vol:.5,type:'highpass',f:3200,at:at+i*.04,attack:.001});tone(d,{type:'sawtooth',f:1200,f2:60,dur:.6,vol:.3,at});thudDrop(d,at+.5,.5)},
+  zspit(d,at){buzz(d,40,1.2,.5,at);noise(d,{dur:1,vol:.6,type:'lowpass',f:400,f2:80,at:at+.1});[.9,1.3].forEach(t=>thudDrop(d,at+t,1))}
+});
 Object.assign(DEATH,{
   zombie(d,at){const r=.85+Math.random()*.3;tone(d,{type:'sawtooth',f:140*r,f2:55*r,dur:.7,vol:.3,at,attack:.05});thudDrop(d,at+.6,.6)},
   zrunner(d,at){noise(d,{dur:.3,vol:.4,type:'bandpass',f:1400,f2:400,q:2,at});thudDrop(d,at+.3,.45)},
@@ -2163,7 +2205,13 @@ const EN={
   zrunner:{name:'Zombie runner',hp:2,speed:2.4,dmg:4,atk:1.4,mat:'flesh',reward:8,z:1},
   zbrute:{name:'Bloated zombie',hp:7,speed:.8,dmg:9,atk:2.2,mat:'flesh',reward:13,z:1},
   zgiant:{name:'Giant zombie',hp:120,speed:.6,dmg:14,atk:2.8,mat:'flesh',reward:66,boss:1,z:1},
-  zancient:{name:'The Ancient One',hp:10000,speed:.3962,dmg:25,atk:3,mat:'flesh',reward:2000,boss:1,z:1,fixedHp:1,cueGap:4.5}
+  zancient:{name:'The Ancient One',hp:10000,speed:.3962,dmg:25,atk:3,mat:'flesh',reward:2000,boss:1,z:1,fixedHp:1,cueGap:4.5},
+  // special zombies: health is a multiple of a regular zombie's 3, so they grow with the waves like every zombie
+  zfrost:{name:'Frost Walker',hp:4.5,speed:1.1,dmg:5,atk:1.8,mat:'flesh',reward:12,z:1},
+  zember:{name:'Ember Zombie',hp:3.75,speed:1.4,dmg:5,atk:1.6,mat:'flesh',reward:12,z:1},
+  zplague:{name:'Plague Carrier',hp:6,speed:.8,dmg:3,atk:2,mat:'flesh',reward:15,z:1},
+  zstorm:{name:'Storm Zombie',hp:3,speed:1.2,dmg:5,atk:1.8,mat:'flesh',reward:15,z:1},
+  zspit:{name:'Spitter Brute',hp:30,speed:.5,dmg:14,atk:2.6,mat:'flesh',reward:45,mini:1,z:1}
 };
 const ENINFO={soldier:'Light. Rainforest. Medium speed, fires short rifle bursts.',
   stalker:'Light. Rainforest. Very fast, slashes up close.',
@@ -2189,6 +2237,11 @@ const ENINFO={soldier:'Light. Rainforest. Medium speed, fires short rifle bursts
   zrunner:'Light. Zombie siege. Fast, rasping snarl. Gets through a broken window quickly.',
   zbrute:'Heavy. Zombie siege. Slow and gurgling, soaks up bullets.',
   zgiant:'Boss of Zombie siege, every fifth wave. Every tenth wave also brings a mega giant with five times the health. Smashes through a window in about a second. Footsteps shake the ground.',
+  zfrost:'Special. Zombie modes, from wave 5, rare and random. Crackles like ice. Its hits chill you for 3 seconds: you move 40 percent slower, or in the stationary modes you fire and reload 40 percent slower. When it dies it bursts, slowing every zombie within 8 feet to half speed for 5 seconds and leaving an icy patch that slows anything walking through it.',
+  zember:'Special. Zombie modes, from wave 5, rare and random. Hisses and crackles like fire. Its hits set you on fire, 3 damage a second for 4 seconds. When it dies it explodes in flames, hurting every zombie within 8 feet and setting them on fire, and the fire spreads to zombies touching them. It hurts you too if it blows up within 8 feet of you.',
+  zplague:'Special. Zombie modes, from wave 5, very rare. Wet coughing and a low drone. It hits softly, but every zombie within 15 feet of it gets 25 percent more health and speed, and growls with a distorted edge, until it dies. Kill it first.',
+  zstorm:'Special. Zombie modes, from wave 5, very rare. Buzzes with electricity. Every 5 seconds its shock jumps between zombies standing within 10 feet of each other, and if any of them is within 10 feet of you, you take a small shock.',
+  zspit:'Mini boss. Zombie modes, at random about every 6 to 8 waves. Heavy footsteps and a deep gurgle. From 15 to 60 feet away it spits acid every 4 seconds, with a rising gargle a second before. Take cover, or in the moving modes step aside. The acid leaves a pool that burns for 3 seconds. Up close it slams the ground.',
   zancient:'The ultimate zombie boss, in every zombie mode, every 50th wave. The first has 10,000 health on every difficulty, and each one after has 2,500 more, with damage and silver rising in step. It moves very slowly, about 1.3 feet a second. It awakens with a deafening roar that shakes the ground, then roars again every few seconds so you always know where it is.'};
 const ARMOR=[
   {id:'vest',name:'Light vest',prot:.15,price:100,desc:'A soft vest. Cuts all damage you take by 15 percent.'},
@@ -3422,7 +3475,7 @@ function startWave(){
   if(G.mode==='bossrush'){G.bossWave=false;G.miniDue=false;G.mega=w%7===0;G.toSpawn=brCount(w);G.maxAlive=G.toSpawn;G.spawnT=3;
     say(sym+`Boss rush, wave ${w}. ${G.mega?'Mega boss wave! ':''}${G.toSpawn>1?G.toSpawn+' bosses':'One boss'} incoming${G.mega?', one of them a mega boss with double health':''}.`);return}
   if(G.mode==='zombies'){G.bossWave=false;G.miniDue=false;G.zMegaDue=w%10===0;G.zBossDue=!G.zg&&w%5===0;G.zAncDue=w%50===0;G.toSpawn=Math.round(4*w*(G.coop?1.5:1));   // co-op: half as many again
-    G.maxAlive=Infinity;G.zBatch=0;G.spawnT=(G.zm==='hall'?1:3)/zSpG().x;   // no limit on zombies alive at once: the whole wave can be on you
+    G.maxAlive=Infinity;G.zBatch=0;zBruteRoll();G.spawnT=(G.zm==='hall'?1:3)/zSpG().x;   // no limit on zombies alive at once: the whole wave can be on you
     say(sym+`Wave ${w}. ${G.toSpawn} ${G.zg?(G.toSpawn>1?'giant zombies':'giant zombie'):'zombies'}${G.zm==='hall'?' ahead':G.zm==='roam'?' closing in through the jungle':''}${zBossWords()}.`);return}
   G.mega=end&&w%7===0;G.bossWave=end?(w%5===0||G.mega):w===MAXW;G.miniDue=!G.bossWave;
   if(!G.bossWave){G.toSpawn=3+Math.min(w,10)*2;G.maxAlive=Math.min(2+Math.floor(w/2),end?6:4)+(S.diff>1.5?1:0);if(G.coop){G.toSpawn=Math.round(G.toSpawn*1.5);G.maxAlive+=2}}   // co-op: half as many again, and 2 more at once
@@ -3494,7 +3547,7 @@ function spawn(type,mega,at){
   G.enemies.push(e);
   if(type==='zancient'){e.cue=4.5;ancientRoar(out(norm(e.angle-G.heading),e.dist,2,enBus,3),0,1);vib(800);
     (g=>setTimeout(()=>{if(G===g&&!G.over&&!e.tutT)say(`The Ancient One has awakened! ${clock(norm(e.angle-G.heading))}, ${ft(e.dist)} feet. It has ${Math.round(e.maxhp).toLocaleString('en-US')} health.`)},1200))(G);return}
-  if(zq&&(!boss||(G.zg&&!mega)))return;   // giants only: too many to announce each one
+  if(zq&&!t.mini&&(!boss||(G.zg&&!mega))){if(ZSPEC[type]&&!G.tutQ)zSpecSay(e);return}   // giants only: too many to announce each one. Special zombies are announced, a few seconds apart at most
   if(G.tutQ)return;   // the tutorial announces its own targets
   const where=clock(norm(e.angle-G.heading));
   say(`${pr?'Target: ':mega?'Mega boss! Mega ':t.mini?'Mini boss! ':t.z?'Boss! ':''}${t.name}, ${where}, ${ft(e.dist)} feet.`);
@@ -5086,7 +5139,7 @@ const killQuiet=()=>!!(KA&&KA.g===G&&(KA.b||performance.now()-KA.last<1200));
    co-op teammate. It shows once, when the match ends by death or by Quit to main menu in the pause menu. It is kept
    only on this match, never saved, so once the player leaves it, it is gone. */
 const ZSBN={bats:'Bat swarm, Darkest Shadow Suit',barbed:'Razorwire barbs, Razorwire Carapace',berserk:'Berserker rage ring of fire, Viking berserker armor',
-  oni:'Dark samurai oni, Samurai armor',hyp:'Hypnotized enemy kills, Hypno-rifle',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate'};
+  oni:'Dark samurai oni, Samurai armor',hyp:'Hypnotized enemy kills, Hypno-rifle',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate',ember:'Ember Zombie explosions'};
 const zsbName=id=>ZSBN[id]||(WBY[id]&&WBY[id].name)||(NADE[id]&&NADE[id].name)||'Other';
 function zsbLabel(src,kind,e){
   if(kind==='burn'){const f=e.fireSrc||src;return f==='berserk'?'Berserker rage, burn damage':zsbName(f)+', burn damage'}
@@ -5109,11 +5162,101 @@ function zsbOpen(sb,quitting,next){
   $('zsb-go').onclick=()=>{$('zsb').hidden=true;list.textContent='';$('zsb-tot').textContent='';next()};
   $('zsb').hidden=false;
   setTimeout(()=>{if($('zsb').hidden)return;$('zsb-h').focus();say(`Match scoreboard. ${tot} ${sb.rows.map(zsbRow).join('. ')}${sb.rows.length?'.':''}`)},400)}
+/* ---------- special zombies ----------
+   From wave 5 in the zombie modes, any regular zombie may turn out special, completely at random: about 2 in 100 a
+   Frost Walker, 2 in 100 an Ember Zombie, 1 in 100 a Plague Carrier and 1 in 100 a Storm Zombie. They come along in
+   the packs like any zombie, so sometimes two turn up together and sometimes a whole wave has none. Not in Giants only.
+   The Spitter Brute mini boss turns up at random, about every 6 to 8 waves, partway through the wave. */
+const ZSPEC={zfrost:1,zember:1,zplague:1,zstorm:1};
+const ZEL_R=8/3.281,PLG_R=15/3.281,STORM_R=10/3.281,SPIT_MIN=15/3.281,SPIT_MAX=60/3.281,ICE_R=4/3.281;
+function zSpecial(ty){if(ty!=='zombie'||!G||G.zg||G.tutQ||G.wave<5)return ty;const r=Math.random();
+  return r<.02?'zfrost':r<.04?'zember':r<.05?'zplague':r<.06?'zstorm':ty}
+function zBruteRoll(){const w=G.wave;G.zBruteDue=false;if(G.zg)return;
+  if(G.zBruteNext==null)G.zBruteNext=Math.max(w,5)+1+Math.floor(Math.random()*3);
+  if(w>=G.zBruteNext){G.zBruteDue=true;G.zBruteAt=G.toSpawn*(.3+Math.random()*.4);G.zBruteNext=w+6+Math.floor(Math.random()*3)}}
+function zSpecSay(e){const n=performance.now();if(n-(G.specAt||0)<2500)return;G.specAt=n;say(`${EN[e.type].name}, ${clock(norm(e.angle-G.heading))}, ${ft(e.dist)} feet.`)}
+// a regular zombie's health right now, so the explosions keep pace with the waves
+function zRegHp(){return EN.zombie.hp*(S.diff>1.5?1.5:1)*(1+zDfG().hp*Math.max(0,(G.wave||1)-1))*(G.coop==='host'?1.25:1)}
+const moveMode=()=>!!(G&&(roamOn()||(G.mode==='zombies'&&G.zm==='hall')));
+// chilled by a Frost Walker: 40 percent slower walking in the moving modes, slower firing and reloading in the others
+const pChillMove=()=>G&&G.chillT>0?.6:1,pChillFire=()=>G&&G.chillT>0&&!moveMode()?.6:1;
+function zElemShift(dx,dy){const f=p=>{p.x-=dx;p.y-=dy};if(G.icep)G.icep.forEach(f);if(G.apools)G.apools.forEach(f);if(G.spits)G.spits.forEach(f)}
+const xyRel=(x,y)=>[norm((Math.atan2(x,y)*180/Math.PI+360)%360-G.heading),Math.hypot(x,y)];
+function emberIgnite(o,dps,t){const was=o.fireT>0;if(o.fireT!==Infinity)o.fireT=Math.max(o.fireT||0,t);o.fireDps=Math.max(o.fireDps||0,dps);if(!was){o.fireSrc='ember';o.embF=1}}
+Object.assign(fx,{
+  spitGargle(rel,dist){const d=out(rel,dist,1.3,enBus);tone(d,{type:'sawtooth',f:80,f2:260,dur:1,vol:.4,attack:.1});noise(d,{dur:1,vol:.6,type:'bandpass',f:280,f2:950,q:3,attack:.1});
+    for(let i=0;i<10;i++){const f=200+Math.random()*300+i*40;tone(d,{f,f2:f*2,dur:.05,vol:.16,at:.1+i*.085})}},
+  spitLaunch(rel,dist){const d=out(rel,dist,1.1,enBus);noise(d,{dur:.35,vol:.8,type:'bandpass',f:900,f2:2500,q:1.2,attack:.01});tone(d,{type:'sawtooth',f:300,f2:120,dur:.25,vol:.25})},
+  spitSplash(rel,dist){const d=out(rel,dist,1.2,enBus);noise(d,{dur:.3,vol:.9,type:'lowpass',f:1600,f2:400,attack:.005});noise(d,{dur:.8,vol:.4,type:'highpass',f:4200,f2:3000,at:.1,attack:.05});
+    for(let i=0;i<6;i++)tone(d,{f:500+Math.random()*900,f2:1200+Math.random()*800,dur:.03,vol:.08,at:.1+Math.random()*.6})},
+  stormArc(rel,dist,at=0){const d=out(rel,dist,.9,enBus);for(let i=0;i<5;i++)noise(d,{dur:.02,vol:.55,type:'highpass',f:3000,at:at+i*.025,attack:.001});tone(d,{type:'sawtooth',f:2000,f2:350,dur:.12,vol:.22,at})},
+  icePatch(rel,dist){const d=out(rel,dist,.35,enBus);for(let i=0;i<3;i++)tone(d,{f:3500+Math.random()*1500,dur:.06,vol:.08,at:Math.random()*.4,attack:.003})},
+  iceCrunch(){const d=out(0,.4,.6,enBus);noise(d,{dur:.12,vol:.5,type:'bandpass',f:3500,q:1.5,attack:.003});tone(d,{f:4200,dur:.05,vol:.1,at:.03})}
+});
+// a buffed zombie growls with a distorted edge under its own cry
+function plgGrowl(d){tone(d,{type:'sawtooth',f:62,f2:52,dur:1,vol:.22,attack:.1});tone(d,{type:'square',f:93,f2:79,dur:.9,vol:.08,attack:.12})}
+/* what happens when a special zombie dies: the Ember Zombie explodes in flames and the Frost Walker bursts into ice,
+   both reaching every zombie within 8 feet of where it died, however far from you that is */
+function zDeathFx(dead){if(!G||G.mode!=='zombies')return;const host=G.coop!=='guest';
+  for(const e of dead){if(e.stone||(e.type!=='zember'&&e.type!=='zfrost'))continue;
+    const[x,y]=xy(e.angle,e.dist),near=G.enemies.filter(o=>{if(o.hp<=0)return false;const[ox,oy]=xy(o.angle,o.dist);return Math.hypot(ox-x,oy-y)<=ZEL_R});
+    if(e.type==='zember'){const hit=zRegHp()*.6,dps=zRegHp()*.1;
+      if(host)near.forEach((o,i)=>{const t=.1+i*.03,rel=norm(o.angle-G.heading);o.hp-=hit;if(o.hp<=0){if(!(o.fireT>0))o.fireSrc='ember';fx.kill(rel,o.dist,t+.1,o.type)}else{emberIgnite(o,dps,5);if(i<6)fx.burn(rel,o.dist,t)}});
+      if(typeof rdBlast==='function')rdBlast(x,y,ZEL_R,5,{c:'255,110,30'});
+      if(host&&e.dist<=ZEL_R){hurtPlayer(8*(e.dm||1),null);if(G.over)return}}
+    else{if(host)near.forEach((o,i)=>{o.chillT=Math.max(o.chillT||0,5);if(i<6)fx.frost(norm(o.angle-G.heading),o.dist,.1+i*.03)});
+      (G.icep=G.icep||[]).push({x,y,t:8,cue:.5});
+      if(typeof rdBlast==='function')rdBlast(x,y,ZEL_R,.5,{c:'170,220,255',lift:.05});
+      if(host&&e.dist<=ZEL_R){const was=G.chillT>0;G.chillT=Math.max(G.chillT||0,3);if(!was)fx.iceCrunch()}}}}
+function zElemTick(dt){
+  const host=G.coop!=='guest';
+  if(G.chillT>0)G.chillT-=dt;
+  // on fire from an Ember Zombie: 3 a second for 4 seconds
+  if(G.pbT>0){G.pbT-=dt;G.pbC=(G.pbC||1)-dt;if(G.pbC<=0){G.pbC+=1;fx.burn(0,.4,0);hurtPlayer(3*(G.pbD||1),null);if(G.over)return}}
+  // Ember fire spreads: a zombie within 3 feet of a burning one catches the time it has left, so a crowd's fire fades together
+  G.emSprT=(G.emSprT||0)-dt;if(G.emSprT<=0){G.emSprT=.2;const lit=[];
+    G.enemies.forEach(e=>{if(!e.embF)return;if(!(e.fireT>0)||e.hp<=0){e.embF=0;if(!(e.fireT>0))e.fireDps=0;return}lit.push([e,...xy(e.angle,e.dist)])});
+    if(lit.length&&host)G.enemies.forEach(o=>{if(o.hp<=0||o.fireT>0)return;const[ox,oy]=xy(o.angle,o.dist),src=lit.find(([e,x,y])=>Math.hypot(x-ox,y-oy)<=3/3.281);
+      if(src){const e=src[0];o.fireT=Math.min(5,e.fireT);o.fireDps=e.fireDps;o.fireSrc='ember';o.embF=1;fx.burn(norm(o.angle-G.heading),o.dist,0)}})}
+  // icy patches slow any zombie walking through, and you too in the moving modes
+  if(G.icep&&G.icep.length){G.icep.forEach(p=>{p.t-=dt;p.cue-=dt;if(p.cue<=0){p.cue=2;const[r,d]=xyRel(p.x,p.y);fx.icePatch(r,d)}
+      G.enemies.forEach(e=>{if(e.hp<=0)return;const[x,y]=xy(e.angle,e.dist);if(Math.hypot(x-p.x,y-p.y)<=ICE_R)e.chillT=Math.max(e.chillT||0,.5)});
+      if(moveMode()&&Math.hypot(p.x,p.y)<=ICE_R){if(!(G.chillT>0))fx.iceCrunch();G.chillT=Math.max(G.chillT||0,.5)}});
+    G.icep=G.icep.filter(p=>p.t>0)}
+  // Plague Carrier: zombies within 15 feet get 25 percent more health and speed while it lives
+  G.plgT=(G.plgT||0)-dt;if(G.plgT<=0&&host){G.plgT=.25;const pc=G.enemies.filter(e=>e.type==='zplague'&&e.hp>0).map(e=>xy(e.angle,e.dist));
+    G.enemies.forEach(o=>{if(o.hp<=0)return;const T=EN[o.type];let on=false;
+      if(pc.length&&o.type!=='zplague'&&T.z&&!T.boss){const[ox,oy]=xy(o.angle,o.dist);on=pc.some(([x,y])=>Math.hypot(x-ox,y-oy)<=PLG_R)}
+      if(on&&!o.plgB){o.plgB=1;o.maxhp*=1.25;o.hp*=1.25}
+      else if(!on&&o.plgB){o.plgB=0;o.maxhp/=1.25;o.hp/=1.25}})}
+  for(const e of G.enemies){if(e.hp<=0)continue;
+    const busy=e.rdb||e.frozeT>0||e.stunT>0||e.bub||e.hz||e.fog||e.loveT>0||e.grav||e.crysT>0||e.rbC||e.snkP||e.hb>0;
+    // Storm Zombie: every 5 seconds its shock jumps between zombies within 10 feet of each other
+    if(e.type==='zstorm'){e.stT=(e.stT??2+Math.random()*3)-dt;if(e.stT<=0&&!busy){e.stT=5;
+      const chain=[e],seen=new Set([e]);for(let i=0;i<chain.length&&chain.length<12;i++){const[cx,cy]=xy(chain[i].angle,chain[i].dist);
+        for(const o of G.enemies){if(seen.has(o)||o.hp<=0)continue;const[ox,oy]=xy(o.angle,o.dist);if(Math.hypot(ox-cx,oy-cy)<=STORM_R){seen.add(o);chain.push(o)}}}
+      chain.slice(0,6).forEach((o,i)=>fx.stormArc(norm(o.angle-G.heading),o.dist,i*.06));
+      if(host&&chain.some(o=>o.dist<=STORM_R)){fx.zap(0,.5,.1);if(!G.told.storm){G.told.storm=1;say('Shocked by a Storm Zombie chain!')}hurtPlayer(3*(e.dm||1),null);if(G.over)return}}}
+    // Spitter Brute: gargles, then spits acid from 15 to 60 feet
+    if(e.type==='zspit'){if(e.gurg>0){e.gurg-=dt;if(e.gurg<=0&&!busy){const[r,d]=[norm(e.angle-G.heading),e.dist];fx.spitLaunch(r,d);
+          (G.spits=G.spits||[]).push({x:0,y:0,t:.35+d*.03,dm:e.dm||1})}continue}
+      e.spT=(e.spT??2.5)-dt;if(e.spT<=0&&!busy&&e.dist>=SPIT_MIN&&e.dist<=SPIT_MAX){e.spT=4;e.gurg=1;fx.spitGargle(norm(e.angle-G.heading),e.dist);
+        if(!G.told.spit){G.told.spit=1;say(moveMode()?'The Spitter Brute is gargling. Move!':'The Spitter Brute is gargling. Take cover!')}}}}
+  // acid in flight, then it lands where you were standing when it was spat
+  if(G.spits&&G.spits.length){G.spits.forEach(s=>{s.t-=dt;if(s.t>0)return;const[r,d]=xyRel(s.x,s.y);fx.spitSplash(r,Math.max(.5,d));
+      (G.apools=G.apools||[]).push({x:s.x,y:s.y,t:3,c:1,dm:s.dm});
+      if(Math.hypot(s.x,s.y)<=5/3.281){if(host)hurtPlayer(6*s.dm,null)}else if(moveMode())say('Dodged the acid!')});
+    G.spits=G.spits.filter(s=>s.t>0);if(G.over)return}
+  // acid pools burn you for 3 seconds while you stand in them
+  if(G.apools&&G.apools.length){G.apools.forEach(p=>{p.t-=dt;p.c-=dt;if(p.c<=0&&p.t>0){p.c+=1;const[r,d]=xyRel(p.x,p.y);fx.acidSizzle(r,Math.max(.5,d));if(host&&Math.hypot(p.x,p.y)<=ICE_R)hurtPlayer(2*p.dm,null)}});
+    G.apools=G.apools.filter(p=>p.t>0)}
+}
 function processDead(src,kind){
   const dead=G.enemies.filter(e=>e.hp<=0);if(!dead.length)return 0;
   if(G.coop)coopDeadHook(dead,src);
   mdGain(dead,src);
   G.enemies=G.enemies.filter(e=>e.hp>0);
+  zDeathFx(dead);
   if(G.mode==='practice'){G.kills+=dead.length;G.spawnT=1.5;say((dead.some(e=>e.hk)?'Headshot! ':'')+`Target down. ${G.kills} so far.`);tutEv('kill',dead);return dead.length}
   let pay=0,lv='',heal='',healN=0;
   if(src==='symbiote'){lv+=symGrow(dead.length);const sw=G.lo.find(x=>x.id==='symbiote');
@@ -5157,6 +5300,8 @@ function hurtPlayer(dmg,by){
   G.hp-=d;fx.hurt();if(ar)fx.armorHit();vib(140);
   // Razorwire Carapace: the attacker is torn by the barbs and bleeds
   if(P.armor.on==='barbed'&&by&&by.hp>0){by.hp-=BARB_HIT*barbMult();by.bleedT=5;by.bleedCue=1;const br=norm(by.angle-G.heading);fx.barbs(br,by.dist);if(by.hp<=0){by.bleedKill=true;fx.kill(br,by.dist,.1,by.type)}}
+  if(by&&by.type==='zfrost'){const was=G.chillT>0;G.chillT=Math.max(G.chillT||0,3);if(!was)fx.frost(0,.5,0);if(!G.told.chill){G.told.chill=1;say(moveMode()?'Chilled! You move slower for 3 seconds.':'Chilled! You fire and reload slower for 3 seconds.')}}
+  if(by&&by.type==='zember'){G.pbT=4;G.pbC=Math.min(G.pbC||1,1);G.pbD=by.dm||1;fx.burn(0,.5,0);if(!G.told.pburn){G.told.pburn=1;say('You are on fire! It burns for 4 seconds.')}}
   if(by&&by.hp>0&&G.pk&&G.pk.frost){const boss=!!EN[by.type].boss;by.frozeT=Math.max(by.frozeT||0,boss?1:2);by.wind=0;fx.frostSkin(norm(by.angle-G.heading),by.dist)}
   if(G.hp>0&&G.hp<G.maxhp*.25&&G.pk&&G.pk.last&&!G.lastUsed)lastStand();
   if(P.armor.on==='shadow'&&P.marm.batswarm&&!(G.batT>0)){const need=G.maxhp*.5,c0=G.batC||0;G.batC=c0+d;if(G.batC>=need){G.batC=0;batSwarm()}else if(c0<need/2&&G.batC>=need/2){fx.batFlap(0,1);say('Bat swarm half charged.')}}
@@ -5851,12 +5996,12 @@ const winWords=()=>G.win.map(W=>`${clock(norm(W.a-G.heading))} ${W.broken?'broke
 function stepHall(dt){
   const ahead=G.enemies.filter(e=>{const[x,y]=xy(e.angle,e.dist);return y>0&&e.dist<=30});
   const blocked=G.enemies.some(e=>{if(e.dist<=MELEE+.3)return true;if(e.hb>0)return false;const[x,y]=xy(e.angle,e.dist);return y>0&&y<2.5&&Math.abs(x)<1.2});
-  const target=blocked?0:HALLV*Math.max(0,1-ahead.length/5);
+  const target=blocked?0:HALLV*Math.max(0,1-ahead.length/5)*pChillMove();
   G.spd+=(target-G.spd)*Math.min(1,dt*(target<G.spd?1.6:.9));if(G.spd<.03)G.spd=0;
   const d=G.spd*dt;
   if(d>0){G.pos+=d;
     const shift=o=>{const[x,y]=xy(o.angle,o.dist),ny=y-d;o.angle=(Math.atan2(x,ny)*180/Math.PI+360)%360;o.dist=Math.max(.3,Math.hypot(x,ny))};
-    G.enemies.forEach(shift);if(G.hyp)G.hyp.forEach(shift);if(G.boxes)G.boxes.forEach(shift);if(G.statues)G.statues.forEach(shift);if(G.hz)shift(G.hz);if(G.snk)G.snk.forEach(shift);rdScroll(d);
+    G.enemies.forEach(shift);if(G.hyp)G.hyp.forEach(shift);if(G.boxes)G.boxes.forEach(shift);if(G.statues)G.statues.forEach(shift);if(G.hz)shift(G.hz);if(G.snk)G.snk.forEach(shift);zElemShift(0,d);rdScroll(d);
     if(G.pos>=G.mileAt){G.mileAt+=100/3.281;fx.mile();hud()}}
   // footsteps: closer together the faster you go
   if(G.spd>.15){G.stepT-=dt;if(G.stepT<=0){G.stepSide^=1;fx.step(G.stepSide);G.stepT=.3*HALLV/G.spd}}
@@ -5982,7 +6127,7 @@ function rWalkToggle(){const R=G.rm;R.auto=!R.auto;rAutoSync();fx.click();say(R.
 /* walking moves the world: everything that has a place on the ground slides the other way */
 function roamShift(dx,dy){
   const sh=o=>{const[x,y]=xy(o.angle,o.dist),nx=x-dx,ny=y-dy;o.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;o.dist=Math.max(.3,Math.hypot(nx,ny))};
-  G.enemies.forEach(sh);if(G.hyp)G.hyp.forEach(sh);if(G.boxes)G.boxes.forEach(sh);if(G.statues)G.statues.forEach(sh);if(G.hz)sh(G.hz);if(G.bubs)G.bubs.forEach(sh);if(G.snk)G.snk.forEach(sh);if(G.pools)G.pools.forEach(p=>{p.x-=dx;p.y-=dy});
+  G.enemies.forEach(sh);if(G.hyp)G.hyp.forEach(sh);if(G.boxes)G.boxes.forEach(sh);if(G.statues)G.statues.forEach(sh);if(G.hz)sh(G.hz);if(G.bubs)G.bubs.forEach(sh);if(G.snk)G.snk.forEach(sh);if(G.pools)G.pools.forEach(p=>{p.x-=dx;p.y-=dy});zElemShift(dx,dy);
   for(const b of RD.bodies){const p=b.p,q=b.q;if(b.pin&&b.pin.k!=='e'){b.pin.x-=dx;b.pin.z-=dy}for(let i=0;i<33;i+=3){p[i]-=dx;q[i]-=dx;p[i+2]-=dy;q[i+2]-=dy}if(b.gu)for(let i=0;i<33;i+=3){b.gu.from[i]-=dx;b.gu.from[i+2]-=dy}}
   for(const d of RD.decals){d.x-=dx;d.z-=dy}for(const f of RD.flash){f.x-=dx;f.z-=dy}
   if(RD.decals.length>40&&Math.hypot(RD.decals[0].x,RD.decals[0].z)>45)RD.decals=RD.decals.filter(d=>Math.hypot(d.x,d.z)<=45)}
@@ -6011,7 +6156,7 @@ function stepRoam(dt){const R=G.rm;
   if(RKEY.f)f=1;else if(RKEY.b)f=-1;
   if(f<0)f*=.6;s*=.8;
   const hr=G.heading*Math.PI/180,sn=Math.sin(hr),cs=Math.cos(hr);
-  const jung=rClamp(R.x,R.y)[2]>0,v=ROAMV*(jung?ROAM_OFF:1)*dt;let dx=(f*sn+s*cs)*v,dy=(f*cs-s*sn)*v;const want=Math.hypot(dx,dy);
+  const jung=rClamp(R.x,R.y)[2]>0,v=ROAMV*(jung?ROAM_OFF:1)*dt*pChillMove();let dx=(f*sn+s*cs)*v,dy=(f*cs-s*sn)*v;const want=Math.hypot(dx,dy);
   R.blockT-=dt;R.sayT-=dt;
   if(want>1e-6){
     // a zombie standing right where you are heading blocks you: shoot your way through or back off
@@ -6115,8 +6260,8 @@ function stepEnemy(e,dt){
   if(e.crysT>0){e.crysT-=dt;e.cue=Math.max(e.cue,.3);if(e.crysT<=0){fx.crysFree(norm(e.angle-G.heading),e.dist);if(EN[e.type].boss)say(`${e.mega?'Mega ':''}${EN[e.type].name} breaks out of the crystal!`)}}
   if(e.grav){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(EN[e.type])){crySpd=1.15;CRY[e.type](out(norm(e.angle-G.heading),e.dist,.8,enBus,zKind(e.type)));crySpd=1}e.cue=1.6+Math.random()}return}   // reverse gravity: floating upside down, helpless
   if(e.rdb){rdDowned(e,dt);return}   // Ragdoll sandbox: knocked flat, it cannot walk or attack until it gets back up
-  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1)*(e.slomoT>0?.1:1);
-  if(e.slowT>0)e.slowT-=dt;if(e.slomoT>0)e.slomoT-=dt;if(e.blossT>0)e.blossT-=dt;
+  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1)*(e.slomoT>0?.1:1)*(e.chillT>0?.5:1);
+  if(e.chillT>0)e.chillT-=dt;if(e.slowT>0)e.slowT-=dt;if(e.slomoT>0)e.slomoT-=dt;if(e.blossT>0)e.blossT-=dt;
   if(e.bub){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,.7,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}   // trapped in a bubble: cannot move or attack
   if(e.hz){e.engaged=false;e.wind=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}
   if(e.hb>0){e.hb-=dt*(slow>0?1:0);e.bt-=dt;const pg=1-e.hb/e.hb0;
@@ -6130,7 +6275,7 @@ function stepEnemy(e,dt){
   if(G.snk&&G.snk.length&&fogSeek(e,t,rel,slow,dt))return;   // going for a pile of snacks, or eating   // Unbearable Buddy's Blinding love: wandering with no goal, never attacking
   if(G.hyp&&G.hyp.length&&hypFight(e,t,rel,slow,dt))return;   // busy fighting a hypnotized enemy
   const stop=e.type==='revenant'?8:MELEE,chase=G.mode==='zombies'&&G.zm==='hall'?Math.min(2,(Math.cos(e.angle*Math.PI/180)<0?2.4:1)*hallSpeed(G.wave)):1;   // never faster than double speed, even chasing from behind
-  if(e.dist>stop&&!(e.charge>0))e.dist=Math.max(stop,e.dist-(e.pinG?pinSpd(e):t.speed)*S.diff*slow*(e.sm||1)*(e.pkS||1)*chase*dt);
+  if(e.dist>stop&&!(e.charge>0))e.dist=Math.max(stop,e.dist-(e.pinG?pinSpd(e):t.speed)*S.diff*slow*(e.sm||1)*(e.pkS||1)*(e.plgB?1.25:1)*chase*dt);
   if(G.mode==='zombies'&&e.win!=null){const W=G.win[e.win];
     if(e.inside){if(e.dist>ZWIN-.3)e.dist=ZWIN-.3}
     else if(e.dist<=ZWIN){if(W.broken)e.inside=true;else if(e.frozeT>0)e.dist=ZWIN;else{e.dist=ZWIN;W.busy+=t.boss?3:(W.busy>=1?.5:1)}}}
@@ -6144,7 +6289,7 @@ function stepEnemy(e,dt){
   if(e.type==='revenant'){e.rocketT-=dt*slow;if(e.rocketT<=0){e.rocketT=6+Math.random()*2;G.rockets.push({t:1.5,angle:e.angle});fx.whistle(rel,e.dist);
     if(!G.told.rocket){G.told.rocket=1;say('Incoming rockets! Take cover!')}}}
   e.cue-=dt;if(e.cue<=0&&!cryOk(t))e.cue=.2+Math.random()*.4;   // too many cries at once: wait a moment
-  if(e.cue<=0){crySpd=e.slomoT>0?.45:e.tiny?(e.tiny<.5?1.9:1.4):1;const cd=out(rel,e.dist,1,enBus,zKind(e.type));CRY[e.type](cd);crySpd=1;if(e.tiny)fx.pdxSqueak(rel,e.dist,.05);else if(e.slomoT>0)tone(cd,{type:'sawtooth',f:70,f2:45,dur:1.1,vol:.15,attack:.2});if(e.slowT>0||e.frozeT>0)fx.frost(rel,e.dist,.1);if(e.shockT>0&&!shockVoices.has(e))fx.shock(rel,e.dist,.1);e.cue=(t.cueGap||(t.boss?1.4:t.z?1.4+Math.random()*1.6:.6))+e.dist*.025}
+  if(e.cue<=0){crySpd=e.slomoT>0?.45:e.tiny?(e.tiny<.5?1.9:1.4):1;const cd=out(rel,e.dist,1,enBus,zKind(e.type));CRY[e.type](cd);crySpd=1;if(e.tiny)fx.pdxSqueak(rel,e.dist,.05);else if(e.slomoT>0)tone(cd,{type:'sawtooth',f:70,f2:45,dur:1.1,vol:.15,attack:.2});if(e.slowT>0||e.frozeT>0||e.chillT>0)fx.frost(rel,e.dist,.1);if(e.plgB)plgGrowl(cd);if(e.shockT>0&&!shockVoices.has(e))fx.shock(rel,e.dist,.1);e.cue=(t.cueGap||(t.boss?1.4:t.z?1.4+Math.random()*1.6:.6))+e.dist*.025}
   if(e.dist<=MELEE||(e.pinG&&pinNear(e))){
     if(!e.engaged){e.engaged=true;say(coopAtkWords(e,t,rel))}
     if(e.wind>0){e.wind-=dt*slow;if(e.wind<=0){if(atkOk())ATTACK[e.type](atkDest(rel,e.dist,e.type));hurtPlayer(t.dmg*(e.dm||1),e)}return}
@@ -6157,7 +6302,7 @@ function stepEnemy(e,dt){
 function step(dt){
   ear3d();   // 3D audio: the listener turns with you
   G.cryTok=Math.min(CRY_MAX,(G.cryTok??CRY_MAX)+CRY_RATE*dt);
-  if(G.cd>0)G.cd-=dt;if(G.ncd>0)G.ncd-=dt;
+  if(G.cd>0)G.cd-=dt*pChillFire();if(G.ncd>0)G.ncd-=dt;
   if((G.rod||0)>=5&&G.lo[G.w]&&G.lo[G.w].rod&&ctx&&!sparkBuf){G.rodCrT=(G.rodCrT||0)-dt;if(G.rodCrT<=0){fx.rodCrackle();G.rodCrT=.18+Math.random()*.35}}   // built-in crackle only until the recorded sparks have loaded
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
@@ -6175,9 +6320,9 @@ function step(dt){
       else{G.wave++;G.lastUsed=false;startWave()}}return}
   if(G.waitWave)return;   // co-op guest: wave cleared, waiting for the host to start the next one
   if(G.jobs.length){const done=[];
-    G.jobs.forEach(j=>{try{if(j.shell){j.left-=dt;if(j.left<=0){const A=G.ammo[j.wi],sw=G.lo[j.wi];A[j.side]=Math.min(sw.mag,A[j.side]+1);if(sw.id==='zeliska'||sw.id==='rex'){const d=rdest(j.pan);clank(.01,1700,.22,d);clank(.14,4400,.09,d);if(sw.id==='rex')tone(d,{type:'sine',f:300,f2:900,dur:.16,vol:.1,at:.12,attack:.02})}else if(!sgShell(rdest(j.pan),SG_PITCH[sw.id]||1))shellIn(rdest(j.pan));
+    const jdt=dt*pChillFire();G.jobs.forEach(j=>{try{if(j.shell){j.left-=jdt;if(j.left<=0){const A=G.ammo[j.wi],sw=G.lo[j.wi];A[j.side]=Math.min(sw.mag,A[j.side]+1);if(sw.id==='zeliska'||sw.id==='rex'){const d=rdest(j.pan);clank(.01,1700,.22,d);clank(.14,4400,.09,d);if(sw.id==='rex')tone(d,{type:'sine',f:300,f2:900,dur:.16,vol:.1,at:.12,attack:.02})}else if(!sgShell(rdest(j.pan),SG_PITCH[sw.id]||1))shellIn(rdest(j.pan));
         if(A[j.side]>=sw.mag)done.push(j);else j.left+=j.per;hud()}return}
-      j.left-=dt;const fr=1-j.left/j.total;while(j.i<j.ev.length&&j.ev[j.i][0]<=fr){j.ev[j.i][1](rdest(j.pan));j.i++}if(j.left<=0)done.push(j)}catch(e){logErr(e,'reload');j.ev=[];j.shell=false;j.left=0;done.push(j)}});   // a broken reload sound never jams the gun: it just finishes
+      j.left-=jdt;const fr=1-j.left/j.total;while(j.i<j.ev.length&&j.ev[j.i][0]<=fr){j.ev[j.i][1](rdest(j.pan));j.i++}if(j.left<=0)done.push(j)}catch(e){logErr(e,'reload');j.ev=[];j.shell=false;j.left=0;done.push(j)}});   // a broken reload sound never jams the gun: it just finishes
     if(done.length){G.jobs=G.jobs.filter(j=>!done.includes(j));
       done.forEach(j=>{const w=G.lo[j.wi];G.ammo[j.wi][j.side]=w.mag;if(w.teddy){teddyReady();return}if(j.shell&&(w.id==='zeliska'||w.id==='rex'))clank(.1,3000,.18,rdest(0));else if(j.shell&&!sgPlay(rdest(0),'pump',{at:.12,rate:SG_PITCH[w.id]||1}))MECH.pump(.12,rdest(0));rSay(w.akimbo?`${j.side?'Right':'Left'} gun ready.`:`${w.short} ready.`,true)});hud()}}
   if((G.hold||flockLive())&&G.cd<=0)fire();
@@ -6192,13 +6337,14 @@ function step(dt){
     if(G.zAncDue&&G.spawnT<=0){G.zAncDue=false;spawn('zancient');G.spawnT=4/zSpG().x}
     else if(G.zMegaDue&&G.spawnT<=0){G.zMegaDue=false;spawn('zgiant',true);G.spawnT=2.5/zSpG().x}
     else if(G.zBossDue&&G.spawnT<=0){G.zBossDue=false;spawn('zgiant');G.spawnT=2.5/zSpG().x}
+    else if(G.zBruteDue&&G.spawnT<=0&&G.toSpawn<=Math.ceil(G.zBruteAt||0)){G.zBruteDue=false;spawn('zspit');G.spawnT=2.5/zSpG().x}   // Spitter Brute, partway through the wave
     else if(G.toSpawn>0&&G.spawnT<=0&&G.enemies.length<G.maxAlive){const r=Math.random(),w=G.wave,pb=Math.min(.25,Math.max(0,(w-4)*.02)),pr=Math.min(.35,.1+w*.01);
       const ty=G.zg?'zgiant':r<pb?'zbrute':r<pb+pr?'zrunner':'zombie',gap=(G.zm==='hall'?Math.max(.4,1.3-w*.03):Math.max(.6,2.4-w*.04))/zSpG().x;
       if(ty==='zombie'&&G.win){   // stationary modes: regular zombies come in tight packs, all at one window, shoulder to shoulder
         const n=Math.min(G.toSpawn,3+Math.floor(Math.random()*(3+Math.min(3,Math.floor(w/5))))),pk=zPack(n),b0=G.zBatch||0;
-        pk.forEach(at=>spawn('zombie',false,at));G.toSpawn-=n;G.spawnT=gap*n;   // the same zombies a minute as before, just bunched up
+        pk.forEach(at=>spawn(zSpecial('zombie'),false,at));G.toSpawn-=n;G.spawnT=gap*n;   // the same zombies a minute as before, just bunched up
         G.zBatch=b0+n;if(Math.floor(G.zBatch/ZBATCH)>Math.floor(b0/ZBATCH)&&G.toSpawn>0)G.spawnT+=zSpG().br}
-      else{spawn(ty);G.toSpawn--;G.spawnT=gap;
+      else{spawn(ty==='zombie'?zSpecial(ty):ty);G.toSpawn--;G.spawnT=gap;
       G.zBatch=(G.zBatch||0)+1;if(G.zBatch%ZBATCH===0&&G.toSpawn>0)G.spawnT+=zSpG().br}}   // a short breather after every 50
   }else if(!G.bossWave){
     if(G.miniDue&&G.spawnT<=0&&G.toSpawn<=Math.ceil((3+Math.min(G.wave,10)*2)/2)){G.miniDue=false;spawn(miniOf());G.spawnT=3.5}
@@ -6213,6 +6359,7 @@ function step(dt){
   else{zPackTick(dt);G.enemies.forEach(e=>stepEnemy(e,dt))}
   if(G.pins&&G.pins.length)pinStep();
   if(G.statues&&G.statues.length)emTick(dt);
+  if(G.mode==='zombies'){zElemTick(dt);if(G.over)return}
   if(G.mode==='zombies'&&G.win)stepWindows(dt);
   if(G.mode==='zombies'&&G.pk&&G.pk.fence){fenceTick(dt);if(G.over)return}
   // jack-o-lantern fire burns down health over time
@@ -6263,7 +6410,7 @@ function step(dt){
   // ambience detail
   gyStep(dt);G.ambT-=dt;if(G.ambT<=0){ambDetail(G.map);G.ambT=2.5+Math.random()*4}
   // wave clear
-  if(G.mode!=='practice'&&G.toSpawn===0&&!G.miniDue&&G.enemies.length===0&&(!G.bossWave||G.bossSpawned)&&!G.zBossDue&&!G.zMegaDue&&!G.zAncDue){
+  if(G.mode!=='practice'&&G.toSpawn===0&&!G.miniDue&&G.enemies.length===0&&(!G.bossWave||G.bossSpawned)&&!G.zBossDue&&!G.zMegaDue&&!G.zAncDue&&!G.zBruteDue){
     const so=S.diff>1.5,hb=healBonus(P.perk.heal),roam=roamOn(),base=(roam?0:so?10:25)+(so?hb/2:hb);   // Jungle scavenger: no free healing between waves, only the Field medic perk. Medkits do the rest
     const gain=Math.min(base,G.maxhp-G.hp);G.hp+=gain;fx.heal();
     G.ammo=G.lo.map(x=>[x.mag,x.akimbo?x.mag:0]);G.jobs=[];G.heat={};if(G.win)G.win.forEach(W=>{W.broken=false;W.bang=0});
@@ -6421,6 +6568,7 @@ const RDRAD=[.12,.07,.08,.05,.05,.05,.05,.05,.05,.05,.05];   // collision radius
 const RDL={head:.2,torso:.47,up:.34,fore:.29,thigh:.46,shin:.46};
 const RDSZ={zombie:{h:1,w:1,m:1,col:'#86a36f'},zrunner:{h:.97,w:.85,m:.85,col:'#a8b878'},zbrute:{h:1.02,w:1.6,m:1.8,col:'#9a9460'},
   zgiant:{h:2,w:1.5,m:6,col:'#6f9160'},zancient:{h:3.2,w:1.8,m:30,col:'#7d6a96'},
+  zfrost:{h:1,w:1.05,m:1.1,col:'#a9d8f0'},zember:{h:1,w:1,m:1,col:'#e2643a'},zplague:{h:.98,w:1.2,m:1.3,col:'#7fae3a'},zstorm:{h:1,w:1,m:1,col:'#e0d65a'},zspit:{h:1.5,w:1.9,m:4,col:'#8c9a4a'},
   soldier:{h:1,w:1,m:1,col:'#7d8a52'},stalker:{h:.95,w:.85,m:.8,col:'#4fa34a'},drone:{h:.75,w:.9,m:.6,col:'#d1a92c',mech:1},brute:{h:1.25,w:1.6,m:2.2,col:'#9a5ad0'},
   wolf:{h:.75,w:1,m:.8,col:'#dfe8ef',quad:1},raider:{h:1.05,w:1.4,m:1.8,col:'#86b0d2'},scav:{h:.98,w:.95,m:1,col:'#a8845a'},sentry:{h:1.3,w:1.5,m:3,col:'#8f959e',mech:1},
   jaguar:{h:1,w:1.3,m:2,col:'#e0aa3c',quad:1},overseer:{h:1.4,w:1.6,m:3,col:'#b07ae0'},behemoth:{h:1.7,w:1.9,m:5,col:'#c4dcea'},warden:{h:1.5,w:1.6,m:4,col:'#757b84',mech:1},
@@ -8440,7 +8588,7 @@ function rdFig(it,P,F,pal){
     if(P(x1,y1,z1,A)&&P(x2,y2,z2,B)){c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1])}}
   c.stroke();
   // bloated zombies carry a big belly
-  if(it.t==='zbrute'&&P((p[3]+p[6])/2,(p[4]+p[7])/2,(p[5]+p[8])/2,A)){c.beginPath();c.arc(A[0],A[1],Math.max(1,.17*h*F/A[2]),0,Math.PI*2);c.fill()}
+  if((it.t==='zbrute'||it.t==='zspit')&&P((p[3]+p[6])/2,(p[4]+p[7])/2,(p[5]+p[8])/2,A)){c.beginPath();c.arc(A[0],A[1],Math.max(1,.17*h*F/A[2]),0,Math.PI*2);c.fill()}
   if(P(p[0],p[1],p[2],A)){const hr=Math.max(1.5,.12*h*F/A[2]);c.beginPath();if(s.mech)c.rect(A[0]-hr,A[1]-hr*.8,hr*2,hr*1.6);else c.arc(A[0],A[1],hr,0,Math.PI*2);c.fill();
     if(e&&e.hp>0&&!(b&&b.dead)&&hr>3){c.fillStyle=s.mech?'#5ff2ff':'#ff3b2f';c.beginPath();c.arc(A[0]-hr*.38,A[1]-hr*.1,hr*.16,0,Math.PI*2);c.arc(A[0]+hr*.38,A[1]-hr*.1,hr*.16,0,Math.PI*2);c.fill()}}
   // torn-off limbs bleed at the stumps
@@ -8519,6 +8667,14 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-21-zspecial',date:'November 21, 2026',title:'New zombies: four special zombies and the Spitter Brute mini boss',items:[
+    'From wave 5 in every zombie mode, special zombies now turn up completely at random among the regular ones, so some waves bring a couple close together and some bring none. Each one has its own sound, so you know what is coming before it reaches you, and each is announced with where it is. They grow tougher with the waves like every zombie. Not in Giants only.',
+    'Frost Walker: crackles like ice. Its hits chill you for 3 seconds: you move 40 percent slower in Jungle scavenger and Horror hallway, and fire and reload 40 percent slower in the other modes. When it dies it bursts with a shattering crack, slowing every zombie within 8 feet to half speed for 5 seconds, and leaves an icy patch for 8 seconds that slows anything walking through it.',
+    'Ember Zombie: hisses and crackles like fire, and is a little faster. Its hits set you on fire, 3 damage a second for 4 seconds. When it dies it explodes in flames, hurting every zombie within 8 feet and setting them on fire, and the fire spreads to zombies touching them. So shoot it while it is far away in a crowd. If it blows up within 8 feet of you, it burns you too.',
+    'Plague Carrier, rarer: wet coughing and a low drone. It hits softly, but every zombie within 15 feet of it gets 25 percent more health and speed and growls with a distorted edge, until it dies. Take it out first.',
+    'Storm Zombie, rarer: buzzes with electricity. Every 5 seconds its shock jumps between zombies standing within 10 feet of each other, and if any of them is within 10 feet of you, you take a small shock.',
+    'New mini boss, the Spitter Brute: big, heavy footsteps and a deep gurgle, with ten times a regular zombie\'s health. It turns up at random about every 6 to 8 waves. From 15 to 60 feet away it spits acid every 4 seconds, and a rising gargle warns you a second before. Take cover to halve it, or step aside in the moving modes to dodge it. The acid leaves a pool that burns for 3 seconds. Up close it slams the ground.',
+    'Kills from Ember Zombie explosions and their fire show on the end-of-match scoreboard. All five are in the sound test and in Intermediate learner in Tutorial/practice.']},
   {id:'2026-11-20-tablet',date:'November 20, 2026',title:'Better battle screen on tablets held sideways',items:[
     'On a tablet turned sideways, the battle screen now keeps the same proportions as on a phone: the health, ammo and wave boxes, the turn buttons, the announcement line and the controls all scale to fit the screen, so nothing is squashed or stretched. Phones are not affected.']},
   {id:'2026-11-20-rex',date:'November 20, 2026',title:'New mythical pistol: Alien Rex Annihilator',items:[
@@ -9605,13 +9761,18 @@ const ETIPS={
   zrunner:'A fast zombie with a rasping snarl and only 2 health. It gets through a broken window quickly, so turn to it first. Any automatic weapon or a shotgun deals with it.',
   zbrute:'The bloated zombie: slow and gurgling, with 7 health, so it soaks up bullets. Use your heaviest gun, and do not let several of them reach you at once.',
   zgiant:'The giant zombie boss comes every fifth wave in zombie modes, with 120 health. It smashes through a window in about a second and its footsteps shake the ground. Every tenth wave also brings a mega giant with five times the health. Your best weapons, grenades and cover all come into play here.',
+  zfrost:'A special zombie that crackles like ice, with 4 and a half health. Do not let it hit you, or you are chilled. Better still, shoot it while it is in a crowd: its icy burst slows every zombie within 8 feet to half speed and leaves an icy patch behind.',
+  zember:'A special zombie that hisses and crackles like fire, a little faster than a regular zombie. Kill it far away while it is in a crowd: it explodes in flames that hurt and burn every zombie within 8 feet, and the fire spreads. Never let it reach you, because its hits set you on fire and it blows up on you if it dies close by.',
+  zplague:'A rare special zombie with a wet cough and a low drone, and 6 health. It hits softly, but every zombie within 15 feet of it is 25 percent tougher and faster, with a distorted growl. Kill it first, and the crowd around it goes back to normal.',
+  zstorm:'A rare special zombie that buzzes with electricity. Every 5 seconds its shock jumps between zombies standing close together, and shocks you if any of them is within 10 feet of you. Take it out before a crowd reaches you.',
+  zspit:'The Spitter Brute, a zombie mini boss with 30 health that turns up at random about every 6 to 8 waves. It spits acid from 15 to 60 feet away. Listen for the rising gargle, then take cover, or step aside in the moving modes. Pour your heaviest damage into it, because up close it slams the ground.',
   zancient:'The ultimate zombie boss. It awakens every 50th wave in every zombie mode, starting at 10,000 health and gaining 2,500 more with each one, with a deafening roar, and keeps roaring every few seconds so you always know where it is. Bring mythical weapons, the Fat Man, and everything else you have.'};
 const EMAT={flesh:'Flesh: your bullets land with a soft thud.',metal:'Metal: your bullets land with a metallic tink.',armor:'Armored: your bullets land with a deep, heavy thud.'};
 const EGRP=[['Light enemies. Each battlefield has its own light enemy, the most common enemy there.',['soldier','stalker','drone','wolf','scav','goblin'],4],
   ['Heavy enemies. Slower and much tougher, and they hit hard.',['brute','raider','sentry','clown'],8],
   ['Mini bosses. One comes in every regular wave, announced by a rising two-note siren before its cry. They pay 50 silver.',['jaguar','overseer','behemoth','warden','pigeon'],10],
   ['Bosses. Each battlefield has its own boss, on wave five of the campaign, every fifth wave of endless survival, and in boss rush. Bosses pay 83 silver, and mega bosses with double health pay 250.',['boss','queen','titan','revenant','yardle'],14],
-  ['Zombies. These come in the zombie modes.',['zombie','zrunner','zbrute','zgiant','zancient'],12]];
+  ['Zombies. These come in the zombie modes.',['zombie','zrunner','zbrute','zfrost','zember','zplague','zstorm','zspit','zgiant','zancient'],12]];
 /* ---------- Gravemoor: the graveyard battlefield (art from Kenney's Graveyard Kit, CC0) ----------
    The battlefield art is flat 2D: every gravestone, crypt, tree, fence and lamp is a picture rendered once from the
    kit's 3D models and drawn as a flat cut-out standing in the world, so it costs no more than drawing a picture.
@@ -10437,6 +10598,9 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
   if(pos[k]){CRY.soldier(out(pos[k][0],pos[k][1]));return}
   if(k==='lock'){[0,.32,.64].forEach(t=>setTimeout(()=>fx.lock(8),t*1000));return}
   if(k==='zhit'){ATTACK.zombie(out(0,2,1,enBus));return}
+  if(k==='zspit-gargle'){fx.spitGargle(0,12);setTimeout(()=>{fx.spitLaunch(0,12);setTimeout(()=>fx.spitSplash(0,1),700)},1000);return}
+  if(k==='zember-boom'){DEATH.zember(out(0,8,1,enBus),0);return}
+  if(k==='zfrost-burst'){DEATH.zfrost(out(0,8,1,enBus),0);return}
   if(CRY[k]){CRY[k](out(0,8,1,enBus));if(k==='yardle')yell('Yardle yardle yardle!',1.5,1.25);return}
   if(WBY[k]){hearGun(WBY[k]);return}
   if(k.startsWith('hit-')){[0,.25,.5].forEach(t=>fx.impact(0,10,k.slice(4),t));return}
@@ -10743,7 +10907,7 @@ function coopSnap(m){
     const want=r[4]-(un[id]||0);let e=by.get(id);
     if(!e){if(want<=0)continue;e=coopMk(r);G.enemies.push(e);
       const t=EN[e.type],zq=G.mode==='zombies';   // zombie siege, like the host: only bosses are announced, and not every giant in Giants only
-      if(!G.tutQ&&!(zq&&(!t.boss||(G.zg&&!e.mega))))say(`${e.mega?'Mega boss! Mega ':t.mini?'Mini boss! ':t.z?'Boss! ':''}${t.name}, ${clock(coopRel(e.angle))}, ${ft(e.dist)} feet.`)}
+      if(!G.tutQ&&!(zq&&!t.mini&&(!t.boss||(G.zg&&!e.mega))))say(`${e.mega?'Mega boss! Mega ':t.mini?'Mini boss! ':t.z?'Boss! ':''}${t.name}, ${clock(coopRel(e.angle))}, ${ft(e.dist)} feet.`)}
     else{if(Math.abs(norm(r[2]-e.angle))>20){fx.whoosh();e.cue=0}e.angle=r[2];e.dist=r[3];if(e.win!=null&&r[9])e.inside=true}
     e.tg=r[7];e.maxhp=r[5];e.hp=e._hp=Math.max(.5,want);
   }
