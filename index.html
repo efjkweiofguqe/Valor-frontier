@@ -730,7 +730,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   </div>
   <div class="seg" id="thr-sub" role="group" aria-label="Throwables and consumables type" hidden>
     <button data-thr="throw">Throwables<small>Grenades and everything else you throw</small></button>
-    <button data-thr="cons">Consumables<small>Adrenaline shot, Super bubble gum</small></button>
+    <button data-thr="cons">Consumables<small>Adrenaline shot, Super bubble gum, Symbiote</small></button>
   </div>
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
@@ -2338,7 +2338,7 @@ const TBM=[3,2.5,2,1.5,1],tMult=(w,d)=>{const b=w.tband;for(let i=0;i<b.length;i
 const growPct=()=>G&&G.pk&&G.pk.grow?10*Math.max(0,G.wave-(G.growFrom??G.wave)):0;   // Growing Violence: plus 10 percent per wave since you bought it, added flat
 // Lycan Rage (Alpha Wolf Pelt): extra damage equal to the share of health you are missing
 const lycMult=()=>G&&P.armor.on==='alpha'&&G.maxhp>0?1+Math.min(1,Math.max(0,1-G.hp/G.maxhp)):1;
-const gunMult=()=>lycMult()*(G&&G.adrT>0?1.25:1)*(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1)*(1+growPct()/100)*ringDmg();
+const gunMult=()=>lycMult()*(G&&G.adrT>0?1.25:1)*(G&&G.symcT>0?2:1)*(1+aimBonus(P.perk.aim||0)/100)*(G&&G.pk&&G.pk.dtap?1.35:1)*(1+growPct()/100)*ringDmg();
 const MLV=[0,10,25,45,70,100,135,175,220,270];
 function mlevel(id){const k=P.mast[id]||0;let L=1;MLV.forEach((t,i)=>{if(k>=t)L=i+1});return L}
 const WPN=[
@@ -3007,7 +3007,7 @@ function build(w){
    Progress lives in two places: this device (instant, but a phone can wipe it) and your
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
-const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},cons:{adren:0,gum:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
+const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},cons:{adren:0,gum:0,symc:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
   stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',skin:{own:{},on:{}},ts:0};
 const P0=JSON.stringify(P);   // a brand new save, used when logging in or out
 function resetP(){Object.keys(P).forEach(k=>delete P[k]);Object.assign(P,JSON.parse(P0))}
@@ -3023,7 +3023,7 @@ function loadP(s){
     const own=own0.filter(i=>ATTBY[i]&&attOK(ATTBY[i],WBY[k]));P.att[k]={own,eq:eq0.filter(i=>own.includes(i))}}
   P.coins+=fmjBack;P.fmjSG=true;
   if(s.gren)NTYPES.forEach(k=>{P.gren[k]=Math.max(0,num(s.gren[k],P.gren[k])|0)});
-  P.cons={adren:Math.max(0,num(s.cons&&s.cons.adren,0)|0),gum:Math.max(0,num(s.cons&&s.cons.gum,0)|0)};   // consumables
+  P.cons={adren:Math.max(0,num(s.cons&&s.cons.adren,0)|0),gum:Math.max(0,num(s.cons&&s.cons.gum,0)|0),symc:Math.max(0,num(s.cons&&s.cons.symc,0)|0)};   // consumables
   P.mast={};if(s.mast&&typeof s.mast==='object')for(const k in s.mast)if(WBY[k])P.mast[k]=Math.max(0,num(s.mast[k])|0);
   if(s.perk)['hp','heal','aim','scav'].forEach(k=>{P.perk[k]=Math.max(0,Math.min(PERKS.find(p=>p.id===k).max,num(s.perk[k])|0))});
   if(s.armor){P.armor.own=(Array.isArray(s.armor.own)?s.armor.own:[]).filter(i=>ARMOR.some(a=>a.id===i));P.armor.on=P.armor.own.includes(s.armor.on)?s.armor.on:''}
@@ -5190,7 +5190,7 @@ const killQuiet=()=>!!(KA&&KA.g===G&&(KA.b||performance.now()-KA.last<1200));
    co-op teammate. It shows once, when the match ends by death or by Quit to main menu in the pause menu. It is kept
    only on this match, never saved, so once the player leaves it, it is gone. */
 const ZSBN={bats:'Bat swarm, Darkest Shadow Suit',barbed:'Razorwire barbs, Razorwire Carapace',berserk:'Berserker rage ring of fire, Viking berserker armor',
-  oni:'Dark samurai oni, Samurai armor',hyp:'Hypnotized enemy kills, Hypno-rifle',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate',ember:'Ember Zombie explosions'};
+  oni:'Dark samurai oni, Samurai armor',hyp:'Hypnotized enemy kills, Hypno-rifle',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate',ember:'Ember Zombie explosions',tendril:'Symbiote tendrils'};
 const zsbName=id=>ZSBN[id]||(WBY[id]&&WBY[id].name)||(NADE[id]&&NADE[id].name)||'Other';
 function zsbLabel(src,kind,e){
   if(kind==='burn'){const f=e.fireSrc||src;return f==='berserk'?'Berserker rage, burn damage':zsbName(f)+', burn damage'}
@@ -5722,17 +5722,65 @@ function gumDraw(c,W,H,X0,Y0,P){if(!G||!(G.gumT>0))return;const grow=Math.min(1,
   c.strokeStyle=`rgba(255,200,235,${.35*k})`;c.lineWidth=Math.max(1.5,W/400);c.beginPath();pen=false;
   for(let d=0;d<=360;d+=6){const u=d*Math.PI/180;if(P(Math.sin(u)*R*.97,1.6,Math.cos(u)*R*.97,A)){pen?c.lineTo(A[0],A[1]):c.moveTo(A[0],A[1]);pen=true}else pen=false}c.stroke();
   c.restore()}
+/* Symbiote (consumable, Armory > Throwables and consumables > Consumables): used up when it bonds with you. For SYMC_T seconds
+   every weapon, guns and melee alike, does double damage. Kills with a melee weapon (Samurai sword, Unquenchable scythe,
+   Feral Rippers, Kinetic bat, and any melee weapon added later) each heal 5 health. Tendrils lash every enemy within 5 feet
+   for 3 damage a second (not doubled, so they stay weak). The drawback: it feeds on you, 1 health a second, but never takes
+   your last point of health. One at a time. Not in Tutorial/practice. Not the Alien Symbiote gun, which is its own weapon. */
+const SYMC_T=30,SYMC_PRICE=20000,SYMC_HEAL=5,SYMC_R=5/3.281,SYMC_DPS=3,SYMC_DRAIN=1;
+const symcMelee=src=>!!src&&(['katana','scythe','rippers','kbat'].includes(src)||(typeof isMelee==='function'&&isMelee(WBY[src])));
+Object.assign(fx,{
+  symcBond(){if(!ctx)return;const d=gunDest(0);
+    for(let i=0;i<5;i++)noise(d,{dur:.18,vol:.35,type:'bandpass',f:500+Math.random()*500,f2:180,q:2.5,at:i*.13,attack:.02});   // wet, crawling goo
+    tone(d,{type:'sawtooth',f:55,f2:85,dur:1.4,vol:.3,at:.4,attack:.3});tone(d,{type:'sawtooth',f:82,f2:120,dur:1.2,vol:.14,at:.5,attack:.3});   // a deep growl rising
+    noise(d,{dur:1,vol:.2,type:'lowpass',f:400,f2:900,at:.5,attack:.3})},
+  symcPulse(){if(!ctx)return;const d=gunDest(0);noise(d,{dur:.16,vol:.16,type:'bandpass',f:320,f2:160,q:3,attack:.03});tone(d,{type:'sine',f:48,f2:36,dur:.18,vol:.22,attack:.02})},   // it feeds: a wet throb each second
+  symcLash(rel,dist){if(!ctx)return;const d=out(rel,dist,.9,enBus);noise(d,{dur:.06,vol:.55,type:'highpass',f:2500,attack:.002});noise(d,{dur:.14,vol:.35,type:'bandpass',f:600,f2:250,q:2,at:.03,attack:.005});tone(d,{type:'sine',f:130,f2:70,dur:.08,vol:.25,at:.03})},
+  symcFeed(){if(!ctx)return;const d=gunDest(0);noise(d,{dur:.35,vol:.3,type:'bandpass',f:1400,f2:350,q:3,attack:.02});tone(d,{type:'sine',f:300,f2:520,dur:.25,vol:.12,at:.1})},   // a melee kill feeds it, and you
+  symcLeave(){if(!ctx)return;const d=gunDest(0);noise(d,{dur:1.1,vol:.3,type:'bandpass',f:900,f2:200,q:1.5,attack:.05});tone(d,{type:'sawtooth',f:110,f2:45,dur:1,vol:.2,attack:.05})}
+});
+function useSymc(){
+  if(!G||G.paused||G.over)return;if(G.down){downNag();return}
+  if(G.mode==='practice'){fx.click();say('The Symbiote does not work in Tutorial/practice.');return}
+  if(G.symcT>0){fx.click();say(`The Symbiote is already bonded with you, ${Math.ceil(G.symcT)} seconds left. You have ${P.cons.symc}.`);return}
+  if(!(P.cons.symc>0)){fx.click();say('No Symbiotes. Buy them in the Armory, under Throwables and consumables, then Consumables.');return}
+  P.cons.symc--;saveP();G.symcT=SYMC_T;G.symcWarn=false;G.symcDrainT=1;G.symcLashT=.5;G.symcLashS=0;G.symcVis=[];fx.symcBond();vib(150);
+  say(`Symbiote bonded! For ${SYMC_T} seconds every weapon does double damage, melee kills heal ${SYMC_HEAL} health, and tendrils lash anything within 5 feet. It feeds on you, 1 health a second. ${P.cons.symc} left.`);adrUi()}
+function symcTick(dt){if(!(G.symcT>0))return;G.symcT-=dt;
+  G.symcDrainT-=dt;if(G.symcDrainT<=0){G.symcDrainT+=1;if(G.hp>1){G.hp=Math.max(1,G.hp-SYMC_DRAIN);hud()}fx.symcPulse()}   // never takes your last point of health
+  G.symcLashT-=dt;G.symcLashS-=dt;
+  if(G.symcLashT<=0){G.symcLashT+=.5;let hit=0,last=null;
+    for(const e of G.enemies){if(e.hp<=0||e.hb>0||e.bub||e.hz||e.dist>SYMC_R+.25*rdSz(e.type).w)continue;
+      e.hp-=SYMC_DPS*.5;hit++;last=e;G.symcVis.push({e,t:.22,a:Math.random()*2-1});
+      if(e.hp<=0)fx.kill(norm(e.angle-G.heading),e.dist,.05,e.type)}
+    if(last&&G.symcLashS<=0){G.symcLashS=.45;fx.symcLash(norm(last.angle-G.heading),last.dist)}
+    if(hit)processDead('tendril')}
+  for(let i=G.symcVis.length-1;i>=0;i--){G.symcVis[i].t-=dt;if(G.symcVis[i].t<=0)G.symcVis.splice(i,1)}
+  if(G.symcT<=5&&!G.symcWarn){G.symcWarn=true;say('Symbiote letting go.')}
+  if(G.symcT<=0){G.symcT=0;G.symcVis=[];fx.symcLeave();say('The Symbiote let go.');adrUi()}}
+// melee kills while bonded heal you
+{const pd0=processDead;processDead=function(src,kind){const n=G&&G.symcT>0&&symcMelee(src)?G.enemies.filter(e=>e.hp<=0).length:0;const r=pd0(src,kind);
+  if(n&&G&&!G.over){const h0=G.hp;G.hp=Math.min(G.maxhp,G.hp+SYMC_HEAL*n);if(G.hp>h0){fx.symcFeed();hud()}}return r}}
+/* in the battle view: black veins creeping in from the edges, and a black tendril whipping out to each enemy it lashes */
+function symcDraw(c,W,H,X0,Y0,P){if(!G||!(G.symcT>0))return;const k=G.symcT<5?.6+.4*Math.sin(performance.now()/110):1,A=[0,0,0];c.save();
+  const g=c.createRadialGradient(W/2,H*.5,Math.min(W,H)*.32,W/2,H*.5,Math.hypot(W,H)*.6);g.addColorStop(0,'rgba(10,0,15,0)');g.addColorStop(1,`rgba(10,0,15,${.55*k})`);c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.lineCap='round';
+  for(const v of G.symcVis){const e=v.e;const[x,z]=xy(e.angle,e.dist);if(!P(x,.9*rdSz(e.type).h,z,A))continue;const sx=W*(.5+.25*v.a),sy=H*1.02,al=Math.min(1,v.t/.12);
+    c.strokeStyle=`rgba(12,8,18,${.9*al})`;c.lineWidth=Math.max(3,W/90);c.beginPath();c.moveTo(sx,sy);c.quadraticCurveTo((sx+A[0])/2+W*.08*v.a,(sy+A[1])/2-H*.15,A[0],A[1]);c.stroke();
+    c.strokeStyle=`rgba(255,255,255,${.25*al})`;c.lineWidth=Math.max(1,W/400);c.stroke()}
+  c.restore()}
 /* consumables in battle: Item type (B on a keyboard) picks which kind, Use item (V) uses one. Both sit at the top, right of Fire lock */
-const CONS={adren:{name:'Adrenaline shot',plural:'Adrenaline shots',use:()=>useAdren()},gum:{name:'Super bubble gum',plural:'pieces of super bubble gum',use:()=>useGum()}},CTYPES=Object.keys(CONS);
+const CONS={adren:{name:'Adrenaline shot',plural:'Adrenaline shots',use:()=>useAdren()},gum:{name:'Super bubble gum',plural:'pieces of super bubble gum',use:()=>useGum()},symc:{name:'Symbiote',plural:'Symbiotes',use:()=>useSymc()}},CTYPES=Object.keys(CONS);
 let curCons='adren';
-function consWords(k){const n=P.cons[k]||0;const run=k==='adren'?G&&G.adrT>0&&G.adrT:k==='gum'?G&&G.gumT>0&&G.gumT:0;return `${CONS[k].name}, ${n} left${run?`, ${Math.ceil(run)} seconds still running`:''}`}
+function consWords(k){const n=P.cons[k]||0;const run=k==='adren'?G&&G.adrT>0&&G.adrT:k==='gum'?G&&G.gumT>0&&G.gumT:k==='symc'?G&&G.symcT>0&&G.symcT:0;return `${CONS[k].name}, ${n} left${run?`, ${Math.ceil(run)} seconds still running`:''}`}
 function consType(){if(!G||G.over)return;initAudio();const i=CTYPES.indexOf(curCons);curCons=CTYPES[(i+1)%CTYPES.length];fx.click();
   say(CTYPES.length>1?consWords(curCons)+'.':`${consWords(curCons)}. It is the only kind of consumable so far.`);adrUi()}
 function useCons(){if(!G||G.over)return;initAudio();CONS[curCons].use()}
-function adrUi(){const b=$('b-cuse');if(!b)return;const on=!!(G&&(curCons==='gum'?G.gumT>0:G.adrT>0));b.classList.toggle('live',on);
+function adrUi(){const b=$('b-cuse');if(!b)return;const on=!!(G&&(curCons==='gum'?G.gumT>0:curCons==='symc'?G.symcT>0:G.adrT>0));b.classList.toggle('live',on);
   b.setAttribute('aria-label',`Use consumable: ${consWords(curCons)}`)}
-function consBuy(k){initAudio();const gum=k==='gum',pr=gum?GUM_PRICE:ADR_PRICE;if(P.coins<pr)return broke(pr,gum?'A piece of super bubble gum':'An adrenaline shot');
-  P.coins-=pr;P.cons[k]=(P.cons[k]||0)+1;fx.buy();saveP();updateShop();say(`Bought ${gum?'a piece of super bubble gum':'an adrenaline shot'}. You have ${P.cons[k]}. ${P.coins} silver left.`)}
+const CPRICE={adren:ADR_PRICE,gum:GUM_PRICE,symc:SYMC_PRICE},CONE={adren:'an adrenaline shot',gum:'a piece of super bubble gum',symc:'a Symbiote'};
+function consBuy(k){initAudio();const pr=CPRICE[k],one=CONE[k];if(P.coins<pr)return broke(pr,one[0].toUpperCase()+one.slice(1));
+  P.coins-=pr;P.cons[k]=(P.cons[k]||0)+1;fx.buy();saveP();updateShop();say(`Bought ${one}. You have ${P.cons[k]}. ${P.coins} silver left.`)}
 function throwNade(){
   if(!G||G.paused||G.over||G.ncd>0)return;if(G.down){downNag();return}timeGo();
   const t=G.gt,N=NADE[t];
@@ -6470,7 +6518,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);adrTick(dt);gumTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);adrTick(dt);gumTick(dt);symcTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -8721,6 +8769,7 @@ function rdDraw(){
       const dr=Math.max(2.5,W/150),gd=c.createRadialGradient(s1[0],s1[1],0,s1[0],s1[1],dr*3);gd.addColorStop(0,'rgba(255,90,90,.95)');gd.addColorStop(.35,'rgba(255,30,30,.6)');gd.addColorStop(1,'rgba(255,0,0,0)');
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   gumDraw(c,W,H,X0,Y0,P);   // Super bubble gum: the bubble around you
+  symcDraw(c,W,H,X0,Y0,P);   // Symbiote: dark veins and lashing tendrils
   rbDraw(c,W,H,X0,Y0,P);   // Rubik's Cubes on the ground, in the air, and in your hand
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   gsDraw(c,W,H,X0,Y0);   // the Gauss rifle in your hands
@@ -9065,6 +9114,14 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-22-symc',date:'November 22, 2026',title:'New consumable: Symbiote',items:[
+    'The Symbiote is in the Armory under Throwables and consumables, then Consumables, for 20,000 silver. It is a consumable, separate from the Alien Symbiote gun.',
+    'In battle, pick it with the Item type button and use it with Use item, or B then V on a keyboard. For 30 seconds every weapon, guns and melee alike, does double damage.',
+    'Every kill with a melee weapon heals you 5 health: the Samurai sword, Unquenchable scythe, Feral Rippers, Kinetic bat, and any melee weapon added later.',
+    'Its tendrils lash any enemy within 5 feet of you for 3 damage a second. Kills they make show on the zombies scoreboard as Symbiote tendrils.',
+    'The drawback: it feeds on you, draining 1 health every second, though it never takes your last point of health.',
+    'You hear it crawl over you with a deep growl, a wet throb each second as it feeds, a whip crack from each enemy it lashes, a slurp when a melee kill heals you, a warning 5 seconds before it lets go, and a hiss as it leaves. Sighted players see dark veins at the edges of the view and black tendrils whipping out.',
+    'One at a time. It does not work in Tutorial/practice.']},
   {id:'2026-11-22-gum',date:'November 22, 2026',title:'New consumable: Super bubble gum',items:[
     'Super bubble gum is in the Armory under Throwables and consumables, then Consumables, for 7,000 silver a piece.',
     'In battle, pick it with the Item type button and chew it with Use item, or B then V on a keyboard. You blow a giant bubble 10 feet around you that lasts 30 seconds and moves with you.',
@@ -10717,6 +10774,7 @@ function buildShop(keepFocus){
     ups.forEach(u=>mkItem(list,'mu-'+u.id,u.name,u.desc,{act:()=>marmAct(u)}))});
   if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-adren','Adrenaline shot',`A single-use shot of pure adrenaline. Inject it in battle with the Use item button at the top of the battle screen, right of Fire lock, or V on a keyboard: for ${ADR_T} seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage. You hear the needle, a rush, and your heartbeat pounding until it wears off, with a warning 5 seconds before. Used up when injected. One at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('adren')});
   if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-gum','Super bubble gum',`A single piece of super bubble gum. Chew it in battle with the Use item button at the top of the battle screen, after picking it with Item type, or V on a keyboard: you blow a giant bubble 10 feet around you that lasts ${GUM_T} seconds and moves with you. Every enemy touching the bubble or inside it, bosses included, moves and attacks at a quarter of normal speed. You hear chewing, the bubble stretching out, a soft wobble while it holds, a sticky boing each time something pushes into it, and a pop when it ends, with a warning 5 seconds before. Used up when chewed. One bubble at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('gum'),hear:()=>{initAudio();fx.gumChew();fx.gumBlow();setTimeout(()=>fx.gumStick(30,2),2800);setTimeout(()=>fx.gumPop(),3600)}});
+  if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-symc','Symbiote',`A living, inky black symbiote that bonds with you in battle. Use it with the Use item button at the top of the battle screen, after picking it with Item type, or V on a keyboard. For ${SYMC_T} seconds every weapon, guns and melee alike, does double damage. Every kill with a melee weapon, like the Samurai sword, Unquenchable scythe, Feral Rippers or Kinetic bat, heals you ${SYMC_HEAL} health. Its tendrils lash any enemy within 5 feet of you for ${SYMC_DPS} damage a second. The drawback: it feeds on you, draining 1 health every second, though it never takes your last point of health. You hear it crawl over you with a deep growl, a wet throb each second as it feeds, a whip crack from the direction of each enemy it lashes, a slurp when a melee kill heals you, a warning 5 seconds before it lets go, and a hiss as it leaves. Used up when it bonds. One at a time. Does not work in Tutorial/practice. Not the same as the Alien Symbiote gun.`,{act:()=>consBuy('symc'),hear:()=>{initAudio();fx.symcBond();setTimeout(()=>fx.symcPulse(),1800);setTimeout(()=>fx.symcLash(-40,1.2),2400);setTimeout(()=>fx.symcFeed(),3000);setTimeout(()=>fx.symcLeave(),3700)}});
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>mkItem(list,'gr-'+k,k==='fatman'?'Fat Man':k==='jack'?'Jack-in-the-boxes':k==='pandora'?N.plural:N.name+'s',N.desc,{act:()=>nadeBuy(k,1),extra:()=>nadeBuy(k,5),
     hear:()=>{initAudio();if(k==='horizon'){hzDemo();return}if(k==='pandora'){pdxDemo();return}if(k==='jack'){fx.jackSet();setTimeout(()=>fx.jackTune(0,3),400);setTimeout(()=>{fx.jackPop(0,3);setTimeout(()=>fx.boom(0,3),450)},1700);return}fx.pin();if(k==='fatman'){fx.fall();fx.nuke(2)}else if(k==='incend'){fx.drop(.25);setTimeout(()=>fx.incBurst(),800)}else{fx.drop(.25);(k==='frag'?fx.boom:fx.cryo)(0,1.5,1)}}}));
   if(curCat==='perks')PERKS.forEach(pk=>mkItem(list,'pk-'+pk.id,pk.name,pk.desc,{act:()=>perkAct(pk)}));
@@ -10745,7 +10803,8 @@ function updateShop(){
     else if(on)setItem('ar-'+a.id,'Owned · Wearing','Take off',`Wearing ${a.name}. Take it off`,false,true);
     else setItem('ar-'+a.id,'Owned','Wear it',`Wear ${a.name}`,false,false)});
   if(curCat==='grenades'&&curThr==='cons'){const n=P.cons.adren||0;setItem('cs-adren',`Price ${ADR_PRICE} silver · You have ${n}`,`Buy 1 for ${ADR_PRICE}`,`Buy 1 adrenaline shot for ${ADR_PRICE} silver. You have ${n}`,P.coins>=ADR_PRICE,n>0);
-    const g=P.cons.gum||0;setItem('cs-gum',`Price ${GUM_PRICE} silver · You have ${g}`,`Buy 1 for ${GUM_PRICE}`,`Buy 1 piece of super bubble gum for ${GUM_PRICE} silver. You have ${g}`,P.coins>=GUM_PRICE,g>0)}
+    const g=P.cons.gum||0;setItem('cs-gum',`Price ${GUM_PRICE} silver · You have ${g}`,`Buy 1 for ${GUM_PRICE}`,`Buy 1 piece of super bubble gum for ${GUM_PRICE} silver. You have ${g}`,P.coins>=GUM_PRICE,g>0);
+    const sy=P.cons.symc||0;setItem('cs-symc',`Price ${SYMC_PRICE} silver · You have ${sy}`,`Buy 1 for ${SYMC_PRICE}`,`Buy 1 Symbiote for ${SYMC_PRICE} silver. You have ${sy}`,P.coins>=SYMC_PRICE,sy>0)}
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>{const p5=Math.round(N.price*5*.9);
     setItem('gr-'+k,`You have ${P.gren[k]}`,`Buy 1 for ${N.price}`,`Buy 1 ${N.name} for ${N.price} silver. You have ${P.gren[k]}`,P.coins>=N.price,P.gren[k]>0);
     const x=$('gr-'+k).querySelector('.att');x.innerHTML=`Buy 5 for ${p5}<small>10 percent off</small>`;x.setAttribute('aria-label',`Buy 5 ${N.plural} for ${p5} silver`)});
