@@ -730,7 +730,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   </div>
   <div class="seg" id="thr-sub" role="group" aria-label="Throwables and consumables type" hidden>
     <button data-thr="throw">Throwables<small>Grenades and everything else you throw</small></button>
-    <button data-thr="cons">Consumables<small>Adrenaline shot</small></button>
+    <button data-thr="cons">Consumables<small>Adrenaline shot, Super bubble gum</small></button>
   </div>
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
@@ -3007,7 +3007,7 @@ function build(w){
    Progress lives in two places: this device (instant, but a phone can wipe it) and your
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
-const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},cons:{adren:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
+const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},cons:{adren:0,gum:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
   stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',skin:{own:{},on:{}},ts:0};
 const P0=JSON.stringify(P);   // a brand new save, used when logging in or out
 function resetP(){Object.keys(P).forEach(k=>delete P[k]);Object.assign(P,JSON.parse(P0))}
@@ -3023,7 +3023,7 @@ function loadP(s){
     const own=own0.filter(i=>ATTBY[i]&&attOK(ATTBY[i],WBY[k]));P.att[k]={own,eq:eq0.filter(i=>own.includes(i))}}
   P.coins+=fmjBack;P.fmjSG=true;
   if(s.gren)NTYPES.forEach(k=>{P.gren[k]=Math.max(0,num(s.gren[k],P.gren[k])|0)});
-  P.cons={adren:Math.max(0,num(s.cons&&s.cons.adren,0)|0)};   // consumables
+  P.cons={adren:Math.max(0,num(s.cons&&s.cons.adren,0)|0),gum:Math.max(0,num(s.cons&&s.cons.gum,0)|0)};   // consumables
   P.mast={};if(s.mast&&typeof s.mast==='object')for(const k in s.mast)if(WBY[k])P.mast[k]=Math.max(0,num(s.mast[k])|0);
   if(s.perk)['hp','heal','aim','scav'].forEach(k=>{P.perk[k]=Math.max(0,Math.min(PERKS.find(p=>p.id===k).max,num(s.perk[k])|0))});
   if(s.armor){P.armor.own=(Array.isArray(s.armor.own)?s.armor.own:[]).filter(i=>ARMOR.some(a=>a.id===i));P.armor.on=P.armor.own.includes(s.armor.on)?s.armor.on:''}
@@ -5685,17 +5685,54 @@ function adrTick(dt){if(!(G.adrT>0))return;G.adrT-=dt;
   G.adrBeatT-=dt;if(G.adrBeatT<=0){G.adrBeatT=G.adrT<5?.55:.85;fx.adrBeat()}
   if(G.adrT<=5&&!G.adrWarn){G.adrWarn=true;say('Adrenaline wearing off.')}
   if(G.adrT<=0){G.adrT=0;fx.adrFade();say('Adrenaline worn off.');adrUi()}}
+/* Super bubble gum (consumable, Armory > Throwables and consumables > Consumables): used up when chewed. You blow a giant
+   bubble around yourself, GUM_R (10 feet) out, for GUM_T seconds. Every enemy touching it or inside it, bosses and the
+   Ancient One included, moves and attacks at a quarter of normal speed while it is in there. It moves with you.
+   One bubble at a time. Not in Tutorial/practice. Use item button (V on a keyboard), after picking it with Item type (B). */
+const GUM_T=30,GUM_PRICE=7000,GUM_R=10/3.281,GUM_SLOW=.25;
+Object.assign(fx,{
+  gumChew(){if(!ctx)return;const d=gunDest(0);for(let i=0;i<4;i++){noise(d,{dur:.12,vol:.28,type:'lowpass',f:900,f2:300,at:i*.22,attack:.02});tone(d,{type:'sine',f:140,f2:90,dur:.1,vol:.12,at:i*.22+.03})}},
+  gumBlow(){if(!ctx)return;const d=gunDest(0);
+    tone(d,{type:'sine',f:160,f2:520,dur:1.3,vol:.3,at:.9,attack:.3});tone(d,{type:'triangle',f:240,f2:700,dur:1.3,vol:.1,at:.95,attack:.3});
+    noise(d,{dur:1.3,vol:.14,type:'bandpass',f:500,f2:1400,q:3,at:.9,attack:.3});
+    tone(d,{type:'sine',f:90,f2:60,dur:.6,vol:.35,at:2.2,attack:.05});noise(d,{dur:.35,vol:.18,type:'lowpass',f:600,f2:150,at:2.2})},   // stretches out, then settles with a soft wobble
+  gumWobble(){if(!ctx)return;const d=gunDest(0);tone(d,{type:'sine',f:75,f2:95,dur:.5,vol:.13,attack:.15});tone(d,{type:'sine',f:95,f2:70,dur:.5,vol:.1,at:.45,attack:.15})},
+  gumStick(rel,dist){if(!ctx)return;const d=out(rel,dist,.9,enBus);tone(d,{type:'sine',f:320,f2:110,dur:.28,vol:.4,attack:.01});noise(d,{dur:.22,vol:.35,type:'bandpass',f:700,f2:250,q:2,attack:.01})},   // something pushes into the gum: a sticky boing
+  gumPop(){if(!ctx)return;const d=gunDest(0);noise(d,{dur:.09,vol:.8,type:'highpass',f:1500,attack:.001});tone(d,{type:'sine',f:900,f2:200,dur:.12,vol:.35,attack:.001});noise(d,{dur:.5,vol:.15,type:'lowpass',f:800,f2:200,at:.06})}
+});
+function useGum(){
+  if(!G||G.paused||G.over)return;if(G.down){downNag();return}
+  if(G.mode==='practice'){fx.click();say('Super bubble gum does not work in Tutorial/practice.');return}
+  if(G.gumT>0){fx.click();say(`Your bubble is already up, ${Math.ceil(G.gumT)} seconds left. You have ${P.cons.gum} pieces.`);return}
+  if(!(P.cons.gum>0)){fx.click();say('No super bubble gum. Buy it in the Armory, under Throwables and consumables, then Consumables.');return}
+  P.cons.gum--;saveP();G.gumT=GUM_T+2.2;G.gumWarn=false;G.gumWobT=4;G.gumStickT=0;fx.gumChew();fx.gumBlow();vib(80);
+  say(`Super bubble gum! A giant bubble 10 feet around you for ${GUM_T} seconds. Anything inside it or touching it moves and attacks at a quarter speed. ${P.cons.gum} piece${P.cons.gum===1?'':'s'} left.`);adrUi()}
+function gumTick(dt){const on=G.gumT>0&&G.gumT<=GUM_T;   // the bubble is up once it has finished blowing out
+  if(G.gumT>0){G.gumT-=dt;G.gumStickT-=dt;G.gumWobT-=dt;if(on&&G.gumWobT<=0){G.gumWobT=3.5;fx.gumWobble()}
+    if(on&&G.gumT<=5&&!G.gumWarn){G.gumWarn=true;say('Bubble wearing thin.')}
+    if(G.gumT<=0){G.gumT=0;fx.gumPop();say('Bubble popped.');adrUi()}}
+  for(const e of G.enemies){const was=e.gumIn;e.gumIn=on&&e.hp>0&&e.dist<=GUM_R+.35*rdSz(e.type).w;   // touching counts: its body reaches the edge
+    if(e.gumIn&&!was&&G.gumStickT<=0){G.gumStickT=.25;fx.gumStick(norm(e.angle-G.heading),e.dist)}}}
+/* the bubble in the battle view: a pink film around you, a ring on the ground at its edge, flickering as it wears thin */
+function gumDraw(c,W,H,X0,Y0,P){if(!G||!(G.gumT>0))return;const grow=Math.min(1,Math.max(0,(GUM_T+2.2-G.gumT)/2.2)),R=GUM_R*grow;if(R<.2)return;
+  const k=G.gumT<5&&G.gumT<=GUM_T?.55+.45*Math.sin(performance.now()/90):1,A=[0,0,0];c.save();
+  c.fillStyle=`rgba(255,120,200,${.07*k*grow})`;c.fillRect(0,0,W,H);
+  c.strokeStyle=`rgba(255,140,210,${.75*k})`;c.lineWidth=Math.max(2,W/220);c.beginPath();let pen=false;
+  for(let d=0;d<=360;d+=6){const u=d*Math.PI/180;if(P(Math.sin(u)*R,.03,Math.cos(u)*R,A)){pen?c.lineTo(A[0],A[1]):c.moveTo(A[0],A[1]);pen=true}else pen=false}c.stroke();
+  c.strokeStyle=`rgba(255,200,235,${.35*k})`;c.lineWidth=Math.max(1.5,W/400);c.beginPath();pen=false;
+  for(let d=0;d<=360;d+=6){const u=d*Math.PI/180;if(P(Math.sin(u)*R*.97,1.6,Math.cos(u)*R*.97,A)){pen?c.lineTo(A[0],A[1]):c.moveTo(A[0],A[1]);pen=true}else pen=false}c.stroke();
+  c.restore()}
 /* consumables in battle: Item type (B on a keyboard) picks which kind, Use item (V) uses one. Both sit at the top, right of Fire lock */
-const CONS={adren:{name:'Adrenaline shot',plural:'Adrenaline shots',use:()=>useAdren()}},CTYPES=Object.keys(CONS);
+const CONS={adren:{name:'Adrenaline shot',plural:'Adrenaline shots',use:()=>useAdren()},gum:{name:'Super bubble gum',plural:'pieces of super bubble gum',use:()=>useGum()}},CTYPES=Object.keys(CONS);
 let curCons='adren';
-function consWords(k){const n=P.cons[k]||0;return `${CONS[k].name}, ${n} left${k==='adren'&&G&&G.adrT>0?`, ${Math.ceil(G.adrT)} seconds still running`:''}`}
+function consWords(k){const n=P.cons[k]||0;const run=k==='adren'?G&&G.adrT>0&&G.adrT:k==='gum'?G&&G.gumT>0&&G.gumT:0;return `${CONS[k].name}, ${n} left${run?`, ${Math.ceil(run)} seconds still running`:''}`}
 function consType(){if(!G||G.over)return;initAudio();const i=CTYPES.indexOf(curCons);curCons=CTYPES[(i+1)%CTYPES.length];fx.click();
   say(CTYPES.length>1?consWords(curCons)+'.':`${consWords(curCons)}. It is the only kind of consumable so far.`);adrUi()}
 function useCons(){if(!G||G.over)return;initAudio();CONS[curCons].use()}
-function adrUi(){const b=$('b-cuse');if(!b)return;const on=!!(G&&G.adrT>0);b.classList.toggle('live',on);
+function adrUi(){const b=$('b-cuse');if(!b)return;const on=!!(G&&(curCons==='gum'?G.gumT>0:G.adrT>0));b.classList.toggle('live',on);
   b.setAttribute('aria-label',`Use consumable: ${consWords(curCons)}`)}
-function consBuy(k){initAudio();if(P.coins<ADR_PRICE)return broke(ADR_PRICE,'An adrenaline shot');
-  P.coins-=ADR_PRICE;P.cons.adren=(P.cons.adren||0)+1;fx.buy();saveP();updateShop();say(`Bought an adrenaline shot. You have ${P.cons.adren}. ${P.coins} silver left.`)}
+function consBuy(k){initAudio();const gum=k==='gum',pr=gum?GUM_PRICE:ADR_PRICE;if(P.coins<pr)return broke(pr,gum?'A piece of super bubble gum':'An adrenaline shot');
+  P.coins-=pr;P.cons[k]=(P.cons[k]||0)+1;fx.buy();saveP();updateShop();say(`Bought ${gum?'a piece of super bubble gum':'an adrenaline shot'}. You have ${P.cons[k]}. ${P.coins} silver left.`)}
 function throwNade(){
   if(!G||G.paused||G.over||G.ncd>0)return;if(G.down){downNag();return}timeGo();
   const t=G.gt,N=NADE[t];
@@ -6386,7 +6423,7 @@ function stepEnemy(e,dt){
   if(e.crysT>0){e.crysT-=dt;e.cue=Math.max(e.cue,.3);if(e.crysT<=0){fx.crysFree(norm(e.angle-G.heading),e.dist);if(EN[e.type].boss)say(`${e.mega?'Mega ':''}${EN[e.type].name} breaks out of the crystal!`)}}
   if(e.grav){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(EN[e.type])){crySpd=1.15;CRY[e.type](out(norm(e.angle-G.heading),e.dist,.8,enBus,zKind(e.type)));crySpd=1}e.cue=1.6+Math.random()}return}   // reverse gravity: floating upside down, helpless
   if(e.rdb){rdDowned(e,dt);return}   // Ragdoll sandbox: knocked flat, it cannot walk or attack until it gets back up
-  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1)*(e.slomoT>0?.1:1)*(e.chillT>0?.5:1);
+  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1)*(e.slomoT>0?.1:1)*(e.chillT>0?.5:1)*(e.gumIn?GUM_SLOW:1);
   if(e.chillT>0)e.chillT-=dt;if(e.slowT>0)e.slowT-=dt;if(e.slomoT>0)e.slomoT-=dt;if(e.blossT>0)e.blossT-=dt;
   if(e.bub){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,.7,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}   // trapped in a bubble: cannot move or attack
   if(e.hz){e.engaged=false;e.wind=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}
@@ -6433,7 +6470,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);adrTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);adrTick(dt);gumTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -6929,7 +6966,7 @@ function rdStep(dt){
   for(const e of G.enemies){if(e.rdb){continue}const[x,z]=xy(e.angle,e.dist);
     if(e.rdX!=null){const mx=x-e.rdX,mz=z-e.rdZ,m=Math.hypot(mx,mz);if(m<3){e.rdPh=(e.rdPh||Math.random()*6)+m/(1.4*rdSz(e.type).h)*Math.PI*2;
       e.rdVx=(e.rdVx||0)*.8+mx/dt*.2;e.rdVz=(e.rdVz||0)*.8+mz/dt*.2}}
-    e.rdX=x;e.rdZ=z;e.rdAt=(e.rdAt||0)+dt;if(e.rdFl>0)e.rdFl-=dt;
+    e.rdX=x;e.rdZ=z;e.rdAt=(e.rdAt||0)+dt*(e.gumIn?GUM_SLOW:1);if(e.rdFl>0)e.rdFl-=dt;
     // a zombie outside the wall that is not lined up with its window walks round the wall to it
     if(G.win&&!e.inside&&e.win!=null&&e.dist<=ZWIN+2&&!(e.stunT>0)&&!(e.frozeT>0)){const W=G.win[e.win],da=norm(W.a-e.angle);
       if(Math.abs(da)>RDWIN-1){const st=EN[e.type].speed*dt/e.dist*180/Math.PI;e.angle=(e.angle+Math.sign(da)*Math.min(Math.abs(da)-RDWIN+1,st)+360)%360}}
@@ -8683,6 +8720,7 @@ function rdDraw(){
       c.strokeStyle=lg;c.lineWidth=Math.max(1.5,W/260);c.beginPath();c.moveTo(s0[0],s0[1]);c.lineTo(s1[0],s1[1]);c.stroke();
       const dr=Math.max(2.5,W/150),gd=c.createRadialGradient(s1[0],s1[1],0,s1[0],s1[1],dr*3);gd.addColorStop(0,'rgba(255,90,90,.95)');gd.addColorStop(.35,'rgba(255,30,30,.6)');gd.addColorStop(1,'rgba(255,0,0,0)');
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
+  gumDraw(c,W,H,X0,Y0,P);   // Super bubble gum: the bubble around you
   rbDraw(c,W,H,X0,Y0,P);   // Rubik's Cubes on the ground, in the air, and in your hand
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   gsDraw(c,W,H,X0,Y0);   // the Gauss rifle in your hands
@@ -9027,6 +9065,12 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-22-gum',date:'November 22, 2026',title:'New consumable: Super bubble gum',items:[
+    'Super bubble gum is in the Armory under Throwables and consumables, then Consumables, for 7,000 silver a piece.',
+    'In battle, pick it with the Item type button and chew it with Use item, or B then V on a keyboard. You blow a giant bubble 10 feet around you that lasts 30 seconds and moves with you.',
+    'Every enemy touching the bubble or inside it moves and attacks at a quarter of normal speed, bosses and the Ancient One included.',
+    'You hear chewing, the bubble stretching out, a soft wobble while it holds, a sticky boing when something pushes into it, a warning 5 seconds before the end, and a pop. Sighted players see a pink bubble around them.',
+    'One bubble at a time. It does not work in Tutorial/practice.']},
   {id:'2026-11-22-zsounds',date:'November 22, 2026',title:'Two new zombie voices',items:[
     'Regular zombies have a new moan in their mix: a deep, demonic growl. It plays now and then among their usual moans, in battle and on the zombie menu screen.',
     'Runner zombies have a new snarl in their mix: a short, angry roar, now and then among their usual snarls.',
@@ -10672,6 +10716,7 @@ function buildShop(keepFocus){
     const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
     ups.forEach(u=>mkItem(list,'mu-'+u.id,u.name,u.desc,{act:()=>marmAct(u)}))});
   if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-adren','Adrenaline shot',`A single-use shot of pure adrenaline. Inject it in battle with the Use item button at the top of the battle screen, right of Fire lock, or V on a keyboard: for ${ADR_T} seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage. You hear the needle, a rush, and your heartbeat pounding until it wears off, with a warning 5 seconds before. Used up when injected. One at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('adren')});
+  if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-gum','Super bubble gum',`A single piece of super bubble gum. Chew it in battle with the Use item button at the top of the battle screen, after picking it with Item type, or V on a keyboard: you blow a giant bubble 10 feet around you that lasts ${GUM_T} seconds and moves with you. Every enemy touching the bubble or inside it, bosses included, moves and attacks at a quarter of normal speed. You hear chewing, the bubble stretching out, a soft wobble while it holds, a sticky boing each time something pushes into it, and a pop when it ends, with a warning 5 seconds before. Used up when chewed. One bubble at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('gum'),hear:()=>{initAudio();fx.gumChew();fx.gumBlow();setTimeout(()=>fx.gumStick(30,2),2800);setTimeout(()=>fx.gumPop(),3600)}});
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>mkItem(list,'gr-'+k,k==='fatman'?'Fat Man':k==='jack'?'Jack-in-the-boxes':k==='pandora'?N.plural:N.name+'s',N.desc,{act:()=>nadeBuy(k,1),extra:()=>nadeBuy(k,5),
     hear:()=>{initAudio();if(k==='horizon'){hzDemo();return}if(k==='pandora'){pdxDemo();return}if(k==='jack'){fx.jackSet();setTimeout(()=>fx.jackTune(0,3),400);setTimeout(()=>{fx.jackPop(0,3);setTimeout(()=>fx.boom(0,3),450)},1700);return}fx.pin();if(k==='fatman'){fx.fall();fx.nuke(2)}else if(k==='incend'){fx.drop(.25);setTimeout(()=>fx.incBurst(),800)}else{fx.drop(.25);(k==='frag'?fx.boom:fx.cryo)(0,1.5,1)}}}));
   if(curCat==='perks')PERKS.forEach(pk=>mkItem(list,'pk-'+pk.id,pk.name,pk.desc,{act:()=>perkAct(pk)}));
@@ -10699,7 +10744,8 @@ function updateShop(){
     if(!own)setItem('ar-'+a.id,`Price ${a.price} silver`,`Buy for ${a.price}`,`Buy ${a.name} for ${a.price} silver`,P.coins>=a.price,false);
     else if(on)setItem('ar-'+a.id,'Owned · Wearing','Take off',`Wearing ${a.name}. Take it off`,false,true);
     else setItem('ar-'+a.id,'Owned','Wear it',`Wear ${a.name}`,false,false)});
-  if(curCat==='grenades'&&curThr==='cons'){const n=P.cons.adren||0;setItem('cs-adren',`Price ${ADR_PRICE} silver · You have ${n}`,`Buy 1 for ${ADR_PRICE}`,`Buy 1 adrenaline shot for ${ADR_PRICE} silver. You have ${n}`,P.coins>=ADR_PRICE,n>0)}
+  if(curCat==='grenades'&&curThr==='cons'){const n=P.cons.adren||0;setItem('cs-adren',`Price ${ADR_PRICE} silver · You have ${n}`,`Buy 1 for ${ADR_PRICE}`,`Buy 1 adrenaline shot for ${ADR_PRICE} silver. You have ${n}`,P.coins>=ADR_PRICE,n>0);
+    const g=P.cons.gum||0;setItem('cs-gum',`Price ${GUM_PRICE} silver · You have ${g}`,`Buy 1 for ${GUM_PRICE}`,`Buy 1 piece of super bubble gum for ${GUM_PRICE} silver. You have ${g}`,P.coins>=GUM_PRICE,g>0)}
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>{const p5=Math.round(N.price*5*.9);
     setItem('gr-'+k,`You have ${P.gren[k]}`,`Buy 1 for ${N.price}`,`Buy 1 ${N.name} for ${N.price} silver. You have ${P.gren[k]}`,P.coins>=N.price,P.gren[k]>0);
     const x=$('gr-'+k).querySelector('.att');x.innerHTML=`Buy 5 for ${p5}<small>10 percent off</small>`;x.setAttribute('aria-label',`Buy 5 ${N.plural} for ${p5} silver`)});
