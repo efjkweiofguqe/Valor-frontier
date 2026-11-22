@@ -853,10 +853,10 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <div class="field">
     <p class="flabel" aria-hidden="true">Graphics</p>
     <div class="seg" role="radiogroup" aria-label="Graphics" data-key="gfx">
-      <button role="radio" data-val="orig" data-name="Original">Original<small>The classic look, fastest. Regular zombies are flat 2D cartoon zombies</small></button>
+      <button role="radio" data-val="orig" data-name="Original">Original<small>The classic look, fastest. Regular zombies and runners are flat 2D cartoon zombies</small></button>
       <button role="radio" data-val="hd" data-name="Enhanced">Enhanced<small>3D zombies, lighting, glows, shadows, effects and weather</small></button>
     </div>
-    <p class="note">Only changes the picture in the battle view, for sighted players. Sounds and gameplay are exactly the same either way. Regular zombies are Kenney's free zombie art either way: a flat 2D cartoon zombie in Original, and an animated 3D zombie in Enhanced that shambles, lunges to grab you, flinches when shot and falls to its knees and onto its face when it dies. Enhanced also adds soft shadows under every figure, glowing eyes, glows on burning, shocked and frozen enemies, sparks and dust when you hit something, bigger explosions with smoke, embers, flying debris, a shockwave and a flash of light, a skyline around each map, and weather like snow, fireflies, falling leaves and mist. It adds no extra blood. If your phone starts to slow down, Enhanced quietly uses fewer effects until it runs smoothly again.</p>
+    <p class="note">Only changes the picture in the battle view, for sighted players. Sounds and gameplay are exactly the same either way. Regular zombies and runners are Kenney's free zombie art either way: a flat 2D cartoon zombie in Original, and an animated 3D zombie in Enhanced that shambles, lunges to grab you, flinches when shot and falls to its knees and onto its face when it dies. Enhanced also adds soft shadows under every figure, glowing eyes, glows on burning, shocked and frozen enemies, sparks and dust when you hit something, bigger explosions with smoke, embers, flying debris, a shockwave and a flash of light, a skyline around each map, and weather like snow, fireflies, falling leaves and mist. It adds no extra blood. If your phone starts to slow down, Enhanced quietly uses fewer effects until it runs smoothly again.</p>
   </div>
   <div class="field">
     <p class="flabel" aria-hidden="true">Crosshair</p>
@@ -8721,7 +8721,7 @@ function rdFig(it,P,F,pal){
 }
 const NEARD=.3;
 /* ---------- Kenney zombies: how regular zombies look (picture only) ----------
-   Regular zombies (not runners, bloated, special or giant zombies) wear Kenney's free CC0 zombie art.
+   Regular zombies and runners (not bloated, special or giant zombies) wear Kenney's free CC0 zombie art; runners use the run animation.
    Enhanced graphics: Kenney's 3D zombie (Animated Characters: Survivors, the zombieA and zombieC skins, half the horde each),
    pre-rendered facing you, since a living zombie always turns toward you. It plays Kenney's idle and run animations and the
    zombie walk, attack, flinch and death animations made for it. A zombie that is thrown, knocked flat, torn apart, pinned,
@@ -8777,16 +8777,16 @@ function zkDoll(c,it,P,F,img,R,d3,hurt){const p=it.p,on=it.on,h=it.s.h;let n=0;
   c.setTransform(1,0,0,1,0,0);return n>0}
 /* Original look, living zombies: the same 2D zombie is put together once into sharp pictures (12 steps of its walk,
    8 of its swing, 3 of a flinch, and standing), so a big wave costs one picture per zombie instead of thirteen parts */
-const ZKF={fr:null,s:120};
-function zkFar(img){if(ZKF.fr)return ZKF.fr;if(!G)return null;const fr={walk:[],atk:[],fl:[],still:null},W=200,H=250,s=ZKF.s;let id=0;
+const ZKF={fr:{},s:120};
+function zkFar(img,type){if(ZKF.fr[type])return ZKF.fr[type];if(!G)return null;const fr={walk:[],atk:[],fl:[],still:null},W=200,H=250,s=ZKF.s;let id=0;
   const P=(x,y,z,o)=>{o[0]=W/2+x*s;o[1]=H-10-y*s;o[2]=5;return true};
-  const mk=(ph,at,d,fl)=>{const cv=document.createElement('canvas');cv.width=W;cv.height=H;cv._zk='f'+(id++);const e={type:'zombie',angle:0,dist:d,rdPh:ph,rdAt:at,rdFl:fl,hp:1};
+  const mk=(ph,at,d,fl)=>{const cv=document.createElement('canvas');cv.width=W;cv.height=H;cv._zk='f'+type+(id++);const e={type,angle:0,dist:d,rdPh:ph,rdAt:at,rdFl:fl,hp:1};
     const p=rdPose(e,new Float32Array(33)),ox=p[6],oz=p[8];for(let i=0;i<33;i+=3){p[i]-=ox;p[i+2]-=oz}
-    zkDoll(cv.getContext('2d'),{p,on:null,s:rdSz('zombie'),e:null,b:null},P,s*5,img,ZK.D2,false,fl>0);return cv};
+    zkDoll(cv.getContext('2d'),{p,on:null,s:{...rdSz(type),h:1},e:null,b:null},P,s*5,img,ZK.D2,false,fl>0);return cv};
   for(let i=0;i<12;i++)fr.walk.push(mk(i/12*Math.PI*2,0,5,0));for(let i=0;i<8;i++)fr.atk.push(mk(0,i/8*Math.PI*2/5,1,0));
   for(const f of[.1,.2,.3])fr.fl.push(mk(0,0,5,f));fr.still=mk(0,0,5,0);
-  return ZKF.fr=fr}
-function zkFarDraw(c,it,P,F,img,tint){const e=it.e,p=it.p,h=it.s.h,fr=zkFar(img);if(!fr||!P(p[6],0,p[8],ZKA))return false;
+  return ZKF.fr[type]=fr}
+function zkFarDraw(c,it,P,F,img,tint){const e=it.e,p=it.p,h=it.s.h,fr=zkFar(img,e.type);if(!fr||!P(p[6],0,p[8],ZKA))return false;
   const still=e.stunT>0||e.frozeT>0||e.crysT>0||(G&&G.tstop>0),atk=e.dist<=MELEE+.05||(G&&G.win&&!e.inside&&e.win!=null&&e.dist<=ZWIN+.05&&!G.win[e.win].broken);
   const cyc=(v,n)=>((Math.floor(v*n)%n)+n)%n;
   let cv=e.rdFl>.05?fr.fl[Math.min(2,Math.floor(e.rdFl/.1))]:atk&&!still?fr.atk[cyc((e.rdAt||0)/(Math.PI*2/5),8)]:still?fr.still:fr.walk[cyc((e.rdPh||0)/(Math.PI*2),12)];
@@ -8801,7 +8801,7 @@ function zkFrame(e,A){const now=performance.now()/1000,cyc=(v,n)=>((Math.floor(v
   if(frozen){const L=e._zkRun?A.run:(atk||bang)?A.attack:A.walk;return L[cyc((atk||bang)?(e.rdAt||0)/1.42:ph,L.length)]}
   if(atk||bang){const L=A.attack;return L[cyc((e.rdAt||0)/(bang?1.1:1.42),L.length)]}
   if(still||e.rbOn||sp<.08){const L=A.idle;return L[cyc(now/1.1+(e.angle||0)*.013,L.length)]}
-  e._zkRun=sp>(e._zkRun?2:2.4);const L=e._zkRun?A.run:A.walk;return L[cyc(ph,L.length)]}
+  e._zkRun=e.type==='zrunner'||sp>(e._zkRun?2:2.4);const L=e._zkRun?A.run:A.walk;return L[cyc(ph,L.length)]}
 function zkScratch(img,r,col,a){let s=ZK.scr;if(!s){s=ZK.scr=document.createElement('canvas');s.width=256;s.height=320}
   if(s.width<r[2]||s.height<r[3]){s.width=Math.max(s.width,r[2]);s.height=Math.max(s.height,r[3])}
   const x=s.getContext('2d');x.globalCompositeOperation='copy';x.globalAlpha=1;x.drawImage(img,r[0],r[1],r[2],r[3],0,0,r[2],r[3]);
@@ -8834,7 +8834,7 @@ function zkDraw(it,P,F){const e=it.e,b=it.b,s=it.s,h=s.h,p=it.p;if(b&&(b.shard||
     else c.drawImage(zkScratch(img,fr,tint[0],tint[1]),0,0,fr[2],fr[3],dx,dy,dw,dh)}
   if(!b){const hq=it.hp3||(it.hp3=[0,0,0]);hq[0]=gx;hq[1]=1.33*h;hq[2]=gz}   // where its eyes are, for Enhanced's glowing eyes
   c.globalAlpha=1;return true}
-{const rf0=rdFig;rdFig=function(it,P,F,pal){if(it.g||it.t!=='zombie'||!zkDraw(it,P,F))return rf0(it,P,F,pal)}}
+{const rf0=rdFig;rdFig=function(it,P,F,pal){if(it.g||(it.t!=='zombie'&&it.t!=='zrunner')||!zkDraw(it,P,F))return rf0(it,P,F,pal)}}
 // a zombie's body keeps the skin it had alive
 {const rc0=rdCorpse;rdCorpse=function(e,src){const had=e.rdb,n=RD.bodies.length,r=rc0(e,src);if(e.zkS!=null){const b=had||(RD.bodies.length>n?RD.bodies[RD.bodies.length-1]:null);if(b)b.zkS=e.zkS}return r}}
 
@@ -9021,6 +9021,11 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-22-krunners',date:'November 22, 2026',title:'Runners get the zombie look too',items:[
+    'For sighted players, runner zombies now look like the regular zombies instead of stick figures.',
+    'With Graphics set to Original, a runner is the same flat 2D cartoon zombie, leaning forward and pumping its arms as it sprints at you.',
+    'With Graphics set to Enhanced, a runner is the 3D zombie playing a full running animation whenever it moves. It still lunges and grabs when it reaches you, flinches when shot, and falls to its knees and onto its face when it dies.',
+    'Only the picture changed. Runners sound and play exactly the same.']},
   {id:'2026-11-22-kzombies',date:'November 22, 2026',title:'Regular zombies get a real zombie look',items:[
     'For sighted players, regular zombies are no longer stick figures. They now use free zombie art from Kenney. Runners, bloated zombies, the special zombies, giants and bosses look the same as before.',
     'With Graphics set to Original, a regular zombie is a flat 2D cartoon zombie: green skin, messy gray hair and a torn brown jacket. It walks, swings, flinches and goes flying exactly like the old figure, and its face winces when it is hit.',
