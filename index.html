@@ -112,7 +112,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
 #game{position:relative}
 #b-flock,#b-ctype,#b-cuse{position:absolute;top:8px;right:80px;width:38px;height:40px;min-height:0;padding:0;margin:0;font-size:10px;line-height:1.05;border-radius:8px;z-index:5;background:var(--panel);border:1px solid var(--line);color:inherit}
 #b-flock[aria-checked="true"]{background:#c0392b;color:#fff;border-color:#fff}
-#b-ctype{right:40px}#b-cuse{right:0}#b-cuse.live{background:#1e8449;color:#fff;border-color:#fff}
+#b-ctype{right:40px}.ankh-pic{display:block;width:60px;height:85px;margin:4px 0}#b-cuse{right:0}#b-cuse.live{background:#1e8449;color:#fff;border-color:#fff}
 .hud div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 7px;min-width:0}
 .hud b{display:block;font-family:var(--display);font-weight:400;font-size:20px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hud span{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
@@ -730,7 +730,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   </div>
   <div class="seg" id="thr-sub" role="group" aria-label="Throwables and consumables type" hidden>
     <button data-thr="throw">Throwables<small>Grenades and everything else you throw</small></button>
-    <button data-thr="cons">Consumables<small>Adrenaline shot, Super bubble gum, Symbiote</small></button>
+    <button data-thr="cons">Consumables<small>Adrenaline shot, Super bubble gum, Symbiote, the Ankh</small></button>
   </div>
   <div class="seg" id="arm-sub" role="group" aria-label="Armor type" hidden>
     <button data-arm="regular">Standard armor<small>Vests, plates and suits</small></button>
@@ -3007,7 +3007,7 @@ function build(w){
    Progress lives in two places: this device (instant, but a phone can wipe it) and your
    Claude account (private to you, survives app reinstalls, cleared storage and new phones).
    Whichever copy was saved most recently wins when the game opens. */
-const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},cons:{adren:0,gum:0,symc:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
+const P={coins:0,owned:['pistol','ak','barrett'],carry:['pistol','ak','barrett'],att:{},gren:{frag:3,cryo:1,incend:0,jack:0,horizon:0,pandora:0,fatman:0},cons:{adren:0,gum:0,symc:0,ankh:0},mast:{},perk:{hp:0,heal:0,aim:0,scav:0},armor:{own:[],on:''},wear:{own:[],on:[]},marm:{},best:{},bestBoss:{},bestZ:{},bestZ6:{},bestZH:{},bestZR:{},bestZF:{},
   stats:{kills:0,headshots:0,games:0,wins:0,earned:0,bossKills:0},player:'',skin:{own:{},on:{}},ts:0};
 const P0=JSON.stringify(P);   // a brand new save, used when logging in or out
 function resetP(){Object.keys(P).forEach(k=>delete P[k]);Object.assign(P,JSON.parse(P0))}
@@ -3023,7 +3023,7 @@ function loadP(s){
     const own=own0.filter(i=>ATTBY[i]&&attOK(ATTBY[i],WBY[k]));P.att[k]={own,eq:eq0.filter(i=>own.includes(i))}}
   P.coins+=fmjBack;P.fmjSG=true;
   if(s.gren)NTYPES.forEach(k=>{P.gren[k]=Math.max(0,num(s.gren[k],P.gren[k])|0)});
-  P.cons={adren:Math.max(0,num(s.cons&&s.cons.adren,0)|0),gum:Math.max(0,num(s.cons&&s.cons.gum,0)|0),symc:Math.max(0,num(s.cons&&s.cons.symc,0)|0)};   // consumables
+  P.cons={adren:Math.max(0,num(s.cons&&s.cons.adren,0)|0),gum:Math.max(0,num(s.cons&&s.cons.gum,0)|0),symc:Math.max(0,num(s.cons&&s.cons.symc,0)|0),ankh:Math.min(1,Math.max(0,num(s.cons&&s.cons.ankh,0)|0))};   // consumables
   P.mast={};if(s.mast&&typeof s.mast==='object')for(const k in s.mast)if(WBY[k])P.mast[k]=Math.max(0,num(s.mast[k])|0);
   if(s.perk)['hp','heal','aim','scav'].forEach(k=>{P.perk[k]=Math.max(0,Math.min(PERKS.find(p=>p.id===k).max,num(s.perk[k])|0))});
   if(s.armor){P.armor.own=(Array.isArray(s.armor.own)?s.armor.own:[]).filter(i=>ARMOR.some(a=>a.id===i));P.armor.on=P.armor.own.includes(s.armor.on)?s.armor.on:''}
@@ -5395,6 +5395,7 @@ function hurtPlayer(dmg,by){
   if(!G||G.over||G.mode==='practice')return;
   if(G.coop&&coopHurtHook(dmg,by))return;
   if(G.down)return;   // co-op: knocked down, nothing can hurt you while you wait to be revived
+  if(G.ankhInv>0)return;   // the ankh just raised you: a moment of grace
   if(wearing('rabbit')&&Math.random()<.05){fx.whoosh();const n=performance.now();if(!(G.luckAt>n-4000)){G.luckAt=n;say('Lucky! Missed you.')}return}   // Lucky rabbit's foot: 5 percent of hits miss
   let d=dmg*(S.diff<1?.7:S.diff>1.5?1.6:1);const ar=ARMBY[P.armor.on];
   if(ar)d*=1-ar.prot;if(G.cover)d*=.5;d*=ringGuard();if(G.adrT>0)d*=.5;   // Adrenaline shot: half damage
@@ -5414,6 +5415,7 @@ function hurtPlayer(dmg,by){
   if(G.hp<=0&&G.pk&&G.pk.revive&&!G.revUsed){G.revUsed=true;setFlock(false);G.hp=Math.ceil(G.maxhp/2);fx.revive();vib(300);rdBlast(0,0,3,7,{c:'255,255,255'});
     G.enemies.forEach(e=>{if(e.dist<=MELEE+.3&&!EN[e.type].boss){e.dist=Math.max(e.dist,3);e.engaged=false}});
     say(`Second wind! You get back up with ${G.hp} health. Nearby zombies are shoved back.`)}
+  if(G.hp<=0&&ankhSave())return;   // the Ankh: used up automatically, after Second wind has had its chance
   hud();if(G.hp<=0){if(coopKnock())return;endGame(false)}
 }
 /* Last stand perk: below a quarter health, a shockwave hits every zombie within 15 feet for 150 and throws survivors back. Once per wave */
@@ -5769,6 +5771,43 @@ function symcDraw(c,W,H,X0,Y0,P){if(!G||!(G.symcT>0))return;const k=G.symcT<5?.6
     c.strokeStyle=`rgba(12,8,18,${.9*al})`;c.lineWidth=Math.max(3,W/90);c.beginPath();c.moveTo(sx,sy);c.quadraticCurveTo((sx+A[0])/2+W*.08*v.a,(sy+A[1])/2-H*.15,A[0],A[1]);c.stroke();
     c.strokeStyle=`rgba(255,255,255,${.25*al})`;c.lineWidth=Math.max(1,W/400);c.stroke()}
   c.restore()}
+/* The Ankh (Armory > Throwables and consumables > Consumables, 500,000 silver): a golden ankh. You can own only one.
+   It is never picked or used by hand, and it does not show up when cycling consumables in battle. The moment you go down,
+   in any mode, it is used up and raises you again with full health. Nearby enemies (not bosses) are thrown back, and nothing
+   can hurt you for ANKH_GRACE seconds. If you have the Second wind perk, that goes first, so the ankh is only spent when
+   nothing else saves you. Then buy another. */
+const ANKH_PRICE=500000,ANKH_GRACE=3;
+Object.assign(fx,{
+  ankhRise(){if(!ctx)return;const d=gunDest(0);
+    [523,659,784,1047].forEach((f,i)=>{tone(d,{type:'sine',f,dur:2.4-i*.2,vol:.16,at:.15+i*.12,attack:.25});tone(d,{type:'triangle',f:f*2,dur:1.6,vol:.04,at:.2+i*.12,attack:.3})});   // a bright, rising golden chord
+    noise(d,{dur:2,vol:.12,type:'highpass',f:5000,f2:9000,at:.1,attack:.4});   // shimmer
+    tone(d,{type:'sine',f:60,f2:40,dur:.14,vol:.5,at:1.4,attack:.004});tone(d,{type:'sine',f:55,f2:40,dur:.12,vol:.4,at:1.58,attack:.004});   // your heart starts again
+    noise(d,{dur:.5,vol:.35,type:'lowpass',f:900,f2:120,at:1.3,attack:.01})}
+});
+function ankhSave(){if(!G||G.over||!(P.cons.ankh>0))return false;
+  P.cons.ankh=0;saveP();G.hp=G.maxhp;G.ankhInv=ANKH_GRACE;G.ankhFx=2.6;setFlock(false);fx.ankhRise();vib(400);
+  rdBlast(0,0,3.5,9,{c:'255,215,90'});
+  G.enemies.forEach(e=>{if(e.dist<=3.5&&!EN[e.type].boss){e.dist=Math.max(e.dist,4);e.engaged=false;e.wind=0}else if(e.dist<=MELEE+.3){e.wind=0}});
+  hud();say(`The Ankh saves you! You rise again with full health, ${G.hp}. Nearby enemies are thrown back. Your ankh is used up; buy another in the Armory.`);return true}
+function ankhTick(dt){if(G.ankhInv>0)G.ankhInv-=dt;if(G.ankhFx>0)G.ankhFx-=dt}
+// the golden ankh, drawn at (cx,cy), s tall
+function ankhPaint(c,cx,cy,s,al){const w=s*.62,lw=s*.13,ly=cy-s*.5+s*.19,lr=s*.15;c.save();c.globalAlpha=al;
+  const g=c.createLinearGradient(cx-w/2,cy-s/2,cx+w/2,cy+s/2);g.addColorStop(0,'#fff6c2');g.addColorStop(.35,'#f5c542');g.addColorStop(.7,'#c9921d');g.addColorStop(1,'#8a5a0b');
+  c.fillStyle=g;c.strokeStyle='#6b4508';c.lineWidth=Math.max(1,s*.018);c.lineJoin='round';
+  // the loop at the top: a teardrop ring
+  c.beginPath();c.ellipse(cx,ly,lr+lw*.55,s*.2+lw*.55,0,0,Math.PI*2);c.ellipse(cx,ly,lr-lw*.45,s*.2-lw*.45,0,0,Math.PI*2,true);c.fill('evenodd');c.stroke();
+  // the crossbar, flaring at the ends
+  const by=cy-s*.5+s*.43,bh=lw;c.beginPath();c.moveTo(cx-w/2,by-bh*.85);c.lineTo(cx-lw*.5,by-bh*.45);c.lineTo(cx+lw*.5,by-bh*.45);c.lineTo(cx+w/2,by-bh*.85);c.lineTo(cx+w/2,by+bh*.85);c.lineTo(cx+lw*.5,by+bh*.45);c.lineTo(cx-lw*.5,by+bh*.45);c.lineTo(cx-w/2,by+bh*.85);c.closePath();c.fill();c.stroke();
+  // the shaft, widening toward the base
+  c.beginPath();c.moveTo(cx-lw*.5,by+bh*.4);c.lineTo(cx+lw*.5,by+bh*.4);c.lineTo(cx+lw*.95,cy+s*.5);c.lineTo(cx-lw*.95,cy+s*.5);c.closePath();c.fill();c.stroke();
+  // a shine down the left edges
+  c.strokeStyle='rgba(255,255,235,.65)';c.lineWidth=Math.max(1,s*.015);c.beginPath();c.moveTo(cx-lw*.3,by+bh*.8);c.lineTo(cx-lw*.6,cy+s*.45);c.moveTo(cx-lr-lw*.2,ly-s*.06);c.lineTo(cx-lr-lw*.2,ly+s*.06);c.stroke();
+  c.restore()}
+// in battle: a glowing golden ankh rises up the view as you are raised, with a flash of gold
+function ankhDraw(c,W,H){if(!G||!(G.ankhFx>0))return;const k=G.ankhFx/2.6,u=1-k,al=Math.min(1,u*4)*Math.min(1,k*2.5),s=H*.55;c.save();
+  c.fillStyle=`rgba(255,210,90,${.35*k*k})`;c.fillRect(0,0,W,H);
+  c.globalCompositeOperation='lighter';if(typeof gxGlow==='function')gxGlow(c,W/2,H*.52-u*H*.08,s*.9,'255,200,80',.7*al);c.globalCompositeOperation='source-over';
+  ankhPaint(c,W/2,H*.52-u*H*.08,s,al);c.restore()}
 /* consumables in battle: Item type (B on a keyboard) picks which kind, Use item (V) uses one. Both sit at the top, right of Fire lock */
 const CONS={adren:{name:'Adrenaline shot',plural:'Adrenaline shots',use:()=>useAdren()},gum:{name:'Super bubble gum',plural:'pieces of super bubble gum',use:()=>useGum()},symc:{name:'Symbiote',plural:'Symbiotes',use:()=>useSymc()}},CTYPES=Object.keys(CONS);
 let curCons='adren';
@@ -5778,9 +5817,9 @@ function consType(){if(!G||G.over)return;initAudio();const i=CTYPES.indexOf(curC
 function useCons(){if(!G||G.over)return;initAudio();CONS[curCons].use()}
 function adrUi(){const b=$('b-cuse');if(!b)return;const on=!!(G&&(curCons==='gum'?G.gumT>0:curCons==='symc'?G.symcT>0:G.adrT>0));b.classList.toggle('live',on);
   b.setAttribute('aria-label',`Use consumable: ${consWords(curCons)}`)}
-const CPRICE={adren:ADR_PRICE,gum:GUM_PRICE,symc:SYMC_PRICE},CONE={adren:'an adrenaline shot',gum:'a piece of super bubble gum',symc:'a Symbiote'};
-function consBuy(k){initAudio();const pr=CPRICE[k],one=CONE[k];if(P.coins<pr)return broke(pr,one[0].toUpperCase()+one.slice(1));
-  P.coins-=pr;P.cons[k]=(P.cons[k]||0)+1;fx.buy();saveP();updateShop();say(`Bought ${one}. You have ${P.cons[k]}. ${P.coins} silver left.`)}
+const CPRICE={adren:ADR_PRICE,gum:GUM_PRICE,symc:SYMC_PRICE,ankh:ANKH_PRICE},CONE={adren:'an adrenaline shot',gum:'a piece of super bubble gum',symc:'a Symbiote',ankh:'the Ankh'};
+function consBuy(k){initAudio();const pr=CPRICE[k],one=CONE[k];if(k==='ankh'&&P.cons.ankh>0){fx.click();say('You already have the Ankh. You can only own one at a time. It saves you automatically the next time you go down.');return}if(P.coins<pr)return broke(pr,one[0].toUpperCase()+one.slice(1));
+  P.coins-=pr;P.cons[k]=(P.cons[k]||0)+1;fx.buy();saveP();updateShop();say(k==='ankh'?`Bought the Ankh. It will raise you automatically the next time you go down, in any mode. ${P.coins} silver left.`:`Bought ${one}. You have ${P.cons[k]}. ${P.coins} silver left.`)}
 function throwNade(){
   if(!G||G.paused||G.over||G.ncd>0)return;if(G.down){downNag();return}timeGo();
   const t=G.gt,N=NADE[t];
@@ -6518,7 +6557,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);adrTick(dt);gumTick(dt);symcTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);adrTick(dt);gumTick(dt);symcTick(dt);ankhTick(dt);bubTick(dt);hypTick(dt);if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -8770,6 +8809,7 @@ function rdDraw(){
       c.fillStyle=gd;c.beginPath();c.arc(s1[0],s1[1],dr*3,0,Math.PI*2);c.fill();c.fillStyle='#ffd0d0';c.beginPath();c.arc(s1[0],s1[1],dr*.6,0,Math.PI*2);c.fill();c.restore()}}}
   gumDraw(c,W,H,X0,Y0,P);   // Super bubble gum: the bubble around you
   symcDraw(c,W,H,X0,Y0,P);   // Symbiote: dark veins and lashing tendrils
+  ankhDraw(c,W,H);   // the Ankh raising you
   rbDraw(c,W,H,X0,Y0,P);   // Rubik's Cubes on the ground, in the air, and in your hand
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
   gsDraw(c,W,H,X0,Y0);   // the Gauss rifle in your hands
@@ -9114,6 +9154,13 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-22-ankh',date:'November 22, 2026',title:'New consumable: the Ankh, your second chance',items:[
+    'The Ankh is in the Armory under Throwables and consumables, then Consumables, for 500,000 silver. It is a golden ankh, the ancient Egyptian symbol of life.',
+    'You can own only one at a time. You never pick it or use it, and it does not show up when you cycle consumables in battle.',
+    'The moment you go down, in any mode, it is used up and raises you again with full health. Nearby enemies are thrown back (not bosses), and nothing can hurt you for 3 seconds.',
+    'If you have the Second wind perk, that saves you first, so the ankh is only spent when nothing else can. In co-op it saves you before you would be knocked down.',
+    'You hear a rising golden chord and your heart starting again. Sighted players see a glowing golden ankh rise up the screen.',
+    'After it saves you, buy another.']},
   {id:'2026-11-22-symc',date:'November 22, 2026',title:'New consumable: Symbiote',items:[
     'The Symbiote is in the Armory under Throwables and consumables, then Consumables, for 20,000 silver. It is a consumable, separate from the Alien Symbiote gun.',
     'In battle, pick it with the Item type button and use it with Use item, or B then V on a keyboard. For 30 seconds every weapon, guns and melee alike, does double damage.',
@@ -10775,6 +10822,8 @@ function buildShop(keepFocus){
   if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-adren','Adrenaline shot',`A single-use shot of pure adrenaline. Inject it in battle with the Use item button at the top of the battle screen, right of Fire lock, or V on a keyboard: for ${ADR_T} seconds you take 50 percent less damage, on top of your armor, and every weapon does 25 percent more damage. You hear the needle, a rush, and your heartbeat pounding until it wears off, with a warning 5 seconds before. Used up when injected. One at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('adren')});
   if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-gum','Super bubble gum',`A single piece of super bubble gum. Chew it in battle with the Use item button at the top of the battle screen, after picking it with Item type, or V on a keyboard: you blow a giant bubble 10 feet around you that lasts ${GUM_T} seconds and moves with you. Every enemy touching the bubble or inside it, bosses included, moves and attacks at a quarter of normal speed. You hear chewing, the bubble stretching out, a soft wobble while it holds, a sticky boing each time something pushes into it, and a pop when it ends, with a warning 5 seconds before. Used up when chewed. One bubble at a time. Does not work in Tutorial/practice.`,{act:()=>consBuy('gum'),hear:()=>{initAudio();fx.gumChew();fx.gumBlow();setTimeout(()=>fx.gumStick(30,2),2800);setTimeout(()=>fx.gumPop(),3600)}});
   if(curCat==='grenades'&&curThr==='cons')mkItem(list,'cs-symc','Symbiote',`A living, inky black symbiote that bonds with you in battle. Use it with the Use item button at the top of the battle screen, after picking it with Item type, or V on a keyboard. For ${SYMC_T} seconds every weapon, guns and melee alike, does double damage. Every kill with a melee weapon, like the Samurai sword, Unquenchable scythe, Feral Rippers or Kinetic bat, heals you ${SYMC_HEAL} health. Its tendrils lash any enemy within 5 feet of you for ${SYMC_DPS} damage a second. The drawback: it feeds on you, draining 1 health every second, though it never takes your last point of health. You hear it crawl over you with a deep growl, a wet throb each second as it feeds, a whip crack from the direction of each enemy it lashes, a slurp when a melee kill heals you, a warning 5 seconds before it lets go, and a hiss as it leaves. Used up when it bonds. One at a time. Does not work in Tutorial/practice. Not the same as the Alien Symbiote gun.`,{act:()=>consBuy('symc'),hear:()=>{initAudio();fx.symcBond();setTimeout(()=>fx.symcPulse(),1800);setTimeout(()=>fx.symcLash(-40,1.2),2400);setTimeout(()=>fx.symcFeed(),3000);setTimeout(()=>fx.symcLeave(),3700)}});
+  if(curCat==='grenades'&&curThr==='cons'){const it=mkItem(list,'cs-ankh','The Ankh',`A golden ankh, the ancient Egyptian symbol of life: a loop on top of a cross. Your second chance. You can own only one at a time. You never pick it or use it, and it does not show up when you cycle consumables in battle: once you own it, it waits. The moment you go down, in any mode, it is used up and raises you again with full health, throws nearby enemies back (not bosses), and keeps you from being hurt for ${ANKH_GRACE} seconds. If you have the Second wind perk, that saves you first, so the ankh is only spent when nothing else can. You hear a rising golden chord and your heart starting again. After it saves you, buy another.`,{act:()=>consBuy('ankh'),hear:()=>{initAudio();fx.ankhRise()}});
+    const cv=document.createElement('canvas');cv.width=120;cv.height=170;cv.className='ankh-pic';cv.setAttribute('aria-hidden','true');ankhPaint(cv.getContext('2d'),60,92,138,1);it.insertBefore(cv,it.querySelector('.meta'))}
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>mkItem(list,'gr-'+k,k==='fatman'?'Fat Man':k==='jack'?'Jack-in-the-boxes':k==='pandora'?N.plural:N.name+'s',N.desc,{act:()=>nadeBuy(k,1),extra:()=>nadeBuy(k,5),
     hear:()=>{initAudio();if(k==='horizon'){hzDemo();return}if(k==='pandora'){pdxDemo();return}if(k==='jack'){fx.jackSet();setTimeout(()=>fx.jackTune(0,3),400);setTimeout(()=>{fx.jackPop(0,3);setTimeout(()=>fx.boom(0,3),450)},1700);return}fx.pin();if(k==='fatman'){fx.fall();fx.nuke(2)}else if(k==='incend'){fx.drop(.25);setTimeout(()=>fx.incBurst(),800)}else{fx.drop(.25);(k==='frag'?fx.boom:fx.cryo)(0,1.5,1)}}}));
   if(curCat==='perks')PERKS.forEach(pk=>mkItem(list,'pk-'+pk.id,pk.name,pk.desc,{act:()=>perkAct(pk)}));
@@ -10804,7 +10853,8 @@ function updateShop(){
     else setItem('ar-'+a.id,'Owned','Wear it',`Wear ${a.name}`,false,false)});
   if(curCat==='grenades'&&curThr==='cons'){const n=P.cons.adren||0;setItem('cs-adren',`Price ${ADR_PRICE} silver · You have ${n}`,`Buy 1 for ${ADR_PRICE}`,`Buy 1 adrenaline shot for ${ADR_PRICE} silver. You have ${n}`,P.coins>=ADR_PRICE,n>0);
     const g=P.cons.gum||0;setItem('cs-gum',`Price ${GUM_PRICE} silver · You have ${g}`,`Buy 1 for ${GUM_PRICE}`,`Buy 1 piece of super bubble gum for ${GUM_PRICE} silver. You have ${g}`,P.coins>=GUM_PRICE,g>0);
-    const sy=P.cons.symc||0;setItem('cs-symc',`Price ${SYMC_PRICE} silver · You have ${sy}`,`Buy 1 for ${SYMC_PRICE}`,`Buy 1 Symbiote for ${SYMC_PRICE} silver. You have ${sy}`,P.coins>=SYMC_PRICE,sy>0)}
+    const sy=P.cons.symc||0;setItem('cs-symc',`Price ${SYMC_PRICE} silver · You have ${sy}`,`Buy 1 for ${SYMC_PRICE}`,`Buy 1 Symbiote for ${SYMC_PRICE} silver. You have ${sy}`,P.coins>=SYMC_PRICE,sy>0);
+    const ak=P.cons.ankh>0;setItem('cs-ankh',ak?`Owned · Waiting to save you`:`Price ${ANKH_PRICE} silver · Only one at a time`,ak?'Owned':`Buy for ${ANKH_PRICE}`,ak?'The Ankh, owned. It saves you automatically the next time you go down':`Buy the Ankh for ${ANKH_PRICE} silver`,!ak&&P.coins>=ANKH_PRICE,ak)}
   if(curCat==='grenades'&&curThr==='throw')Object.entries(NADE).forEach(([k,N])=>{const p5=Math.round(N.price*5*.9);
     setItem('gr-'+k,`You have ${P.gren[k]}`,`Buy 1 for ${N.price}`,`Buy 1 ${N.name} for ${N.price} silver. You have ${P.gren[k]}`,P.coins>=N.price,P.gren[k]>0);
     const x=$('gr-'+k).querySelector('.att');x.innerHTML=`Buy 5 for ${p5}<small>10 percent off</small>`;x.setAttribute('aria-label',`Buy 5 ${N.plural} for ${p5} silver`)});
