@@ -75,6 +75,8 @@ ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
   <section style="display:flex;flex-direction:column;gap:10px" aria-labelledby="sent-h">
     <h2 id="sent-h">Recent gifts</h2>
     <button id="refresh" type="button">Refresh list</button>
+    <button id="sent-clear" type="button">Clear recent gifts</button>
+    <p id="sent-st" class="muted" role="status"></p>
     <ul id="sent"></ul>
   </section>
   <button id="out" type="button">Sign out</button>
@@ -279,9 +281,23 @@ async function loadFb(){
 $('fb-refresh').onclick=()=>{loadFb();status('Feedback refreshed.')};
 const summary=it=>{const p=[];if(it.silver)p.push(`${it.silver} silver`);(it.weapons||[]).forEach(i=>p.push(NAME[i]||i));(it.armor||[]).forEach(i=>p.push(NAME[i]||i));
   for(const k in it.grenades||{})p.push(`${it.grenades[k]} ${NAME[k]||k}`);return p.join(', ')||'nothing'};
+/* Clear recent gifts: deletes every gift players have already received (the game only ever reads gifts still waiting),
+   and hides the ones still waiting from this list on this device. Waiting gifts are kept, so players still get them. */
+const SENTKEY='vf-admin-gifts-cleared';
+function sentCut(){try{return +localStorage.getItem(SENTKEY)||0}catch(e){return 0}}
+$('sent-clear').onclick=async()=>{
+  if(!confirm('Clear the recent gifts list? Gifts players already received are deleted. Gifts still waiting are kept and will still be delivered.'))return;
+  const b=$('sent-clear'),st=$('sent-st');b.disabled=true;st.textContent='Clearing recent gifts…';
+  try{const s=await F.getDocs(F.query(F.collection(db,'gifts'),F.where('claimed','==',true)));
+    for(let i=0;i<s.docs.length;i+=400){const wb=F.writeBatch(db);s.docs.slice(i,i+400).forEach(d=>wb.delete(d.ref));await wb.commit()}
+    try{localStorage.setItem(SENTKEY,String(Date.now()))}catch(e){}
+    st.textContent=`Recent gifts cleared. ${s.size} received ${s.size===1?'gift':'gifts'} deleted.`;loadSent()}
+  catch(e){console.error('clearSent',e);st.textContent=`Could not clear the gifts. ${why(e)}`}
+  b.disabled=false};
 async function loadSent(){
   try{const s=await F.getDocs(F.query(F.collection(db,'gifts'),F.orderBy('created','desc'),F.limit(25)));
-    $('sent').innerHTML=s.size?s.docs.map(d=>{const g=d.data();return `<li><b>${esc(g.name)}</b>: ${esc(summary(g.items||{}))}. ${g.claimed?'Received.':'Waiting for them to open the game.'}</li>`}).join(''):'<li>No gifts sent yet.</li>';
+    const cut=sentCut(),docs=s.docs.filter(d=>{const c=d.data().created;return !(c&&c.toMillis&&c.toMillis()<=cut)});
+    $('sent').innerHTML=docs.length?docs.map(d=>{const g=d.data();return `<li><b>${esc(g.name)}</b>: ${esc(summary(g.items||{}))}. ${g.claimed?'Received.':'Waiting for them to open the game.'}</li>`}).join(''):'<li>No recent gifts.</li>';
   }catch(e){console.error('loadSent',e);$('sent').innerHTML=`<li>Could not load gifts. ${esc(why(e))}</li>`}
 }
 $('refresh').onclick=()=>{loadPlayers();loadReqs();loadFb();loadSent()};
