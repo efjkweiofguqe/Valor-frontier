@@ -217,6 +217,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-go="settings">Settings<small>Voice, volume, difficulty</small></button>
     <button class="btn" id="b-record">Service record<small>Hear your lifetime stats</small></button>
     <button class="btn" data-go="lb" id="menu-lb">Leaderboard<small>The top 3 players in every game mode</small></button>
+    <button class="btn" data-go="notes" id="menu-notes">Notes from the developer<small id="menu-notes-s">What I have been working on, and what I want you to test</small></button>
     <button class="btn" data-go="req" id="menu-req" hidden>Request items and feedback<small>Ask the developer for things to test, or tell them how they played</small></button>
     <button class="btn" data-go="pid" id="menu-pid">Account<small id="menu-pid-s">Log in, or create an account to back up your progress</small></button>
   </div>
@@ -263,6 +264,15 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <button class="btn back" data-go="menu">Back</button>
   <p class="note">Newest updates first. Each update is a heading, so you can jump between them with your screen reader.</p>
   <div class="stack" id="log-list"></div>
+</section>
+
+<!-- NOTES FROM THE DEVELOPER (personal notes, newest first, kept in the NOTES list in the script) -->
+<section id="notes" class="screen" hidden>
+  <p class="tag">From the developer</p>
+  <h2 id="notes-h" tabindex="-1">Notes from the developer</h2>
+  <button class="btn back" data-go="menu">Back</button>
+  <p class="note">My personal notes about what I have been working on and what I would love you to test. Newest first. Each note is a heading, so you can jump between them with your screen reader.</p>
+  <div class="stack" id="notes-list"></div>
 </section>
 
 <!-- LEADERBOARD (top 3 in every game mode, shared online) -->
@@ -9343,6 +9353,9 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-24-notes',date:'November 24, 2026',title:'New: Notes from the developer',items:[
+    'A new option in the main menu: Notes from the developer. Read my personal notes about what I have been working on and what I would love you to test.',
+    'When there is a new note, the menu button tells you.']},
   {id:'2026-11-24-lycan-howl',date:'November 24, 2026',title:'Lycanthropy pack: real howl and claw slashes',items:[
     'Full Moon now ends with a real wolf howl.',
     'Every Feral Rippers swipe is now a real slash, sweeping across you from one side to the other.']},
@@ -10320,9 +10333,32 @@ function buildLog(){
   try{if(UPDATES.length)localStorage.setItem(LOGKEY,UPDATES[0].id)}catch(e){}
 }
 updateLogBtn();
+/* ---------- notes from the developer ----------
+   The developer's personal notes to players, newest first. To add one, put a new entry at the TOP with a new id:
+   {id:'2026-11-24-a',date:'November 24, 2026',title:'…',text:['paragraph','paragraph'],test:['something to try','…']}
+   test is optional: a list of things players should try out. */
+const NOTES=[
+];
+const NOTEKEY='vf-notes-seen';
+function notesSeen(){try{return localStorage.getItem(NOTEKEY)||''}catch(e){return ''}}
+function updateNotesBtn(){const b=$('menu-notes-s');if(!b)return;
+  b.textContent=NOTES.length&&notesSeen()!==NOTES[0].id?'New note: '+NOTES[0].title:'What I have been working on, and what I want you to test'}
+function buildNotes(){
+  const box=$('notes-list');box.textContent='';
+  if(!NOTES.length){const p=document.createElement('p');p.textContent='No notes yet. Check back soon.';box.appendChild(p);return}
+  NOTES.forEach(n=>{const d=document.createElement('div');d.className='logent';
+    const h=document.createElement('h3');h.textContent=n.title;
+    const t=document.createElement('p');t.className='tag';t.textContent=n.date;d.append(h,t);
+    (n.text||[]).forEach(x=>{const q=document.createElement('p');q.textContent=x;d.appendChild(q)});
+    if(n.test&&n.test.length){const th=document.createElement('p');th.textContent='Please test:';const ul=document.createElement('ul');
+      n.test.forEach(x=>{const li=document.createElement('li');li.textContent=x;ul.appendChild(li)});d.append(th,ul)}
+    box.appendChild(d)});
+  try{localStorage.setItem(NOTEKEY,NOTES[0].id)}catch(e){}
+}
+updateNotesBtn();
 
 /* ---------- screens ---------- */
-const screens=['menu','maps','coop','shop','mods','tutorial','settings','pid','req','log','lb','game'];
+const screens=['menu','maps','coop','shop','mods','tutorial','settings','pid','req','log','notes','lb','game'];
 function show(id){
   if(ctx){const was=curScr;if(id==='shop'&&was!=='shop'&&was!=='mods')sfPlay('doorOpen_001',out(0,0,.5));else if(was==='shop'&&id!=='mods')sfPlay('doorClose_001',out(0,0,.5))}   // the Armory doors
   curScr=id;setTimeout(menuAmbSync,0);
@@ -10335,9 +10371,10 @@ function show(id){
   if(id==='coop')updateCoop();
   if(id==='req'){fillReq();fillFb();fillErrBox()}
   if(id==='log')buildLog();
+  if(id==='notes')buildNotes();
   if(id==='lb')lbShow(false);
   if(id==='menu'&&lbQueued){const l=lbQueued;lbQueued='';setTimeout(()=>say(l),900)}
-  if(id==='menu')updateLogBtn();
+  if(id==='menu'){updateLogBtn();updateNotesBtn()}
   if(id==='menu')updatePidMenu();
   const h=$(id+'-h');if(h)setTimeout(()=>h.focus(),50);
 }
