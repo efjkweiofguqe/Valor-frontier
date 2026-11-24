@@ -217,7 +217,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-go="settings">Settings<small>Voice, volume, difficulty</small></button>
     <button class="btn" id="b-record">Service record<small>Hear your lifetime stats</small></button>
     <button class="btn" data-go="lb" id="menu-lb">Leaderboard<small>The top 3 players in every game mode</small></button>
-    <button class="btn" data-go="notes" id="menu-notes">Notes from the developer<small id="menu-notes-s">What I have been working on, and what I want you to test</small></button>
+    <button class="btn" data-go="notes" id="menu-notes">Notes from the developer<small id="menu-notes-s" hidden></small></button>
     <button class="btn" data-go="req" id="menu-req" hidden>Request items and feedback<small>Ask the developer for things to test, or tell them how they played</small></button>
     <button class="btn" data-go="pid" id="menu-pid">Account<small id="menu-pid-s">Log in, or create an account to back up your progress</small></button>
   </div>
@@ -271,7 +271,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
   <p class="tag">From the developer</p>
   <h2 id="notes-h" tabindex="-1">Notes from the developer</h2>
   <button class="btn back" data-go="menu">Back</button>
-  <p class="note">My personal notes about what I have been working on and what I would love you to test. Newest first. Each note is a heading, so you can jump between them with your screen reader.</p>
+  <p class="note">Newest first. Each note is a heading, so you can jump between them with your screen reader.</p>
   <div class="stack" id="notes-list"></div>
 </section>
 
@@ -9354,7 +9354,7 @@ function hud(){
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
   {id:'2026-11-24-notes',date:'November 24, 2026',title:'New: Notes from the developer',items:[
-    'A new option in the main menu: Notes from the developer. Read my personal notes about what I have been working on and what I would love you to test.',
+    'A new option in the main menu: Notes from the developer, where you can read my personal notes.',
     'When there is a new note, the menu button tells you.']},
   {id:'2026-11-24-lycan-howl',date:'November 24, 2026',title:'Lycanthropy pack: real howl and claw slashes',items:[
     'Full Moon now ends with a real wolf howl.',
@@ -10342,7 +10342,7 @@ const NOTES=[
 const NOTEKEY='vf-notes-seen';
 function notesSeen(){try{return localStorage.getItem(NOTEKEY)||''}catch(e){return ''}}
 function updateNotesBtn(){const b=$('menu-notes-s');if(!b)return;
-  b.textContent=NOTES.length&&notesSeen()!==NOTES[0].id?'New note: '+NOTES[0].title:'What I have been working on, and what I want you to test'}
+  const fresh=NOTES.length&&notesSeen()!==NOTES[0].id;b.textContent=fresh?'New note: '+NOTES[0].title:'';b.hidden=!fresh}
 function buildNotes(){
   const box=$('notes-list');box.textContent='';
   if(!NOTES.length){const p=document.createElement('p');p.textContent='No notes yet. Check back soon.';box.appendChild(p);return}
