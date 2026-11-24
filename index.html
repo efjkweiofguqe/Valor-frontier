@@ -695,6 +695,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-set="samurai">Samurai pack<small>Swords and armor</small></button>
     <button data-set="night">Nightwalker pack<small>Machine guns, scythes, lanterns and armor</small></button>
     <button data-set="lycan">Lycanthropy pack<small>Claws and armor</small></button>
+    <button data-set="horror">Halloween Horror pack<small>Coming soon</small></button>
   </div>
   <div class="seg" id="lyc-sub" role="group" aria-label="Lycanthropy pack section" hidden>
     <button data-lyc="claw">Claws<small>Feral Rippers</small></button>
@@ -9156,6 +9157,8 @@ function hud(){
 /* ---------- update log ----------
    Newest first. To announce a new update, add an entry at the top with a new id. */
 const UPDATES=[
+  {id:'2026-11-24-horror',date:'November 24, 2026',title:'New legendary set: Halloween Horror pack',items:[
+    'A new legendary set in the Armory, under Legendary: the Halloween Horror pack. It is empty for now. New horror gear is coming soon.']},
   {id:'2026-11-22-alphagen',date:'November 22, 2026',title:'New Alpha Wolf Pelt upgrade: Alpha Genetics',items:[
     'Alpha Genetics is in the Armory with the Alpha Wolf Pelt upgrades, for 40,000 silver. Buy Full Moon first.',
     'While you are transformed by Full Moon, your Lycan Rage damage bonus is doubled. At 10 percent health you do 180 percent extra damage instead of 90, with every weapon, the Feral Rippers included.',
@@ -10749,6 +10752,7 @@ const catW=()=>curCat==='secret'?SECRET.filter(i=>P.owned.includes(i)).map(i=>WB
 const LSET={mythic:{name:'Mythical'},scav:{name:'Scavenger pack',list:['boomer'],note:'The Scavenger pack. Legendary gear scavenged and rebuilt from scrap: throwing weapons and armor.'},
   samurai:{name:'Samurai pack',list:['katana'],note:'The Samurai pack. Legendary blades and armor of the samurai: swords and armor.'},
   lycan:{name:'Lycanthropy pack',list:['rippers'],note:'The Lycanthropy pack. Legendary gear for those who turn under the full moon: claws and armor. The lower your health, the deadlier you get.'},
+  horror:{name:'Halloween Horror pack',list:[],note:'The Halloween Horror pack. Legendary gear for the scariest night of the year. Nothing here yet. New gear is coming soon.'},
   night:{name:'Nightwalker pack',list:['vlad','scythe','ra'],note:'The Nightwalker pack. Legendary gear for those who hunt in the dark, and those who feed in it: machine guns, scythes, lanterns and armor.'}};
 const NIGHTN={lantern:'Nightwalker pack lanterns. Hold Fire to shine the Lantern of Ra. Its ray of sunlight sets everything it touches on fire, and the fire spreads from enemy to enemy.',gun:'Nightwalker pack machine guns. Vlad the Impaler fires wooden stakes that pin enemies to the floor, the walls and each other. Takes only its own upgrades.',blade:'Nightwalker pack scythes. Swing with the Fire button, in a full circle around you. You must own the Darkest Shadow Suit before you can buy the Unquenchable scythe.',armor:'Nightwalker pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Darkest Shadow Suit has its own special abilities, Bat swarm and Endless appetite, listed under it.'};
 const LYCN={claw:'Lycanthropy pack claws. Swipe with the Fire button. You must own the Alpha Wolf Pelt before you can buy the Feral Rippers.',armor:'Lycanthropy pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Alpha Wolf Pelt has Lycan Rage built in, and its own special ability, Full Moon, listed under it.'};
@@ -10793,7 +10797,7 @@ function setItem(id,meta,act,aria,primary,on){const it=$(id);if(!it)return;it.cl
 $('b-unequip').onclick=()=>{initAudio();if(!P.carry.length)return;P.carry=[];fx.reload(.3);saveP();updateShop();say(`All guns put in storage. Choose Carry into battle on up to ${MAXCARRY} guns before you deploy.`)};
 document.querySelectorAll('#shop-cats button').forEach(b=>b.onclick=()=>{initAudio();if(b.dataset.cat==='std'){curCat=curStd;buildShop(true);say('Standard weapons. Choose a weapon type.')}else{curCat=b.dataset.cat;buildShop(true)}});
 document.querySelectorAll('#std-sub button').forEach(b=>b.onclick=()=>{initAudio();curStd=curCat=b.dataset.std;buildShop(true)});
-document.querySelectorAll('#leg-sub button').forEach(b=>b.onclick=()=>{initAudio();curSet=b.dataset.set;buildShop(true);say(curSet==='mythic'?'Mythical set. Choose a weapon type.':LSET[curSet].note+' Choose a section.')});
+document.querySelectorAll('#leg-sub button').forEach(b=>b.onclick=()=>{initAudio();curSet=b.dataset.set;buildShop(true);say(curSet==='mythic'?'Mythical set. Choose a weapon type.':curSet==='horror'?LSET.horror.note:LSET[curSet].note+' Choose a section.')});
 document.querySelectorAll('#scav-sub button').forEach(b=>b.onclick=()=>{initAudio();curScav=b.dataset.scav;buildShop(true);say(SCAVN[curScav])});
 document.querySelectorAll('#sam-sub button').forEach(b=>b.onclick=()=>{initAudio();curSam=b.dataset.sam;buildShop(true);say(SAMN[curSam])});
 document.querySelectorAll('#lyc-sub button').forEach(b=>b.onclick=()=>{initAudio();curLyc=b.dataset.lyc;buildShop(true);say(LYCN[curLyc])});
@@ -10819,7 +10823,7 @@ function buildShop(keepFocus){
   document.querySelectorAll('#leg-sub button').forEach(b=>{const on=b.dataset.set===curSet;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#myth-sub button').forEach(b=>{const on=b.dataset.myth===curMyth;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
   document.querySelectorAll('#arm-sub button').forEach(b=>{const on=b.dataset.arm===curArm;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
-  $('shop-note').textContent=curCat==='grenades'&&curThr==='cons'?'Consumables. Items you use up in battle. Each one is gone once you use it.':curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:curSet==='lycan'?LYCN[curLyc]:SCAVN[curScav]):CATNOTE[curCat];
+  $('shop-note').textContent=curCat==='grenades'&&curThr==='cons'?'Consumables. Items you use up in battle. Each one is gone once you use it.':curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:curSet==='lycan'?LYCN[curLyc]:curSet==='horror'?LSET.horror.note:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
