@@ -585,6 +585,9 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button class="btn" data-test="fogmunch">Brain Fog Bites, enemy munching</button>
     <button class="btn" data-test="fogdaze">Brain Fog Bites, enemy dazed</button>
     <button class="btn" data-test="foggroan">Brain Fog Bites, dazed enemy nearby</button>
+    <button class="btn" data-test="swslow">Chris's sweater, enemy slowed by its warmth</button>
+    <button class="btn" data-test="swsmile">Chris's sweater, Warm embrace, enemy smiling</button>
+    <button class="btn" data-test="swlove">Chris's sweater, Warm embrace, enemy blinded by love</button>
     <button class="btn" data-test="gtstrum">Gabriel's echo guitar, strum and shockwave</button>
     <button class="btn" data-test="gthum">Gabriel's echo guitar, vibrating zombies</button>
     <button class="btn" data-test="gtpop">Gabriel's echo guitar, head exploding</button>
@@ -718,7 +721,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-set="lycan">Lycanthropy pack<small>Claws and armor</small></button>
     <button data-set="horror">Halloween Horror pack<small>Terror Teddy</small></button>
     <button data-set="xmas">Christmas<small>Santa's Punisher</small></button>
-    <button data-set="heroes">My Heroes pack<small>Gabriel's echo guitar</small></button>
+    <button data-set="heroes">My Heroes pack<small>Gabriel's echo guitar and Chris's sweater</small></button>
   </div>
   <div class="seg" id="lyc-sub" role="group" aria-label="Lycanthropy pack section" hidden>
     <button data-lyc="claw">Claws<small>Feral Rippers</small></button>
@@ -2308,6 +2311,7 @@ const ARMOR=[
   {id:'alpha',name:'Alpha Wolf Pelt',prot:.5,price:50000,lycan:true,desc:'Lycanthropy pack armor. A heavy pelt of thick grey wolf fur over light leather, with the alpha\'s skull as a hood. Cuts all damage you take by 50 percent, less than the other pack armors, because this one wants you hurt. Lycan Rage, built in: the more health you have lost, the harder you hit, with every weapon. Your damage goes up by the same share of health you are missing: plus 50 percent at half health, plus 75 percent at a quarter, plus 90 percent at a tenth. Every time you are hit you hear your own growl, deeper the lower your health. Status tells you how much extra damage you have. You must own it before you can buy the Feral Rippers. Its special ability, Full Moon, is listed under it.'},
   {id:'samurai',name:'Samurai armor',prot:.75,price:30000,sam:true,desc:'Samurai pack armor. Lacquered steel plates laced with silk cords, with a horned helmet and a war mask. Cuts all damage you take by 75 percent, the best protection in the game. You must own it before you can buy the Samurai sword.'},
   {id:'shadow',name:'Darkest Shadow Suit',prot:.6,price:35000,night:true,desc:'Nightwalker pack armor. A long black coat with a high collar over a suit of dark, supple plates that drinks in the light. Cuts all damage you take by 60 percent. You must own it before you can buy the Unquenchable scythe. Its special ability, Bat swarm, is listed under it.'},
+  {id:'sweater',name:"Chris's sweater",prot:.4,price:50000,heroes:true,desc:"My Heroes pack armor. A soft, thick blue knitted sweater. Cuts all damage you take by 40 percent. Its warmth slows every zombie and enemy within 10 feet of you to half speed, both moving and attacking. Its special ability, Warm embrace, is listed under it."},
   {id:'berserk',name:'Viking berserker armor',prot:.6,price:50000,myth:true,desc:'Mythical armor of iron, fur and runes. Cuts all damage you take by 60 percent. Has its own special ability, Berserker rage, and special traits you buy below. Traits level up only from kills you make while wearing it.'}
 ];
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
@@ -2337,6 +2341,7 @@ MARMUP.push({id:'batswarm',arm:'shadow',kind:'ability',name:'Bat swarm',price:30
   {id:'appetite',arm:'shadow',kind:'ability',req:'batswarm',name:'Endless appetite',price:20000,desc:'Second tier of Bat swarm. The bats stay out for 15 seconds instead of 10. Every kill they make drives the whole swarm into a frenzy: they fly 25 percent faster and bite 25 percent faster, and it keeps building with every kill until they fly off. Buy Bat swarm first.'});
 MARMUP.push({id:'fullmoon',arm:'alpha',kind:'ability',name:'Full Moon',price:20000,desc:'Special ability. When your health drops to a quarter or less while wearing the Alpha Wolf Pelt, you turn into a werewolf for 20 seconds. Even a hit that would kill you leaves you at 1 health and sets it off: bones crack, you snarl, then let out a huge howl. For the first 10 seconds of the change nothing can hurt you at all. For the whole transformation you take half damage, on top of the armor, and every kill heals you 2 health. You keep all your weapons and can switch to the Feral Rippers any time. Lycan Rage keeps working, so you are already hitting at least 75 percent harder. When it ends you change back, panting. It can happen once per wave.'});
 MARMUP.push({id:'alphagen',arm:'alpha',kind:'ability',name:'Alpha Genetics',price:40000,req:'fullmoon',desc:'Special ability. Your werewolf blood runs pure. While you are transformed by Full Moon, your Lycan Rage damage bonus is doubled: at 10 percent health you do 180 percent extra damage instead of 90, with every weapon, the Feral Rippers included. When the transformation ends, Lycan Rage goes back to normal. Buy Full Moon first.'});
+MARMUP.push({id:'embrace',arm:'sweater',kind:'ability',name:'Warm embrace',price:10000,desc:"Special ability. The sweater's warmth wraps around every enemy within 10 feet of you: they slow to a quarter of their normal speed, moving and attacking, and they smile. Each enemy that starts smiling has a 10 percent chance to be so blinded by love that it turns on its own side. It moves at normal speed and attacks other enemies for the rest of its life, with its normal health and damage, and they fight back. It never attacks you, and its kills pay you silver. Mini bosses can be won over, bosses cannot. Each enemy gets one chance. Enemies are not won over in Tutorial/practice or Co-op."});
 const MUBY=Object.fromEntries(MARMUP.map(u=>[u.id,u]));
 // Hungry barbs: how much harder the Razorwire Carapace's barbs and bleeding hit, from barb kills this battle
 const HB_STEP=.1,HB_MAX=20;
@@ -5241,9 +5246,9 @@ Object.assign(fx,{
 function hypnoShot(d,at=0){tone(d,{type:'sine',f:880,f2:560,dur:.07,vol:.09,at:at+.01})}
 const hypPos=e=>xy(e.angle,e.dist),hypSet=(e,x,y)=>{e.angle=(Math.atan2(x,y)*180/Math.PI+360)%360;e.dist=Math.max(.3,Math.hypot(x,y))};
 const hypOk=e=>e&&e.hp>0&&!EN[e.type].boss&&!e.mega&&!(e.hb>0)&&!e.bub&&!e.hz&&!e.rdb&&!(e.crysT>0)&&!e.crys&&!e.tutT;
-function hypnotize(e,at=0){const i=G.enemies.indexOf(e);if(i<0)return false;G.enemies.splice(i,1);
-  e.hyp=true;e.hp*=HYP_X;e.maxhp*=HYP_X;e.tgt=null;e.hcd=.4;e.hsn=.8+Math.random();e.engaged=false;e.wind=0;e.charge=0;e.pinG=null;e.inf=false;e.win=null;e.inside=false;
-  (G.hyp=G.hyp||[]).push(e);fx.hypno(norm(e.angle-G.heading),e.dist,at);G.hypN=(G.hypN||0)+1;return true}
+function hypnotize(e,at=0,x=HYP_X){const i=G.enemies.indexOf(e);if(i<0)return false;G.enemies.splice(i,1);
+  e.hyp=true;e.hypX=x;e.hp*=x;e.maxhp*=x;e.tgt=null;e.hcd=.4;e.hsn=.8+Math.random();e.engaged=false;e.wind=0;e.charge=0;e.pinG=null;e.inf=false;e.win=null;e.inside=false;
+  (G.hyp=G.hyp||[]).push(e);if(x===HYP_X)fx.hypno(norm(e.angle-G.heading),e.dist,at);G.hypN=(G.hypN||0)+1;return true}
 // called for every Hypno-rifle round that hits; true means this round hypnotized instead of hurting
 function hypRoll(w,e,rel,fly){if(G.coop||G.mode==='practice'||!hypOk(e)||Math.random()>=HYP_CH)return false;
   if(!hypnotize(e,fly))return false;const T=EN[e.type],g=G;
@@ -5258,11 +5263,11 @@ function hypTick(dt){
   G.hyp.forEach(h=>{if(h.hp<=0)return;const T=EN[h.type];let[hx,hy]=hypPos(h);
     if(!h.tgt||!(h.tgt.hp>0)||!G.enemies.includes(h.tgt)){let bd=Infinity;h.tgt=null;
       for(const e of live){const[ex,ey]=hypPos(e),dd=Math.hypot(ex-hx,ey-hy);if(dd<bd){bd=dd;h.tgt=e}}}
-    const sp=T.speed*HYP_X*(h.sm||1)*quick*dt;
+    const hx3=h.hypX??HYP_X,sp=T.speed*hx3*(h.sm||1)*quick*dt;
     if(h.tgt){const[tx,ty]=hypPos(h.tgt),dx=tx-hx,dy=ty-hy,dd=Math.hypot(dx,dy);
       if(dd>HYP_REACH*.85){const st=Math.min(sp,dd-HYP_REACH*.8);hx+=dx/dd*st;hy+=dy/dd*st;hypSet(h,hx,hy)}
       h.hcd-=dt;if(dd<=HYP_REACH+.3&&h.hcd<=0){const e=h.tgt,rel=norm(e.angle-G.heading);h.hcd=T.atk*(h.am||1)/quick;
-        e.hp-=T.dmg*(h.dm||1)*HYP_X*boost;rdShot(e,{id:'hyp'},false);if(atkOk())ATTACK[h.type](out(norm(h.angle-G.heading),h.dist,1,enBus,zKind(h.type)));
+        e.hp-=T.dmg*(h.dm||1)*hx3*boost;rdShot(e,{id:'hyp'},false);if(atkOk())ATTACK[h.type](out(norm(h.angle-G.heading),h.dist,1,enBus,zKind(h.type)));
         if(e.hp<=0){fx.kill(rel,e.dist,.1,e.type);died=true;h.tgt=null}
         else if(contag&&Math.random()<HYP_SPREAD&&hypOk(e)&&hypnotize(e,.1)){h.tgt=null;
           if(!killQuiet()&&!(G.hypSayT>performance.now())){G.hypSayT=performance.now()+1500;say(`The trance spreads! ${EN[e.type].name} hypnotized. ${G.hyp.length} fighting for you.`)}}}}
@@ -6428,7 +6433,7 @@ function enStates(e){const o=[],add=(one,many)=>o.push([one,many||one]);
   if(e.pinG&&e.pinG.mem.length>1)add(`pinned with ${e.pinG.mem.length-1} other${e.pinG.mem.length>2?'s':''}`,'pinned');
   if(e.crysT>0)add('locked in crystal');else if(e.frozeT>0)add('frozen solid');else if(e.slowT>0)add('frozen');
   if(e.grav)add('floating upside down');if(e.tiny)add('shrunk');if(e.slomoT>0)add('in slow motion');if(e.stunT>0)add('stunned');if(e.loveT>0)add('blinded by love');if(e.fog)add('dazed');else if(e.snkP)add('eating snacks');if(e.rbC)add(e.rbOn?"solving a Rubik's Cube":"going for a Rubik's Cube");if(e.shockT>0)add('shocked');if(e.inf)add('infected');if(e.ice)add(`chilled ${e.ice} of 5`,'chilled');
-  if(e.vibT>0)add(e.vib&&e.vib.length>1?`vibrating, ${e.vib.length} strums deep`:'vibrating','vibrating');if(e.xmL>0)add(`lit up with ${e.xmL} Christmas ${e.xmL===1?'light':'lights'}`);if(e.fireT>0)add('on fire');if(e.acidT>0)add('covered in acid');if(e.bleedT>0)add('bleeding');
+  if(e.swIn)add(e.swSmile?'smiling, wrapped in warmth':'slowed by the sweater','slowed by the sweater');if(e.vibT>0)add(e.vib&&e.vib.length>1?`vibrating, ${e.vib.length} strums deep`:'vibrating','vibrating');if(e.xmL>0)add(`lit up with ${e.xmL} Christmas ${e.xmL===1?'light':'lights'}`);if(e.fireT>0)add('on fire');if(e.acidT>0)add('covered in acid');if(e.bleedT>0)add('bleeding');
   if(e.crawl)add('crawling, no legs','crawling');else if(e.rdOn)add('on its knees','on their knees');if(e.rdb)add('knocked down');return o}
 const enHp=e=>Math.max(1,Math.round(e.hp/e.maxhp*100));
 function radar(){
@@ -6740,7 +6745,7 @@ function stepEnemy(e,dt){
   if(e.crysT>0){e.crysT-=dt;e.cue=Math.max(e.cue,.3);if(e.crysT<=0){fx.crysFree(norm(e.angle-G.heading),e.dist);if(EN[e.type].boss)say(`${e.mega?'Mega ':''}${EN[e.type].name} breaks out of the crystal!`)}}
   if(e.grav){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(EN[e.type])){crySpd=1.15;CRY[e.type](out(norm(e.angle-G.heading),e.dist,.8,enBus,zKind(e.type)));crySpd=1}e.cue=1.6+Math.random()}return}   // reverse gravity: floating upside down, helpless
   if(e.rdb){rdDowned(e,dt);return}   // Ragdoll sandbox: knocked flat, it cannot walk or attack until it gets back up
-  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1)*(e.slomoT>0?.1:1)*(e.chillT>0?.5:1)*(e.gumIn?GUM_SLOW:1)*(e.vibT>0?GT_ATK:1);
+  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1)*(e.slomoT>0?.1:1)*(e.chillT>0?.5:1)*(e.gumIn?GUM_SLOW:1)*(e.vibT>0?GT_ATK:1)*(e.swIn?swSlow():1);
   if(e.chillT>0)e.chillT-=dt;if(e.slowT>0)e.slowT-=dt;if(e.slomoT>0)e.slomoT-=dt;if(e.blossT>0)e.blossT-=dt;
   if(e.bub){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,.7,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}   // trapped in a bubble: cannot move or attack
   if(e.hz){e.engaged=false;e.wind=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}
@@ -6787,7 +6792,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);tbTick(dt);if(G.over)return;adrTick(dt);gumTick(dt);symcTick(dt);ankhTick(dt);bubTick(dt);hypTick(dt);xmasTick(dt);gtTick(dt);if(G.over)return;if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);tbTick(dt);if(G.over)return;adrTick(dt);gumTick(dt);symcTick(dt);ankhTick(dt);bubTick(dt);swTick(dt);hypTick(dt);xmasTick(dt);gtTick(dt);if(G.over)return;if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -9064,7 +9069,7 @@ function rdFig(it,P,F,pal){
   let col=b&&b.col||s.col;const now=performance.now();
   if(b&&b.stone)col='#8e8e8e';else if(b&&b.crys)col='#7ff3ff';
   else if(e&&e.hp>0){if(e.rdFl>.05)col='#ffffff';else if(e.fireT>0)col=e.hblue?['#f4f9ff','#2f7bff','#6fb6ff','#9a7bff'][(now/70|0)%4]:(now/90|0)%2?'#ff8a2a':'#ffb347';else if(e.shockT>0)col=(now/70|0)%2?'#ffe14d':s.col;
-    else if(e.vibT>0)col=(now/40|0)%2?'#e2ccff':'#8a5cff';else if(e.slowT>0||e.ice||e.frozeT>0)col='#a9dcff';else if(e.acidT>0)col='#a6e84a';else if(e.hyp)col=(now/350|0)%2?'#c46bff':'#ff6bd8';else if(e.loveT>0)col=(now/450|0)%2?'#ff8cc6':'#ffc4e1';else if(e.fog)col=(now/700|0)%2?'#9fd46a':'#b9a2f0';else if(e.rbOn)col=(now/500|0)%2?'#ffd500':'#0051ba'}
+    else if(e.vibT>0)col=(now/40|0)%2?'#e2ccff':'#8a5cff';else if(e.swIn)col=e.swSmile?'#ffd9a8':'#8fb8ff';else if(e.slowT>0||e.ice||e.frozeT>0)col='#a9dcff';else if(e.acidT>0)col='#a6e84a';else if(e.hyp)col=(now/350|0)%2?'#c46bff':'#ff6bd8';else if(e.loveT>0)col=(now/450|0)%2?'#ff8cc6':'#ffc4e1';else if(e.fog)col=(now/700|0)%2?'#9fd46a':'#b9a2f0';else if(e.rbOn)col=(now/500|0)%2?'#ffd500':'#0051ba'}
   else if(b&&b.dead&&!b.shard)col=rdShade(col,.62);
   const fog=S.zfog?Math.max(0,Math.min(1,1-(it.d-FOG_A)/(FOG_B-FOG_A))):Math.max(.35,Math.min(1,1-(it.d-18)/30));if(fog<=.01)return;let al=fog;if(it.t==='wraith')al*=.72;if(b&&b.fade>0&&b.fade<2)al*=Math.min(1,b.fade/(b.shard?1.6:2));
   c.globalAlpha=al;c.strokeStyle=col;c.fillStyle=col;c.lineCap='round';
@@ -9116,7 +9121,7 @@ function zkParts(k,img){let o=ZK.parts[k];if(o)return o;const P=ZK.M[k==='A'?'zo
 function zkTint(it){const e=it.e,b=it.b,now=performance.now();
   if(b&&b.stone)return['#8e8e8e',.8];if(b&&b.crys)return['#7ff3ff',.7];
   if(e&&e.hp>0){let col=null;if(e.rdFl>.05)col='#ffffff';else if(e.fireT>0)col=e.hblue?['#f4f9ff','#2f7bff','#6fb6ff','#9a7bff'][(now/70|0)%4]:(now/90|0)%2?'#ff8a2a':'#ffb347';
-    else if(e.shockT>0)col=(now/70|0)%2?'#ffe14d':null;else if(e.vibT>0)col=(now/40|0)%2?'#e2ccff':'#8a5cff';else if(e.slowT>0||e.ice||e.frozeT>0)col='#a9dcff';else if(e.acidT>0)col='#a6e84a';
+    else if(e.shockT>0)col=(now/70|0)%2?'#ffe14d':null;else if(e.vibT>0)col=(now/40|0)%2?'#e2ccff':'#8a5cff';else if(e.swIn)col=e.swSmile?'#ffd9a8':'#8fb8ff';else if(e.slowT>0||e.ice||e.frozeT>0)col='#a9dcff';else if(e.acidT>0)col='#a6e84a';
     else if(e.hyp)col=(now/350|0)%2?'#c46bff':'#ff6bd8';else if(e.loveT>0)col=(now/450|0)%2?'#ff8cc6':'#ffc4e1';else if(e.fog)col=(now/700|0)%2?'#9fd46a':'#b9a2f0';
     else if(e.rbOn)col=(now/500|0)%2?'#ffd500':'#0051ba';return col?[col,col==='#ffffff'?.45:.5]:null}
   if(b&&b.dead&&!b.shard)return['#000000',.38];return null}
@@ -9589,7 +9594,40 @@ function gtDraw(c,W,H,X0,Y0,P){
   c.beginPath();c.ellipse(u*.02,u*(.2-.15*st),u*.2,u*.15,.4,0,Math.PI*2);c.fill();c.stroke();
   c.beginPath();c.ellipse(-u*2.1,u*.12,u*.17,u*.13,-.2,0,Math.PI*2);c.fill();c.stroke();
   c.restore()}
+/* ----- Chris's sweater (My Heroes pack armor). Cuts damage by 40 percent. Every enemy within SW_RF feet of you is slowed
+   to SW_SLOW speed, moving and attacking (e.swIn, worked out every frame). Warm embrace: SW_HUG speed instead, and they
+   smile (e.swSmile). The first time an enemy starts smiling it gets one SW_LOVE chance to be blinded by love: it joins
+   the hypnotized enemies (G.hyp) with its normal health, damage and speed (hypnotize multiplier 1) and fights for you.
+   Bosses and mega bosses cannot be won over (hypOk), nor anything in Tutorial/practice or Co-op. ----- */
+const SW_RF=10,SW_R=SW_RF/3.281,SW_SLOW=.5,SW_HUG=.25,SW_LOVE=.1;
+const swHug=()=>P.armor.on==='sweater'&&!!P.marm.embrace,swSlow=()=>swHug()?SW_HUG:SW_SLOW;
+Object.assign(fx,{
+  // an enemy caught in the warmth: a soft woolly hum
+  swWarm(rel,dist,at=0){const d=out(rel,dist,.7,enBus);noise(d,{dur:.35,vol:.25,type:'lowpass',f:700,f2:300,at,attack:.06});tone(d,{type:'sine',f:262,f2:247,dur:.5,vol:.12,at,attack:.08});tone(d,{type:'sine',f:392,dur:.45,vol:.07,at:at+.05,attack:.08})},
+  // a smile: a happy, rising little "mm-hm"
+  swSmile(rel,dist,at=0){const d=out(rel,dist,.8,enBus);tone(d,{type:'triangle',f:330,f2:440,dur:.18,vol:.2,at,attack:.02});tone(d,{type:'triangle',f:415,f2:554,dur:.22,vol:.2,at:at+.2,attack:.02});tone(d,{type:'sine',f:880,dur:.3,vol:.06,at:at+.22})},
+  // blinded by love: a sweet rising chime and a heartbeat
+  swLove(rel,dist,at=0){fx.loveHit(rel,dist,at);const d=out(rel,dist,.9,enBus);[0,.7].forEach(t=>{tone(d,{type:'sine',f:70,f2:50,dur:.12,vol:.45,at:at+.45+t});tone(d,{type:'sine',f:65,f2:48,dur:.12,vol:.35,at:at+.65+t})})}
+});
+function swTick(dt){
+  const on=P.armor.on==='sweater',hug=on&&!!P.marm.embrace,now=performance.now();let snd=0;
+  for(const e of G.enemies.slice()){const was=e.swIn;e.swIn=on&&e.hp>0&&!(e.hb>0)&&e.dist<=SW_R+.35*rdSz(e.type).w;
+    if(!e.swIn||!hug)e.swSmile=false;if(!e.swIn)continue;
+    const rel=norm(e.angle-G.heading);
+    if(hug&&!e.swSmile){e.swSmile=true;
+      if(!e.swRolled){e.swRolled=true;
+        if(!G.coop&&G.mode!=='practice'&&hypOk(e)&&Math.random()<SW_LOVE&&hypnotize(e,0,1)){e.swIn=false;e.swSmile=false;fx.swLove(rel,e.dist);loveHearts(e,8);vib(40);
+          if(!killQuiet())say(`${EN[e.type].mini?'Mini boss ':''}${EN[e.type].name} is blinded by love! It fights for you now.`);continue}}
+      if(snd<2&&!(G.swSndT>now)){snd++;fx.swSmile(rel,e.dist)}}
+    else if(!was&&snd<2&&!(G.swSndT>now)){snd++;fx.swWarm(rel,e.dist)}}
+  if(snd)G.swSndT=now+250}
 const UPDATES=[
+  {id:'2026-11-24-sweater',date:'November 24, 2026',title:"My Heroes pack: Chris's sweater",items:[
+    "New armor in the My Heroes pack: Chris's sweater, 50,000 silver. A soft, thick blue knitted sweater that cuts all damage you take by 40 percent.",
+    'Its warmth slows every zombie and enemy within 10 feet of you to half speed, both moving and attacking. You hear a soft, warm hum when one is caught.',
+    'Special ability Warm embrace, 10,000 silver: enemies within 10 feet slow to a quarter of their speed instead, and they smile, with a happy little hum.',
+    'Each enemy that starts smiling has a 10 percent chance to be so blinded by love that it turns on its own side. It moves at normal speed and attacks other enemies for the rest of its life, and they fight back. It never attacks you, and its kills pay you silver. Mini bosses can be won over, bosses cannot.',
+    'Try the sounds in the sound test.']},
   {id:'2026-11-24-guitar',date:'November 24, 2026',title:"My Heroes pack: Gabriel's echo guitar",items:[
     "The first gear in the My Heroes pack: Gabriel's echo guitar, 70,000 silver. A white and gold electric guitar with wings for horns and a glowing halo over the headstock.",
     'Press Fire to strum a huge power chord. It echoes out as a shockwave that hits every enemy within 50 feet, all the way around you.',
@@ -11261,7 +11299,7 @@ const LSET={mythic:{name:'Mythical'},scav:{name:'Scavenger pack',list:['boomer']
   samurai:{name:'Samurai pack',list:['katana'],note:'The Samurai pack. Legendary blades and armor of the samurai: swords and armor.'},
   lycan:{name:'Lycanthropy pack',list:['rippers'],note:'The Lycanthropy pack. Legendary gear for those who turn under the full moon: claws and armor. The lower your health, the deadlier you get.'},
   horror:{name:'Halloween Horror pack',list:['tbear'],note:'The Halloween Horror pack. Legendary gear for the scariest night of the year. Things that look sweet, until they are not.'},
-  heroes:{name:'My Heroes pack',list:['guitar'],note:'My Heroes pack. Legendary gear inspired by heroes.'},
+  heroes:{name:'My Heroes pack',list:['guitar'],note:'My Heroes pack. Legendary gear inspired by heroes: a guitar and armor.'},
   xmas:{name:'Christmas',list:['santa'],note:'Christmas. Legendary holiday gear. Things that light up, jingle and go bang.'},
   night:{name:'Nightwalker pack',list:['vlad','scythe','ra'],note:'The Nightwalker pack. Legendary gear for those who hunt in the dark, and those who feed in it: machine guns, scythes, lanterns and armor.'}};
 const NIGHTN={lantern:'Nightwalker pack lanterns. Hold Fire to shine the Lantern of Ra. Its ray of sunlight sets everything it touches on fire, and the fire spreads from enemy to enemy.',gun:'Nightwalker pack machine guns. Vlad the Impaler fires wooden stakes that pin enemies to the floor, the walls and each other. Takes only its own upgrades.',blade:'Nightwalker pack scythes. Swing with the Fire button, in a full circle around you. You must own the Darkest Shadow Suit before you can buy the Unquenchable scythe.',armor:'Nightwalker pack armor. Wear one armor at a time, from any section. Armor you buy is yours to keep. The Darkest Shadow Suit has its own special abilities, Bat swarm and Endless appetite, listed under it.'};
@@ -11317,9 +11355,9 @@ document.querySelectorAll('#thr-sub button').forEach(b=>b.onclick=()=>{initAudio
 document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio();curArm=b.dataset.arm;buildShop(true);say(ARMSUBN[curArm]+'.')});
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
 const ARMSUBN={regular:'Standard armor',mythic:'Mythical armor',wear:'Standard wearables',mwear:'Mythical wearables'};
-const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&!a.lycan&&(curArm==='wear'||curArm==='mwear'?a.wear&&(curArm==='mwear'?!!a.myth:!a.myth):!a.wear&&(curArm==='mythic'?a.myth:!a.myth)));
+const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&!a.lycan&&!a.heroes&&(curArm==='wear'||curArm==='mwear'?a.wear&&(curArm==='mwear'?!!a.myth:!a.myth):!a.wear&&(curArm==='mythic'?a.myth:!a.myth)));
 const shopWear=()=>curCat==='armor'&&(curArm==='wear'||curArm==='mwear')?WEAR.filter(r=>curArm==='mwear'?!!r.myth:!r.myth):[];
-const shopArmors=()=>curCat==='armor'?(curArm==='wear'||curArm==='mwear'?[]:armList()):curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):curCat==='mythic'&&curSet==='lycan'&&curLyc==='armor'?ARMOR.filter(a=>a.lycan):[];
+const shopArmors=()=>curCat==='armor'?(curArm==='wear'||curArm==='mwear'?[]:armList()):curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):curCat==='mythic'&&curSet==='lycan'&&curLyc==='armor'?ARMOR.filter(a=>a.lycan):curCat==='mythic'&&curSet==='heroes'?ARMOR.filter(a=>a.heroes):[];
 function buildShop(keepFocus){
   const isGun=GUNCATS.includes(curCat);if(isGun)curStd=curCat;
   document.querySelectorAll('#shop-cats button').forEach(b=>{const on=b.dataset.cat==='std'?isGun:b.dataset.cat===curCat;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});
@@ -11707,7 +11745,7 @@ document.querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>{
     rex:()=>{rexShot(gunDest(0));setTimeout(()=>{if(ctx){fx.zap(0,4);fx.zap(-25,5,.1);fx.zap(20,6,.2);fx.crackle(0,4)}},120)},
     rexsup:()=>{rexShot(gunDest(0),0,true);setTimeout(()=>{if(ctx){[0,-30,25,-50,45].forEach((a,i)=>fx.zap(a,4+i,i*.06));fx.crackle(0,4)}},120)},
     micro:()=>{microShot(gunDest(0));lnFly(0,12,.08+12/60,'micro');setTimeout(()=>{if(ctx)fx.microBoom(0,12)},(.08+12/60)*1000)},
-    novaboom:()=>fx.novaBoom(0,12),hypnotize:()=>fx.hypno(0,8),xmshot:()=>{const d=gunDest(0);for(let i=0;i<4;i++)fx.xmShot(d,i*.4)},xmbuzz:()=>{fx.xmBuzz(-40,6);setTimeout(()=>{if(ctx)fx.xmBuzz(40,6)},900)},xmsleigh:()=>fx.xmSleigh(),xmboom:()=>{fx.xmBoom(-30,10,0,3);fx.xmBoom(10,12,.15,1);fx.xmBoom(40,9,.3,5)},teddyfire:()=>tdPreview(gunDest(0)),fogthrow:()=>fx.bagThrow(),gtstrum:()=>fx.gtStrum(),gthum:()=>{fx.gtHum(-50,6,1);setTimeout(()=>{if(ctx)fx.gtHum(30,9,3)},700);setTimeout(()=>{if(ctx)fx.gtHum(120,4,2)},1400)},gtpop:()=>{fx.gtPop(-20,6);setTimeout(()=>{if(ctx)fx.gtPop(40,10)},900)},gtready:()=>fx.gtReady(),tbthrow:()=>{fx.tbSqueak();setTimeout(()=>{if(ctx)fx.tbGrow(0,8)},500)},tbmaul:()=>{[0,.42,.84,1.26].forEach(t=>fx.tbStep(-20,5,t));fx.tbHuff(-20,4,.3);[1.5,2.5,3.5].forEach(t=>fx.tbMaul(-10,3,t))},tbback:()=>{fx.tbShrink(0,6);for(let i=0;i<8;i++)fx.tbPatter(0,6-i*.7,1+i*.24);setTimeout(()=>{if(ctx)fx.tbHome()},3000)},rbthrow:()=>{fx.rbThrow();setTimeout(()=>{if(ctx)fx.rbLand(0,9)},550)},rbtwist:()=>{for(let i=0;i<8;i++)fx.rbTwist(-20,6,i*.36)},rbspike:()=>{for(let i=0;i<6;i++)fx.rbTwist(20,6,i*.36,true)},rbsolve:()=>fx.rbSolved(0,8),mdcharge:()=>{fx.mdStart();for(let i=0;i<20;i++)fx.mdHum(Math.min(1,i/20),false,0,i*.15);[1,2,3].forEach(n=>setTimeout(()=>{if(ctx)fx.mdLevel(n)},n*1000))},mdblast:()=>fx.mdBlast(3),mdstone:()=>{fx.mdStone(-30,10);setTimeout(()=>fx.mdStone(30,20),700)},fogland:()=>fx.snackLand(0,9),fogmunch:()=>fx.munch(0,6),fogdaze:()=>fx.fogDaze(0,8),foggroan:()=>{fx.fogGroan(-40,8);setTimeout(()=>fx.fogGroan(40,8),1800)},teddyready:()=>{loadTeddyRec();setTimeout(()=>{if(!teddyClip())say('Still loading, press it again.')},250)},teddylove:()=>fx.loveHit(0,10),teddylovehum:()=>{fx.loveHum(-40,8);setTimeout(()=>fx.loveHum(40,8),900)},hyphum:()=>{fx.hypHum(-40,6);setTimeout(()=>fx.hypHum(40,6),700)},novasing:()=>{fx.novaImplode(0,12);setTimeout(()=>{fx.novaBoom(0,12,0,1);fx.novaPush(0,12,.05)},SG_T*1000)},novachain:()=>{fx.novaBoom(0,12,0,1);[-40,-15,20,45].forEach(r=>fx.novaBoom(r,14));setTimeout(()=>say('Chain reaction times 9.'),1700)},
+    novaboom:()=>fx.novaBoom(0,12),hypnotize:()=>fx.hypno(0,8),xmshot:()=>{const d=gunDest(0);for(let i=0;i<4;i++)fx.xmShot(d,i*.4)},xmbuzz:()=>{fx.xmBuzz(-40,6);setTimeout(()=>{if(ctx)fx.xmBuzz(40,6)},900)},xmsleigh:()=>fx.xmSleigh(),xmboom:()=>{fx.xmBoom(-30,10,0,3);fx.xmBoom(10,12,.15,1);fx.xmBoom(40,9,.3,5)},teddyfire:()=>tdPreview(gunDest(0)),fogthrow:()=>fx.bagThrow(),swslow:()=>{fx.swWarm(-40,3);setTimeout(()=>{if(ctx)fx.swWarm(50,2)},700)},swsmile:()=>{fx.swSmile(-30,3);setTimeout(()=>{if(ctx)fx.swSmile(40,2.5)},900)},swlove:()=>fx.swLove(0,3),gtstrum:()=>fx.gtStrum(),gthum:()=>{fx.gtHum(-50,6,1);setTimeout(()=>{if(ctx)fx.gtHum(30,9,3)},700);setTimeout(()=>{if(ctx)fx.gtHum(120,4,2)},1400)},gtpop:()=>{fx.gtPop(-20,6);setTimeout(()=>{if(ctx)fx.gtPop(40,10)},900)},gtready:()=>fx.gtReady(),tbthrow:()=>{fx.tbSqueak();setTimeout(()=>{if(ctx)fx.tbGrow(0,8)},500)},tbmaul:()=>{[0,.42,.84,1.26].forEach(t=>fx.tbStep(-20,5,t));fx.tbHuff(-20,4,.3);[1.5,2.5,3.5].forEach(t=>fx.tbMaul(-10,3,t))},tbback:()=>{fx.tbShrink(0,6);for(let i=0;i<8;i++)fx.tbPatter(0,6-i*.7,1+i*.24);setTimeout(()=>{if(ctx)fx.tbHome()},3000)},rbthrow:()=>{fx.rbThrow();setTimeout(()=>{if(ctx)fx.rbLand(0,9)},550)},rbtwist:()=>{for(let i=0;i<8;i++)fx.rbTwist(-20,6,i*.36)},rbspike:()=>{for(let i=0;i<6;i++)fx.rbTwist(20,6,i*.36,true)},rbsolve:()=>fx.rbSolved(0,8),mdcharge:()=>{fx.mdStart();for(let i=0;i<20;i++)fx.mdHum(Math.min(1,i/20),false,0,i*.15);[1,2,3].forEach(n=>setTimeout(()=>{if(ctx)fx.mdLevel(n)},n*1000))},mdblast:()=>fx.mdBlast(3),mdstone:()=>{fx.mdStone(-30,10);setTimeout(()=>fx.mdStone(30,20),700)},fogland:()=>fx.snackLand(0,9),fogmunch:()=>fx.munch(0,6),fogdaze:()=>fx.fogDaze(0,8),foggroan:()=>{fx.fogGroan(-40,8);setTimeout(()=>fx.fogGroan(40,8),1800)},teddyready:()=>{loadTeddyRec();setTimeout(()=>{if(!teddyClip())say('Still loading, press it again.')},250)},teddylove:()=>fx.loveHit(0,10),teddylovehum:()=>{fx.loveHum(-40,8);setTimeout(()=>fx.loveHum(40,8),900)},hyphum:()=>{fx.hypHum(-40,6);setTimeout(()=>fx.hypHum(40,6),700)},novasing:()=>{fx.novaImplode(0,12);setTimeout(()=>{fx.novaBoom(0,12,0,1);fx.novaPush(0,12,.05)},SG_T*1000)},novachain:()=>{fx.novaBoom(0,12,0,1);[-40,-15,20,45].forEach(r=>fx.novaBoom(r,14));setTimeout(()=>say('Chain reaction times 9.'),1700)},
     zapfx:()=>{[0,.07,.14].forEach((t,i)=>fx.zap(i*40-40,8,t))},dbreathfx:()=>{const b=build(WBY.spas);b.dragon=true;gunSound(b,1);fx.burn(0,6,.15)},fatman:()=>{fx.pin();fx.fall();fx.nuke(2)},hadesfire:()=>hadesShot(gunDest(0),'fire'),boomwide:()=>fx.boomDemo('wide'),kbat:()=>fx.kbDemo(),boomnarrow:()=>fx.boomDemo('narrow'),boomcircle:()=>fx.boomDemo('circle'),slice:()=>fx.slice(-30,10),barbs:()=>{fx.barbs(0,2);[1,2,3].forEach(t=>setTimeout(()=>fx.bleed(0,2),t*1000))},hydrasever:()=>hydraShot(gunDest(0),0,6),hydrahe:()=>fx.heBoom(0,12),hydraacid:()=>{fx.boom(0,12);fx.acidHit(0,12,.05)},acidsizzle:()=>[0,1.1,2.2].forEach(t=>setTimeout(()=>fx.acidSizzle(0,10),t*1000)),acidpool:()=>{fx.poolSplash(0,10);[.4,1.8,3.2].forEach(t=>setTimeout(()=>fx.poolBubble(0,10),t*1000))},tetra:()=>crystalShot(gunDest(0)),tetraburst:()=>[0,.09,.18].forEach(t=>crystalShot(gunDest(0),t)),crystallize:()=>{crystalShot(gunDest(0));fx.crystallize(0,12,.1)},crysboss:()=>{crystalShot(gunDest(0));fx.crysBoss(0,12,.1);setTimeout(()=>fx.crysFree(0,12),3100)},crumble:()=>fx.crumble(5),hadeshell:()=>hadesShot(gunDest(0),'hell'),pandora:()=>pdxDemo(),
     hadesslug:()=>{hadesShot(gunDest(0),'slug');fx.erupt(0,12,.25)},hadeserupt:()=>{fx.erupt(0,10);setTimeout(()=>fx.crackle(-30,10),900);setTimeout(()=>fx.crackle(30,10),1500)},
     hadesload:()=>{loadSgRec();for(let i=0;i<5;i++)setTimeout(()=>{if(!sgShell(rdest(0),SG_PITCH.hades))shellIn(rdest(0))},i*700);setTimeout(()=>{if(!sgPlay(rdest(0),'pump',{rate:SG_PITCH.hades}))MECH.pump(0,rdest(0))},3600)},armor:()=>{fx.hurt();fx.armorHit()},
