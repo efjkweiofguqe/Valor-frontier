@@ -2329,7 +2329,7 @@ MARMUP.push({id:'darksam',arm:'samurai',kind:'ability',name:'Dark samurai',price
 MARMUP.push({id:'hungry',arm:'barbed',kind:'ability',name:'Hungry barbs',price:15000,desc:'Special ability. The barbs grow sharper every time they kill. Every enemy killed by the Razorwire Carapace, torn apart by the barbs when it hits you or bleeding out from their wounds, makes the barbs and the bleeding 10 percent stronger, up to triple damage after 20 barb kills: 120 damage when an enemy hits you, and 30 a second of bleeding. Kills by your guns, grenades and anything else do not count. You hear a rising metal scrape each time they grow sharper, and every 5 barb kills you hear how strong they are. It builds up over each battle and starts over in the next one.'});
 MARMUP.push({id:'batswarm',arm:'shadow',kind:'ability',name:'Bat swarm',price:30000,desc:'Special ability. Every time the damage you take while wearing the Darkest Shadow Suit adds up to half your maximum health, 5 bats burst out of the coat: with 800 health, every 400 damage taken. They fly at 8 feet a second to the enemies closest to you, a different enemy each when they can, and bite for 3 damage a second each. Every bite heals you as much as it deals, so each bite gives back 3 health. They stay out for 10 seconds, then fly off and the charge starts over. It does not charge while they are out. You hear their wings and bites from wherever they are, and Feeding tells you how much health they give you.'},
   {id:'appetite',arm:'shadow',kind:'ability',req:'batswarm',name:'Endless appetite',price:20000,desc:'Second tier of Bat swarm. The bats stay out for 15 seconds instead of 10. Every kill they make drives the whole swarm into a frenzy: they fly 25 percent faster and bite 25 percent faster, and it keeps building with every kill until they fly off. Buy Bat swarm first.'});
-MARMUP.push({id:'fullmoon',arm:'alpha',kind:'ability',name:'Full Moon',price:20000,desc:'Special ability. When your health drops to a quarter or less while wearing the Alpha Wolf Pelt, you turn into a werewolf for 20 seconds: bones crack, you snarl, then let out a huge howl. While you are transformed you take half damage, on top of the armor, and every kill heals you 2 health. You keep all your weapons and can switch to the Feral Rippers any time. Lycan Rage keeps working, so you are already hitting at least 75 percent harder. When it ends you change back, panting. It can happen once per wave.'});
+MARMUP.push({id:'fullmoon',arm:'alpha',kind:'ability',name:'Full Moon',price:20000,desc:'Special ability. When your health drops to a quarter or less while wearing the Alpha Wolf Pelt, you turn into a werewolf for 20 seconds: bones crack, you snarl, then let out a huge howl. For the first 10 seconds of the change nothing can hurt you at all. For the whole transformation you take half damage, on top of the armor, and every kill heals you 2 health. You keep all your weapons and can switch to the Feral Rippers any time. Lycan Rage keeps working, so you are already hitting at least 75 percent harder. When it ends you change back, panting. It can happen once per wave.'});
 MARMUP.push({id:'alphagen',arm:'alpha',kind:'ability',name:'Alpha Genetics',price:40000,req:'fullmoon',desc:'Special ability. Your werewolf blood runs pure. While you are transformed by Full Moon, your Lycan Rage damage bonus is doubled: at 10 percent health you do 180 percent extra damage instead of 90, with every weapon, the Feral Rippers included. When the transformation ends, Lycan Rage goes back to normal. Buy Full Moon first.'});
 const MUBY=Object.fromEntries(MARMUP.map(u=>[u.id,u]));
 // Hungry barbs: how much harder the Razorwire Carapace's barbs and bleeding hit, from barb kills this battle
@@ -5519,7 +5519,7 @@ function zElemTick(dt){
    for 20 seconds, taking half damage and healing 2 health a kill.
    Feral Rippers: a wide double swipe every half second, 120 degrees out to 5 feet, 15 a swipe, each hit bleeding
    5 a second for 3 seconds. Essence Drain: 1 percent stronger per enemy hit, no limit, gone after 10 seconds with no hit. */
-const RIP_R=5/3.281,RIP_ARC=60,RIP_BLEED=5,RIP_BT=3,ESS_T=10,MOON_T=20;
+const RIP_R=5/3.281,RIP_ARC=60,RIP_BLEED=5,RIP_BT=3,ESS_T=10,MOON_T=20,MOON_INV=10;
 Object.assign(fx,{
   ripSwipe(dir=1){const t=ctx.currentTime,d=gunDest(0),p=ctx.createStereoPanner?ctx.createStereoPanner():null,g=ctx.createGain();g.__pri=true;
     if(p){p.pan.setValueAtTime(-.85*dir,t);p.pan.linearRampToValueAtTime(.85*dir,t+.16);g.connect(p);p.connect(d)}else g.connect(d);
@@ -5546,13 +5546,14 @@ Object.assign(fx,{
   // changing back: heavy panting
   moonEnd(){const d=gunDest(0);tbRec(d,'bones',{vol:.5,rate:1.15,dur:1.2});for(let i=0;i<6;i++){const at=i*.42;noise(d,{dur:.2,vol:.4,type:'bandpass',f:i%2?1100:800,q:1.2,at,attack:.04});tone(d,{type:'sawtooth',f:i%2?140:110,f2:90,dur:.18,vol:.05,at,attack:.04})}}
 });
-function lycWords(){if(P.armor.on!=='alpha'||!G)return '';const n=Math.round((lycMult()-1)*100);return `${G.moonT>0?`Full Moon, ${Math.ceil(G.moonT)} seconds left. `:''}Lycan Rage plus ${n} percent damage. `}
+function lycWords(){if(P.armor.on!=='alpha'||!G)return '';const n=Math.round((lycMult()-1)*100);return `${G.moonT>0?`Full Moon, ${Math.ceil(G.moonT)} seconds left${G.moonInv>0?`, invincible for ${Math.ceil(G.moonInv)} more`:''}. `:''}Lycan Rage plus ${n} percent damage. `}
 function lycHurt(){const k=Math.min(1,Math.max(0,1-G.hp/G.maxhp)),n=performance.now();
   if(!(G.lycAt>n-1200)){G.lycAt=n;fx.lycGrowl(k)}
   if(!G.told.lyc&&k>=.25){G.told.lyc=1;say(`Lycan Rage, plus ${Math.round(k*100)} percent damage.`)}
-  if(P.marm.fullmoon&&!(G.moonT>0)&&G.hp<=G.maxhp*.25&&G.moonWave!==G.wave){G.moonWave=G.wave;G.moonT=MOON_T;fx.moonTurn();vib(600);
-    (g=>setTimeout(()=>{if(G===g&&!G.over)say(`Full Moon! You transform for ${MOON_T} seconds. Half damage, and every kill heals you.${P.marm.alphagen?` Alpha Genetics doubles your Lycan Rage: plus ${Math.round(2*Math.min(1,Math.max(0,1-G.hp/G.maxhp))*100)} percent damage.`:''}`)},1800))(G)}}
+  if(P.marm.fullmoon&&!(G.moonT>0)&&G.hp<=G.maxhp*.25&&G.moonWave!==G.wave){G.moonWave=G.wave;G.moonT=MOON_T;G.moonInv=MOON_INV;fx.moonTurn();vib(600);
+    (g=>setTimeout(()=>{if(G===g&&!G.over)say(`Full Moon! You transform for ${MOON_T} seconds. Invincible for the first ${MOON_INV} seconds, then half damage, and every kill heals you.${P.marm.alphagen?` Alpha Genetics doubles your Lycan Rage: plus ${Math.round(2*Math.min(1,Math.max(0,1-G.hp/G.maxhp))*100)} percent damage.`:''}`)},1800))(G)}}
 function lycTick(dt){
+  if(G.moonInv>0){G.moonInv-=dt;if(G.moonInv<=0){G.moonInv=0;if(G.moonT>0&&!G.over)say(`Invincibility over. ${Math.ceil(G.moonT)} seconds of Full Moon left.`)}}
   if(G.moonT>0){G.moonT-=dt;if(G.moonT<=0){G.moonT=0;fx.moonEnd();say('The full moon fades. You change back.')}}
   if(G.essN>0){G.essT-=dt;if(G.essT<=0){const n=G.essN;G.essN=0;if(n>=10)say('Essence Drain faded.');hud()}}
   // Feral Rippers bleeding
@@ -5610,6 +5611,7 @@ function hurtPlayer(dmg,by){
   if(G.coop&&coopHurtHook(dmg,by))return;
   if(G.down)return;   // co-op: knocked down, nothing can hurt you while you wait to be revived
   if(G.ankhInv>0)return;   // the ankh just raised you: a moment of grace
+  if(G.moonInv>0){const n=performance.now();if(!(G.moonInvAt>n-400)){G.moonInvAt=n;fx.armorHit()}return}   // Full Moon: invincible for the first 10 seconds of the change
   if(wearing('rabbit')&&Math.random()<.05){fx.whoosh();const n=performance.now();if(!(G.luckAt>n-4000)){G.luckAt=n;say('Lucky! Missed you.')}return}   // Lucky rabbit's foot: 5 percent of hits miss
   let d=dmg*(S.diff<1?.7:S.diff>1.5?1.6:1);const ar=ARMBY[P.armor.on];
   if(ar)d*=1-ar.prot;if(G.cover)d*=.5;d*=ringGuard();if(G.adrT>0)d*=.5;   // Adrenaline shot: half damage
@@ -9480,6 +9482,10 @@ RF_GUN.santa={name:"Santa's Punisher",mag:[44.6,6.8],grip:[63.4,10.2],trig:[55.6
       if(on){c.globalCompositeOperation='lighter';c.globalAlpha=.35;rfCirc(c,x,y+1.6,2.4,col);c.globalCompositeOperation='source-over'}c.globalAlpha=1}
     c.restore()}};
 const UPDATES=[
+  {id:'2026-11-24-moon-inv',date:'November 24, 2026',title:'Full Moon: 10 seconds of invincibility',items:[
+    'When Full Moon turns you into a werewolf, nothing can hurt you for the first 10 seconds. Hits that land just clank off.',
+    'Everything else stays the same: 20 seconds as a werewolf, half damage the whole time, 2 health for every kill, and Lycan Rage and Alpha Genetics on top.',
+    'A voice tells you when the invincibility is over, and Status tells you how long it has left.']},
   {id:'2026-11-24-santa',date:'November 24, 2026',title:"Christmas set: Santa's Punisher",items:[
     "The first gear in the Christmas set: Santa's Punisher, 100,000 silver. A legendary assault rifle in red and white candy cane stripes that fires Christmas lights.",
     '25 damage a round, one round every 0.4 seconds, full auto. 25 rounds and a 2.5 second reload. Every shot is a glassy pop with a tiny jingle.',
