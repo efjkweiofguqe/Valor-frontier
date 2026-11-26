@@ -725,6 +725,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-set="horror">Halloween Horror pack<small>Terror Teddy</small></button>
     <button data-set="xmas">Christmas<small>Santa's Punisher and the Ornament Launcher</small></button>
     <button data-set="heroes">My Heroes pack<small>Gabriel's echo guitar and Chris's sweater</small></button>
+    <button data-set="pets">Pets<small>Voltkit, the shadow fox</small></button>
   </div>
   <div class="seg" id="lyc-sub" role="group" aria-label="Lycanthropy pack section" hidden>
     <button data-lyc="claw">Claws<small>Feral Rippers</small></button>
@@ -2321,7 +2322,7 @@ const ARMOR=[
 ];
 /* mythical armor upgrades. ability = bought once. trait = bought once, then levels up from kills made while wearing that armor */
 /* Wearables: worn on top of armor, by slot. Up to 2 rings and 1 piece of eyewear (monocle, glasses) at once */
-const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'},neck:{max:1,one:'necklace',many:'necklaces'},hands:{max:1,one:'pair of gloves',many:'pairs of gloves'},charm:{max:1,one:'charm',many:'charms'},head:{max:1,one:'crown',many:'crowns'},wrist:{max:1,one:'sweat band',many:'sweat bands'},chest:{max:1,one:'chest piece',many:'chest pieces'}},WEAR=[
+const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewear',many:'pieces of eyewear'},neck:{max:1,one:'necklace',many:'necklaces'},hands:{max:1,one:'pair of gloves',many:'pairs of gloves'},charm:{max:1,one:'charm',many:'charms'},head:{max:1,one:'crown',many:'crowns'},wrist:{max:1,one:'sweat band',many:'sweat bands'},chest:{max:1,one:'chest piece',many:'chest pieces'},pet:{max:1,one:'pet',many:'pets'},petup:{max:0,one:'pet upgrade',many:'pet upgrades'}},WEAR=[
   {id:'sweatband',name:'Sweat band',slot:'wrist',price:4000,desc:'A thick terry-cloth sweat band for a firmer grip and more strength. The Samurai sword and the Unquenchable scythe hit 10 percent harder and swing 10 percent faster. The bonus is worked out from each weapon\'s base stats only, so upgrades are not boosted again: the Samurai sword\'s wave gains 100 at full reach, making 1,100, or 2,100 with an Iaido draw. The Kinetic baseball bat is not a melee weapon and is not changed. Wristband: one at a time, and it fits under Tactical gloves. It does not stack with the Crown of Vlad the Impaler: putting one on takes the other off.'},
   {id:'gloves',name:'Tactical gloves',slot:'hands',price:3000,desc:'Snug tactical gloves with grippy palms for a steadier pistol hold. Every pistol does 15 percent more damage and reloads 15 percent faster, including the Micro Catastrophe and the Pfeifer Zeliska\'s one-round-at-a-time loading. Gloves: one pair at a time.'},
   {id:'dogtags',name:'Dog tags',slot:'neck',price:4000,desc:'A pair of stamped steel dog tags on a ball chain. You earn 10 percent more silver from every kill. Necklace: one at a time.'},
@@ -2334,7 +2335,11 @@ const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewe
   {id:'ringred',slot:'ring',name:'Red ring',price:20000,myth:true,desc:'A burning red ring. Every area of effect weapon does 19 percent more damage: the Black Hole Cannon, Hydra, Pumpkin Salvo, Soul blast, Medusa and Heavy Bubble Blaster.'},
   {id:'ringgreen',slot:'ring',name:'Green ring',price:20000,myth:true,desc:'A bright green ring that quickens your trigger finger. Every weapon fires 15 percent faster. Stacks with Hair trigger and other trigger upgrades.'},
   {id:'ringpurple',slot:'ring',name:'Purple ring',price:20000,myth:true,desc:'A deep purple ring that drinks in life. Every kill you make heals you 1 health, up to your max health.'},
-  {id:'crownvlad',slot:'head',name:'Crown of Vlad the Impaler',price:33000,myth:true,desc:'The iron crown of the Impaler himself. The Samurai sword and the Unquenchable scythe hit 20 percent harder and swing 20 percent faster, worked out from each weapon\'s base stats only, like the Sweat band: the Samurai sword\'s wave reaches 1,200, or 2,200 with an Iaido draw. It does not stack with the Sweat band: putting one on takes the other off. And every 30 kills you make in a match, by any weapon, heal you 5 percent of your max health. The Kinetic baseball bat is not a melee weapon and is not changed. Crown: one at a time, alongside your rings.'}
+  {id:'crownvlad',slot:'head',name:'Crown of Vlad the Impaler',price:33000,myth:true,desc:'The iron crown of the Impaler himself. The Samurai sword and the Unquenchable scythe hit 20 percent harder and swing 20 percent faster, worked out from each weapon\'s base stats only, like the Sweat band: the Samurai sword\'s wave reaches 1,200, or 2,200 with an Iaido draw. It does not stack with the Sweat band: putting one on takes the other off. And every 30 kills you make in a match, by any weapon, heal you 5 percent of your max health. The Kinetic baseball bat is not a melee weapon and is not changed. Crown: one at a time, alongside your rings.'},
+  {id:'voltkit',slot:'pet',pet:true,myth:true,name:'Voltkit',price:40000,desc:'A pet for the Pets set. Voltkit is a small shadow fox, all jet black, with a long pointed snout, four pointed ears (a tall pair on top and a smaller pair angled out to the sides), two big bushy tails with glowing blue tips, glowing blue almond eyes, a blue diamond on its forehead and a blue zigzag spark down its side. Equip it and it comes into every battle with you except Tutorial/practice. It can never be hurt. It trots along about 18 feet in front of you and a little to your left, clear of the gun in your hands, so sighted players can see it while facing forward, and paces around within about 4 feet of that spot. Spark Bite: once a second it zaps the nearest enemy within 20 feet of you for 20 damage, and the zap jumps to up to 2 more enemies within 10 feet of the first for 10 damage each. You hear soft chirps so you always know where it is, a sharp crackle on every zap, a fizzing pop on each jump and a happy yip when it gets a kill. Pet: one at a time.'},
+  {id:'vktwin',slot:'petup',petup:'voltkit',name:'Twin Tail Surge',price:15000,desc:'Voltkit upgrade. Both tails fire, so Spark Bite zaps twice a second instead of once.'},
+  {id:'vkfur',slot:'petup',petup:'voltkit',name:'Static Fur',price:10000,desc:'Voltkit upgrade. Voltkit charges you with static while it is equipped. Any enemy that hits you gets shocked for 15 damage and stunned for 1 second.'},
+  {id:'vkhowl',slot:'petup',petup:'voltkit',name:'Thunderkit Howl',price:30000,desc:'Voltkit special ability. Every kill you make, with anything, charges it. After 50 kills a voice says Thunderkit Howl ready, and as soon as an enemy is within 40 feet of you, Voltkit lets out a rising howl and calls down a lightning storm on every enemy within 40 feet: 150 damage each, and a 3 second stun. Then it starts charging again.'}
 ],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r])),WEX={sweatband:'crownvlad',crownvlad:'sweatband'};   // pairs that never stack
 const MARMUP=[
   {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
@@ -4716,6 +4721,114 @@ Object.assign(fx,{
   /* back in your arms: a happy little double squeak */
   tbHome(at=0){fx.tbSqueak(0,0,at,1.2);fx.tbSqueak(0,0,at+.28,1.35)}
 });
+/* Voltkit (Pets set). An original shadow fox: jet black, long pointed snout, four pointed ears, two bushy tails with
+   glowing blue tips, blue eyes, a blue forehead diamond and a blue zigzag down its side. It can never be hurt.
+   It stays about 18 feet in front of you and a little to your left (anything much nearer drops below the bottom of
+   the picture, and the left keeps it clear of the gun in your hands), and paces around within about 4 feet of that spot.
+   Spark Bite: once a second (twice with Twin Tail Surge) it zaps the nearest enemy within 20 feet of you for 20,
+   jumping to up to 2 more within 10 feet of it for 10 each. Static Fur: enemies that hit you are shocked for 15 and
+   stunned 1 second. Thunderkit Howl: 50 kills charge it; then a lightning storm hits everything within 40 feet for 150
+   and stuns for 3 seconds. Not in Tutorial/practice. It lives in G.vk. */
+const VK_HOMEF=18,VK_HOMEA=-22,VK_PACEF=4,VK_H=.9,VK_R=20/3.281,VK_CR=10/3.281,VK_ZAP=20,VK_CHD=10,VK_CHN=2,VK_FUR=15,VK_HK=50,VK_HR=40/3.281,VK_HD=150,VK_HS=3;
+Object.assign(fx,{
+  /* soft little chirps now and then, so you always know where it is */
+  vkChirp(rel=0,dist=0){const d=out(rel,dist,.55,gunBus);tone(d,{type:'sine',f:1900,f2:2600,dur:.07,vol:.22});tone(d,{type:'sine',f:2400,f2:2000,dur:.09,vol:.18,at:.09})},
+  /* a sharp electric crackle on every zap */
+  vkZap(rel,dist,v=1){const d=out(rel,dist,.9*v,gunBus);noise(d,{dur:.09,vol:.55,type:'highpass',f:2500,attack:.001});tone(d,{type:'sawtooth',f:1400,f2:180,dur:.13,vol:.22});noise(d,{dur:.05,vol:.4,type:'bandpass',f:4200,q:2,at:.04,attack:.001})},
+  /* a fizzing pop each time the zap jumps to another enemy */
+  vkPop(rel,dist,at=0){const d=out(rel,dist,.7,gunBus);noise(d,{dur:.06,vol:.4,type:'bandpass',f:2600,q:3,at});tone(d,{type:'square',f:900,f2:300,dur:.07,vol:.1,at})},
+  /* a happy yip after a kill */
+  vkYip(rel=0,dist=0){const d=out(rel,dist,.8,gunBus);tone(d,{type:'triangle',f:850,f2:1350,dur:.08,vol:.3});tone(d,{type:'triangle',f:1150,f2:1650,dur:.1,vol:.28,at:.11})},
+  /* light paws when it runs to catch up with you */
+  vkPat(rel,dist){const d=out(rel,dist,.35,gunBus);noise(d,{dur:.025,vol:.25,type:'bandpass',f:1800,q:2})},
+  /* Thunderkit Howl: a rising howl */
+  vkHowl(rel,dist){const d=out(rel,dist,1.1,gunBus);tone(d,{type:'sawtooth',f:320,f2:880,dur:1,vol:.2,attack:.15});tone(d,{type:'sine',f:330,f2:900,dur:1.05,vol:.3,attack:.12});tone(d,{type:'sine',f:900,f2:700,dur:.4,vol:.25,at:.95})},
+  /* then the lightning storm: a crack and rolling thunder */
+  vkStorm(){const d=out(0,0,1.2,gunBus);noise(d,{dur:.12,vol:.9,type:'highpass',f:1800,attack:.001});noise(d,{dur:1.6,vol:.8,type:'lowpass',f:300,f2:80,at:.05,attack:.02});
+    for(let i=0;i<6;i++)noise(d,{dur:.05,vol:.5,type:'bandpass',f:3000+Math.random()*2000,q:2,at:.05+i*.07,attack:.001})}
+});
+const vkHas=id=>!!(P.wear&&P.wear.own.includes(id)&&P.wear.on.includes('voltkit'));
+function vkHome(){return xy(G.heading+VK_HOMEA,VK_HOMEF/3.281)}
+function vkRel(){const v=G.vk;return[norm(Math.atan2(v.x,v.z)*180/Math.PI-G.heading),Math.hypot(v.x,v.z)]}
+function vkCount(dead){if(!G||!G.vk||!vkHas('vkhowl')||G.vk.ready||G.vk.howlT>0)return;G.vk.ch+=dead.length;
+  if(G.vk.ch>=VK_HK){G.vk.ch=VK_HK;G.vk.ready=true;fx.vkChirp(...vkRel());say('Thunderkit Howl ready.')}}
+function vkBolt(a,b){const pts=[a];for(let i=1;i<6;i++){const k=i/6;pts.push([a[0]+(b[0]-a[0])*k+(Math.random()-.5)*.25,a[1]+(b[1]-a[1])*k+(Math.random()-.5)*.25,a[2]+(b[2]-a[2])*k+(Math.random()-.5)*.25])}pts.push(b);return pts}
+function vkTick(dt){
+  if(!wearing('voltkit')||G.mode==='practice'){G.vk=null;return}
+  if(!G.vk){const[hx,hz]=vkHome();G.vk={x:hx,z:hz,tx:hx,tz:hz,wait:1,dir:1,step:0,cd:1.2,chirp:1.5,pat:0,ch:0,ready:false,howlT:0,bolts:[],flash:0,kills:0};fx.vkChirp(...vkRel())}
+  const v=G.vk;
+  // pacing: wander to a spot within 4 feet of the home spot, rest a moment, pick another. Run to catch up if you turned
+  const[hx,hz]=vkHome(),far=Math.hypot(v.x-hx,v.z-hz)>VK_PACEF/3.281*1.6;
+  if(far||(v.wait-=dt)<=0&&Math.hypot(v.tx-v.x,v.tz-v.z)<.08){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*VK_PACEF/3.281;v.tx=hx+Math.sin(a)*r;v.tz=hz+Math.cos(a)*r;v.wait=1+Math.random()*2}
+  {const dx=v.tx-v.x,dz=v.tz-v.z,dd=Math.hypot(dx,dz);
+    if(dd>.05){const sp=far?4:.9,st=Math.min(dd,sp*dt);v.x+=dx/dd*st;v.z+=dz/dd*st;v.step+=dt*(far?16:8);
+      const hd=G.heading*Math.PI/180,sx=dx*Math.cos(hd)-dz*Math.sin(hd);if(Math.abs(sx)>.01)v.dir=sx>0?1:-1;
+      if(far&&(v.pat-=dt)<=0){v.pat=.2;fx.vkPat(...vkRel())}}
+    else v.step=0}
+  v.chirp-=dt;if(v.chirp<=0){v.chirp=3.5+Math.random()*2;fx.vkChirp(...vkRel())}
+  v.bolts=v.bolts.filter(b=>(b.t-=dt)>0);if(v.flash>0)v.flash-=dt;
+  const mouth=[v.x+Math.sin((G.heading)*Math.PI/180)*.15,.42,v.z+Math.cos(G.heading*Math.PI/180)*.15];
+  // Spark Bite
+  v.cd-=dt;
+  if(v.cd<=0){const live=tbLive().filter(e=>e.dist<=VK_R).sort((a,b)=>a.dist-b.dist),e=live[0];
+    if(e){v.cd=vkHas('vktwin')?.5:1;const m=gunMult(),[ex,ez]=hypPos(e),er=norm(e.angle-G.heading);
+      e.hp-=VK_ZAP*m;fx.vkZap(er,e.dist);v.bolts.push({t:.16,pts:vkBolt(mouth,[ex,1.1,ez])});if(e.hp<=0)e.vkKill=true;
+      tbLive().filter(o=>o!==e&&o.hp>0).map(o=>{const[ox,oz]=hypPos(o);return[o,Math.hypot(ox-ex,oz-ez),ox,oz]}).filter(q=>q[1]<=VK_CR).sort((a,b)=>a[1]-b[1]).slice(0,VK_CHN)
+        .forEach(([o,,ox,oz],i)=>{o.hp-=VK_CHD*m;fx.vkPop(norm(o.angle-G.heading),o.dist,.05+i*.05);v.bolts.push({t:.16,pts:vkBolt([ex,1.1,ez],[ox,1.1,oz])});if(o.hp<=0)o.vkKill=true})}
+    else v.cd=.15}
+  // Thunderkit Howl: once charged, it howls as soon as an enemy is within 40 feet, then the storm strikes
+  if(v.ready&&!(v.howlT>0)&&tbLive().some(e=>e.dist<=VK_HR)){v.ready=false;v.howlT=1;fx.vkHowl(...vkRel())}
+  if(v.howlT>0){v.howlT-=dt;if(v.howlT<=0){v.howlT=0;v.ch=0;const hit=tbLive().filter(e=>e.dist<=VK_HR),m=gunMult();fx.vkStorm();vib(80);v.flash=.4;
+      hit.forEach((e,i)=>{e.hp-=VK_HD*m;e.stunT=Math.max(e.stunT||0,VK_HS);if(e.hp<=0)e.vkKill=true;if(i<14){const[ex,ez]=hypPos(e);v.bolts.push({t:.4,pts:vkBolt([ex+(Math.random()-.5),7,ez+(Math.random()-.5)],[ex,.9,ez])})}});
+      if(!killQuiet())say(`Thunderkit Howl! ${hit.length} ${hit.length===1?'enemy':'enemies'} struck.`)}}
+  if(G.enemies.some(e=>e.hp<=0&&e.vkKill)){const n=G.enemies.filter(e=>e.hp<=0&&e.vkKill);n.forEach(e=>fx.kill(norm(e.angle-G.heading),e.dist,.1,e.type));v.kills+=n.length;processDead('voltkit');fx.vkYip(...vkRel())}}
+function vkWords(){const v=G&&G.vk;if(!v)return '';const[r]=vkRel();
+  return `Voltkit at ${clock(r)}${vkHas('vkhowl')?`, Thunderkit Howl ${v.ready||v.howlT>0?'ready':`${v.ch} of ${VK_HK} kills`}`:''}. `}
+/* Draws Voltkit side-on with its feet at (x,y), h pixels from paws to ear tips, facing right when dir is 1 */
+function vkArt(c,x,y,h,dir,step,t){
+  const u=h/100,BL='#3ba7ff',BK='#0d0d10',FAR='#060608',OL='rgba(120,145,180,.75)';
+  c.save();c.translate(x,y);c.scale(dir*u,u);c.lineJoin='round';c.lineCap='round';
+  c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.ellipse(-10,0,58,6,0,0,Math.PI*2);c.fill();
+  const lw=Math.max(1/u,1.3);c.strokeStyle=OL;c.lineWidth=lw;
+  const sh=(f)=>{c.fillStyle=BK;f();c.fill();c.stroke()};
+  // two bushy tails, swaying a little
+  c.save();c.translate(-30,-45);c.rotate(Math.sin(t*2.6)*.07);c.translate(30,45);
+  sh(()=>{c.beginPath();c.moveTo(-28,-36);c.bezierCurveTo(-48,-40,-88,-46,-110,-66);c.bezierCurveTo(-86,-72,-60,-60,-48,-52);c.bezierCurveTo(-40,-48,-34,-46,-30,-46);c.closePath()});
+  c.fillStyle=BL;c.beginPath();c.ellipse(-102,-66,10,5,-.45,0,Math.PI*2);c.fill();
+  c.restore();c.save();c.translate(-30,-45);c.rotate(Math.sin(t*2.6+1.3)*.08);c.translate(30,45);
+  sh(()=>{c.beginPath();c.moveTo(-28,-40);c.bezierCurveTo(-52,-54,-78,-74,-90,-100);c.bezierCurveTo(-68,-94,-52,-78,-44,-62);c.bezierCurveTo(-38,-52,-33,-48,-28,-46);c.closePath()});
+  c.fillStyle=BL;c.beginPath();c.ellipse(-86,-94,9,5,-1.05,0,Math.PI*2);c.fill();
+  c.restore();
+  // legs: far pair darker and behind the body, near pair in front
+  const sw=Math.sin(step)*.45,leg=(hx,a,col)=>{c.strokeStyle=col;c.lineWidth=7;c.beginPath();c.moveTo(hx,-38);c.lineTo(hx+Math.sin(a)*38,-38+Math.cos(a)*38);c.stroke()};
+  leg(-16,-sw,FAR);leg(26,sw,FAR);
+  c.strokeStyle=OL;c.lineWidth=lw;
+  sh(()=>{c.beginPath();c.ellipse(0,-46,38,15,0,0,Math.PI*2)});
+  sh(()=>{c.beginPath();c.ellipse(30,-56,13,15,-.5,0,Math.PI*2)});
+  leg(-22,sw,BK);leg(20,-sw,BK);
+  c.strokeStyle=OL;c.lineWidth=lw;
+  // the small side pair of ears, angled back, then the head, snout and tall ears
+  sh(()=>{c.beginPath();c.moveTo(33,-74);c.lineTo(12,-90);c.lineTo(39,-63);c.closePath()});
+  c.fillStyle='#1e3a5f';c.beginPath();c.moveTo(31,-74);c.lineTo(18,-85);c.lineTo(35,-68);c.closePath();c.fill();
+  sh(()=>{c.beginPath();c.ellipse(42,-68,15,12,0,0,Math.PI*2)});
+  sh(()=>{c.beginPath();c.moveTo(50,-75);c.lineTo(80,-64);c.lineTo(52,-58);c.closePath()});
+  sh(()=>{c.beginPath();c.moveTo(35,-76);c.lineTo(32,-104);c.lineTo(46,-79);c.closePath()});
+  sh(()=>{c.beginPath();c.moveTo(43,-78);c.lineTo(49,-102);c.lineTo(53,-75);c.closePath()});
+  c.fillStyle='#1e3a5f';c.beginPath();c.moveTo(37,-80);c.lineTo(35,-97);c.lineTo(43,-81);c.closePath();c.fill();
+  c.fillStyle='#2a3a55';c.beginPath();c.arc(79,-64,2.6,0,Math.PI*2);c.fill();
+  // glowing blue eye with a slit pupil, forehead diamond, and the zigzag spark down its side
+  c.fillStyle=BL;c.beginPath();c.ellipse(50,-70,4.5,2.4,-.15,0,Math.PI*2);c.fill();
+  c.fillStyle='#000';c.beginPath();c.ellipse(50.5,-70,.9,2.1,0,0,Math.PI*2);c.fill();
+  c.fillStyle=BL;c.beginPath();c.moveTo(41,-82);c.lineTo(44,-78);c.lineTo(41,-74);c.lineTo(38,-78);c.closePath();c.fill();
+  c.strokeStyle=BL;c.lineWidth=2.6;c.beginPath();c.moveTo(-14,-56);c.lineTo(-5,-48);c.lineTo(-12,-43);c.lineTo(1,-35);c.stroke();
+  c.restore()}
+function vkDraw(c,X0,Y0,P){const v=G&&G.vk;if(!v)return;const o=[0,0,0],o2=[0,0,0],bob=v.step?Math.abs(Math.sin(v.step))*.03:0;
+  if(v.flash>0){c.save();c.globalAlpha=Math.min(.35,v.flash);c.fillStyle='#bfe6ff';c.fillRect(0,0,c.canvas.width,c.canvas.height);c.restore()}
+  if(P(v.x,bob,v.z,o)&&P(v.x,bob+VK_H,v.z,o2))vkArt(c,o[0],o[1],Math.max(6,o[1]-o2[1]),v.dir,v.step,performance.now()/1000);
+  if(v.bolts.length){c.save();c.lineCap='round';c.lineJoin='round';const a=[0,0,0];
+    for(const b of v.bolts){const pts=[];for(const p of b.pts){if(!P(p[0],p[1],p[2],a)){pts.length=0;break}pts.push([a[0],a[1]])}if(pts.length<2)continue;
+      [[5,'rgba(59,167,255,.45)'],[2,'#e8f6ff']].forEach(([w,col])=>{c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)c.lineTo(pts[i][0],pts[i][1]);c.stroke()})}
+    c.restore()}}
 function tbWi(){return G.lo.findIndex(w=>w.tbear)}
 function tbSync(){const wi=tbWi();if(wi>=0)G.ammo[wi][0]=1}   // always counts as loaded, so nothing tries to reload it; G.tb decides whether it can be thrown
 function tbLive(){return G.enemies.filter(e=>e.hp>0&&!(e.hb>0)&&!e.hz&&!e.stone)}
@@ -5625,7 +5738,7 @@ const killQuiet=()=>!!(KA&&KA.g===G&&(KA.b||performance.now()-KA.last<1200));
    co-op teammate. It shows once, when the match ends by death or by Quit to main menu in the pause menu. It is kept
    only on this match, never saved, so once the player leaves it, it is gone. */
 const ZSBN={bats:'Bat swarm, Darkest Shadow Suit',barbed:'Razorwire barbs, Razorwire Carapace',berserk:'Berserker rage ring of fire, Viking berserker armor',
-  oni:'Dark samurai oni, Samurai armor',hyp:'Hypnotized enemy kills, Hypno-rifle',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate',ember:'Ember Zombie explosions',tendril:'Symbiote tendrils'};
+  oni:'Dark samurai oni, Samurai armor',voltkit:'Voltkit, shadow fox pet',hyp:'Hypnotized enemy kills, Hypno-rifle',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate',ember:'Ember Zombie explosions',tendril:'Symbiote tendrils'};
 const zsbName=id=>ZSBN[id]||(WBY[id]&&WBY[id].name)||(NADE[id]&&NADE[id].name)||'Other';
 function zsbLabel(src,kind,e){
   if(kind==='burn'){const f=e.fireSrc||src;return f==='berserk'?'Berserker rage, burn damage':zsbName(f)+', burn damage'}
@@ -5794,7 +5907,7 @@ function ripSwipe(w,dir){fx.ripSwipe(dir);const h0=G.heading;let n=0,i=0;
 function processDead(src,kind){
   const dead=G.enemies.filter(e=>e.hp<=0);if(!dead.length)return 0;
   if(G.coop)coopDeadHook(dead,src);
-  mdGain(dead,src);
+  mdGain(dead,src);vkCount(dead);
   G.enemies=G.enemies.filter(e=>e.hp>0);
   zDeathFx(dead);
   if(G.mode==='practice'){G.kills+=dead.length;G.spawnT=1.5;say((dead.some(e=>e.hk)?'Headshot! ':'')+`Target down. ${G.kills} so far.`);tutEv('kill',dead);return dead.length}
@@ -5845,6 +5958,7 @@ function hurtPlayer(dmg,by){
   if(G.hp<=0&&P.armor.on==='alpha'&&P.marm.fullmoon&&!(G.moonT>0)&&G.moonWave!==G.wave)G.hp=1;   // Full Moon is ready: a killing blow leaves you at 1 health and you transform instead
   // Razorwire Carapace: the attacker is torn by the barbs and bleeds
   if(P.armor.on==='barbed'&&by&&by.hp>0){by.hp-=BARB_HIT*barbMult();by.bleedT=5;by.bleedCue=1;const br=norm(by.angle-G.heading);fx.barbs(br,by.dist);if(by.hp<=0){by.bleedKill=true;fx.kill(br,by.dist,.1,by.type)}}
+  if(by&&by.hp>0&&G.vk&&vkHas('vkfur')){by.hp-=VK_FUR*gunMult();by.stunT=Math.max(by.stunT||0,1);const fr=norm(by.angle-G.heading);fx.vkZap(fr,by.dist,.7);if(by.hp<=0){by.vkKill=true;fx.kill(fr,by.dist,.1,by.type)}}   // Voltkit's Static Fur
   if(by&&by.type==='zfrost'){const was=G.chillT>0;G.chillT=Math.max(G.chillT||0,3);if(!was)fx.frost(0,.5,0);if(!G.told.chill){G.told.chill=1;say(moveMode()?'Chilled! You move slower for 3 seconds.':'Chilled! You fire and reload slower for 3 seconds.')}}
   if(by&&by.type==='zember'){G.pbT=4;G.pbC=Math.min(G.pbC||1,1);G.pbD=by.dm||1;fx.burn(0,.5,0);if(!G.told.pburn){G.told.pburn=1;say('You are on fire! It burns for 4 seconds.')}}
   if(by&&by.hp>0&&G.pk&&G.pk.frost){const boss=!!EN[by.type].boss;by.frozeT=Math.max(by.frozeT||0,boss?1:2);by.wind=0;fx.frostSkin(norm(by.angle-G.heading),by.dist)}
@@ -6671,7 +6785,7 @@ function status(){
   if(G.mode==='practice'){say(`Tutorial/practice. ${G.kills} target${G.kills===1?'':'s'} down.${rdWords()} Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
   const left=G.enemies.length+G.toSpawn;
   const wv=G.mode==='zombies'?(G.zm==='roam'?`${rmName()}, wave ${G.wave}. ${rWhere()} ${G.rm.crates.length} supply crate${G.rm.crates.length===1?'':'s'} out, ${G.rm.got} collected.${rdWords()}`:G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}${rdWords()}`:`${G.zm==='six'?'Watch my six':G.zm==='ragdoll'?'Ragdoll sandbox':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.${rdWords()}`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.id==='grow'?`${p.name} plus ${growPct()} percent`:p.name).join(', ')}${G.revUsed?', second wind used':''}${G.lastUsed?', last stand recharging':''}.`:''):(G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`)+rdWords();
-  say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${lycWords()}${xmasWords()}${hypWords()}${tbWords()}${dgWords()}${G.lo.some(x=>x.medusa)&&w&&!w.medusa?`Medusa's Head: ${mdSouls()} souls. `:''}${G.mdStat?`${G.mdStat} stone statue${G.mdStat>1?'s':''} standing. `:''}${P.armor.on==='shadow'&&P.marm.batswarm?(G.batT>0?`Bats out, ${Math.ceil(G.batT)} seconds left. `:`Bat swarm ${Math.min(99,Math.floor((G.batC||0)/(G.maxhp*.5)*100))} percent charged. `):''}${P.armor.on==='barbed'&&P.marm.hungry?`Hungry barbs at ${Math.round(barbMult()*100)} percent, ${Math.min(HB_MAX,G.barbK||0)} of ${HB_MAX} barb kills. `:''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing${G.statues.some(x=>x.mine)?`, ${G.statues.filter(x=>x.mine).length} armed as emerald mines`:''}.`:''} Facing ${facing()}. ${P.coins} silver.${coopMates()}`);
+  say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${lycWords()}${xmasWords()}${hypWords()}${tbWords()}${vkWords()}${dgWords()}${G.lo.some(x=>x.medusa)&&w&&!w.medusa?`Medusa's Head: ${mdSouls()} souls. `:''}${G.mdStat?`${G.mdStat} stone statue${G.mdStat>1?'s':''} standing. `:''}${P.armor.on==='shadow'&&P.marm.batswarm?(G.batT>0?`Bats out, ${Math.ceil(G.batT)} seconds left. `:`Bat swarm ${Math.min(99,Math.floor((G.batC||0)/(G.maxhp*.5)*100))} percent charged. `):''}${P.armor.on==='barbed'&&P.marm.hungry?`Hungry barbs at ${Math.round(barbMult()*100)} percent, ${Math.min(HB_MAX,G.barbK||0)} of ${HB_MAX} barb kills. `:''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing${G.statues.some(x=>x.mine)?`, ${G.statues.filter(x=>x.mine).length} armed as emerald mines`:''}.`:''} Facing ${facing()}. ${P.coins} silver.${coopMates()}`);
 }
 
 /* ---------- loop ---------- */
@@ -7001,7 +7115,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);tbTick(dt);dgTick(dt);if(G.over)return;adrTick(dt);gumTick(dt);symcTick(dt);ankhTick(dt);bubTick(dt);swTick(dt);hypTick(dt);xmasTick(dt);gtTick(dt);if(G.over)return;if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);tbTick(dt);vkTick(dt);if(G.over)return;dgTick(dt);if(G.over)return;adrTick(dt);gumTick(dt);symcTick(dt);ankhTick(dt);bubTick(dt);swTick(dt);hypTick(dt);xmasTick(dt);gtTick(dt);if(G.over)return;if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -9297,7 +9411,7 @@ function rdDraw(){
   symcDraw(c,W,H,X0,Y0,P);   // Symbiote: dark veins and lashing tendrils
   ankhDraw(c,W,H);   // the Ankh raising you
   gtDraw(c,W,H,X0,Y0,P);   // Gabriel's echo guitar in your hands, and its shockwave ring
-  tbDraw(c,W,H,X0,Y0,P);   // Terror Teddy on the field, and the cute teddy in your hands
+  vkDraw(c,X0,Y0,P);tbDraw(c,W,H,X0,Y0,P);   // Terror Teddy on the field, and the cute teddy in your hands
   dgDraw(c,W,H,X0,Y0,P);   // the Five Star Draggin' Ball and Sir Dragsalot himself
   rbDraw(c,W,H,X0,Y0,P);   // Rubik's Cubes on the ground, in the air, and in your hand
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
@@ -9873,6 +9987,14 @@ function swTick(dt){
     else if(!was&&snd<2&&!(G.swSndT>now)){snd++;fx.swWarm(rel,e.dist)}}
   if(snd)G.swSndT=now+250}
 const UPDATES=[
+  {id:'2026-11-26-voltkit',date:'November 26, 2026',title:'New legendary set: Pets, with Voltkit the shadow fox',items:[
+    'New legendary set in the shop: Pets. Equip one pet at a time and it fights beside you in every mode except Tutorial/practice.',
+    'First pet: Voltkit, 40,000 silver. An original shadow fox, all jet black, with a long pointed snout, four pointed ears, two bushy tails with glowing blue tips, glowing blue eyes, a blue diamond on its forehead and a blue zigzag spark down its side. It can never be hurt.',
+    'Voltkit stays about 18 feet in front of you and a little to your left, clear of the gun in your hands, so sighted players can see it while facing forward, and paces around within about 4 feet of that spot. If you turn, it runs to catch up.',
+    'Spark Bite: once a second it zaps the nearest enemy within 20 feet of you for 20 damage, and the zap jumps to up to 2 more enemies within 10 feet for 10 damage each.',
+    'Upgrades: Twin Tail Surge, 15,000 silver, zaps twice a second. Static Fur, 10,000 silver, shocks any enemy that hits you for 15 damage and stuns it for 1 second.',
+    'Special ability Thunderkit Howl, 30,000 silver: 50 kills charge it, a voice says Thunderkit Howl ready, then Voltkit howls and a lightning storm hits every enemy within 40 feet for 150 damage and stuns them for 3 seconds.',
+    'Sounds: soft chirps so you always know where Voltkit is, a sharp crackle on each zap, a fizzing pop on each jump, a happy yip after kills, and a rising howl with thunder. The status readout tells you where Voltkit is and how charged the howl is.']},
   {id:'2026-11-25-orn',date:'November 25, 2026',title:'Christmas set: Ornament Launcher',items:[
     'New mythical weapon in the Christmas set: the Ornament Launcher, 80,000 silver. A 10-round drum grenade launcher built like the Milkor MGL, painted for Christmas with a red frame, a green stock with holly, a candy cane barrel and a gold drum.',
     'It fires glass Christmas ornaments in random colors: red, green, blue, yellow, purple, silver and gold. Each one arcs out like a grenade with a jingling whistle you can follow by ear and explodes on impact.',
@@ -11558,6 +11680,7 @@ const LSET={mythic:{name:'Mythical'},scav:{name:'Scavenger pack',list:['boomer']
   samurai:{name:'Samurai pack',list:['katana'],note:'The Samurai pack. Legendary blades and armor of the samurai: swords and armor.'},
   lycan:{name:'Lycanthropy pack',list:['rippers'],note:'The Lycanthropy pack. Legendary gear for those who turn under the full moon: claws and armor. The lower your health, the deadlier you get.'},
   horror:{name:'Halloween Horror pack',list:['tbear'],note:'The Halloween Horror pack. Legendary gear for the scariest night of the year. Things that look sweet, until they are not.'},
+  pets:{name:'Pets',list:[],note:'Pets. Legendary companions that fight beside you. Equip one at a time.'},
   heroes:{name:'My Heroes pack',list:['guitar'],note:'My Heroes pack. Legendary gear inspired by heroes: a guitar and armor.'},
   xmas:{name:'Christmas',list:['santa','orn'],note:'Christmas. Legendary holiday gear. Things that light up, jingle and go bang.'},
   night:{name:'Nightwalker pack',list:['vlad','scythe','ra'],note:'The Nightwalker pack. Legendary gear for those who hunt in the dark, and those who feed in it: machine guns, scythes, lanterns and armor.'}};
@@ -11604,7 +11727,7 @@ function setItem(id,meta,act,aria,primary,on){const it=$(id);if(!it)return;it.cl
 $('b-unequip').onclick=()=>{initAudio();if(!P.carry.length)return;P.carry=[];fx.reload(.3);saveP();updateShop();say(`All guns put in storage. Choose Carry into battle on up to ${MAXCARRY} guns before you deploy.`)};
 document.querySelectorAll('#shop-cats button').forEach(b=>b.onclick=()=>{initAudio();if(b.dataset.cat==='std'){curCat=curStd;buildShop(true);say('Standard weapons. Choose a weapon type.')}else{curCat=b.dataset.cat;buildShop(true)}});
 document.querySelectorAll('#std-sub button').forEach(b=>b.onclick=()=>{initAudio();curStd=curCat=b.dataset.std;buildShop(true)});
-document.querySelectorAll('#leg-sub button').forEach(b=>b.onclick=()=>{initAudio();curSet=b.dataset.set;buildShop(true);say(curSet==='mythic'?'Mythical set. Choose a weapon type.':(curSet==='horror'||curSet==='xmas'||curSet==='heroes')?LSET[curSet].note:LSET[curSet].note+' Choose a section.')});
+document.querySelectorAll('#leg-sub button').forEach(b=>b.onclick=()=>{initAudio();curSet=b.dataset.set;buildShop(true);say(curSet==='mythic'?'Mythical set. Choose a weapon type.':(curSet==='horror'||curSet==='xmas'||curSet==='heroes'||curSet==='pets')?LSET[curSet].note:LSET[curSet].note+' Choose a section.')});
 document.querySelectorAll('#scav-sub button').forEach(b=>b.onclick=()=>{initAudio();curScav=b.dataset.scav;buildShop(true);say(SCAVN[curScav])});
 document.querySelectorAll('#sam-sub button').forEach(b=>b.onclick=()=>{initAudio();curSam=b.dataset.sam;buildShop(true);say(SAMN[curSam])});
 document.querySelectorAll('#lyc-sub button').forEach(b=>b.onclick=()=>{initAudio();curLyc=b.dataset.lyc;buildShop(true);say(LYCN[curLyc])});
@@ -11615,7 +11738,7 @@ document.querySelectorAll('#arm-sub button').forEach(b=>b.onclick=()=>{initAudio
 const MARMNOTE='Mythical armor. Wear one armor at a time. Each mythical armor has its own special ability and special traits, bought with silver. Traits stack, and they level up only from kills you make while wearing that armor after buying them.';
 const ARMSUBN={regular:'Standard armor',mythic:'Mythical armor',wear:'Standard wearables',mwear:'Mythical wearables'};
 const armList=()=>ARMOR.filter(a=>!a.scav&&!a.sam&&!a.night&&!a.lycan&&!a.heroes&&(curArm==='wear'||curArm==='mwear'?a.wear&&(curArm==='mwear'?!!a.myth:!a.myth):!a.wear&&(curArm==='mythic'?a.myth:!a.myth)));
-const shopWear=()=>curCat==='armor'&&(curArm==='wear'||curArm==='mwear')?WEAR.filter(r=>curArm==='mwear'?!!r.myth:!r.myth):[];
+const shopWear=()=>curCat==='armor'&&(curArm==='wear'||curArm==='mwear')?WEAR.filter(r=>!r.pet&&!r.petup&&(curArm==='mwear'?!!r.myth:!r.myth)):curCat==='mythic'&&curSet==='pets'?WEAR.filter(r=>r.pet):[];
 const shopArmors=()=>curCat==='armor'?(curArm==='wear'||curArm==='mwear'?[]:armList()):curCat==='mythic'&&curSet==='scav'&&curScav==='armor'?ARMOR.filter(a=>a.scav):curCat==='mythic'&&curSet==='samurai'&&curSam==='armor'?ARMOR.filter(a=>a.sam):curCat==='mythic'&&curSet==='night'&&curNight==='armor'?ARMOR.filter(a=>a.night):curCat==='mythic'&&curSet==='lycan'&&curLyc==='armor'?ARMOR.filter(a=>a.lycan):curCat==='mythic'&&curSet==='heroes'?ARMOR.filter(a=>a.heroes):[];
 function buildShop(keepFocus){
   const isGun=GUNCATS.includes(curCat);if(isGun)curStd=curCat;
@@ -11633,9 +11756,12 @@ function buildShop(keepFocus){
   $('shop-note').textContent=curCat==='grenades'&&curThr==='cons'?'Consumables. Items you use up in battle. Each one is gone once you use it.':curCat==='secret'?'Gifts. Special items the developer gave you. They are never sold in the shop. Carry them into battle like any other gun.':curCat==='armor'&&curArm==='mythic'?MARMNOTE:curCat==='armor'&&curArm==='wear'?'Standard wearables. Handy gear worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='armor'&&curArm==='mwear'?'Mythical wearables. Rings and trinkets with special powers, worn on top of your armor. Wear up to 2 rings, 1 piece of eyewear, and one each of crown, gloves, sweat band, necklace, chest piece and charm at a time. Wearables you buy are yours to keep.':curCat==='mythic'?(curSet==='mythic'?MCATN[curMyth]+' '+CATNOTE.mythic:curSet==='samurai'?SAMN[curSam]:curSet==='night'?NIGHTN[curNight]:curSet==='lycan'?LYCN[curLyc]:(curSet==='horror'||curSet==='xmas'||curSet==='heroes')?LSET[curSet].note:SCAVN[curScav]):CATNOTE[curCat];
   const list=$('shop-list');list.textContent='';
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
-  if(curCat==='mythic'&&!catW().length&&!shopArmors().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
+  if(curCat==='mythic'&&!catW().length&&!shopArmors().length&&!shopWear().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
   catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.rippers||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.rubik||w.tbear||w.dorb||w.guitar||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'||w.id==='rex'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
-  shopWear().forEach(r=>mkItem(list,'wr-'+r.id,r.name,r.desc,{act:()=>wearAct(r)}));
+  shopWear().forEach(r=>{mkItem(list,'wr-'+r.id,r.name,r.desc,{act:()=>wearAct(r)});
+    const ups=WEAR.filter(u=>u.petup===r.id);if(!ups.length)return;
+    const h=document.createElement('h3');h.className='grp';h.textContent=r.name+' upgrades';list.appendChild(h);
+    ups.forEach(u=>mkItem(list,'pu-'+u.id,u.name,u.desc,{act:()=>petUpAct(u)}))});
   shopArmors().forEach(a=>{mkItem(list,'ar-'+a.id,a.name,a.desc,{act:()=>armorAct(a)});
     const ups=MARMUP.filter(u=>u.arm===a.id);if(!ups.length)return;
     const h=document.createElement('h3');h.className='grp';h.textContent=a.name+' upgrades';list.appendChild(h);
@@ -11664,10 +11790,14 @@ function updateShop(){
     else if(u.kind==='ability')setItem('mu-'+u.id,`Owned · Active while you wear the ${a.name}`,'Owned',`${u.name} is owned and active while you wear the ${a.name}`,false,true);
     else{const l=tlv(u.id),k=P.marm[u.id].kills,next=l<3?` · ${u.lv[l+1]-k} kills to level ${l+1}`:' · Maxed out';
       setItem('mu-'+u.id,`Owned · Level ${l} of 3${next}`,`Level ${l} of 3`,`${u.name} level ${l} of 3.${l<3?` ${u.lv[l+1]-k} more kills in the ${a.name} to level ${l+1}.`:' Maxed out.'}`,false,true)}});
+  WEAR.filter(u=>u.petup).forEach(u=>{if(!$('pu-'+u.id))return;const own=P.wear.own.includes(u.id),base=WEARBY[u.petup];
+    if(own)setItem('pu-'+u.id,`Owned · Active while ${base.name} is equipped`,'Owned',`${u.name} is owned and active while ${base.name} is equipped`,false,true);
+    else if(!P.wear.own.includes(base.id))setItem('pu-'+u.id,`Price ${u.price} silver · Needs ${base.name} first`,'Locked',`${u.name}, ${u.price} silver. Locked: buy ${base.name} first`,false,false);
+    else setItem('pu-'+u.id,`Price ${u.price} silver`,`Buy for ${u.price}`,`Buy ${u.name} for ${u.price} silver`,P.coins>=u.price,false)});
   shopWear().forEach(r=>{const own=P.wear.own.includes(r.id),on=P.wear.on.includes(r.id);
     if(!own)setItem('wr-'+r.id,`Price ${r.price} silver`,`Buy for ${r.price}`,`Buy ${r.name} for ${r.price} silver`,P.coins>=r.price,false);
-    else if(on)setItem('wr-'+r.id,'Owned · Wearing','Take off',`Wearing ${r.name}. Take it off`,false,true);
-    else setItem('wr-'+r.id,'Owned','Wear it',`Wear ${r.name}`,false,false)});
+    else if(on)setItem('wr-'+r.id,r.pet?'Owned · Equipped':'Owned · Wearing',r.pet?'Unequip':'Take off',r.pet?`${r.name} is equipped. Unequip it`:`Wearing ${r.name}. Take it off`,false,true);
+    else setItem('wr-'+r.id,'Owned',r.pet?'Equip':'Wear it',r.pet?`Equip ${r.name}`:`Wear ${r.name}`,false,false)});
   shopArmors().forEach(a=>{const own=P.armor.own.includes(a.id),on=P.armor.on===a.id;
     if(!own)setItem('ar-'+a.id,`Price ${a.price} silver`,`Buy for ${a.price}`,`Buy ${a.name} for ${a.price} silver`,P.coins>=a.price,false);
     else if(on)setItem('ar-'+a.id,'Owned · Wearing','Take off',`Wearing ${a.name}. Take it off`,false,true);
@@ -11711,7 +11841,16 @@ function shopAct(w){
   }
   saveP();updateShop();
 }
+function petAct(r){initAudio();const W=P.wear,own=W.own.includes(r.id);
+  if(!own){if(P.coins<r.price)return broke(r.price,r.name);P.coins-=r.price;W.own.push(r.id);W.on=W.on.filter(i=>WEARBY[i].slot!=='pet');W.on.push(r.id);fx.buy();fx.vkYip&&fx.vkYip();say(`Bought ${r.name}. ${r.name} is equipped and will fight beside you. ${P.coins} silver left.`)}
+  else if(W.on.includes(r.id)){W.on=W.on.filter(i=>i!==r.id);fx.click();say(`${r.name} unequipped.`)}
+  else{W.on=W.on.filter(i=>WEARBY[i].slot!=='pet');W.on.push(r.id);fx.vkChirp&&fx.vkChirp();say(`${r.name} equipped.`)}
+  saveP();updateShop()}
+function petUpAct(u){initAudio();const base=WEARBY[u.petup];if(P.wear.own.includes(u.id)){fx.click();say(`${u.name} is already owned.`);return}
+  if(!P.wear.own.includes(base.id)){fx.click();say(`Buy ${base.name} first.`);return}
+  if(P.coins<u.price)return broke(u.price,u.name);P.coins-=u.price;P.wear.own.push(u.id);fx.buy();fx.vkYip&&fx.vkYip();say(`Bought ${u.name}. ${P.coins} silver left.`);saveP();updateShop()}
 function wearAct(r){
+  if(r.pet)return petAct(r);
   initAudio();const W=P.wear,own=W.own.includes(r.id),wasOn=W.on.includes(r.id),sl=WSLOT[r.slot],same=W.on.filter(i=>WEARBY[i].slot===r.slot),full=same.length>=sl.max,others=()=>same.map(i=>WEARBY[i].name).join(' or ');
   // one-item slots like eyewear swap straight over; the ring slots ask you to take one off first
   const swap=()=>{const old=same[0];W.on=W.on.filter(i=>i!==old);W.on.push(r.id);return WEARBY[old].name};
