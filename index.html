@@ -725,7 +725,7 @@ select,input[type=range]{font:inherit;font-size:17px;background:var(--panel);col
     <button data-set="horror">Halloween Horror pack<small>Terror Teddy</small></button>
     <button data-set="xmas">Christmas<small>Santa's Punisher and the Ornament Launcher</small></button>
     <button data-set="heroes">My Heroes pack<small>Gabriel's echo guitar and Chris's sweater</small></button>
-    <button data-set="pets">Pets<small>Voltkit, the shadow fox</small></button>
+    <button data-set="pets">Pets<small>Voltkit and Luke's parrot</small></button>
   </div>
   <div class="seg" id="lyc-sub" role="group" aria-label="Lycanthropy pack section" hidden>
     <button data-lyc="claw">Claws<small>Feral Rippers</small></button>
@@ -2339,7 +2339,12 @@ const WSLOT={ring:{max:2,one:'ring',many:'rings'},eye:{max:1,one:'piece of eyewe
   {id:'voltkit',slot:'pet',pet:true,myth:true,name:'Voltkit',price:40000,desc:'A pet for the Pets set. Voltkit is a small shadow fox, all jet black, with a long pointed snout, four pointed ears (a tall pair on top and a smaller pair angled out to the sides), two big bushy tails with glowing blue tips, glowing blue almond eyes, a blue diamond on its forehead and a blue zigzag spark down its side. Equip it and it comes into every battle with you except Tutorial/practice. It can never be hurt. It trots along about 18 feet in front of you and a little to your left, clear of the gun in your hands, so sighted players can see it while facing forward, and paces around within about 4 feet of that spot. Spark Bite: once a second it zaps the nearest enemy within 20 feet of you for 20 damage, and the zap jumps to up to 2 more enemies within 10 feet of the first for 10 damage each. You hear soft chirps so you always know where it is, a sharp crackle on every zap, a fizzing pop on each jump and a happy yip when it gets a kill. Pet: one at a time.'},
   {id:'vktwin',slot:'petup',petup:'voltkit',name:'Twin Tail Surge',price:15000,desc:'Voltkit upgrade. Both tails fire, so Spark Bite zaps twice a second instead of once.'},
   {id:'vkfur',slot:'petup',petup:'voltkit',name:'Static Fur',price:10000,desc:'Voltkit upgrade. Voltkit charges you with static while it is equipped. Any enemy that hits you gets shocked for 15 damage and stunned for 1 second.'},
-  {id:'vkhowl',slot:'petup',petup:'voltkit',name:'Thunderkit Howl',price:30000,desc:'Voltkit special ability. Every kill you make, with anything, charges it. After 50 kills a voice says Thunderkit Howl ready, and as soon as an enemy is within 40 feet of you, Voltkit lets out a rising howl and calls down a lightning storm on every enemy within 40 feet: 150 damage each, and a 3 second stun. Then it starts charging again.'}
+  {id:'vkhowl',slot:'petup',petup:'voltkit',name:'Thunderkit Howl',price:30000,desc:'Voltkit special ability. Every kill you make, with anything, charges it. After 50 kills a voice says Thunderkit Howl ready, and as soon as an enemy is within 40 feet of you, Voltkit lets out a rising howl and calls down a lightning storm on every enemy within 40 feet: 150 damage each, and a 3 second stun. Then it starts charging again.'},
+  {id:'parrot',slot:'pet',pet:true,myth:true,name:"Luke's parrot",price:40000,desc:"A pet for the Pets set. Luke's parrot is a big, colorful macaw-style parrot: scarlet red head and body, a white face patch around a pale yellow eye, a big cream hooked beak with a black lower jaw, wings banded red, gold, green and deep blue, and long red and blue tail feathers. Equip it and it comes into every battle with you except Tutorial/practice. It can never be hurt. It flies about 12 feet in front of you, a little to your left and up above head height, clear of the gun in your hands, so sighted players can see it while facing forward, flapping and drifting around within about 3 feet of that spot. Dive Peck: every 3 seconds it swoops at the nearest enemy within 30 feet of you, pecks it for 20 damage, and flies back. You hear soft chatter so you always know where it is, wing flaps when it takes off, a squawk and a pecking crunch on every hit, and a happy chirp when it gets back. Pet: one at a time."},
+  {id:'pqlook',slot:'petup',petup:'parrot',name:'Lookout Call',price:10000,desc:"Luke's parrot upgrade. The parrot squawks out danger in spoken warnings: runners, fast enemies, Frost Walkers, Ember Zombies, Plague Carriers, Storm Zombies, mini bosses and bosses as they show up within 60 feet, with where they are, like Runner, left! And anything that sneaks within 12 feet behind you, like Zombie behind you! Matching warnings are joined together, like 3 Runners, ahead!"},
+  {id:'pqcopy',slot:'petup',petup:'parrot',name:'Copycat Squawk',price:15000,desc:"Luke's parrot upgrade. Every 20 seconds, when enemies are within 25 feet of you, the parrot fakes your gunshots from a spot 30 feet away, on the side with the fewest enemies. Those enemies turn and walk toward the fake noise for 5 seconds and do not attack you while they do. Bosses are not fooled. You hear a squawk, then three copied gunshots from that spot."},
+  {id:'pqfeather',slot:'petup',petup:'parrot',name:'Rainbow Feathers',price:15000,desc:"Luke's parrot upgrade. Every Dive Peck leaves a colorful feather stuck in the enemy, red, gold, green or blue, and slows it by 30 percent for 4 seconds."},
+  {id:'pqstorm',slot:'petup',petup:'parrot',name:'Jungle Storm',price:30000,desc:"Luke's parrot special ability. Every kill you make, with anything, charges it. After 25 kills a voice says Jungle Storm ready, and as soon as an enemy is within 40 feet of you the parrot screeches and calls in a flock of 10 wild parrots for 10 seconds. They peck every enemy within 40 feet for 5 damage a second and confuse them, so they wander and swing at the air instead of attacking you. Bosses are confused too, but the Ancient One is never confused, only pecked. You hear the big screech, a flock of squawks and wing beats all around, pecking, and confused enemies swinging at nothing."}
 ],WEARBY=Object.fromEntries(WEAR.map(r=>[r.id,r])),WEX={sweatband:'crownvlad',crownvlad:'sweatband'};   // pairs that never stack
 const MARMUP=[
   {id:'rage',arm:'berserk',kind:'ability',name:'Berserker rage',price:11111,desc:'Special ability. Every hit you take while wearing the armor builds rage. After 100 damage taken, you let out a roar and a ring of fire bursts up around you, 10 feet out, for 5 seconds. Every enemy that touches it takes 100 damage, and survivors keep burning for 10 damage a second for 10 seconds. Then the rage starts building again.'},
@@ -4829,6 +4834,180 @@ function vkDraw(c,X0,Y0,P){const v=G&&G.vk;if(!v)return;const o=[0,0,0],o2=[0,0,
     for(const b of v.bolts){const pts=[];for(const p of b.pts){if(!P(p[0],p[1],p[2],a)){pts.length=0;break}pts.push([a[0],a[1]])}if(pts.length<2)continue;
       [[5,'rgba(59,167,255,.45)'],[2,'#e8f6ff']].forEach(([w,col])=>{c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)c.lineTo(pts[i][0],pts[i][1]);c.stroke()})}
     c.restore()}}
+/* Luke's parrot (Pets set). An original scarlet-red macaw-style parrot: red head and body, white face patch with a pale
+   yellow eye, big cream hooked beak with a black lower jaw, wings banded red, gold, green and deep blue, and long red
+   and blue tail feathers. It can never be hurt. It flies about 12 feet in front of you, a little to your left and up
+   above head height (so sighted players see it clear of the gun in your hands), drifting around within about 3 feet.
+   Dive Peck: every 3 seconds it swoops at the nearest enemy within 30 feet of you for 20 damage, then flies back.
+   Lookout Call: spoken warnings for runners, fast enemies, special zombies, mini bosses and bosses as they show up,
+   and for anything sneaking up behind you. Copycat Squawk: every 20 seconds, when enemies are within 25 feet of you,
+   it fakes your gunshots from a spot 30 feet away and those enemies walk toward the noise for 5 seconds (bosses
+   ignore it). Rainbow Feathers: each Dive Peck leaves a feather that slows the enemy 30 percent for 4 seconds.
+   Jungle Storm: 25 kills charge it; a flock of 10 wild parrots pecks every enemy within 40 feet for 5 damage a second
+   for 10 seconds and confuses them, so they swing at the air instead of attacking (the Ancient One is never confused).
+   Not in Tutorial/practice. It lives in G.pq. */
+const PQ_HOMEF=12,PQ_HOMEA=-16,PQ_Y=1.75,PQ_DRIFT=3,PQ_H=.8,PQ_R=30/3.281,PQ_CD=3,PQ_PECK=20,PQ_LOOK=60/3.281,PQ_BEHIND=12/3.281,
+  PQ_CCD=20,PQ_CCR=25/3.281,PQ_CCF=30/3.281,PQ_LURE=5,PQ_FT=4,PQ_FSLOW=.7,PQ_SK=25,PQ_SR=40/3.281,PQ_SD=5,PQ_ST=10,PQ_SN=10;
+Object.assign(fx,{
+  /* a short parrot squawk: a raspy, warbling cry */
+  pqSquawk(rel=0,dist=0,at=0,v=1,p=1){const d=out(rel,dist,.8*v,gunBus);
+    tone(d,{type:'sawtooth',f:1100*p,f2:1700*p,dur:.07,vol:.22,at});tone(d,{type:'sawtooth',f:1700*p,f2:900*p,dur:.16,vol:.25,at:at+.06});
+    tone(d,{type:'square',f:2300*p,f2:1500*p,dur:.12,vol:.08,at:at+.05});noise(d,{dur:.18,vol:.22,type:'bandpass',f:2400*p,q:3,at,attack:.01})},
+  /* soft chatter now and then, so you always know where it is */
+  pqChat(rel=0,dist=0){const d=out(rel,dist,.5,gunBus),p=.9+Math.random()*.25;
+    tone(d,{type:'triangle',f:1500*p,f2:2100*p,dur:.06,vol:.18});tone(d,{type:'triangle',f:2000*p,f2:1600*p,dur:.07,vol:.15,at:.08});tone(d,{type:'triangle',f:1700*p,f2:2300*p,dur:.06,vol:.13,at:.17})},
+  /* wing flaps when it takes off */
+  pqFlap(rel=0,dist=0,n=3){const d=out(rel,dist,.6,gunBus);for(let i=0;i<n;i++)noise(d,{dur:.07,vol:.32,type:'bandpass',f:700,f2:350,q:1.2,at:i*.11,attack:.01})},
+  /* a pecking crunch on each hit */
+  pqPeck(rel,dist,v=1){const d=out(rel,dist,.9*v,gunBus);noise(d,{dur:.04,vol:.6,type:'bandpass',f:2200,q:2,attack:.001});noise(d,{dur:.05,vol:.45,type:'lowpass',f:900,at:.05,attack:.001});tone(d,{type:'square',f:420,f2:180,dur:.05,vol:.12})},
+  /* a happy chirp when it lands back */
+  pqChirp(rel=0,dist=0){const d=out(rel,dist,.7,gunBus);tone(d,{type:'sine',f:2200,f2:3000,dur:.06,vol:.25});tone(d,{type:'sine',f:2600,f2:3400,dur:.07,vol:.22,at:.08})},
+  /* Copycat Squawk: a squawk, then its copy of your gunfire */
+  pqFake(rel,dist){fx.pqSquawk(rel,dist,0,1.1,.85);const d=out(rel,dist,1.1,gunBus);
+    for(let i=0;i<3;i++){const at=.3+i*.22;noise(d,{dur:.06,vol:.8,type:'bandpass',f:1600,q:.8,at,attack:.001});noise(d,{dur:.28,vol:.55,type:'lowpass',f:500,f2:120,at:at+.01,attack:.002})}},
+  /* a confused zombie swinging at the air */
+  pqSwing(rel,dist){const d=out(rel,dist,.4,gunBus);noise(d,{dur:.18,vol:.3,type:'bandpass',f:500,f2:1400,q:1.5,attack:.03})},
+  /* Jungle Storm: the parrot's big screech, then the whole flock arriving */
+  pqStormCall(){fx.pqSquawk(0,0,0,1.4,.75);fx.pqSquawk(0,0,.18,1.4,.9);fx.pqSquawk(0,0,.36,1.5,.7);
+    for(let i=0;i<PQ_SN;i++){const a=Math.random()*360-180;fx.pqSquawk(a,6+Math.random()*6,.5+Math.random()*.9,.7,.8+Math.random()*.5);fx.pqFlap(a,8,2)}}
+});
+const pqHas=id=>!!(P.wear&&P.wear.own.includes(id)&&P.wear.on.includes('parrot'));
+function pqHome(){return xy(G.heading+PQ_HOMEA,PQ_HOMEF/3.281)}
+function pqRelOf(x,z){return[norm(Math.atan2(x,z)*180/Math.PI-G.heading),Math.hypot(x,z)]}
+function pqRel(){const v=G.pq;return pqRelOf(v.x,v.z)}
+function pqCount(dead){if(!G||!G.pq||!pqHas('pqstorm')||G.pq.ready||G.pq.storm>0)return;G.pq.ch+=dead.length;
+  if(G.pq.ch>=PQ_SK){G.pq.ch=PQ_SK;G.pq.ready=true;fx.pqSquawk(...pqRel());say('Jungle Storm ready.')}}
+function pqDir(rel){const a=Math.abs(rel);return a<=40?'ahead':a>=140?'behind you':rel>0?'right':'left'}
+function pqLabel(e){const t=EN[e.type];if(e.type==='zrunner')return['Runner','Runners'];if(e.mega)return['Mega '+t.name.toLowerCase(),'Mega '+t.name.toLowerCase()+'s'];
+  return[t.name,t.name.endsWith('s')?t.name:t.name+'s']}
+function pqWorth(e){const t=EN[e.type];return !!(t.boss||t.mini||e.type==='zrunner'||['zfrost','zember','zplague','zstorm'].includes(e.type)||(!t.z&&t.speed>=2.3))}
+/* Lookout Call: collects warnings, then speaks one at a time, merging matching ones ("2 Runners, left!") */
+function pqLookout(v,dt){
+  v.lkScan-=dt;
+  if(v.lkScan<=0){v.lkScan=.25;
+    for(const e of tbLive()){const rel=norm(e.angle-G.heading),dir=pqDir(rel);
+      if(!e.pqSeen&&e.dist<=PQ_LOOK&&pqWorth(e)){e.pqSeen=1;const[one]=pqLabel(e);v.lk.push({e,key:one+'|'+dir,dir,t:performance.now(),big:EN[e.type].boss})}
+      if(dir==='behind you'&&e.dist<=PQ_BEHIND){if(!e.pqBack){e.pqBack=1;const[one]=pqLabel(e);v.lk.push({e,key:one+'|behind you',dir:'behind you',t:performance.now(),big:true})}}
+      else if(e.pqBack&&(dir!=='behind you'||e.dist>PQ_BEHIND*1.6))e.pqBack=0}}
+  v.lkT-=dt;if(v.lkT>0||!v.lk.length||killQuiet())return;
+  const now=performance.now();v.lk=v.lk.filter(q=>q.e.hp>0&&G.enemies.includes(q.e)&&now-q.t<5000);if(!v.lk.length)return;
+  const q=v.lk.find(x=>x.big)||v.lk[0],same=v.lk.filter(x=>x.key===q.key);v.lk=v.lk.filter(x=>x.key!==q.key);
+  const[one,many]=pqLabel(q.e),n=same.length,name=n>1?`${n} ${many}`:one;
+  fx.pqSquawk(...pqRel(),0,.8,1.15);say(q.dir==='behind you'?`${name} behind you!`:`${name}, ${q.dir}!`);v.lkT=1.6}
+/* Copycat Squawk: picks the side with the fewest enemies, 30 feet out, and fakes gunfire there */
+function pqCopycat(v,dt){
+  v.cc-=dt;if(v.cc>0)return;
+  const near=tbLive().filter(e=>e.dist<=PQ_CCR&&!EN[e.type].boss);if(!near.length){v.cc=.5;return}
+  let best=0,bestN=Infinity;for(let k=0;k<8;k++){const a=G.heading+k*45,n=tbLive().filter(e=>Math.abs(norm(e.angle-a))<60).length;if(n<bestN){bestN=n;best=a}}
+  const[dx,dz]=xy(best,PQ_CCF);G.pqDec={x:dx,z:dz,t:PQ_LURE};v.cc=PQ_CCD;
+  near.forEach(e=>{e.pqLure=PQ_LURE;e.engaged=false;e.wind=0;e.charge=0});
+  const[r,d]=pqRelOf(dx,dz);fx.pqFake(r,d);
+  say(`Copycat Squawk, ${clock(r)}. ${near.length} ${near.length===1?'enemy':'enemies'} fooled.`)}
+/* an enemy walking toward the fake gunfire; it never attacks while fooled */
+function pqLureStep(e,t,rel,slow,dt){
+  e.pqLure-=dt;e.engaged=false;e.wind=0;e.charge=0;const D=G.pqDec;
+  if(!D||e.pqLure<=0){e.pqLure=0;e.cue=Math.min(e.cue,.4);return}
+  if(!e.pinG){const[x,y]=xy(e.angle,e.dist),dx=D.x-x,dy=D.z-y,dd=Math.hypot(dx,dy);
+    if(dd>.6){const sp=Math.min(dd,t.speed*S.diff*slow*dt);let nx=x+dx/dd*sp,ny=y+dy/dd*sp;const d=Math.hypot(nx,ny);
+      let lo=MELEE+1.2,hi=Math.max(PQ_CCF+2,e.dist);if(G.win&&e.win!=null){if(e.inside)hi=Math.min(hi,ZWIN-.3);else lo=Math.max(lo,ZWIN+.4)}
+      if(lo>hi)lo=hi;if(d<lo||d>hi){const k=Math.min(hi,Math.max(lo,d))/Math.max(d,.01);nx*=k;ny*=k}
+      e.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;e.dist=Math.max(.3,Math.hypot(nx,ny))}}
+  e.cue-=dt;if(e.cue<=0&&cryOk(t)){CRY[e.type](out(norm(e.angle-G.heading),e.dist,.8,enBus,zKind(e.type)));e.cue=2+Math.random()*1.5}}
+/* Jungle Storm: confused, wandering and swinging at the air, never attacking */
+function pqConfStep(e,t,rel,slow,dt){
+  e.pqConf-=dt;e.engaged=false;e.wind=0;e.charge=0;if(e.pqConf<=0){e.pqConf=0;e.cue=Math.min(e.cue,.3);return}
+  if(!e.pinG){e.wanT=(e.wanT||0)-dt;if(e.wanT<=0){e.wanT=.8+Math.random()*1.6;e.wanD=Math.random()*360}
+    const[x,y]=xy(e.angle,e.dist),r=e.wanD*Math.PI/180,sp=t.speed*.45*slow*dt;let nx=x+Math.sin(r)*sp,ny=y+Math.cos(r)*sp;const d=Math.hypot(nx,ny);
+    let lo=MELEE+1.2,hi=Math.max(15,e.dist);if(G.win&&e.win!=null){if(e.inside)hi=Math.min(hi,ZWIN-.3);else lo=Math.max(lo,ZWIN+.4)}
+    if(lo>hi)lo=hi;if(d<lo||d>hi){const k=Math.min(hi,Math.max(lo,d))/Math.max(d,.01);nx*=k;ny*=k;e.wanT=0}
+    e.angle=(Math.atan2(nx,ny)*180/Math.PI+360)%360;e.dist=Math.max(.3,Math.hypot(nx,ny))}
+  e.pqSw=(e.pqSw??Math.random())-dt;if(e.pqSw<=0){e.pqSw=1+Math.random()*1.5;e.pqSwA=.3;fx.pqSwing(norm(e.angle-G.heading),e.dist)}
+  if(e.pqSwA>0)e.pqSwA-=dt}
+function pqHit(e,dmg){e.hp-=dmg;if(e.hp<=0)e.pqKill=true}
+function pqTick(dt){
+  if(G.pqDec&&(G.pqDec.t-=dt)<=0)G.pqDec=null;
+  if(!wearing('parrot')||G.mode==='practice'){G.pq=null;return}
+  if(!G.pq){const[hx,hz]=pqHome();G.pq={x:hx,z:hz,y:PQ_Y,tx:hx,tz:hz,ty:PQ_Y,wait:1,dir:1,flap:0,cd:1.5,chat:2,ph:'home',tgt:null,
+      ch:0,ready:false,storm:0,stormHit:0,flock:[],cc:pqHas('pqcopy')?6:Infinity,lk:[],lkT:0,lkScan:0,feathers:[],kills:0};fx.pqFlap(...pqRel());fx.pqChat(...pqRel())}
+  const v=G.pq,[hx,hz]=pqHome(),sp=(x,z,y,s)=>{const dx=x-v.x,dz=z-v.z,dy=y-v.y,dd=Math.hypot(dx,dz,dy);if(dd<.02)return true;const st=Math.min(dd,s*dt);v.x+=dx/dd*st;v.z+=dz/dd*st;v.y+=dy/dd*st;
+      const hd=G.heading*Math.PI/180,sx=dx*Math.cos(hd)-dz*Math.sin(hd);if(Math.abs(sx)>.02)v.dir=sx>0?1:-1;return dd<=s*dt+.02};
+  v.flap+=dt*(v.ph==='home'?11:18);
+  if(v.ph==='home'){
+    const far=Math.hypot(v.x-hx,v.z-hz)>PQ_DRIFT/3.281*1.8;
+    if(far||(v.wait-=dt)<=0){const a=Math.random()*Math.PI*2,r=Math.sqrt(Math.random())*PQ_DRIFT/3.281;v.tx=hx+Math.sin(a)*r;v.tz=hz+Math.cos(a)*r;v.ty=PQ_Y+(Math.random()-.5)*.35;v.wait=1.2+Math.random()*2}
+    sp(v.tx,v.tz,v.ty,far?7:1.1)}
+  else if(v.ph==='dive'){const e=v.tgt;
+    if(!e||!(e.hp>0)||!G.enemies.includes(e)){v.ph='back';fx.pqFlap(...pqRel(),2)}
+    else{const[ex,ez]=hypPos(e);if(sp(ex,ez,1.25,16)){const m=gunMult(),[r,d]=pqRelOf(ex,ez);pqHit(e,PQ_PECK*m);fx.pqPeck(r,d);fx.pqSquawk(r,d,0,.7,1.1);
+        if(pqHas('pqfeather')&&e.hp>0){e.pqFeT=PQ_FT;v.feathers.push({e,t:PQ_FT,c:['#e3201f','#ffd43a','#3cc46b','#2a7be0'][Math.floor(Math.random()*4)],a:Math.random()*6.28})}
+        v.ph='back';v.tgt=null}}}
+  else if(v.ph==='back'){if(sp(v.tx,v.tz,v.ty,10)){v.ph='home';fx.pqChirp(...pqRel())}}
+  v.chat-=dt;if(v.chat<=0){v.chat=4+Math.random()*3;fx.pqChat(...pqRel())}
+  // Dive Peck
+  v.cd-=dt;
+  if(v.cd<=0&&v.ph==='home'){const e=tbLive().filter(o=>o.dist<=PQ_R).sort((a,b)=>a.dist-b.dist)[0];
+    if(e){v.cd=PQ_CD;v.ph='dive';v.tgt=e;fx.pqFlap(...pqRel());fx.pqSquawk(...pqRel(),0,.6,1.2)}else v.cd=.2}
+  if(pqHas('pqlook'))pqLookout(v,dt);
+  if(pqHas('pqcopy'))pqCopycat(v,dt);
+  v.feathers=v.feathers.filter(f=>(f.t-=dt)>0&&f.e.hp>0&&G.enemies.includes(f.e));
+  // Jungle Storm: once charged, it goes off as soon as an enemy is within 40 feet
+  if(v.ready&&!(v.storm>0)&&tbLive().some(e=>e.dist<=PQ_SR)){v.ready=false;v.storm=PQ_ST;v.stormHit=0;v.ch=0;fx.pqStormCall();vib(60);
+    v.flock=[];for(let i=0;i<PQ_SN;i++){const a=Math.random()*360,[x,z]=xy(a,3+Math.random()*3);v.flock.push({x,z,y:2+Math.random(),tgt:null,dir:1,flap:Math.random()*6,hue:i%4,cd:Math.random()*.5})}
+    if(!killQuiet())say('Jungle Storm! A flock of wild parrots swoops in.')}
+  if(v.storm>0){v.storm-=dt;v.stormHit-=dt;const inR=tbLive().filter(e=>e.dist<=PQ_SR);
+    if(v.stormHit<=0){v.stormHit=1;const m=gunMult();inR.forEach((e,i)=>{pqHit(e,PQ_SD*m);if(e.type!=='zancient'&&e.hp>0)e.pqConf=Math.max(e.pqConf||0,1.6);
+        if(i<6)fx.pqPeck(norm(e.angle-G.heading),e.dist,.35)});if(Math.random()<.6){const a=Math.random()*360-180;fx.pqSquawk(a,6+Math.random()*8,0,.5,.8+Math.random()*.5)}}
+    for(const b of v.flock){b.flap+=dt*20;b.cd-=dt;
+      if(!b.tgt||!(b.tgt.hp>0)||!G.enemies.includes(b.tgt)||b.cd<=0){b.tgt=inR.length?inR[Math.floor(Math.random()*inR.length)]:null;b.cd=.6+Math.random()*.6}
+      let tx,tz,ty;if(b.tgt){[tx,tz]=hypPos(b.tgt);ty=1.3+Math.sin(b.flap*.3)*.3}else{const[ox,oz]=xy(G.heading+(b.hue*90+performance.now()/20)%360,5);tx=ox;tz=oz;ty=2.2}
+      const dx=tx-b.x,dz=tz-b.z,dy=ty-b.y,dd=Math.hypot(dx,dz,dy);if(dd>.05){const st=Math.min(dd,13*dt);b.x+=dx/dd*st;b.z+=dz/dd*st;b.y+=dy/dd*st;
+        const hd=G.heading*Math.PI/180,sx=dx*Math.cos(hd)-dz*Math.sin(hd);if(Math.abs(sx)>.02)b.dir=sx>0?1:-1}}
+    if(v.storm<=0){v.storm=0;v.flock=[];fx.pqFlap(0,10,5);if(!killQuiet())say('The wild parrots fly away.')}}
+  if(G.enemies.some(e=>e.hp<=0&&e.pqKill)){const n=G.enemies.filter(e=>e.hp<=0&&e.pqKill);n.forEach(e=>fx.kill(norm(e.angle-G.heading),e.dist,.1,e.type));v.kills+=n.length;processDead('parrot');fx.pqChirp(...pqRel())}}
+function pqWords(){const v=G&&G.pq;if(!v)return '';const[r]=pqRel();
+  return `Luke's parrot at ${clock(r)}${pqHas('pqstorm')?`, Jungle Storm ${v.storm>0?'flying':v.ready?'ready':`${v.ch} of ${PQ_SK} kills`}`:''}${pqHas('pqcopy')?`, Copycat Squawk ${v.cc<=0?'ready':`in ${Math.ceil(v.cc)} seconds`}`:''}. `}
+/* The parrot art, from the same shapes as the picture made for it. Side-on, beak forward, drawn with its feet at
+   (x,y) and h pixels from feet to the top of its head, facing right when dir is 1. Wings beat with flap. */
+const PQ_PATHS={
+  tailB:new Path2D('M288 362 C325 392 365 436 428 474 C420 486 406 490 396 486 C344 452 306 412 278 376 Z'),
+  tailR:new Path2D('M276 368 C300 402 340 452 392 506 C378 510 366 506 356 498 C318 456 290 416 264 380 Z'),
+  body:new Path2D('M205 95 C245 92 270 120 268 160 C266 190 290 230 300 280 C310 330 300 370 280 385 C250 396 225 382 215 356 C200 316 185 270 180 230 C170 205 155 190 160 165 C160 120 175 97 205 95 Z'),
+  hl:new Path2D('M195 104 C228 100 250 115 256 140 C238 122 218 114 195 104 Z'),
+  wB:new Path2D('M232 180 C290 175 325 240 330 310 C335 360 345 400 352 428 C320 412 285 372 265 322 C250 282 228 232 232 180 Z'),
+  wG:new Path2D('M232 180 C290 175 322 238 325 302 C318 308 306 310 296 306 C288 314 276 312 268 304 C258 306 250 296 250 284 C238 252 228 214 232 180 Z'),
+  wY:new Path2D('M232 180 C285 177 312 220 314 266 C306 274 296 274 288 268 C280 276 268 274 262 266 C252 268 244 258 244 248 C234 226 229 202 232 180 Z'),
+  wR:new Path2D('M232 180 C270 178 292 200 296 226 C286 232 276 230 270 224 C262 230 250 226 246 216 C236 206 230 194 232 180 Z'),
+  beakU:new Path2D('M168 132 C135 128 110 155 117 196 C119 207 128 210 131 199 C133 182 143 172 170 180 Z'),
+  beakL:new Path2D('M170 178 C152 175 139 184 140 197 C148 210 166 206 174 194 Z'),
+  feet:new Path2D('M232 372 C226 384 226 396 236 400 C244 402 246 392 242 384 Z M248 374 C246 388 250 398 258 398 C266 396 264 386 258 378 Z M262 374 C262 388 268 396 276 394 C282 390 278 380 272 374 Z')};
+const PQ_HUES=[['#e3201f','#2a7be0'],['#2fb34f','#ffd43a'],['#2a7be0','#ffd43a'],['#ffb020','#2fb34f']];
+function pqArt(c,x,y,h,dir,flap,hue){
+  const u=h/300,P2=PQ_PATHS,beat=Math.sin(flap),col=hue==null?null:PQ_HUES[hue];
+  c.save();c.translate(x,y);c.scale(-dir*u,u);c.translate(-255,-395);c.lineJoin='round';
+  // tilt forward a little as it flies
+  c.translate(240,250);c.rotate(-.12);c.translate(-240,-250);
+  c.fillStyle=col?col[1]:'#2a63c8';c.fill(P2.tailB);c.fillStyle=col?col[0]:'#c8161d';c.fill(P2.tailR);
+  c.fillStyle=col?col[0]:'#e3201f';c.fill(P2.body);
+  if(!col){c.fillStyle='rgba(255,140,92,.6)';c.fill(P2.hl)}
+  // the wing beats around the shoulder
+  c.save();c.translate(236,186);c.rotate(-.55+beat*.75);c.scale(1,.85+Math.abs(beat)*.2);c.translate(-236,-186);
+  c.fillStyle=col?col[1]:'#1f4fb8';c.fill(P2.wB);
+  if(!col){c.fillStyle='#2f9e4f';c.fill(P2.wG);c.fillStyle='#f6c02c';c.fill(P2.wY);c.fillStyle='#d81b22';c.fill(P2.wR)}
+  c.restore();
+  c.fillStyle='#fbf7f0';c.beginPath();c.ellipse(190,152,28,22,0,0,Math.PI*2);c.fill();
+  c.fillStyle='#f7e9a8';c.beginPath();c.arc(196,147,10,0,Math.PI*2);c.fill();
+  c.fillStyle='#111';c.beginPath();c.arc(197,147,5.5,0,Math.PI*2);c.fill();
+  c.fillStyle='#fff';c.beginPath();c.arc(199.5,144.5,2,0,Math.PI*2);c.fill();
+  c.fillStyle='#ece0bf';c.fill(P2.beakU);c.strokeStyle='#5b4a3a';c.lineWidth=Math.max(1.2,1/u);c.stroke(P2.beakU);
+  c.fillStyle='#2b2523';c.fill(P2.beakL);
+  c.fillStyle='#7d7a80';c.fill(P2.feet);
+  c.restore()}
+function pqDraw(c,X0,Y0,P){const v=G&&G.pq;if(!v)return;const o=[0,0,0],o2=[0,0,0],bob=Math.sin(v.flap*.35)*.05;
+  // feathers stuck in slowed enemies
+  for(const f of v.feathers){const[ex,ez]=hypPos(f.e);if(P(ex,1.15,ez,o)&&P(ex,1.45,ez,o2)){const L=Math.max(4,o[1]-o2[1]);c.save();c.translate(o[0],o[1]);c.rotate(f.a);
+      c.fillStyle=f.c;c.beginPath();c.ellipse(0,-L/2,L*.18,L/2,0,0,Math.PI*2);c.fill();c.strokeStyle='rgba(255,255,255,.7)';c.lineWidth=1;c.beginPath();c.moveTo(0,0);c.lineTo(0,-L);c.stroke();c.restore()}}
+  if(P(v.x,v.y+bob,v.z,o)&&P(v.x,v.y+bob+PQ_H,v.z,o2))pqArt(c,o[0],o[1],Math.max(6,o[1]-o2[1]),v.dir,v.flap,null);
+  for(const b of v.flock)if(P(b.x,b.y,b.z,o)&&P(b.x,b.y+.35,b.z,o2))pqArt(c,o[0],o[1],Math.max(4,o[1]-o2[1]),b.dir,b.flap,b.hue)}
 function tbWi(){return G.lo.findIndex(w=>w.tbear)}
 function tbSync(){const wi=tbWi();if(wi>=0)G.ammo[wi][0]=1}   // always counts as loaded, so nothing tries to reload it; G.tb decides whether it can be thrown
 function tbLive(){return G.enemies.filter(e=>e.hp>0&&!(e.hb>0)&&!e.hz&&!e.stone)}
@@ -5738,7 +5917,7 @@ const killQuiet=()=>!!(KA&&KA.g===G&&(KA.b||performance.now()-KA.last<1200));
    co-op teammate. It shows once, when the match ends by death or by Quit to main menu in the pause menu. It is kept
    only on this match, never saved, so once the player leaves it, it is gone. */
 const ZSBN={bats:'Bat swarm, Darkest Shadow Suit',barbed:'Razorwire barbs, Razorwire Carapace',berserk:'Berserker rage ring of fire, Viking berserker armor',
-  oni:'Dark samurai oni, Samurai armor',voltkit:'Voltkit, shadow fox pet',hyp:'Hypnotized enemy kills, Hypno-rifle',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate',ember:'Ember Zombie explosions',tendril:'Symbiote tendrils'};
+  oni:'Dark samurai oni, Samurai armor',voltkit:'Voltkit, shadow fox pet',parrot:"Luke's parrot, pet",hyp:'Hypnotized enemy kills, Hypno-rifle',last:'Last stand shockwave perk',fence:'Electric fence perk',mate:'Your teammate',ember:'Ember Zombie explosions',tendril:'Symbiote tendrils'};
 const zsbName=id=>ZSBN[id]||(WBY[id]&&WBY[id].name)||(NADE[id]&&NADE[id].name)||'Other';
 function zsbLabel(src,kind,e){
   if(kind==='burn'){const f=e.fireSrc||src;return f==='berserk'?'Berserker rage, burn damage':zsbName(f)+', burn damage'}
@@ -5907,7 +6086,7 @@ function ripSwipe(w,dir){fx.ripSwipe(dir);const h0=G.heading;let n=0,i=0;
 function processDead(src,kind){
   const dead=G.enemies.filter(e=>e.hp<=0);if(!dead.length)return 0;
   if(G.coop)coopDeadHook(dead,src);
-  mdGain(dead,src);vkCount(dead);
+  mdGain(dead,src);vkCount(dead);pqCount(dead);
   G.enemies=G.enemies.filter(e=>e.hp>0);
   zDeathFx(dead);
   if(G.mode==='practice'){G.kills+=dead.length;G.spawnT=1.5;say((dead.some(e=>e.hk)?'Headshot! ':'')+`Target down. ${G.kills} so far.`);tutEv('kill',dead);return dead.length}
@@ -6785,7 +6964,7 @@ function status(){
   if(G.mode==='practice'){say(`Tutorial/practice. ${G.kills} target${G.kills===1?'':'s'} down.${rdWords()} Accuracy ${G.pShots?Math.round(G.pHits/G.pShots*100):0} percent. ${w.name}, ${ammoWords()}. Facing ${facing()}.`);return}
   const left=G.enemies.length+G.toSpawn;
   const wv=G.mode==='zombies'?(G.zm==='roam'?`${rmName()}, wave ${G.wave}. ${rWhere()} ${G.rm.crates.length} supply crate${G.rm.crates.length===1?'':'s'} out, ${G.rm.got} collected.${rdWords()}`:G.zm==='hall'?`Horror hallway, wave ${G.wave}. ${hallWords()}${rdWords()}`:`${G.zm==='six'?'Watch my six':G.zm==='ragdoll'?'Ragdoll sandbox':'Zombie siege'}, wave ${G.wave}. Windows: ${winWords()}.${rdWords()}`)+(G.pk&&Object.keys(G.pk).length?` Perks: ${PERKZ.filter(p=>G.pk[p.id]).map(p=>p.id==='grow'?`${p.name} plus ${growPct()} percent`:p.name).join(', ')}${G.revUsed?', second wind used':''}${G.lastUsed?', last stand recharging':''}.`:''):(G.mode==='endless'?`Wave ${G.wave}, endless.`:G.mode==='bossrush'?`Boss rush, wave ${G.wave}.`:`Wave ${G.wave} of ${MAXW}.`)+rdWords();
-  say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${lycWords()}${xmasWords()}${hypWords()}${tbWords()}${vkWords()}${dgWords()}${G.lo.some(x=>x.medusa)&&w&&!w.medusa?`Medusa's Head: ${mdSouls()} souls. `:''}${G.mdStat?`${G.mdStat} stone statue${G.mdStat>1?'s':''} standing. `:''}${P.armor.on==='shadow'&&P.marm.batswarm?(G.batT>0?`Bats out, ${Math.ceil(G.batT)} seconds left. `:`Bat swarm ${Math.min(99,Math.floor((G.batC||0)/(G.maxhp*.5)*100))} percent charged. `):''}${P.armor.on==='barbed'&&P.marm.hungry?`Hungry barbs at ${Math.round(barbMult()*100)} percent, ${Math.min(HB_MAX,G.barbK||0)} of ${HB_MAX} barb kills. `:''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing${G.statues.some(x=>x.mine)?`, ${G.statues.filter(x=>x.mine).length} armed as emerald mines`:''}.`:''} Facing ${facing()}. ${P.coins} silver.${coopMates()}`);
+  say(`Health ${Math.ceil(G.hp)} of ${G.maxhp}. ${G.lo.some(x=>x.sym)?`Symbiote damage ${n1(G.symMult||1)} times${G.symFull?', fully grown':''}. `:''}${G.cover?'In cover. ':''}${lycWords()}${xmasWords()}${hypWords()}${tbWords()}${vkWords()}${pqWords()}${dgWords()}${G.lo.some(x=>x.medusa)&&w&&!w.medusa?`Medusa's Head: ${mdSouls()} souls. `:''}${G.mdStat?`${G.mdStat} stone statue${G.mdStat>1?'s':''} standing. `:''}${P.armor.on==='shadow'&&P.marm.batswarm?(G.batT>0?`Bats out, ${Math.ceil(G.batT)} seconds left. `:`Bat swarm ${Math.min(99,Math.floor((G.batC||0)/(G.maxhp*.5)*100))} percent charged. `):''}${P.armor.on==='barbed'&&P.marm.hungry?`Hungry barbs at ${Math.round(barbMult()*100)} percent, ${Math.min(HB_MAX,G.barbK||0)} of ${HB_MAX} barb kills. `:''}${w.name}, ${ammoWords()}. ${wv} ${G.bossWave?'Boss fight.':left+(G.mode==='zombies'?' zombies left.':' hostiles left.')} Grenades: ${G.gren.frag} frag, ${G.gren.cryo} cryo, ${G.gren.incend} incendiary, ${G.gren.jack} jack-in-the-box, ${G.gren.horizon} event horizon, ${G.gren.fatman} Fat Man.${G.hz?(G.hz.on?` Event horizon holding, ${Math.ceil(G.hz.on)} seconds left.`:' Event horizon waiting.'):''}${G.ring>0?` Ring of fire burning, ${Math.ceil(G.ring)} seconds left.`:''}${G.boxes&&G.boxes.length?` ${G.boxes.length} box${G.boxes.length>1?'es':''} set.`:''} ${G.statues&&G.statues.length?` ${G.statues.length} crystal statue${G.statues.length>1?'s':''} standing${G.statues.some(x=>x.mine)?`, ${G.statues.filter(x=>x.mine).length} armed as emerald mines`:''}.`:''} Facing ${facing()}. ${P.coins} silver.${coopMates()}`);
 }
 
 /* ---------- loop ---------- */
@@ -7068,8 +7247,8 @@ function stepEnemy(e,dt){
   if(e.crysT>0){e.crysT-=dt;e.cue=Math.max(e.cue,.3);if(e.crysT<=0){fx.crysFree(norm(e.angle-G.heading),e.dist);if(EN[e.type].boss)say(`${e.mega?'Mega ':''}${EN[e.type].name} breaks out of the crystal!`)}}
   if(e.grav){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(EN[e.type])){crySpd=1.15;CRY[e.type](out(norm(e.angle-G.heading),e.dist,.8,enBus,zKind(e.type)));crySpd=1}e.cue=1.6+Math.random()}return}   // reverse gravity: floating upside down, helpless
   if(e.rdb){rdDowned(e,dt);return}   // Ragdoll sandbox: knocked flat, it cannot walk or attack until it gets back up
-  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1)*(e.slomoT>0?.1:1)*(e.chillT>0?.5:1)*(e.gumIn?GUM_SLOW:1)*(e.vibT>0?GT_ATK:1)*(e.swIn?swSlow():1);
-  if(e.chillT>0)e.chillT-=dt;if(e.slowT>0)e.slowT-=dt;if(e.slomoT>0)e.slomoT-=dt;if(e.blossT>0)e.blossT-=dt;
+  const t=EN[e.type],rel=norm(e.angle-G.heading),slow=(e.stunT>0?0:1)*(e.shockT>0?.5:1)*(e.slowT>0?.35:1)*(e.blossT>0?.5:1)*(e.ice?Math.max(.1,1-.25*e.ice):1)*(e.frozeT>0?0:1)*(e.fenceIn?.6:1)*(e.slomoT>0?.1:1)*(e.chillT>0?.5:1)*(e.gumIn?GUM_SLOW:1)*(e.vibT>0?GT_ATK:1)*(e.swIn?swSlow():1)*(e.pqFeT>0?PQ_FSLOW:1);
+  if(e.pqFeT>0)e.pqFeT-=dt;if(e.chillT>0)e.chillT-=dt;if(e.slowT>0)e.slowT-=dt;if(e.slomoT>0)e.slomoT-=dt;if(e.blossT>0)e.blossT-=dt;
   if(e.bub){e.engaged=false;e.wind=0;e.charge=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,.7,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}   // trapped in a bubble: cannot move or attack
   if(e.hz){e.engaged=false;e.wind=0;e.cue-=dt;if(e.cue<=0){if(cryOk(t))CRY[e.type](out(rel,e.dist,1,enBus,zKind(e.type)));e.cue=3*((t.boss?1.4:t.z?1.4+Math.random()*1.6:.6)+e.dist*.025)}return}
   if(e.hb>0){e.hb-=dt*(slow>0?1:0);e.bt-=dt;const pg=1-e.hb/e.hb0;
@@ -7079,6 +7258,8 @@ function stepEnemy(e,dt){
     return}
   if(e.fog){fogStep(e,t,rel,slow,dt);return}   // Brain Fog Bites: dazed for good, harmless
   if(e.loveT>0){loveStep(e,t,rel,slow,dt);return}
+  if(e.pqConf>0){pqConfStep(e,t,rel,slow,dt);return}   // Luke's parrot, Jungle Storm: confused, swinging at the air
+  if(e.pqLure>0){pqLureStep(e,t,rel,slow,dt);return}   // Luke's parrot, Copycat Squawk: walking toward the fake gunfire
   if(G.rbc&&G.rbc.length&&rbSeek(e,t,rel,slow,dt))return;   // Rubik's Cube: going for a cube, or busy solving it
   if(G.snk&&G.snk.length&&fogSeek(e,t,rel,slow,dt))return;   // going for a pile of snacks, or eating   // Unbearable Buddy's Blinding love: wandering with no goal, never attacking
   if(G.hyp&&G.hyp.length&&hypFight(e,t,rel,slow,dt))return;   // busy fighting a hypnotized enemy
@@ -7115,7 +7296,7 @@ function step(dt){
   if(G.thawT>0){G.thawT-=dt;if(G.thawT<=0&&!G.over&&G.enemies.some(e=>e.frozeT!==undefined&&e.frozeT<1)){fx.thaw();say('The ice is cracking. Frozen enemies are moving again.')}}
   if(G.blizzT>0){G.blizzT-=dt;if(G.blizzT<=0&&!G.over&&G.lo.some(x=>x.blizz)){fx.blizzReady();say('Blizzard blast ready. It goes off on your next Jack Frost reload.')}}
   if(G.chargeT>0){G.chargeT-=dt;if(G.chargeT<=0&&!G.over&&G.w===G.chargeW){G.cd=0;G.charged=true;fire();G.charged=false}}
-  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);tbTick(dt);vkTick(dt);if(G.over)return;dgTick(dt);if(G.over)return;adrTick(dt);gumTick(dt);symcTick(dt);ankhTick(dt);bubTick(dt);swTick(dt);hypTick(dt);xmasTick(dt);gtTick(dt);if(G.over)return;if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
+  if(G.down)coopDownTick(dt);stepNades(dt);pdxTick(dt);if(G.over)return;stepBoxes(dt);stepHorizon(dt);stepRockets(dt);quasarTick(dt);if(G.over)return;raTick(dt);if(G.over)return;teddyTick(dt);if(G.over)return;fogTick(dt);rbTick(dt);tbTick(dt);vkTick(dt);if(G.over)return;pqTick(dt);if(G.over)return;dgTick(dt);if(G.over)return;adrTick(dt);gumTick(dt);symcTick(dt);ankhTick(dt);bubTick(dt);swTick(dt);hypTick(dt);xmasTick(dt);gtTick(dt);if(G.over)return;if(G.over)return;katTick(dt);if(G.over)return;divineTick(dt);if(G.over)return;slTick(dt);
   if(G.q&&G.q.length&&!G.over){G.q=G.q.filter(f=>!f(dt))}
   feedTick(dt);
   if(G.over)return;
@@ -9411,7 +9592,7 @@ function rdDraw(){
   symcDraw(c,W,H,X0,Y0,P);   // Symbiote: dark veins and lashing tendrils
   ankhDraw(c,W,H);   // the Ankh raising you
   gtDraw(c,W,H,X0,Y0,P);   // Gabriel's echo guitar in your hands, and its shockwave ring
-  vkDraw(c,X0,Y0,P);tbDraw(c,W,H,X0,Y0,P);   // Terror Teddy on the field, and the cute teddy in your hands
+  vkDraw(c,X0,Y0,P);pqDraw(c,X0,Y0,P);tbDraw(c,W,H,X0,Y0,P);   // Terror Teddy on the field, and the cute teddy in your hands
   dgDraw(c,W,H,X0,Y0,P);   // the Five Star Draggin' Ball and Sir Dragsalot himself
   rbDraw(c,W,H,X0,Y0,P);   // Rubik's Cubes on the ground, in the air, and in your hand
   fogDraw(c,W,H,X0,Y0,P);   // Brain Fog Bites: snack piles, handfuls in the air, and the bag in your hands
@@ -9987,6 +10168,14 @@ function swTick(dt){
     else if(!was&&snd<2&&!(G.swSndT>now)){snd++;fx.swWarm(rel,e.dist)}}
   if(snd)G.swSndT=now+250}
 const UPDATES=[
+  {id:'2026-11-26-parrot',date:'November 26, 2026',title:"New pet: Luke's parrot",items:[
+    "Second pet in the Pets set: Luke's parrot, 40,000 silver. A big, colorful macaw-style parrot: scarlet red head and body, white face patch, pale yellow eye, big cream hooked beak, wings banded red, gold, green and deep blue, and long red and blue tail feathers. It can never be hurt.",
+    'It flies about 12 feet in front of you, a little to your left and up above head height, so sighted players can see it while facing forward, flapping and drifting around.',
+    'Dive Peck: every 3 seconds it swoops at the nearest enemy within 30 feet for 20 damage, then flies back.',
+    'Upgrades: Lookout Call, 10,000 silver, spoken warnings for runners, special zombies, mini bosses, bosses and anything sneaking up behind you. Copycat Squawk, 15,000 silver, every 20 seconds it fakes your gunfire 30 feet away and enemies within 25 feet of you walk toward the noise for 5 seconds. Rainbow Feathers, 15,000 silver, each peck leaves a feather that slows the enemy 30 percent for 4 seconds.',
+    'Special ability Jungle Storm, 30,000 silver: 25 kills charge it, then a flock of 10 wild parrots pecks every enemy within 40 feet for 5 damage a second for 10 seconds and confuses them, so they swing at the air instead of attacking.',
+    'Sounds: soft chatter so you always know where it is, wing flaps, squawks, a pecking crunch on hits, a happy chirp when it gets back, and a whole flock for Jungle Storm. The status readout tells you where the parrot is and how charged Jungle Storm and Copycat Squawk are. One pet at a time, so equipping the parrot puts Voltkit away.'
+  ]},
   {id:'2026-11-26-voltkit',date:'November 26, 2026',title:'New legendary set: Pets, with Voltkit the shadow fox',items:[
     'New legendary set in the shop: Pets. Equip one pet at a time and it fights beside you in every mode except Tutorial/practice.',
     'First pet: Voltkit, 40,000 silver. An original shadow fox, all jet black, with a long pointed snout, four pointed ears, two bushy tails with glowing blue tips, glowing blue eyes, a blue diamond on its forehead and a blue zigzag spark down its side. It can never be hurt.',
@@ -11758,7 +11947,7 @@ function buildShop(keepFocus){
   {const sb=document.querySelector('#shop-cats [data-cat=secret]');if(sb)sb.hidden=!SECRET.some(i=>P.owned.includes(i));if(curCat==='secret'&&sb&&sb.hidden)curCat='grenades'}
   if(curCat==='mythic'&&!catW().length&&!shopArmors().length&&!shopWear().length){const e=document.createElement('p');e.className='note';e.textContent=`${LSET[curSet].name}: nothing here yet. New weapons are coming soon.`;list.appendChild(e)}
   catW().forEach(w=>mkItem(list,'it-'+w.id,w.name,`${w.traits} ${dmgLine(w)}${w.kbat||w.boomer||w.katana||w.scythe||w.rippers||w.ra||w.bubble||w.mjol||w.zeus||w.soul||w.medusa||w.teddy||w.fog||w.rubik||w.tbear||w.dorb||w.guitar||w.flame?'':` Magazine ${w.mag}. ${w.shell?`Loads one ${w.id==='zeliska'||w.id==='rex'?'round':'shell'} at a time, ${w.shell} seconds each.`:`Reload ${w.reload} seconds.`} ${w.rng?`Full damage out to about ${ft(w.rng)} feet, weaker beyond.`:w.spread?'':'No damage falloff at any range.'}`}`,{act:()=>shopAct(w),hear:()=>hearGun(w),extra:()=>{curMod=w.id;show('mods')}}));
-  shopWear().forEach(r=>{mkItem(list,'wr-'+r.id,r.name,r.desc,{act:()=>wearAct(r)});
+  shopWear().forEach(r=>{mkItem(list,'wr-'+r.id,r.name,r.desc,{act:()=>wearAct(r),hear:r.id==='parrot'?()=>{initAudio();fx.pqChat();fx.pqFlap(0,0);setTimeout(()=>{fx.pqSquawk();fx.pqPeck(0,1)},700);setTimeout(()=>fx.pqChirp(),1500)}:undefined});
     const ups=WEAR.filter(u=>u.petup===r.id);if(!ups.length)return;
     const h=document.createElement('h3');h.className='grp';h.textContent=r.name+' upgrades';list.appendChild(h);
     ups.forEach(u=>mkItem(list,'pu-'+u.id,u.name,u.desc,{act:()=>petUpAct(u)}))});
@@ -11842,13 +12031,13 @@ function shopAct(w){
   saveP();updateShop();
 }
 function petAct(r){initAudio();const W=P.wear,own=W.own.includes(r.id);
-  if(!own){if(P.coins<r.price)return broke(r.price,r.name);P.coins-=r.price;W.own.push(r.id);W.on=W.on.filter(i=>WEARBY[i].slot!=='pet');W.on.push(r.id);fx.buy();fx.vkYip&&fx.vkYip();say(`Bought ${r.name}. ${r.name} is equipped and will fight beside you. ${P.coins} silver left.`)}
+  if(!own){if(P.coins<r.price)return broke(r.price,r.name);P.coins-=r.price;W.own.push(r.id);W.on=W.on.filter(i=>WEARBY[i].slot!=='pet');W.on.push(r.id);fx.buy();r.id==='parrot'?fx.pqSquawk():fx.vkYip&&fx.vkYip();say(`Bought ${r.name}. ${r.name} is equipped and will fight beside you. ${P.coins} silver left.`)}
   else if(W.on.includes(r.id)){W.on=W.on.filter(i=>i!==r.id);fx.click();say(`${r.name} unequipped.`)}
-  else{W.on=W.on.filter(i=>WEARBY[i].slot!=='pet');W.on.push(r.id);fx.vkChirp&&fx.vkChirp();say(`${r.name} equipped.`)}
+  else{W.on=W.on.filter(i=>WEARBY[i].slot!=='pet');W.on.push(r.id);r.id==='parrot'?fx.pqChat():fx.vkChirp&&fx.vkChirp();say(`${r.name} equipped.`)}
   saveP();updateShop()}
 function petUpAct(u){initAudio();const base=WEARBY[u.petup];if(P.wear.own.includes(u.id)){fx.click();say(`${u.name} is already owned.`);return}
   if(!P.wear.own.includes(base.id)){fx.click();say(`Buy ${base.name} first.`);return}
-  if(P.coins<u.price)return broke(u.price,u.name);P.coins-=u.price;P.wear.own.push(u.id);fx.buy();fx.vkYip&&fx.vkYip();say(`Bought ${u.name}. ${P.coins} silver left.`);saveP();updateShop()}
+  if(P.coins<u.price)return broke(u.price,u.name);P.coins-=u.price;P.wear.own.push(u.id);fx.buy();base.id==='parrot'?fx.pqChirp():fx.vkYip&&fx.vkYip();say(`Bought ${u.name}. ${P.coins} silver left.`);saveP();updateShop()}
 function wearAct(r){
   if(r.pet)return petAct(r);
   initAudio();const W=P.wear,own=W.own.includes(r.id),wasOn=W.on.includes(r.id),sl=WSLOT[r.slot],same=W.on.filter(i=>WEARBY[i].slot===r.slot),full=same.length>=sl.max,others=()=>same.map(i=>WEARBY[i].name).join(' or ');
